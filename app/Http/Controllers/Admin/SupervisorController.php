@@ -1208,32 +1208,32 @@ class SupervisorController extends Controller
         }
     }
 
-    public function get_formp_apps()
+    public function get_formp_pending()
     {
+        // var_dump(Auth::user());die;
+
         $userRole = Auth::user()->roles_id; // Supervisor Role ID
-        $assignedFormID = Auth::user()->form_id;
-        $forms = self::getForms($assignedFormID);
+        // $assignedFormID = Auth::user()->form_id;
+        // $forms = self::getForms($assignedFormID);
     
-        $new_applications = DB::table('tnelb_application_tbl')
-        ->where('form_id', $assignedFormID) // Filter by Form S
+        $new_applications = DB::table('tnelb_form_p')
         ->where('appl_type', 'N') // Filter by Form S
         ->where('payment_status', 'payment') // Filter by Form S
-        ->whereIn('status', ['P','RE']) // Only show new applications
+        ->whereIn('app_status', ['P','RE']) // Only show new applications
         ->select('*')
         ->orderByDesc('id')
         ->get();
 
 
-        $renewal = DB::table('tnelb_application_tbl')
-        ->where('form_id', $assignedFormID) // Filter by Form S
+        $renewal = DB::table('tnelb_form_p')
         ->where('appl_type', 'R') // Filter by Form S
-        ->whereIn('status', ['P','RE']) // Only show new applications
+        ->whereIn('app_status', ['P','RE']) // Only show new applications
         ->select('*')
         ->orderByDesc('id')
         ->get();
 
-        // var_dump($renewal);die;
+        // var_dump($new_applications);die;
     
-        return view('admin.supervisor.view', compact('new_applications','renewal','forms'));
+        return view('admin.supervisor.formp.view_pending', compact('new_applications','renewal'));
     }
 }

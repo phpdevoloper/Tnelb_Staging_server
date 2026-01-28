@@ -27,6 +27,7 @@
     use App\Http\Controllers\Admin\AddFormController;
 use App\Http\Controllers\Admin\EquipmentController;
 use App\Http\Controllers\Admin\FormBprocessController;
+use App\Http\Controllers\Admin\FormPController;
 use App\Http\Controllers\Admin\FormsaprocessController;
 use App\Http\Controllers\Admin\FormSBprocessController;
 use App\Http\Controllers\Admin\GalleryController;
@@ -88,7 +89,8 @@ use App\Http\Controllers\MediaController;
         Route::get('/get-applicant-details', [LoginController::class, 'getApplicantDetails'])->name('get.applicant.details');
             Route::post('/profile', [LoginController::class, 'profile'])->name('profile');
             Route::get('/applicants_detail/{applicant_id}', [LoginController::class, 'showApplicantDetails'])->name('applicants_detail');
-
+            //Form P view Application
+            Route::get('/view_application_formp/{applicant_id}', [FormPController::class, 'view_application_formp'])->name('application_details_formp');
             // Secretary
             Route::get('/secretary_table', [LoginController::class, 'secretary_table'])->name('secretary_table');
             
@@ -101,7 +103,7 @@ use App\Http\Controllers\MediaController;
             Route::post('/approveApplication', [SupervisorController::class, 'approveApplication'])->name('approveApplication');
             
             // Supervisor 
-            Route::get('/get_applications', [ApplicationController::class, 'get_applications'])->name('get_applications');
+            Route::get('/get_formp_pending', [SupervisorController::class, 'get_formp_pending'])->name('get_formp_pending');
             
             // Secretary Views
             Route::get('/view_secratary', [SecretaryController::class, 'view_secratary'])->name('view_secratary');

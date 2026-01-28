@@ -87,7 +87,7 @@
                     </div>
                 </div>
                 <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 col-12  layout-spacing">
-                    <div class="widget widget-card-five bg-yellow color_forms">
+                    <div class="widget widget-card-five bg-thickgreen color_forms">
                         <div class="widget-content">
                             <div class="account-box">
                                 <div class="info-box">
@@ -116,8 +116,8 @@
                                         <h4 onclick="window.location.href='{{ route('admin.get_rejected') }}'" style="cursor: pointer"> Rejected <span class="badge badge-danger">{{ $rejected_appls }}</span></h4>
                                     </div>
                                     <div style="text-align: end;">
-                                        <h4 onclick="window.location.href='{{ route('admin.get_completed') }}'" style="cursor: pointer"> Completed <span class="badge badge-success">{{ $completed }}</span></h4>
-                                        <h4 onclick="window.location.href='{{ route('admin.get_applications') }}'" style="cursor: pointer"> Pending <span class="badge badge-warning">{{ $pendings }}</span></h4>
+                                        <h4 onclick="window.location.href='{{ route('admin.get_completed') }}'" style="cursor: pointer"> Completed <span class="badge badge-success">{{ $formP_completed }}</span></h4>
+                                        <h4 onclick="window.location.href='{{ route('admin.get_formp_pending') }}'" style="cursor: pointer"> Pending <span class="badge badge-warning">{{ $formP_pending }}</span></h4>
                                     </div>
                                 </div>
                             </div>
