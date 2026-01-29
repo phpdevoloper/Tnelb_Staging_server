@@ -2,8 +2,6 @@
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Contracts\Encryption\DecryptException;
 
 if (!function_exists('format_date_input')) {
     function format_date_input($date)
@@ -55,18 +53,6 @@ function calculateDaysDifference($givenDate)
     
     // Return the number of days
     return $interval->days;
-}
-
-
-if (!function_exists('safeDecrypt')) {
-    function safeDecrypt($value)
-    {
-        try {
-            return $value ? Crypt::decryptString($value) : null;
-        } catch (DecryptException $e) {
-            return null; // invalid or unencrypted data
-        }
-    }
 }
 
 

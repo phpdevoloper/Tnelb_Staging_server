@@ -56,6 +56,7 @@
                                     <nav class="breadcrumb-style-one" aria-label="breadcrumb">
                                         <ol class="breadcrumb">
                                             <li class="breadcrumb-item"><a href="#"></a></li>
+    
                                         </ol>
                                     </nav>
     
@@ -251,7 +252,7 @@
                                                 <div class="icon bg-H">
                                                     <span>
                                                         <i class="fa fa-file-text"></i>
-                                                        <!-- <img src="{{ url ('assets/images/icon/doc-icon.png') }}" alt="money-bag"> -->
+                                                        <!-- <img src="{{url ('assets/images/icon/doc-icon.png') }}" alt="money-bag"> -->
                                                     </span>
                                                 </div>
                                             </div>

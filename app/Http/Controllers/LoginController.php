@@ -284,25 +284,34 @@ $tables = [
     'EB'  => 'tnelb_eb_applications',
 ];
 
-$workflows_cl = collect(); // final result
+$applicationTables = array_values($tables);
+
+$workflows_cl = collect();
 
 foreach ($tables as $formCode => $tableName) {
+
     $records = DB::table("$tableName as ta")
         ->where('ta.login_id', $loginId)
         ->orderBy('ta.created_at', 'desc')
         ->get()
-        ->map(function ($workflow) use ($formCode) {
+        ->map(function ($workflow) use ($formCode, $applicationTables) {
 
             $licenseNumber = null;
             $expiry = null;
             $renewalApplicationId = null;
             $isValid = false;
-            $licenceID = null;
 
-            // get mst_licence id
-            $licenceID = MstLicence::where('cert_licence_code', $workflow->license_name)->value('id');
+            // 🔹 Get licence master id
+            $licenceID = MstLicence::where(
+                'cert_licence_code',
+                $workflow->license_name
+            )->value('id');
+
             $appl_type = str_replace(' ', '', $workflow->appl_type);
 
+            // ------------------------------------------------
+            // NEW APPLICATION
+            // ------------------------------------------------
             if ($appl_type === 'N') {
 
                 $license = DB::table('tnelb_license')
@@ -310,31 +319,40 @@ foreach ($tables as $formCode => $tableName) {
                     ->select('license_number', 'expires_at')
                     ->first();
 
-                  
-
                 if ($license) {
-                    $renewalApp = DB::table('tnelb_ea_applications')
-                        ->where('old_application', $workflow->application_id)
-                        ->where('appl_type', 'R')
-                        ->orderBy('id', 'desc')
-                        ->first();
 
-                    if ($renewalApp) {
-                        $renewalApplicationId = $renewalApp->application_id;
-                    } else {
+                    // 🔍 Check renewal in ALL FOUR tables
+                    foreach ($applicationTables as $appTable) {
+
+                        $renewalApp = DB::table($appTable)
+                            ->where('old_application', $workflow->application_id)
+                            ->where('appl_type', 'R')
+                            ->orderBy('id', 'desc')
+                            ->first();
+
+                        if ($renewalApp) {
+                            $renewalApplicationId = $renewalApp->application_id;
+                            break;
+                        }
+                    }
+
+                    // If NO renewal exists → show license
+                    if (!$renewalApplicationId) {
                         $licenseNumber = $license->license_number;
                         $expiry = $license->expires_at;
                     }
                 }
+            }
 
-            } elseif ($appl_type === 'R') {
-
+            // ------------------------------------------------
+            // RENEWAL APPLICATION
+            // ------------------------------------------------
+            elseif ($appl_type === 'R') {
 
                 $renewal = DB::table('tnelb_renewal_license')
                     ->where('application_id', $workflow->application_id)
                     ->select('license_number', 'expires_at')
                     ->first();
-
 
                 if ($renewal) {
                     $licenseNumber = $renewal->license_number;
@@ -342,7 +360,9 @@ foreach ($tables as $formCode => $tableName) {
                 }
             }
 
-            // check validity
+            // ------------------------------------------------
+            // VALIDITY CHECK
+            // ------------------------------------------------
             if ($expiry && $licenceID) {
 
                 $validityMonths = FeesValidity::where('licence_id', $licenceID)
@@ -355,9 +375,12 @@ foreach ($tables as $formCode => $tableName) {
                 $oneYearAfterExpiry = $expiryDate->copy()->addYear();
 
                 $isValid = $today->greaterThanOrEqualTo($validFromDate)
-                            && $today->lessThanOrEqualTo($oneYearAfterExpiry);
+                         && $today->lessThanOrEqualTo($oneYearAfterExpiry);
             }
 
+            // ------------------------------------------------
+            // ATTACH EXTRA DATA
+            // ------------------------------------------------
             $workflow->form_code = $formCode;
             $workflow->license_number = $licenseNumber;
             $workflow->expires_at = $expiry;
@@ -370,9 +393,12 @@ foreach ($tables as $formCode => $tableName) {
     $workflows_cl = $workflows_cl->merge($records);
 }
 
-$workflows_cl = $workflows_cl->sortByDesc('updated_at')->values();
-
-
+// ------------------------------------------------
+// FINAL SORTING
+// ------------------------------------------------
+$workflows_cl = $workflows_cl
+    ->sortByDesc('updated_at')
+    ->values();
 
         $workflows_present = DB::table('tnelb_application_tbl as ta')
             ->where('ta.login_id', $loginId)

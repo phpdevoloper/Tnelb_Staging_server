@@ -27,7 +27,6 @@
     use App\Http\Controllers\Admin\AddFormController;
 use App\Http\Controllers\Admin\EquipmentController;
 use App\Http\Controllers\Admin\FormBprocessController;
-use App\Http\Controllers\Admin\FormPController;
 use App\Http\Controllers\Admin\FormsaprocessController;
 use App\Http\Controllers\Admin\FormSBprocessController;
 use App\Http\Controllers\Admin\GalleryController;
@@ -84,53 +83,49 @@ use App\Http\Controllers\MediaController;
 
 
             Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
-            
+
         // Applicant Details
-        Route::get('/get-applicant-details', [LoginController::class, 'getApplicantDetails'])->name('get.applicant.details');
+            Route::get('/get-applicant-details', [LoginController::class, 'getApplicantDetails'])->name('get.applicant.details');
             Route::post('/profile', [LoginController::class, 'profile'])->name('profile');
             Route::get('/applicants_detail/{applicant_id}', [LoginController::class, 'showApplicantDetails'])->name('applicants_detail');
-            //Form P view Application
-            Route::get('/view_application_formp/{applicant_id}', [FormPController::class, 'view_application_formp'])->name('application_details_formp');
-            // Secretary
+
+        // Secretary
             Route::get('/secretary_table', [LoginController::class, 'secretary_table'])->name('secretary_table');
-            
-            // Supervisor Routes
+
+        // Supervisor Routes
             Route::get('/view_applications', [SupervisorController::class, 'view_applications'])->name('view_applications');
             Route::get('/view_auditor', [SupervisorController::class, 'view_auditor'])->name('view_auditor');
             Route::get('/get_completed', [SupervisorController::class, 'get_completed'])->name('get_completed');
             Route::get('/get_completed_wh', [SupervisorController::class, 'get_completed_wh'])->name('get_completed_wh');
             Route::post('/forwardApplication/{role}', [SupervisorController::class, 'forwardApplication'])->name('forwardApplication');
             Route::post('/approveApplication', [SupervisorController::class, 'approveApplication'])->name('approveApplication');
-            
-            // Supervisor 
-            Route::get('/get_formp_pending', [SupervisorController::class, 'get_formp_pending'])->name('get_formp_pending');
-            
-            // Secretary Views
+
+        // Secretary Views
             Route::get('/view_secratary', [SecretaryController::class, 'view_secratary'])->name('view_secratary');
             Route::get('/completed_secratary', [SecretaryController::class, 'completed_secratary'])->name('completed_secratary');
 
-            // Application Controller
+        // Application Controller
             Route::get('/get_applications', [ApplicationController::class, 'get_applications'])->name('get_applications');
             Route::get('/get_wh_apps', [ApplicationController::class, 'get_wh_apps'])->name('get_wh_apps');
             Route::get('/view', [AuditorController::class, 'view'])->name('view');
             Route::get('/view_completed', [AuditorController::class, 'view_completed'])->name('view_completed');
             Route::get('/secratary_completed', [SecretaryController::class, 'secratary_completed'])->name('secratary_completed');
             Route::get('/fetch-auditor-data', [AuditorController::class, 'fetchAuditorData'])->name('fetch_auditor_data');
-            
-            
-            // President Routes
+
+
+        // President Routes
             Route::get('/view_president', [SecretaryController::class, 'view_president'])->name('view_president');
             Route::get('/completed_pres', [SecretaryController::class, 'completed_pres'])->name('completed_pres');
-            
+
         // FORM-A Specific
             // Route::get('/view_forma', [SupervisorController::class, 'view_forma'])->name('view_forma');
             Route::get('/view_form/{type}', [SupervisorController::class, 'view_forma'])->name('view_form');
-            
-            
+
+
             Route::get('/completed_forma', [SupervisorController::class, 'completed_forma'])->name('completed_forma');
 
             Route::get('/view_forma_pending/{type}', [AuditorController::class, 'view_forma_pending'])->name('view_forma_pending');
-            
+
             Route::get('/view_forma_completed', [AuditorController::class, 'view_forma_completed'])->name('view_forma_completed');
 
             Route::get('/view_sec_forma_pending/{type}', [SecretaryController::class, 'view_sec_forma_pending'])->name('view_sec_forma_pending');
@@ -153,17 +148,17 @@ use App\Http\Controllers\MediaController;
             Route::post('/forwardApplicationforma/{role}', [SupervisorController::class, 'forwardApplicationforma'])->name('forwardApplicationforma');
             Route::post('/approveApplicationForma', [SupervisorController::class, 'approveApplicationForma'])
             ->name('approveApplicationForma');
-            
-            // return forma-------------------
-            
+
+        // return forma-------------------
+
             Route::post('/returntoSupervisorforma', [ApplicationController::class, 'returntoSupervisorforma'])->name('returntoSupervisorforma');
         // Route::get('/generateForma-pdf/{application_id}', [LicensepdfController::class, 'generateFormaPDF'])->name('generateForma.pdf');
-        
+
         // Misc
-        Route::post('/returntoSupervisor', [ApplicationController::class, 'returntoSupervisor'])->name('returntoSupervisor');
-        
-        
-        
+            Route::post('/returntoSupervisor', [ApplicationController::class, 'returntoSupervisor'])->name('returntoSupervisor');
+
+
+
             /* REPORTS */
             Route::get('/reports', [ReportController::class, 'index'])->name('reports');
             Route::get('/get_whcert', [ReportController::class, 'get_whcert'])->name('get_whcert');
@@ -171,129 +166,129 @@ use App\Http\Controllers\MediaController;
             Route::post('/get_mic_report', [ReportController::class, 'get_mic_report'])->name('get_mic_report');
             Route::post('/get_filter_data', [ReportController::class, 'get_filter_data'])->name('get_filter_data');
 
-            // Renewal Apps
+        // Renewal Apps
             Route::get('/renewal_apps', [ApplicationController::class, 'renewal_apps'])->name('renewal_apps');
 
-            
+
         // -------------completed applications --------------------
-        
-        
+
+
         Route::get('/completed_application/{applicant_id}', [CompletedApplsController::class, 'index'])->name('completed_application');
-        
-        
+
+
         // ---------------------------------------------Form S------------------------------------
         Route::get('/completed_formsa', [FormsaprocessController::class, 'completed_formsa'])->name('completed_formsa');
         
         Route::get('/viewformsa', [FormsaprocessController::class, 'view_formsa'])->name('view_formsa');
-        
+
         Route::get('/applicants_detail_formsa/{applicant_id}', [FormsaprocessController::class, 'applicants_detail_formsa'])->name('applicants_detail_formsa');
-        
-        //form A Completed
+
+     //form A Completed
         Route::get('/applicants_detail_formsa_completed/{applicant_id}', [FormsaprocessController::class, 'applicants_detail_formsa_completed'])->name('applicants_detail_formsa_completed');
 
         Route::post('/forwardApplicationformsa/{role}', [FormsaprocessController::class, 'forwardApplicationformsa'])->name('forwardApplicationformsa');
-        
+
         Route::post('/approveApplicationFormsa', [FormsaprocessController::class, 'approveApplicationFormsa'])
             ->name('approveApplicationFormsa');
-            
-            Route::get('/view_formsa_pending', [FormsaprocessController::class, 'view_formsa_pending'])->name('view_formsa_pending');
+
+        Route::get('/view_formsa_pending', [FormsaprocessController::class, 'view_formsa_pending'])->name('view_formsa_pending');
 
         Route::get('/view_sec_formsa_pending', [FormsaprocessController::class, 'view_sec_formsa_pending'])->name('view_sec_formsa_pending');
-        
+
         Route::post('/returntoSupervisorformsa', [FormsaprocessController::class, 'returntoSupervisorformsa'])->name('returntoSupervisorformsa');
 
          Route::get('/president_pending_formsa', [FormsaprocessController::class, 'president_pending_formsa'])->name('president_pending_formsa');
-         
+
          Route::get('/applicants_detail_formsa_completed/{applicant_id}', [FormsaprocessController::class, 'applicants_detail_formsa_completed'])->name('applicants_detail_formsa_completed');
 
-         Route::get('/view_formsa_completed', [FormsaprocessController::class, 'view_formsa_completed'])->name('view_formsa_completed');
+        Route::get('/view_formsa_completed', [FormsaprocessController::class, 'view_formsa_completed'])->name('view_formsa_completed');
 
           Route::get('/view_sec_formsa_completed', [FormsaprocessController::class, 'view_sec_formsa_completed'])->name('view_sec_formsa_completed');
 
-          
-          Route::get('/president_completed_formsa', [FormsaprocessController::class, 'president_completed_formsa'])->name('president_completed_formsa');
-          
+
+           Route::get('/president_completed_formsa', [FormsaprocessController::class, 'president_completed_formsa'])->name('president_completed_formsa');
+
 
         // ------------------Form SB--------------------------------
-        
+
           Route::get('/completed_formsb', [FormSBprocessController::class, 'completed_formsb'])->name('completed_formsb');
-          
+
           Route::get('/view_formsb_pending', [FormSBprocessController::class, 'view_formsb_pending'])->name('view_formsb_pending');
         
           Route::get('/viewformsb', [FormSBprocessController::class, 'view_formsb'])->name('view_formsb');
-          
+
           Route::get('/applicants_detail_formsb/{applicant_id}', [FormSBprocessController::class, 'applicants_detail_formsb'])->name('applicants_detail_formsb');
-          
+
           
         Route::post('/forwardApplicationformsb/{role}', [FormSBprocessController::class, 'forwardApplicationformsb'])->name('forwardApplicationformsb');
-        
+
         Route::post('/approveApplicationFormsb', [FormSBprocessController::class, 'approveApplicationFormsb'])
             ->name('approveApplicationFormsb');
 
          Route::post('/returntoSupervisorformsb', [FormSBprocessController::class, 'returntoSupervisorformsb'])->name('returntoSupervisorformsb');
-         
-         
-         Route::get('/view_formsb_completed', [FormSBprocessController::class, 'view_formsb_completed'])->name('view_formsb_completed');
-         
-         //   ----------Secretary-----------------------
+
+
+        Route::get('/view_formsb_completed', [FormSBprocessController::class, 'view_formsb_completed'])->name('view_formsb_completed');
+
+                //   ----------Secretary-----------------------
         Route::get('/view_sec_formsb_completed', [FormSBprocessController::class, 'view_sec_formsb_completed'])->name('view_sec_formsb_completed'); 
 
          Route::get('/view_sec_formsb_pending', [FormSBprocessController::class, 'view_sec_formsb_pending'])->name('view_sec_formsb_pending');
 
          
 
-         //  -----president------------
-         
+        //  -----president------------
+
          Route::get('/president_completed_formsb', [FormSBprocessController::class, 'president_completed_formsb'])->name('president_completed_formsb');
-         
+
         Route::get('/president_pending_formsb', [FormSBprocessController::class, 'president_pending_formsb'])->name('president_pending_formsb');
-        
-        
-        Route::get('/applicants_detail_formsb_completed/{applicant_id}', [FormSBprocessController::class, 'applicants_detail_formsb_completed'])->name('applicants_detail_formsb_completed');
-        
-        //    ---------PDF generate-------------
+
+
+         Route::get('/applicants_detail_formsb_completed/{applicant_id}', [FormSBprocessController::class, 'applicants_detail_formsb_completed'])->name('applicants_detail_formsb_completed');
+
+            //    ---------PDF generate-------------
         Route::get('/generateFormsb-pdf/{application_id}', [LicensepdfController::class, 'generateFormsbPDF'])->name('generateFormsb.pdf');
 
-        
-        // ------------------Form EB--------------------------------
 
-        Route::get('/completed_formb', [FormBprocessController::class, 'completed_formb'])->name('completed_formb');
-        
-        Route::get('/viewformb', [FormBprocessController::class, 'view_formb'])->name('view_formb');
-        
-        Route::get('/applicants_detail_formb/{applicant_id}', [FormBprocessController::class, 'applicants_detail_formb'])->name('applicants_detail_formb');
+         // ------------------Form EB--------------------------------
 
+          Route::get('/completed_formb', [FormBprocessController::class, 'completed_formb'])->name('completed_formb');
         
+          Route::get('/viewformb', [FormBprocessController::class, 'view_formb'])->name('view_formb');
+
+          Route::get('/applicants_detail_formb/{applicant_id}', [FormBprocessController::class, 'applicants_detail_formb'])->name('applicants_detail_formb');
+
+          
         Route::post('/forwardApplicationformb/{role}', [FormBprocessController::class, 'forwardApplicationformb'])->name('forwardApplicationformb');
-        
+
         Route::post('/approveApplicationFormb', [FormBprocessController::class, 'approveApplicationFormb'])
             ->name('approveApplicationFormb');
-            
-            Route::post('/returntoSupervisorformb', [FormBprocessController::class, 'returntoSupervisorformb'])->name('returntoSupervisorformb');
-            
-            //  ---------------Auditor-----------
-            Route::get('/view_formb_completed', [FormBprocessController::class, 'view_formb_completed'])->name('view_formb_completed');
-            
-            Route::get('/view_formb_pending', [FormBprocessController::class, 'view_formb_pending'])->name('view_formb_pending');
-            
-            //   ----------Secretary-----------------------
-            Route::get('/view_sec_formb_completed', [FormBprocessController::class, 'view_sec_formb_completed'])->name('view_sec_formb_completed'); 
-            
-            Route::get('/view_sec_formb_pending', [FormBprocessController::class, 'view_sec_formb_pending'])->name('view_sec_formb_pending');
-            
-            //  -----president------------
-            Route::get('/president_completed_formb', [FormBprocessController::class, 'president_completed_formb'])->name('president_completed_formb');
-            
-            Route::get('/president_pending_formb', [FormBprocessController::class, 'president_pending_formb'])->name('president_pending_formb');
-            
-            //    ---------PDF generate-------------
+
+         Route::post('/returntoSupervisorformb', [FormBprocessController::class, 'returntoSupervisorformb'])->name('returntoSupervisorformb');
+
+        //  ---------------Auditor-----------
+        Route::get('/view_formb_completed', [FormBprocessController::class, 'view_formb_completed'])->name('view_formb_completed');
+
+        Route::get('/view_formb_pending', [FormBprocessController::class, 'view_formb_pending'])->name('view_formb_pending');
+
+        //   ----------Secretary-----------------------
+        Route::get('/view_sec_formb_completed', [FormBprocessController::class, 'view_sec_formb_completed'])->name('view_sec_formb_completed'); 
+
+         Route::get('/view_sec_formb_pending', [FormBprocessController::class, 'view_sec_formb_pending'])->name('view_sec_formb_pending');
+
+        //  -----president------------
+        Route::get('/president_completed_formb', [FormBprocessController::class, 'president_completed_formb'])->name('president_completed_formb');
+
+        Route::get('/president_pending_formb', [FormBprocessController::class, 'president_pending_formb'])->name('president_pending_formb');
+
+        //    ---------PDF generate-------------
         Route::get('/generateFormb-pdf/{application_id}', [LicensepdfController::class, 'generateFormbPDF'])->name('generateFormb.pdf');
 
 
              //form A Completed
         Route::get('/applicants_detail_formb_completed/{applicant_id}', [FormBprocessController::class, 'applicants_detail_formb_completed'])->name('applicants_detail_formb_completed');
 
-        
+
 
         // // CMS
             Route::get('/homeslider', [LoginController::class, 'homeslider'])->name('homeslider');

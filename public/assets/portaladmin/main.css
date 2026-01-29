@@ -7,6 +7,10 @@
   box-shadow: 1px 8px 10px #035ab3;
 }
 
+#style-3_wrapper ul{
+  list-style: none!important;
+}
+
 .lateralDropDownContainer .dropDownItem {
   position: relative;
   transition: 0.3s ease-out;
@@ -520,4 +524,12 @@ body.gu-unselectable .media.el-drag-ex-1 i {
   min-height: 108px;
   max-width: 192px;
   max-height: 108px;
+}
+
+
+
+.table-controls{
+  gap: .5rem !important;
+  align-items: center !important;
+  display: flex !important;
 }

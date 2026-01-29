@@ -3988,74 +3988,91 @@ $html .= '</table>';
 
 
     
-    public static function getStaffExpiryDate($ccNumber)
-    {
-        $type = strtoupper(substr($ccNumber, 0, 1));
+    
+  public static function getStaffExpiryDate($ccNumber)
+{
+    // Default response (NIL)
+    $default = [
+        'valid_from' => 'NIL',
+        'valid_upto' => 'NIL'
+    ];
 
-        $tableMap = [
-            'B' => 'wcert',
-            'H' => 'whcert',
-            'C' => 'scert'
-        ];
+    if (empty($ccNumber)) {
+        return $default;
+    }
 
-        if (!isset($tableMap[$type])) {
-            return [
-                'valid_from' => '-',
-                'valid_upto' => '-'
-            ];
-        }
+    // Get first character (B / H / C)
+    $type = strtoupper(substr(trim($ccNumber), 0, 1));
 
-        // Extract numeric part (CC_111 → 111)
-        $certNo = (int) preg_replace('/\D/', '', $ccNumber);
+    $tableMap = [
+        'B' => 'wcert',
+        'H' => 'whcert',
+        'C' => 'scert'
+    ];
 
-        // 1️⃣ Renewal table (highest priority)
-        $renewal = DB::table('tnelb_renewal_license')
-            ->select('issued_at', 'expires_at')
-            ->where('license_number', $certNo)
-            ->orderBy('expires_at', 'desc')
-            ->first();
+    // Invalid certificate type
+    if (!isset($tableMap[$type])) {
+        return $default;
+    }
 
-        if ($renewal) {
-            return [
-                'valid_from' => date('d-m-Y', strtotime($renewal->issued_at)),
-                'valid_upto' => date('d-m-Y', strtotime($renewal->expires_at)),
-            ];
-        }
+    // Extract numeric part (B123 → 123)
+    $certNo = preg_replace('/\D/', '', $ccNumber);
 
-        // 2️⃣ License table
-        $license = DB::table('tnelb_license')
-            ->select('issued_at', 'expires_at')
-            ->where('license_number', $certNo)
-            ->orderBy('expires_at', 'desc')
-            ->first();
+    if (empty($certNo)) {
+        return $default;
+    }
 
-        if ($license) {
-            return [
-                'valid_from' => date('d-m-Y', strtotime($license->issued_at)),
-                'valid_upto' => date('d-m-Y', strtotime($license->expires_at)),
-            ];
-        }
+    /* -------------------------------------------------
+     * 1️⃣ Renewal license (highest priority)
+     * ------------------------------------------------- */
+    $renewal = DB::table('tnelb_renewal_license')
+        ->select('issued_at', 'expires_at')
+        ->where('license_number', $certNo)
+        ->orderBy('expires_at', 'desc')
+        ->first();
 
-        // 3️⃣ Certificate table (fallback)
-        $cert = DB::table($tableMap[$type])
-            ->select('frdate1', 'vdate')
-            ->where('certno', $certNo)
-            ->orderBy('vdate', 'desc')
-            ->first();
-
-        if ($cert) {
-            return [
-                'valid_from' => date('d-m-Y', strtotime($cert->frdate1)),
-                'valid_upto' => date('d-m-Y', strtotime($cert->vdate)),
-            ];
-        }
-
+    if ($renewal) {
         return [
-            'valid_from' => '-',
-            'valid_upto' => '-'
+            'valid_from' => date('d-m-Y', strtotime($renewal->issued_at)),
+            'valid_upto' => date('d-m-Y', strtotime($renewal->expires_at)),
         ];
     }
 
+    /* -------------------------------------------------
+     * 2️⃣ New license
+     * ------------------------------------------------- */
+    $license = DB::table('tnelb_license')
+        ->select('issued_at', 'expires_at')
+        ->where('license_number', $certNo)
+        ->orderBy('expires_at', 'desc')
+        ->first();
+
+    if ($license) {
+        return [
+            'valid_from' => date('d-m-Y', strtotime($license->issued_at)),
+            'valid_upto' => date('d-m-Y', strtotime($license->expires_at)),
+        ];
+    }
+
+    /* -------------------------------------------------
+     * 3️⃣ Certificate table fallback
+     * ------------------------------------------------- */
+    $cert = DB::table($tableMap[$type])
+        ->select('frdate1', 'vdate')
+        ->where('certno', $certNo)
+        ->orderBy('vdate', 'desc')
+        ->first();
+
+    if ($cert) {
+        return [
+            'valid_from' => date('d-m-Y', strtotime($cert->frdate1)),
+            'valid_upto' => date('d-m-Y', strtotime($cert->vdate)),
+        ];
+    }
+
+    // ❗ Not found anywhere → NIL
+    return $default;
+}
 
 
 }

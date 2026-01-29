@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\FormPController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,8 +29,6 @@ use App\Models\MstLicence;
 use App\Models\Tnelb_banksolvency_a;
 use Carbon\Carbon;
 use App\Models\Admin\FeesValidity;
-use App\Models\TnelbFormP;
-use Illuminate\Support\Facades\Storage;
 
 class LoginController extends Controller
 {
@@ -295,13 +292,6 @@ class LoginController extends Controller
         $auditorFormb_pendings      = FormbModel::getAuditorFormbPendingCounts();
         $secFormb_counts            = FormbModel::getSecFormbCounts();
         $form_wh_rejected           = ApplicationModel::getform_wh_rejected();
-
-
-        $formP_pending = TnelbFormP::getPendingCountFormp();
-        $formP_completed = TnelbFormP::getcompletedCount();
-
-        // var_dump($formP_pending);die;
-
 
         $rejected_appls             = ApplicationModel::getRejectCount($assignedFormID);
 
@@ -657,9 +647,7 @@ $cl_forms = $cl_forms_ea
 
             'presidentFormSA',
             'presidentFormSB',
-            'presidentFormB',
-            'formP_pending',
-            'formP_completed'
+            'presidentFormB'
         ));
     }
     public function getForms($form_id)

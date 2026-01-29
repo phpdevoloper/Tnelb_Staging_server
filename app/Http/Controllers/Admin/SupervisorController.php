@@ -618,24 +618,48 @@ class SupervisorController extends Controller
 
             /* -------------------- WORKFLOW -------------------- */
 
-            DB::table('tnelb_workflow_a')->insert([
-                'application_id' => $request->application_id,
-                'processed_by'   => $request->processed_by,
-                'role_id'        => Auth::user()->roles_id,
-                'appl_status'    => 'A',
-                'remarks'        => $request->remarks ?? 'No remarks provided',
-                'forwarded_to'   => $request->forwarded_to,
-                'created_at'     => now(),
-            ]);
+//            $workflow_change = DB::table('tnelb_workflow_a')->insert([
+//                 'application_id' => $request->application_id,
+//                 'processed_by'   => $request->processed_by,
+//                 'role_id'        => Auth::user()->roles_id,
+//                 'appl_status'    => 'A',
+//                 'remarks'        => $request->remarks ?? 'No remarks provided',
+//                 'forwarded_to'   => $request->forwarded_to,
+//                 'created_at'     => now(),
+//             ]);
 
-          WorkflowA::where('application_id', $request->application_id)
-              ->where('processed_by', $request->processed_by)
-              ->where('role_id', $request->role_id)
-                ->orderByDesc('id')
-                ->limit(1)
-                ->update([
-                    'created_at' => DB::raw('NOW()'),
-                ]);
+
+
+//          $workflow_change1 = WorkflowA::where('application_id', $request->application_id)
+//               ->where('processed_by', $request->processed_by)
+//               ->where('role_id', $request->role_id)
+//                 ->orderByDesc('id')
+//                 ->limit(1)
+//                 ->update([
+//                     'created_at' => DB::raw('NOW()'),
+//                 ]);
+// dd($workflow_change1->created_at);exit;
+
+
+               $workflowId = DB::table('tnelb_workflow_a')->insertGetId([
+        'application_id' => $request->application_id,
+        'processed_by'   => $request->processed_by,
+        'role_id'        => Auth::user()->roles_id,
+        'appl_status'    => 'A',
+        'remarks'        => $request->remarks ?? 'No remarks provided',
+        'forwarded_to'   => $request->forwarded_to,
+        'created_at'     => now(),
+        'updated_at'     => now(),
+    ]);
+
+    // 2️⃣ UPDATE SAME RECORD (guaranteed)
+    DB::table('tnelb_workflow_a')
+        ->where('id', $workflowId)
+        ->update([
+          'created_at' => DB::raw('NOW()'),
+          'updated_at' => DB::raw('NOW()'),
+        ]);
+
 
             DB::commit();
 
@@ -1206,34 +1230,5 @@ class SupervisorController extends Controller
             //\log()::error("Approve Application Error: " . $e->getMessage()); // Log the exact error
             return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
         }
-    }
-
-    public function get_formp_pending()
-    {
-        // var_dump(Auth::user());die;
-
-        $userRole = Auth::user()->roles_id; // Supervisor Role ID
-        // $assignedFormID = Auth::user()->form_id;
-        // $forms = self::getForms($assignedFormID);
-    
-        $new_applications = DB::table('tnelb_form_p')
-        ->where('appl_type', 'N') // Filter by Form S
-        ->where('payment_status', 'payment') // Filter by Form S
-        ->whereIn('app_status', ['P','RE']) // Only show new applications
-        ->select('*')
-        ->orderByDesc('id')
-        ->get();
-
-
-        $renewal = DB::table('tnelb_form_p')
-        ->where('appl_type', 'R') // Filter by Form S
-        ->whereIn('app_status', ['P','RE']) // Only show new applications
-        ->select('*')
-        ->orderByDesc('id')
-        ->get();
-
-        // var_dump($new_applications);die;
-    
-        return view('admin.supervisor.formp.view_pending', compact('new_applications','renewal'));
     }
 }

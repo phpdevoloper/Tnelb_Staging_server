@@ -165,11 +165,11 @@
                                             }}
                                         </td>
 
-                                        <td>
-                                            @if (in_array($application->application_status, ['F','RF']))
-                                                <span class="badge badge-warning">Forwarded</span>
-                                            @elseif (in_array($application->application_status, ['A']))
+                                          <td>
+                                            @if (in_array($application->application_status, ['A']))
                                             <span class="badge badge-success">Completed</span>
+                                            @else
+                                                <span class="badge badge-warning">Forwarded</span>
                                             @endif
                                         </td>
                                     </tr>

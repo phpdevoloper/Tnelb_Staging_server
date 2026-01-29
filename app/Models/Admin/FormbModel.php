@@ -39,7 +39,7 @@ class FormbModel extends Model
         return DB::table('tnelb_eb_applications as ta')
         ->select(
             DB::raw("COUNT(CASE WHEN ta.application_status = 'F' AND ta.processed_by = 'S' OR ta.processed_by='S2' THEN 1 END) as pending_count"),
-            DB::raw("COUNT(CASE WHEN ta.application_status IN ('F', 'A', 'RF') AND ta.processed_by IN ('A', 'PR', 'SE') THEN 1 END) as completed_count"),
+            DB::raw("COUNT(CASE WHEN ta.application_status IN ('F', 'A', 'RF', 'RE', 'SPRE') AND ta.processed_by IN ('A', 'PR', 'SE','SPRE' ) THEN 1 END) as completed_count"),
             DB::raw("COUNT(CASE WHEN ta.application_status = 'RJ' THEN 1 END) as rejected_count")
         )
         ->first();

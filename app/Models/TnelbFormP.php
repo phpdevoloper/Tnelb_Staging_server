@@ -45,17 +45,4 @@ class TnelbFormP extends Model
         'created_at',
         'updated_at'
     ];
-
-    public static function getPendingCountFormp(){
-        return self::whereIn('app_status', ['P','RE'])
-        ->where('payment_status', 'payment')
-            ->count();
-    }
-
-    public static function getcompletedCount()
-    {
-       return self::whereIn('app_status', ['F', 'A','RF'])
-            ->whereIn('processed_by', ['A', 'SE', 'PR', 'S', 'SPRE'])
-            ->count();
-    }
 }

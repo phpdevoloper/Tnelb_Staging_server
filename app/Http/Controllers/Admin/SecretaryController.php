@@ -187,7 +187,7 @@ class SecretaryController extends Controller
     {
      $workflows = DB::table('tnelb_ea_applications as ta')
         ->whereIn('ta.application_status', ['F','A', 'RE'])
-        ->whereIn('processed_by', ['A','PR', 'SE'])
+        ->whereIn('processed_by', ['PR', 'SE'])
         ->orderByDesc('updated_at')
             // ->where('ta.form_id', $formId)
             ->select('ta.*')

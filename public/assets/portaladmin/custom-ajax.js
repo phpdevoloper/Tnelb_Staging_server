@@ -1232,6 +1232,7 @@ $(document).ready(function() {
     $(document).on("submit", "#addFees", function (e) {
         e.preventDefault();
 // alert('1111');
+// exit;
         // console.log('sdfdsf');
         
 

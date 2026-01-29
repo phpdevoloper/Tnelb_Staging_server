@@ -50,6 +50,8 @@ $("#competency_form_a").on("submit", function (e) {
             ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
+        
+
         return;
        
         isValid = false;
@@ -74,6 +76,8 @@ $("#competency_form_a").on("submit", function (e) {
     });
 
 // -----------------------------------------
+
+
 let proprietor = [];
 
     // ✅ Collect all rows data first
@@ -509,7 +513,44 @@ let proprietor = [];
         }
     }
     // alert(actionType);
+// -----------------------------------------
 
+let ownershipType = $("#ownership_type_select").val();
+
+// Validate ONLY if not draft
+if (ownershipType === "1") {
+    $("#ownership_type_error").text("Please select an ownership type");
+
+    $(".nav-item").each(function () {
+        if ($(this).text().trim() === "Basic Details") {
+            $(this).addClass("tab-error-bg");
+            $(this).trigger("click");
+        }
+    });
+
+    const ownershipNotice = document.querySelector('.text-red');
+    if (ownershipNotice) {
+        ownershipNotice.style.color = 'red';
+        ownershipNotice.style.fontWeight = 'bold';
+        ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  // Smooth scroll to the input field
+    document.getElementById("ownership_type_select")
+        .scrollIntoView({ behavior: "smooth", block: "center" });
+    isValid = false;
+    return
+
+
+} else {
+    $("#ownership_type_error").text("");
+}
+
+// Clear error when user selects a valid option
+$("#ownership_type_select").on("change", function () {
+    if ($(this).val() !== "0") {
+        $("#ownership_type_error").text("");
+    }
+});
 
    // ---------------------ownership type validation------------------------------
    if (proprietor.length === 0 && partners.length === 0 && directors.length === 0) {
@@ -538,7 +579,100 @@ let proprietor = [];
 
         return;
     }
-  
+
+    // Proprietor - table --------------------------------
+       let tableValid = true;
+let errorRowData = null;
+let errorRowIndex = null;
+
+$('.head_label_proprietor tbody tr').each(function (index) {
+
+    const tds = $(this).find('td');
+
+    const rowData = {
+        name:   tds.eq(0).text().trim(),
+        father: tds.eq(1).text().trim(),
+        age:    tds.eq(2).text().trim(),
+        addr:   tds.eq(3).text().trim(),
+        qual:   tds.eq(4).text().trim(),
+        bus:    tds.eq(5).text().trim(),
+
+        competency: tds.eq(6).data('competency') || 'no',
+        certno:     tds.eq(6).data('certno') || '',
+        validity:   tds.eq(6).data('validity') || '',
+
+        employed:   tds.eq(7).data('employed') || 'no',
+        empname:    tds.eq(7).data('employer') || '',
+        empaddr:    tds.eq(7).data('empaddress') || '',
+
+        experience: tds.eq(8).data('experience') || 'no',
+        expname:    tds.eq(8).data('expname') || '',
+        expaddr:    tds.eq(8).data('expaddress') || '',
+        explic:     tds.eq(8).data('explicense') || '',
+        expval:     tds.eq(8).data('expvalidity') || ''
+    };
+
+    if (
+        rowData.name !== '' &&
+        (!rowData.father || !rowData.age || !rowData.addr || !rowData.qual || !rowData.bus)
+    ) {
+        tableValid = false;
+        errorRowData = rowData;
+        errorRowIndex = index; // 🔑 STORE INDEX
+        return false;
+    }
+});
+
+
+if (!tableValid) {
+
+    Swal.fire({
+        icon: 'error',
+        width: 450,
+        title: 'Incomplete Proprietor Details',
+        text: 'Proprietor details are incomplete. Please correct the highlighted fields.'
+    });
+
+    // Switch to Basic Details tab
+    $(".nav-item").each(function () {
+        if ($(this).text().trim() === "Basic Details") {
+            $(this).addClass("tab-error-bg").trigger("click");
+        }
+    });
+
+    // 🔑 SET EDIT MODE
+    editIndex = errorRowIndex;
+
+    // OPEN SECTION
+    const $section = $("#proprietor-sectionfresh");
+    $section.slideDown();
+
+    // PREFILL FORM + SHOW ERRORS
+    fillProprietorForm(errorRowData);
+
+    // 🔁 SWITCH BUTTON TO UPDATE MODE
+    $("#save_proprietor")
+        .text("Update")
+        .removeClass("btn-success")
+        .addClass("btn-warning");
+
+    if (!$("#cancel_proprietor").length) {
+        $("#save_proprietor").after(`
+            <button type="button" id="cancel_proprietor"
+                class="btn btn-danger ms-2">
+                Cancel
+            </button>
+        `);
+    }
+
+    // Scroll to form
+    $section[0].scrollIntoView({ behavior: "smooth", block: "start" });
+
+    return false; // ⛔ STOP SUBMIT
+}
+
+
+
 
 
     // ----------------------------------------------------
@@ -600,12 +734,35 @@ let proprietor = [];
             isValid = false;
         }
         // ✅ Check if starts with EA
-        else if (!/^EA|L/i.test(prevAppNo)) {
-            $("#previous_application_number").after(
-                '<span class="error text-danger d-block">License number must start with "EA or L".</span>'
-            );
-            isValid = false;
+      else if (!/^EA|L/i.test(prevAppNo)) {
+
+    // Remove existing error (optional cleanup)
+    $("#previous_application_number_error").remove();
+
+    // Add error message under input
+    $("#previous_application_number").after(
+        '<span id="previous_application_number_error" class="error text-danger d-block">License number must start with "EA or L".</span>'
+    );
+
+    // Add red border highlight
+    $("#previous_application_number").addClass("input-error");
+
+    // Switch to tab "Basic Details"
+    $(".nav-item").each(function () {
+        if ($(this).text().trim() === "Basic Details") {
+            $(this).addClass("tab-error-bg");
+            $(this).trigger("click");
         }
+    });
+
+    // Smooth scroll to the input field
+    document.getElementById("previous_application_number")
+        .scrollIntoView({ behavior: "smooth", block: "center" });
+
+    isValid = false;
+    return;
+}
+
 
         let prevAppNoval = $("#previous_application_validity").val().trim();
         $("#previous_application_validity").next(".error").remove();
@@ -632,9 +789,9 @@ let proprietor = [];
     // ---------------- 7 Bank------------------------
 
     let bankAddress = $("textarea[name='bank_address']").val().trim();
-    let bankValidity = $("input[name='bank_validity']").val().trim();
     let bankAmount = $("#bank_amount").val().trim();
-
+    let bankValidity = $("input[name='bank_validity']").val().trim();
+    
     // if (bankAddress === "") {
     //     $("#bank_address_error").text("Bank name and address is required.");
 
@@ -657,6 +814,30 @@ let proprietor = [];
 
     //     isValid = false;
     // }
+function checkBankValidity(bankValidityValue) {
+    // let bankValidityInput = bankValidity.val().trim();
+    let isValid = true;
+
+    $.ajax({
+        url: BASE_URL + "/checkBankValidity",
+        type: "POST",
+        async: false,  // optional but ensures sequential validation
+        data: {
+            _token: $('meta[name="csrf-token"]').attr("content"),
+            bank_validity: bankValidityValue
+        },
+        success: function(res) {
+            if (res.status === "invalid_bank") {
+                $("#bank_validity_error").text(res.msg);
+                isValid = false;
+            } else {
+                $("#bank_validity_error").text("");
+            }
+        }
+    });
+
+    return isValid;
+}
 
     if (bankValidity === "" | bankAmount === "" | bankAddress === "" ) {
         if(bankValidity === "" ){
@@ -1187,10 +1368,48 @@ $("#gst_doc").on("change", function () { $("#gst_doc_error").text(""); });
     //         $(this).next(".error").remove(); // Remove appended span errors
     //     }
     // );
-let staffValid = true;
+
+
+
+
+    // Declaration Checkboxes
+    const declaration1Checked = $("#declarationCheckbox").is(":checked");
+    const declaration2Checked = $("#declarationCheckbox1").is(":checked");
+
+    if (!declaration1Checked) {
+        $("#declaration3_error").text(
+            "⚠ Please check this declaration before proceeding."
+        );
+        isValid = false;
+    }
+
+    if (!declaration2Checked) {
+        $("#declaration4_error").text(
+            "⚠ Please check this declaration before proceeding."
+        );
+        isValid = false;
+    }
+
+    // Clear errors on change
+    $("#declarationCheckbox").on("change", function () {
+        if ($(this).is(":checked")) {
+            $("#declaration3_error").text("");
+        }
+    });
+
+    $("#declarationCheckbox1").on("change", function () {
+        if ($(this).is(":checked")) {
+            $("#declaration4_error").text("");
+        }
+    });
+
+
+
+    let staffValid = true;
 let staffCount = 0;
 let licenseNumbers = [];
 let duplicateFound = false;
+let stopValidation = false;   // 🚨 To stop when LC age > 75
 
 $('.staff-fields').each(function(index) {
     const name = $(this).find('input[name="staff_name[]"]');
@@ -1199,23 +1418,12 @@ $('.staff-fields').each(function(index) {
     const ccValid = $(this).find('input[name="cc_validity[]"]');
     const category = $(this).find('select[name="staff_category[]"]');
 
-    
-name.on("keyup", function() {
-    if ($(this).val().trim() !== "") $(this).closest("td").find(".error").text("");
-});
-qual.on("change", function() {
-    if ($(this).val() !== "") $(this).closest("td").find(".error").text("");
-});
-category.on("change", function() {
-    if ($(this).val() !== "") $(this).closest("td").find(".error").text("");
-});
-ccNum.on("keyup input", function() {
-    if ($(this).val().trim() !== "") $(this).closest("td").find(".error").text("");
-});
-ccValid.on("keyup change", function() {
-    if ($(this).val().trim() !== "") $(this).closest("td").find(".error").text("");
-});
-
+    // Clear error on typing
+    name.on("keyup", function() { if ($(this).val().trim() !== "") $(this).closest("td").find(".error").text(""); });
+    qual.on("change", function() { if ($(this).val() !== "") $(this).closest("td").find(".error").text(""); });
+    category.on("change", function() { if ($(this).val() !== "") $(this).closest("td").find(".error").text(""); });
+    ccNum.on("keyup input", function() { if ($(this).val().trim() !== "") $(this).closest("td").find(".error").text(""); });
+    ccValid.on("keyup change", function() { if ($(this).val().trim() !== "") $(this).closest("td").find(".error").text(""); });
 
     const nameVal = name.val().trim();
     const qualVal = qual.val();
@@ -1223,35 +1431,31 @@ ccValid.on("keyup change", function() {
     const ccValidVal = ccValid.val().trim();
     const categoryVal = category.val();
 
-    // ---- Validation for all 4 mandatory rows ----
-   if (index < 4) {
-    if (nameVal === "") {
-        name.closest("td").find(".error").text("Name is required.");
-        staffValid = false;
-    }
-    if (qualVal === "" || qualVal === null) {
-        qual.closest("td").find(".error").text("Qualification is required.");
-        staffValid = false;
-    }
-    if (ccNumVal === "") {
-        ccNum.closest("td").find(".error").text("CC Number is required.");
-        staffValid = false;
-    }
-    if (ccValidVal === "") {
-        ccValid.closest("td").find(".error").text("CC Validity is required.");
-        staffValid = false;
-    }
-    if (categoryVal === "" || categoryVal === null) {
-        category.closest("td").find(".error").text("Category is required.");
-        staffValid = false;
-    }
+    // ---- Mandatory validation for first 4 rows ----
+    if (index < 4) {
+        if (nameVal === "") { name.closest("td").find(".error").text("Name is required."); staffValid = false; }
+        if (qualVal === "" || qualVal === null) { qual.closest("td").find(".error").text("Qualification is required."); staffValid = false; }
+        if (ccNumVal === "") { ccNum.closest("td").find(".error").text("CC Number is required."); staffValid = false; }
+        if (ccValidVal === "") { ccValid.closest("td").find(".error").text("CC Validity is required."); staffValid = false; }
+        if (categoryVal === "" || categoryVal === null) { category.closest("td").find(".error").text("Category is required."); staffValid = false; }
     }
 
-    // ---- Proceed only if all 4 are filled ----
+    // ---- Proceed when a complete row is filled ----
     if (nameVal !== "" && qualVal !== "" && ccNumVal !== "" && ccValidVal !== "" && categoryVal !== "") {
         staffCount++;
 
-        // Duplicate CC number check
+        let certCheck = checkCertificateValidity(
+        ccNumVal,
+        ccValidVal,
+        ccValid,
+        staffCount - 1 // pass 0-based index
+    );
+
+    if (!certCheck.valid) {
+        staffValid = false;
+    }
+
+        // Duplicate CC Number (inside UI)
         if (licenseNumbers.includes(ccNumVal)) {
             duplicateFound = true;
             staffValid = false;
@@ -1261,92 +1465,218 @@ ccValid.on("keyup change", function() {
         }
 
         // ---- Prefix rule ----
-        const prefix = ccNumVal.charAt(0);
-        if (index === 0 && !["C", "L"].includes(prefix)) {
-            ccNum.siblings(".error").text("First staff's license must start with 'C' or 'L'.");
+        const prefix = ccNumVal.startsWith("LC") ? "LC" : ccNumVal.charAt(0);
+
+        // 🔥 LC AGE VALIDATION (only LC prefix)
+        if (prefix === "LC") {
+            $.ajax({
+                url: BASE_URL + "/checkLcAge",
+                type: "POST",
+                async: false,
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr("content"),
+                    cc_number: ccNumVal
+                },
+                success: function(res) {
+                    if (res.status === "not_found") {
+                        ccNum.siblings(".error").text("Invalid LC license number.");
+                        staffValid = false;
+                        return;
+                    }
+                    else if (res.status === "age_above_limit") {
+                        Swal.fire({
+                            icon: 'error',
+                            width: 500,
+                            title: 'Age Limit Exceeded',
+                            text: 'QC staff age more than 75 is not allowed to apply this license.',
+                            confirmButtonText: 'OK'
+                        });
+
+                        ccNum.siblings(".error").text("QC staff age more than 75 is not allowed to apply this license.");
+
+                         $(".nav-item").each(function () {
+                                if ($(this).text().trim() === "Staff & Bank Details") {
+                                    $(this).addClass("tab-error-bg");
+                                    $(this).trigger("click");
+                                }
+                            });
+
+                            const ownershipNotice = document.querySelector('.text-red');
+                            if (ownershipNotice) {
+                                ownershipNotice.style.color = 'red';
+                                ownershipNotice.style.fontWeight = 'bold';
+                                ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+
+    
+                        stopValidation = true;  // 🚨 STOP all remaining checks
+                        staffValid = false;
+                        return;
+                    }
+                },
+                error: function() {
+                    ccNum.siblings(".error").text("Error validating LC age. Try again.");
+                    staffValid = false;
+                    return;
+                }
+            });
+        }
+
+        if (index === 0 && !["C", "LC"].includes(prefix)) {
+            ccNum.siblings(".error").text("First staff's license must start with 'C' or 'LC'.");
             staffValid = false;
-        } else if (index > 0 && !["C", "B", "H", "L"].includes(prefix)) {
+        } else if (index > 0 && !["C", "B", "H", "LC"].includes(prefix)) {
             ccNum.siblings(".error").text("License must start with 'C', 'B', 'H', or 'L'.");
             staffValid = false;
         }
-
-        // ---- AJAX duplicate check with DB ----
-        // $.ajax({
-        //     url: BASE_URL + "/checkStaffExists",
-        //     type: 'POST',
-        //     data: {
-        //         _token: $('meta[name="csrf-token"]').attr("content"),
-        //         cc_number: ccNumVal,
-        //         cc_validity: ccValidVal
-        //     },
-        //     async: false,
-        //     success: function(response) {
-        //         if (response.exists) {
-        //             ccNum.siblings(".error").text("This staff is already working under another contractor.");
-        //             staffValid = false;
-        //         }
-        //     },
-        //     error: function() {
-        //         ccNum.siblings(".error").text("Error checking staff. Try again.");
-        //         staffValid = false;
-        //     }
-        // });
     }
 });
 
-if (!staffValid ) {
-    Swal.fire({
-    icon: 'warning',
-    width:450,
-    title: 'Incomplete Staff Details',
-    text: 'Fill all 4 staff details in staff Section.',
-    confirmButtonText: 'OK'
+
+
+    // let bankValidity = $("input[name='bank_validity']").val().trim();
+if (!checkBankValidity(bankValidity)) {
+
+    // Highlight the tab
+    $(".nav-item").each(function () {
+        if ($(this).text().trim() === "Staff & Bank Details") {
+            $(this).addClass("tab-error-bg");
+            $(this).trigger("click"); // switch to Staff & Bank Details tab
+        }
     });
 
-        $(".nav-item").each(function () {
-            if ($(this).text().trim() === "Staff & Bank Details") {
-                $(this).addClass("tab-error-bg");
-                $(this).trigger("click"); // switch to Basic Details tab
-            }
-        });
+    // Clear previous errors if any
+    $("#bank_validity_error").text("Minimum 1 year is required for Bank Solvency Validity Period.");
 
-        
-        const ownershipNotice = document.querySelector('.text-red');
-        if (ownershipNotice) {
-            ownershipNotice.style.color = 'red';
-            ownershipNotice.style.fontWeight = 'bold';
-            ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Smooth scroll directly to the bank validity input
+    const bankValidityInput = $("input[name='bank_validity']")[0]; // get DOM element
+    if (bankValidityInput) {
+        bankValidityInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        bankValidityInput.focus(); // optional: focus on the input
+    }
+
+    // Stop submission
+    return false;
+}
+
+    
+
+function checkCertificateValidity(ccNumVal, ccValidVal, ccNumInput, rowIndex) {
+
+// console.log(ccNumVal, ccValidVal, ccNumInput, rowIndex);
+
+    let resultStatus = { valid: true };
+
+    // ✅ SAFETY: ensure number
+    const certOrder = Number(rowIndex) + 1;
+
+    if (isNaN(certOrder)) {
+        ccNumInput.closest("td").find(".error")
+            .text("Internal error: invalid row order.");
+        return { valid: false };
+    }
+
+    $.ajax({
+        url: BASE_URL + "/checkCertificateValidity",
+        type: "POST",
+        async: false,
+        data: {
+            _token: $('meta[name="csrf-token"]').attr("content"),
+            validity_date: ccValidVal,
+            l_number: ccNumVal,
+            cert_order: certOrder // ✅ 1,2,3,4
+        },
+     success: function (res) {
+
+    if (res.status === "invalid_license") {
+        ccNumInput.closest("td").find(".error").text(res.msg);
+        resultStatus.valid = false;
+    }
+    else if (res.status === "expired") {
+        ccNumInput.closest("td").find(".error")
+            .text("Expired Certificate Not Allowed.");
+        resultStatus.valid = false;
+    }
+    else if (res.status === "less_than_one_year") {
+        ccNumInput.closest("td").find(".error")
+            .text("Minimum 1 year validity is required for QC Category certificate.");
+        resultStatus.valid = false;
+    }
+    else if (res.status === "error") {   // ✅ IMPORTANT
+        ccNumInput.closest("td").find(".error")
+            .html(
+                "Certificate is active with Contractor Licence: <b>" +
+                res.form_name +
+                "</b>"
+            );
+        resultStatus.valid = false;
+    }
+    else {
+        ccNumInput.closest("td").find(".error").text("");
+        resultStatus.valid = true;
+    }
+}
+
+    });
+
+    return resultStatus;
+}
+
+
+
+
+
+// 🚨 If LC age > 75 detected → Stop here (do NOT show global popup)
+if (stopValidation) return;
+
+if (!staffValid) {
+    // Swal.fire({
+    //     icon: 'warning',
+    //     width:450,
+    //     title: 'Incomplete Staff Details',
+    //     text: 'Fill all 4 staff details Properly in staff Section.',
+    //     confirmButtonText: 'OK'
+    // });
+
+    $(".nav-item").each(function () {
+        if ($(this).text().trim() === "Staff & Bank Details") {
+            $(this).addClass("tab-error-bg");
+            $(this).trigger("click");
         }
+    });
 
-        return;
+    const ownershipNotice = document.querySelector('.text-red');
+    if (ownershipNotice) {
+        ownershipNotice.style.color = 'red';
+        ownershipNotice.style.fontWeight = 'bold';
+        ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     return false;
 }
-if ( staffCount < 4) {
+
+if (staffCount < 4) {
     Swal.fire({
-    icon: 'warning',
-    width:450,
-    title: 'Incomplete Staff Details',
-    text: 'Fill all 4 staff details correctly before adding another one.',
-    confirmButtonText: 'OK'
+        icon: 'warning',
+        width:450,
+        title: 'Incomplete Staff Details',
+        text: 'Fill all 4 staff details correctly before adding another one.',
+        confirmButtonText: 'OK'
     });
 
-     $(".nav-item").each(function () {
-            if ($(this).text().trim() === "Staff & Bank Details") {
-                $(this).addClass("tab-error-bg");
-                $(this).trigger("click"); // switch to Basic Details tab
-            }
-        });
-
-        
-        const ownershipNotice = document.querySelector('.text-red');
-        if (ownershipNotice) {
-            ownershipNotice.style.color = 'red';
-            ownershipNotice.style.fontWeight = 'bold';
-            ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $(".nav-item").each(function () {
+        if ($(this).text().trim() === "Staff & Bank Details") {
+            $(this).addClass("tab-error-bg");
+            $(this).trigger("click");
         }
+    });
 
-        return;
+    const ownershipNotice = document.querySelector('.text-red');
+    if (ownershipNotice) {
+        ownershipNotice.style.color = 'red';
+        ownershipNotice.style.fontWeight = 'bold';
+        ownershipNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     return false;
 }
@@ -1459,49 +1789,16 @@ if ( staffCount < 4) {
 //     }
 // });
 
-// if duplicate found → show SweetAlert
-if (duplicateFound) {
-    Swal.fire({
-        icon: "error",
-        title: "Duplicate License Number",
-        html: "Two or more staff members have the same CC Number.<br>Please correct it before submitting.",
-        width: "450px"
-    });
-    isValid = false;
-}
-
-
-
-    // Declaration Checkboxes
-    const declaration1Checked = $("#declarationCheckbox").is(":checked");
-    const declaration2Checked = $("#declarationCheckbox1").is(":checked");
-
-    if (!declaration1Checked) {
-        $("#declaration3_error").text(
-            "⚠ Please check this declaration before proceeding."
-        );
+    // if duplicate found → show SweetAlert
+    if (duplicateFound) {
+        Swal.fire({
+            icon: "error",
+            title: "Duplicate License Number",
+            html: "Two or more staff members have the same CC Number.<br>Please correct it before submitting.",
+            width: "450px"
+        });
         isValid = false;
     }
-
-    if (!declaration2Checked) {
-        $("#declaration4_error").text(
-            "⚠ Please check this declaration before proceeding."
-        );
-        isValid = false;
-    }
-
-    // Clear errors on change
-    $("#declarationCheckbox").on("change", function () {
-        if ($(this).is(":checked")) {
-            $("#declaration3_error").text("");
-        }
-    });
-
-    $("#declarationCheckbox1").on("change", function () {
-        if ($(this).is(":checked")) {
-            $("#declaration4_error").text("");
-        }
-    });
     // console.log({
     //     applicantName,
     //     businessAddress,
@@ -1550,7 +1847,9 @@ if (duplicateFound) {
     // console.groupEnd();
     // alert(isValid);
     if (isValid) {
-        showDeclarationPopupformA(formData);
+        // alert('111');
+        checkvaliditydatesformA(formData);
+        // showDeclarationPopupformA(formData);
     }
     // if (staffCount < 4) {
     //     Swal.fire("Warning", "Please add at least 4 valid staff entries.", "warning");
@@ -1622,10 +1921,119 @@ if (duplicateFound) {
     // });
 });
 
-function showDeclarationPopupformA(formData) {
-    let formName = formData.get("form_name");
+function checkvaliditydatesformA(formData, actionType = "") {
 
-    // alert('formA');
+    let firstCertNo       = $("input[name='cc_number[]']").eq(0).val()?.trim();
+    let firstCertValidity = $("input[name='cc_validity[]']").eq(0).val()?.trim();
+    let bankValidity      = $("input[name='bank_validity']").val()?.trim();
+    let appl_type         = $("input[name='appl_type']").val()?.trim();
+    let form_name         = $("input[name='form_name']").val()?.trim();
+
+    // If missing data → skip DB check
+    if (!firstCertNo || !firstCertValidity || !bankValidity) {
+        formData.append("check_value", "NO");
+        showDeclarationPopupformA(formData);
+        return;
+    }
+
+    $.ajax({
+        url: BASE_URL + "/check_ealicence_validity",
+        type: "POST",
+        headers: {
+            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+        },
+        data: {
+            firstCertNo: firstCertNo,
+            qc_validity_date: firstCertValidity,
+            bank_validity: bankValidity,
+            appl_type: appl_type,
+            form_name: form_name
+        },
+        success: function (res) {
+
+            // ⚠️ INVALID FROM DB
+            if (res.status === "INVALID") {
+
+                let msgHtml = `
+                     <hr>
+                    <div style="text-align:left;font-size:15px;">
+                        <p>QC Certificate No:<b> ${firstCertNo} </b> Validity:<b> ${formatDDMMYYYY(firstCertValidity)} </b></p>
+                        
+                        <p>Bank Solvency Validity:<b> ${formatDDMMYYYY(bankValidity)} </b></p>
+                        <hr>
+                        <h6 style="color:red;font-weight:bold;line-height:30px;text-align:center">
+                            ${res.message} (${formatDDMMYYYY(res.licence_validitydate)})<br>
+                           Hence, Licence will be issued up to the expiry date (${formatDDMMYYYY(res.renewal_period)}) <br>
+                            Confirm to proceed?
+                        </h6>
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: "Important Notice",
+                    width: 750,
+                    html: msgHtml,
+                    showCancelButton: true,
+                    confirmButtonText: "OK",
+                    cancelButtonText: "Cancel",
+                   confirmButtonColor: "#0d6efd", // Bootstrap primary blue
+                    cancelButtonColor: "red",
+                    allowOutsideClick: false
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        formData.append("check_value", "YES");
+                        showDeclarationPopupformA(formData);
+                    } else {
+                        formData.append("check_value", "NO");
+                        actionType = "draft";
+                        submitFormAFinal(formData, actionType);
+                    }
+                });
+
+            } else {
+                // ✅ VALID
+                formData.append("check_value", "NO");
+                showDeclarationPopupformA(formData);
+            }
+        },
+        error: function () {
+            Swal.fire("Error", "Validity check failed", "error");
+        }
+    });
+}
+
+
+
+function storeValidityCheck(checkValue) {
+    $.ajax({
+        url: "/storevaliditycheck_cl",
+        type: "POST",
+        data: {
+            check_value: checkValue,
+            application_id: $("input[name='application_id']").val(),
+            form_name: "FORM_A",
+            license_name: "CL",
+            _token: $('meta[name="csrf-token"]').attr("content")
+        }
+    });
+}
+
+
+function formatDDMMYYYY(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+
+function showDeclarationPopupformA(formData) {
+
+    // alert(formData.check_value);
+    let formName = formData.get("form_name");
     let appl_type = formData.get("appl_type");
 
     let issued_licence = $('#license_number').val();
@@ -1655,9 +2063,21 @@ function showDeclarationPopupformA(formData) {
             formData.set("dbNow", response.fees_details.dbNow);
             formData.set("licenseName", response.licenseName);
 
-            // Convert Delta to HTML
-            let form_instruct = response.instructions; // DB content (delta JSON string)
+            // Get fee details
+            let fees_start_date = response.fees_start_date;
+            let basic_fees = response.fees_details.basic_fees;
 
+            // alert(basic_fees);
+            let certificate_name = response.licenseName;
+
+            if (fees_start_date) {
+                let parts = fees_start_date.split("-");   // ["2025","01","27"]
+                fees_start_date = `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+            }
+
+            // Convert Delta to HTML
+            let form_instruct = response.instructions;
+           
             let html = "";
             try {
                 const delta = JSON.parse(form_instruct);
@@ -1666,17 +2086,27 @@ function showDeclarationPopupformA(formData) {
                     listItemTag: "li",
                     paragraphTag: "p"
                 });
-
                 html = converter.convert();
             } catch (e) {
                 console.error("Delta parse failed. Showing raw text.");
                 html = `<p>${form_instruct}</p>`;
             }
 
-            // ⬇ Insert generated HTML into modal
-            const modalEl = document.getElementById("contractorInstructionsModal");
-            const instructionsList = modalEl.querySelector(".instruct");
-            instructionsList.innerHTML = html;
+            // Insert instructions only (not replacing values above)
+        const modalEl = document.getElementById("contractorInstructionsModal");
+        document.getElementById('certificate_name').textContent = certificate_name;
+        document.getElementById('fees_starts_from').textContent = fees_start_date;
+        document.getElementById('form_fees').textContent = 'Rs.' + basic_fees + '/-';
+
+        // Build HTML to show inside instructions
+        let topDetails = `
+            <div>
+            <p>1. (i)Fees Issue for <span > ${certificate_name}</span> from <span >${fees_start_date}</span> onwards is <span id="form_fees" style="color:#1f6920; font-weight:600;">Rs.${basic_fees}</span>.</p>
+               
+            </div>`;
+
+        const instructionsList = modalEl.querySelector(".instruct");
+        instructionsList.innerHTML = topDetails + html;
 
             // Reset checkbox & error text
             const agreeCheckbox = modalEl.querySelector("#declaration-agree-renew-contractor");
@@ -1695,8 +2125,10 @@ function showDeclarationPopupformA(formData) {
                 submitFormAFinal(formData, "submit");
             };
 
+            // Show Modal
             $("#contractorInstructionsModal").modal("show");
         },
+
         error: function () {
             Swal.fire({
                 icon: "error",
@@ -1709,9 +2141,16 @@ function showDeclarationPopupformA(formData) {
 
 
 
+
 function submitFormAFinal(formData, actionType) {
-    
+
+      if (!formData.has("check_value")) {
+        formData.append("check_value", "NO");   
+    }
+
     formData.append("form_action", actionType);
+    
+    // formData.append("form_action", actionType);
 
     let applType = $("#appl_type").val()?.trim();
     let postUrl =
@@ -1964,6 +2403,8 @@ function showPaymentInitiationPopupformA(
         },
         success: function () {
 
+          
+
             let timerInterval;
             Swal.fire({
                 width: 450,
@@ -2021,7 +2462,7 @@ function showPaymentSuccessPopupformA(
         licenseName,
         formName
 ) {
- // alert('111');
+//  alert(applicantName);
         $("#ps_applicantName").text(applicantName);
         $("#ps_applicationId").text(loginId);
         $("#ps_licenceName").text(licence_name);
@@ -2138,7 +2579,7 @@ function paymentreceiptformA() {
         return;
     }
     // alert(paymentAppId);
-    window.open(`/payment-receipt/${window.paymentAppId}`, "_blank");
+    window.open(`${BASE_URL}/payment-receipt/${window.paymentAppId}`, "_blank");
 }
 
 function downloadPDFformApdf() {
@@ -2551,7 +2992,7 @@ function verifyeaCertificateprevoius(e, btn) {
     const hiddenInput = $parent.find(".previous_contractor_license_verify");
 
     $parent.find(".license-status").hide();
-    const prefixPattern = /^(EA|L)/i;
+    const prefixPattern = /^(EA|LEA)/i;
 
     if (!licenseNumber || !date) {
         resultBox.text("⚠️ Enter license number and date.");
@@ -2560,7 +3001,7 @@ function verifyeaCertificateprevoius(e, btn) {
     }
 
     if (!prefixPattern.test(licenseNumber)) {
-        resultBox.html(`<span class="text-danger">⚠️ License number must start with EA or L.</span>`);
+        resultBox.html(`<span class="text-danger">⚠️ License number must start with EA or LEA.</span>`);
         hiddenInput.val("0"); // invalid
         return;
     }
@@ -2673,5 +3114,73 @@ function validatestaffcertificate(e, btn) {
             console.error(xhr.responseText);
         },
     });
+}
+
+
+function fillProprietorForm(data) {
+
+    const $section = $("#proprietor-sectionfresh");
+    $section.find(".error").remove();
+
+    function showError($field, msg) {
+        $field
+            .closest('.col-md-6, .col-md-5, .col-md-4, .col-md-12')
+            .append(`<span class="error text-danger">${msg}</span>`);
+    }
+
+    // Fill basics
+    $section.find("input[name='proprietor_name[]']").val(data.name);
+    $section.find("input[name='fathers_name[]']").val(data.father);
+    $section.find("input[name='age[]']").val(data.age);
+    $section.find("textarea[name='proprietor_address[]']").val(data.addr);
+    $section.find("input[name='qualification[]']").val(data.qual);
+    $section.find("input[name='present_business[]']").val(data.bus);
+
+    // Errors
+    if (!data.father) showError($section.find("input[name='fathers_name[]']"), "Father/Husband name required");
+    if (!data.age)    showError($section.find("input[name='age[]']"), "Age required");
+    if (!data.addr)   showError($section.find("textarea[name='proprietor_address[]']"), "Address required");
+    if (!data.qual)   showError($section.find("input[name='qualification[]']"), "Qualification required");
+    if (!data.bus)    showError($section.find("input[name='present_business[]']"), "Present business required");
+
+    /* ---------------- COMPETENCY ---------------- */
+    $section.find(`input[name^='competency_certificate_holding'][value="${data.competency}"]`).prop("checked", true);
+    if (data.competency === 'yes') {
+        toggleCompetencyFields('proprietor', true);
+        $section.find("input[name='competency_certificate_number[]']").val(data.certno);
+        $section.find("input[name='competency_certificate_validity[]']").val(data.validity);
+
+        if (!data.certno)   showError($section.find("input[name='competency_certificate_number[]']"), "Certificate number required");
+        if (!data.validity) showError($section.find("input[name='competency_certificate_validity[]']"), "Validity date required");
+    }
+
+    /* ---------------- EMPLOYMENT ---------------- */
+    $section.find(`input[name^='presently_employed'][value="${data.employed}"]`).prop("checked", true);
+    if (data.employed === 'yes') {
+        toggleEmploymentFields('proprietor', true);
+        $section.find("input[name='presently_employed_name[]']").val(data.empname);
+        $section.find("textarea[name='presently_employed_address[]']").val(data.empaddr);
+
+        if (!data.empname) showError($section.find("input[name='presently_employed_name[]']"), "Employer name required");
+        if (!data.empaddr) showError($section.find("textarea[name='presently_employed_address[]']"), "Employer address required");
+    }
+
+    /* ---------------- EXPERIENCE ---------------- */
+    $section.find(`input[name^='previous_experience'][value="${data.experience}"]`).prop("checked", true);
+    if (data.experience === 'yes') {
+        toggleExperienceFields('proprietor', true);
+        $section.find("input[name='previous_experience_name[]']").val(data.expname);
+        $section.find("textarea[name='previous_experience_address[]']").val(data.expaddr);
+        $section.find("input[name='previous_experience_lnumber[]']").val(data.explic);
+        $section.find("input[name='previous_experience_lnumber_validity[]']").val(data.expval);
+
+        if (!data.expname) showError($section.find("input[name='previous_experience_name[]']"), "Contractor name required");
+        if (!data.expaddr) showError($section.find("textarea[name='previous_experience_address[]']"), "Contractor address required");
+        if (!data.explic)  showError($section.find("input[name='previous_experience_lnumber[]']"), "Licence number required");
+        if (!data.expval)  showError($section.find("input[name='previous_experience_lnumber_validity[]']"), "Validity date required");
+    }
+
+    // Scroll
+    $section[0].scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

@@ -61,8 +61,8 @@ class FormBprocessController extends Controller
     {
         $userRole = Auth::user()->roles_id;
 
-        $workflows = B_Application::whereIn('application_status', ['F', 'A', 'RE'])
-            ->whereIn('processed_by', ['A', 'SE', 'PR'])
+        $workflows = B_Application::whereIn('application_status', ['F', 'A', 'RE', 'SPRE'])
+            ->whereIn('processed_by', ['A', 'SE', 'PR', 'SPRE'])
             ->orderby('updated_at', 'DESC')
             ->select('*')
             

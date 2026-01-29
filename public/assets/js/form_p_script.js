@@ -288,11 +288,28 @@ async function showInstructPopup(licence_code,login_id) {
                     $('.is-invalid').removeClass('is-invalid');
 
                     $.each(errors, function (field, messages) {
-                        // Find input by name (supports array names)
-                        const input = $('[name="' + field + '"]');
+
+                        let input;
+
+                        // Handle array fields (field.0, field.1 etc.)
+                        if (field.includes('.')) {
+                            const baseField = field.split('.')[0];
+                            input = $('[name="' + baseField + '[]"]');
+                        } else {
+                            input = $('[name="' + field + '"]');
+                        }
+
                         if (input.length) {
                             input.addClass('is-invalid');
-                            input.after('<span class="text-danger server-error">' + messages[0] + '</span>');
+
+                            // Prevent duplicate messages
+                            if (!input.next('.server-error').length) {
+                                input.after(
+                                    '<span class="text-danger server-error d-block mt-1">' +
+                                    messages[0] +
+                                    '</span>'
+                                );
+                            }
                         }
                     });
 
@@ -330,7 +347,6 @@ async function showInstructPopup(licence_code,login_id) {
 $(document).ready(function () {
     $('#ProceedtoPayment').on('click', function (e) {
         e.preventDefault();
-
 
         $('.error-message').remove();
         let isValid = true;
@@ -557,6 +573,8 @@ $(document).ready(function () {
             if (!firstErrorField) firstErrorField = $(employer_name);
             isValid = false;
         }
+
+        console.log(isValid);
 
         
 
@@ -1159,6 +1177,7 @@ $(document).ready(function () {
 
         }
     });
+
 
 
 });

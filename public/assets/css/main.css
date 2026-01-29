@@ -685,6 +685,7 @@ i.fa.fa-question {
 
 .nav-item .nav-link {
   color: #fff;
+  font-size: 15px;
 }
 
 .nav-link.active {
@@ -705,7 +706,7 @@ i.fa.fa-question {
 }
 
 div.collapse-menu {
-  background: #318815;
+  background: #4894cd;
 }
 
 .tab {
@@ -749,7 +750,7 @@ div.collapse-menu {
 }
 
 .tabs-section {
-  padding: 30px 0px;
+  padding: 10px 0px;
 }
 
 .tabs-section form {
@@ -1255,7 +1256,7 @@ div.collapse-menu {
 .sidebar-login {
   background: #035ab3;
   color: white;
-  width: 300px;
+  width: 340px;
   /* padding: 1rem 0px; */
   display: flex;
   flex-direction: column;
@@ -1757,7 +1758,7 @@ color:#fff;
 
 .apply-form {
   position: relative;
-  padding: 20px 0;
+  padding: 10px 0;
 }
 
 .apply-card-header {
@@ -1982,7 +1983,7 @@ textarea.form-control {
 
 .apply-card-header a {
   color: #fff;
-  font-weight: 700;
+  /* font-weight: 700; */
 }
 
 .apply-card-header a i {
@@ -2200,7 +2201,7 @@ textarea.form-control {
   left: 0;
   transform: translateY(-50%);
   transition: .7s;
-  background-color: #5b5d60;
+  background-color: #0c7e1f;
 }
 
 .service-block .inner-box:hover .icon1:before {
@@ -2463,3 +2464,79 @@ textarea.form-control {
     border-right: none;
   }
 }
+
+
+/* -----bg-form--------- */
+.bg-form{
+  background: #035ab3;
+  /* color: #fff!important; */
+}
+
+.text-head p{
+margin-bottom: 0px;
+}
+
+.comp_certificate .apply-card-body{
+  padding: 0em 1.25rem 1rem; 
+}
+
+#ownership_type_select:disabled {
+    background-color: #fff !important;
+    color: #595656 !important;
+    
+    opacity: 1 !important;
+}
+
+.f-s-14{
+      font-size: 14px;
+}
+
+.comp_certificate .apply-card-header .fa-file-pdf-o{
+  color: #ffffff;
+    background: red;
+    border-radius: 50px;
+    padding: 6px;
+}
+
+.apply-card-header .fa-file-pdf-o{
+  color: #ffffff;
+    background: red;
+    border-radius: 50px;
+    padding: 6px;
+}
+
+
+/* ---------------sidebar ul li---------- */
+.flex-column .nav-item .nav-link i {
+    margin-right: 1px;
+}
+
+
+.flex-column .nav-item li a.nav-link {
+
+      padding: .5rem 0rem;
+}
+
+/* certificate-menu */
+.certificate-menu .nav-link {
+    display: flex;
+    gap: 5px;
+}
+
+.certificate-menu .icon-left {
+    margin-top: 4px;   
+    min-width: 18px;  
+}
+
+.contractor-menu .nav-link {
+    display: flex;
+    gap: 5px;
+}
+
+.contractor-menu .icon-left {
+    margin-top: 4px;   
+    min-width: 18px;  
+}
+
+
+

@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Str;
+
 class FormBController extends BaseController
 {
     /**
@@ -354,25 +356,26 @@ class FormBController extends BaseController
         $panFilename = $existingDoc->pancard_doc ?? null;
         $gstFilename = $existingDoc->gst_doc ?? null;
 
+       
         // Aadhaar upload
         if ($request->hasFile('aadhaar_doc')) {
-            $aadhaarPath = 'documents/' . time() . '.' . $request->file('aadhaar_doc')->getClientOriginalExtension();
-            $request->file('aadhaar_doc')->move(public_path('documents'), basename($aadhaarPath));
-            $aadhaarFilename = Crypt::encryptString($aadhaarPath);
+        $aadhaarName = 'aadhaar_' . Str::uuid() . '.' . $request->file('aadhaar_doc')->getClientOriginalExtension();
+        $request->file('aadhaar_doc')->move(public_path('documents'), $aadhaarName);
+        $aadhaarFilename = Crypt::encryptString('documents/' . $aadhaarName);
         }
 
         // PAN upload
         if ($request->hasFile('pancard_doc')) {
-            $panPath = 'documents/' . time() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
-            $request->file('pancard_doc')->move(public_path('documents'), basename($panPath));
-            $panFilename = Crypt::encryptString($panPath);
+        $panName = 'pan_' . Str::uuid() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
+        $request->file('pancard_doc')->move(public_path('documents'), $panName);
+        $panFilename = Crypt::encryptString('documents/' . $panName);
         }
 
         // GST upload
         if ($request->hasFile('gst_doc')) {
-            $gstPath = 'documents/' . time() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
-            $request->file('gst_doc')->move(public_path('documents'), basename($gstPath));
-            $gstFilename = Crypt::encryptString($gstPath);
+            $gstName = 'gst_' . Str::uuid() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
+            $request->file('gst_doc')->move(public_path('documents'), $gstName);
+            $gstFilename = Crypt::encryptString('documents/' . $gstName);
         }
 
         // Insert or Update Document
@@ -1648,9 +1651,9 @@ class FormBController extends BaseController
 
         // ---------- Aadhaar ----------
         if ($request->hasFile('aadhaar_doc')) {
-            $aadhaarPath = 'documents/' . time() . '.' . $request->file('aadhaar_doc')->getClientOriginalExtension();
-            $request->file('aadhaar_doc')->move(public_path('documents'), basename($aadhaarPath));
-            $aadhaarFilename = Crypt::encryptString($aadhaarPath);
+             $aadhaarName = 'aadhaar_' . Str::uuid() . '.' . $request->file('aadhaar_doc')->getClientOriginalExtension();
+            $request->file('aadhaar_doc')->move(public_path('documents'), $aadhaarName);
+            $aadhaarFilename = Crypt::encryptString('documents/' . $aadhaarName);
         } elseif ($request->filled('aadhaar_doc')) {
             // user submitted a hidden input (string path) — keep or encrypt appropriately
             $postedAadhaar = $request->input('aadhaar_doc');
@@ -1668,9 +1671,9 @@ class FormBController extends BaseController
 
         // ---------- PAN ----------
         if ($request->hasFile('pancard_doc')) {
-            $panPath = 'documents/' . time() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
-            $request->file('pancard_doc')->move(public_path('documents'), basename($panPath));
-            $panFilename = Crypt::encryptString($panPath);
+     $panName = 'pan_' . Str::uuid() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
+        $request->file('pancard_doc')->move(public_path('documents'), $panName);
+        $panFilename = Crypt::encryptString('documents/' . $panName);
         } elseif ($request->filled('pancard_doc')) {
             $postedPan = $request->input('pancard_doc');
 
@@ -1685,9 +1688,9 @@ class FormBController extends BaseController
 
         // ---------- GST ----------
         if ($request->hasFile('gst_doc')) {
-            $gstPath = 'documents/' . time() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
-            $request->file('gst_doc')->move(public_path('documents'), basename($gstPath));
-            $gstFilename = Crypt::encryptString($gstPath);
+           $gstName = 'gst_' . Str::uuid() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
+    $request->file('gst_doc')->move(public_path('documents'), $gstName);
+    $gstFilename = Crypt::encryptString('documents/' . $gstName);
         } elseif ($request->filled('gst_doc')) {
             $postedGst = $request->input('gst_doc');
 

@@ -72,9 +72,7 @@ use Illuminate\Support\Facades\Auth;
             color: #fff;
         }
 
-        
-
-
+    
         .show-list-numbers ol {
             list-style-type: decimal !important;
             list-style-position: outside !important;

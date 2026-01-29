@@ -165,8 +165,9 @@ class AuditorController extends Controller
     {
         $userRole = Auth::user()->roles_id;
 
-        $workflows = EA_Application_model::whereIn('application_status', ['F', 'A', 'RE'])
-            ->whereIn('processed_by', ['A', 'SE', 'PR'])
+// , 'RE'
+   $workflows = EA_Application_model::whereIn('application_status', ['F', 'A', 'RE', 'SPRE'])
+            ->whereIn('processed_by', ['A', 'SE', 'PR', 'SPRE'])
             ->orderby('updated_at', 'DESC')
             ->select('*')
             
