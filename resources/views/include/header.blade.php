@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-
-@php
+    
+    @php
 use Illuminate\Support\Facades\Auth;
 @endphp
 
 <head>
     <meta charset="utf-8">
     <title>@yield('title', 'TNELB - Home')</title>
-
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    
     <!-- Stylesheets -->
-  <link href="{{ asset('assets/css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/bootstrap.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/responsive.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/color-2.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/main.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/page_top.css') }}" rel="stylesheet">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
    
     <link href="{{ asset('assets/admin/src/plugins/src/flatpickr/flatpickr.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/admin/src/plugins/css/light/flatpickr/custom-flatpickr.css') }}" rel="stylesheet">
@@ -25,17 +27,30 @@ use Illuminate\Support\Facades\Auth;
 
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&family=Merriweather:ital@0;1&display=swap" rel="stylesheet">
+    {{-- <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&family=Merriweather:ital@0;1&display=swap" rel="stylesheet"> --}}
 
     <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/x-icon">
     <link rel="icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/x-icon">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/font-awesome-4.7.0/css/font-awesome.min.css') }}">
 
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 
     <style>
+
+        .header-container{
+            padding: 8px 0px;
+        }
+
+        .logo-text{
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0 0 0 10px;
+        }
+
+        .logo-text h3{
+            font-weight: 700;
+        }   
+
         .instruct li {
             list-style: unset;
         }
@@ -523,7 +538,7 @@ use Illuminate\Support\Facades\Auth;
 
                 <!-- Header Top two -->
                 <div class="header-top-two bg-gray">
-                    <div class="auto-container">
+                    <div class="container">
                         <div class="row">
                             <div class="col-lg-8 col-md-8">
                                 <ul class="top-info text-center text-md-left">
@@ -572,45 +587,34 @@ use Illuminate\Support\Facades\Auth;
                             </div>
                             <!--/ Top social end -->
                         </div>
-
-
                     </div>
                 </div>
-                <!-- <pre>{{ print_r(session()->all(), true) }}</pre> -->
 
                 <div class="logo-fun">
-                    <div class="container">
+                    <div class="container header-container">
                         <div class="row">
-                            @if(Auth::check())
                             <div class="col-lg-8 col-md-12">
-                                <div class="flex-shrink-0 mr-3 mr-xl-8 mr-xlwd-16 d-none d-md-block">
+                                <div class="logo">
+                                    <a href="{{ url('/') }}">
+                                        <img src="{{ asset('assets/images/logo/logo_tr.png') }}" class="site_logo" alt="Logo of Government of Tamil Nadu" />
+                                        <div class="logo-text">
+                                            <h3>Tamil Nadu Electrical Licencing Board</h3>
+                                            <h5>Goverment of Tamil Nadu</h5>
+                                        </div>
+                                    </a>
+                                </div>
+                                {{-- <div class="flex-shrink-0 mr-3 mr-xl-8 mr-xlwd-16 d-none d-md-block">
                                     <a href="/logout">
                                         <img src="{{ asset('assets/images/logo/logo.png') }}" class="img-fluid" alt="tnelb" />
                                     </a>
-                                </div>
+                                </div> --}}
 
-                                <div class="flex-shrink-0 mr-3 mr-xl-8 mr-xlwd-16 d-block d-lg-none">
+                                {{-- <div class="flex-shrink-0 mr-3 mr-xl-8 mr-xlwd-16 d-block d-lg-none">
                                     <a href="/logout">
                                         <img src="{{ asset('assets/images/logo/logo_mobile.png') }}" class="img-fluid" alt="tnelb" />
                                     </a>
-                                </div>
+                                </div> --}}
                             </div>
-                            @else
-                            <div class="col-lg-8 col-md-12">
-                                <div class="flex-shrink-0 mr-3 mr-xl-8 mr-xlwd-16 d-none d-md-block">
-                                    <a href="/">
-                                        <img src="{{ asset('assets/images/logo/logo.png') }}" class="img-fluid" alt="tnelb" />
-                                    </a>
-                                </div>
-
-                                <div class="flex-shrink-0 mr-3 mr-xl-8 mr-xlwd-16 d-block d-lg-none">
-                                    <a href="/">
-                                        <img src="{{ asset('assets/images/logo/logo_mobile.png') }}" class="img-fluid" alt="tnelb" />
-                                    </a>
-                                </div>
-                            </div>
-                            @endif
-
                             <div class="col-lg-4 col-md-12 text-center">
                                 <ul class="top-info-box">
                                     @if(Auth::check())
@@ -740,27 +744,6 @@ use Illuminate\Support\Facades\Auth;
                                             </li>
                                             @endforeach
 
-
-
-                                            <!-- <li class="dropdown">
-                                                <a href="#">About</a>
-                                                <ul>
-                                                    <li><a href="about">About</a></li>
-                                                    <li><a href="vision">Vision</a></li>
-                                                    <li><a href="mission">Mission</a></li>
-                                                    <li><a href="future-scenario">Future Scenario</a></li>
-                                                </ul>
-                                            </li>
-
-                                            <li><a href="members">Members</a></li>
-                                            <li><a href="rules">Rules</a></li>
-                                            <li><a href="services-and-standards">Services & Standards</a></li>
-                                            <li><a href="complaints">Complaints</a></li>
-                                           
-
-
-                                            <li><a href="contact">Contact</a></li> -->
-
                                             @if(Auth::check())
                                             <li class="dropdown">
                                                 <a href="#">Forms</a>
@@ -853,7 +836,6 @@ use Illuminate\Support\Facades\Auth;
                     <div class="close-btn"><span class="icon far fa-times-circle"></span></div>
 
                     <nav class="menu-box">
-
                         <div class="menu-outer">
                             <!--Here Menu Will Come Automatically Via Javascript / Same Menu as in Header-->
                         </div>
