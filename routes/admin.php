@@ -25,13 +25,13 @@
 
 // CMS
     use App\Http\Controllers\Admin\AddFormController;
-use App\Http\Controllers\Admin\EquipmentController;
-use App\Http\Controllers\Admin\FormBprocessController;
-use App\Http\Controllers\Admin\FormsaprocessController;
-use App\Http\Controllers\Admin\FormSBprocessController;
-use App\Http\Controllers\Admin\GalleryController;
-use App\Http\Controllers\Admin\LicenceManagementController;
-use App\Http\Controllers\Admin\MediaController as AdminMediaController;
+    use App\Http\Controllers\Admin\EquipmentController;
+    use App\Http\Controllers\Admin\FormBprocessController;
+    use App\Http\Controllers\Admin\FormsaprocessController;
+    use App\Http\Controllers\Admin\FormSBprocessController;
+    use App\Http\Controllers\Admin\GalleryController;
+    use App\Http\Controllers\Admin\LicenceManagementController;
+    use App\Http\Controllers\Admin\MediaController as AdminMediaController;
     use App\Http\Controllers\Admin\MenuController;
     use App\Http\Controllers\Admin\NewsController;
     use App\Http\Controllers\Admin\PageController;
@@ -39,8 +39,8 @@ use App\Http\Controllers\Admin\MediaController as AdminMediaController;
     use App\Http\Controllers\Admin\RulesController;
 
     use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\FormBController;
-use App\Http\Controllers\MediaController;
+    use App\Http\Controllers\FormBController;
+    use App\Http\Controllers\MediaController;
     use App\Http\Controllers\RolesController;
     use App\Http\Controllers\PDFController;
 // use App\Models\Admin;

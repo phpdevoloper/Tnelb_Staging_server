@@ -127,7 +127,7 @@
                                     <table class="table table-bordered " width="100%">
                                         <thead class="text-center">
                                             <tr>
-                                                <th>License Name</th>
+                                                <th>Licence Name / Certificate Name</th>
                                                 <th>Category</th>
                                                 <th>License Number</th>
                                                 <th>Issued On</th>

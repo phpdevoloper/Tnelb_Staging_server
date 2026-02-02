@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Auth;
 <head>
     <meta charset="utf-8">
     <title>@yield('title', 'TNELB - Home')</title>
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    {{-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> --}}
+    {{-- <meta http-equiv="X-UA-Compatible" content="IE=edge"> --}}
+    {{-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> --}}
+    
     
     <!-- Stylesheets -->
     <link href="{{ asset('assets/css/bootstrap.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('assets/css/font-awesome-4.7.0/css/font-awesome.min.css') }}">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/responsive.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/color-2.css') }}" rel="stylesheet">
@@ -32,7 +34,6 @@ use Illuminate\Support\Facades\Auth;
     <link rel="shortcut icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/x-icon">
     <link rel="icon" href="{{ asset('assets/images/logo/favicon.png') }}" type="image/x-icon">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/font-awesome-4.7.0/css/font-awesome.min.css') }}">
 
 
     <style>
@@ -195,7 +196,6 @@ use Illuminate\Support\Facades\Auth;
                   One <span style=" font-weight: 600;">Supervisor</span> holding <span style="">Supervisor Competency Certificate</span> granted by the Board with a minimum Technical Educational qualification of a <span style="color: #198754; font-weight: 600;">Diploma in Electrical Engineering</span>…
                 </div>
               </li>
-          
               <li>
                 <span style=" font-weight: 600;">Instruments:</span> The applicant must possess the following instruments:
                 <ul style="margin-left: 20px; list-style-type: disc;">
@@ -208,7 +208,6 @@ use Illuminate\Support\Facades\Auth;
                   <li>Portable Voltmeter (Hand Operated)</li>
                 </ul>
               </li>
-          
               <li>
                 <span style=" font-weight: 600;">Financial Status:</span> The applicant shall produce a <span style=" font-weight: 600;">Bank Solvency Certificate</span> for 
                 <span style="color: #dc3545; font-weight: 600;">Rs.50,000/-</span> in <strong>Form ‘G’</strong>…

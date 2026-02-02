@@ -31,9 +31,8 @@
         <div class="swiper-wrapper">
             @foreach($sliders as $slider)
               @if($slider->media)
-            <div class="swiper-slide" style="background-image: url('{{ asset($slider->media->filepath_img_pdf) }}');">
-                  
-                                                @endif
+                <div class="swiper-slide" style="background-image: url('{{ asset($slider->media->filepath_img_pdf) }}');">
+                @endif
                 <div class="content-outer">
                     <div class="content-box">
                         <div class="inner">
