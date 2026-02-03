@@ -196,10 +196,10 @@
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage / Grade</th>
-                                                            <th class="text-center">Upload Document (Consolidated MarkSheet)
+                                                            <th>Certificate No</th>
+                                                            {{-- <th class="text-center">Upload Document (Consolidated MarkSheet)
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                            </th>
+                                                            </th> --}}
                                                             <th>
                                                                 <button type="button" class="btn btn-primary add-more">
                                                                     <i class="fa fa-plus"></i>
@@ -244,10 +244,10 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-12 ">
-                                                <label>6. Details of Previous and Current Work experiences <span style="color: red;">*</span> <span class="text-label"> (Upload the documents) </span></label>
+                                                <label>6. Details of Previous and Current Work experiences (Upload the documents) </span></label>
                                                 <br>
                                                 <label for="tamil" class="tamil">பெற்றுள்ள
-                                                    முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள் <span style="color: red;">*</span>
+                                                    முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
                                                     <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span></label>
                                             </div>
 
@@ -261,9 +261,9 @@
                                                         <th>Years of Experience</th>
                                                         <th>Designation</th>
 
-                                                        <th class="text-center">Upload Document (Experience Certificate)
+                                                        {{-- <th class="text-center">Upload Document (Experience Certificate)
                                                             <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                        </th>
+                                                        </th> --}}
                                                         <th>
                                                             <button type="button" class="btn btn-primary add-more-work">
                                                                 <i class="fa fa-plus"></i>
@@ -283,9 +283,9 @@
                                                             <input autocomplete="off" class="form-control" name="designation[]" type="text">
                                                         </td>
 
-                                                        <td>
+                                                        {{-- <td>
                                                             <input class="form-control" name="work_document[]" type="file">
-                                                        </td>
+                                                        </td> --}}
                                                         <td>
                                                             <button type="button" class="btn btn-danger remove-work">
                                                                 <i class="fa fa-trash-o"></i>
@@ -446,7 +446,7 @@
                                                             <span class="file-limit"> File type: PDF (Max 250 KB) </span>
                                                         </td>
                                                     </tr>
-                                                    <tr>
+                                                    {{-- <tr>
                                                         <td>(iv)</td>
                                                         <td>
                                                             <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
@@ -467,7 +467,7 @@
                                                             <span class="file-limit"> File type: PDF (Max 250 KB) </span>
                                                             <p class="text-danger file-error"></p>
                                                         </td>
-                                                    </tr>
+                                                    </tr> --}}
                                                 </table>
                                             </div>
 

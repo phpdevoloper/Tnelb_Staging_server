@@ -11,7 +11,7 @@
         <!-- <script src="https://kit.fontawesome.com/a076d05399.js"></script> -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        <link rel="icon" type="image/x-icon" href="{{asset('assets/admin/images/logo/logo.png') }}" />
+        <link rel="icon" type="image/x-icon" href="{{ asset('assets/admin/images/logo/logo.png') }}" />
         {{-- <link href="{{secure_asset('assets/admin/layouts/vertical-light-menu/css/light/loader.css') }}" rel="stylesheet" type="text/css" />
         <link href="{{secure_asset('assets/admin/layouts/vertical-light-menu/css/dark/loader.css') }}" rel="stylesheet" type="text/css" />
         <script src="{{secure_asset('assets/admin/layouts/vertical-light-menu/loader.js') }}"></script> --}}
@@ -23,7 +23,7 @@
         <!-- END GLOBAL MANDATORY STYLES -->
         <link href="{{ asset('assets/admin/main.css') }}" rel="stylesheet" type="text/css" />
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+        {{-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">     --}}
         <style>
             .logo-img img{
                 width: 150px;

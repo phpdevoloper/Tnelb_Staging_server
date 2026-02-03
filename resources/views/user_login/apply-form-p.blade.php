@@ -225,7 +225,7 @@
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage / Grade</th>
+                                                            <th>Certificate No</th>
                                                             <th class="text-center">Upload Document (Consolidated MarkSheet)
                                                                 <br><span class="file-limit"> File type: PDF,PNG (Max 200 KB)</span>
                                                             </th>
@@ -333,10 +333,9 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-12 ">
-                                                <label>(iii). Power Station to which he is aattached at present<span style="color: red;">*</span> <span class="text-label">(Upload the documents)</span></label>
+                                                <label>(iii). Power Station to which he is aattached at present <span class="text-label">(Upload the documents)</span></label>
                                                 <br>
-                                                <label for="tamil" class="tamil">பெற்றுள்ள விண்ணப்பதாரர் பயிற்சி பெற்ற நிறுவனம் மற்றும் பயிற்சி பெற்ற காலம்<span style="color: red;">*</span>
-                                                    <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span>
+                                                <label for="tamil" class="tamil">பெற்றுள்ள விண்ணப்பதாரர் பயிற்சி பெற்ற நிறுவனம் மற்றும் பயிற்சி பெற்ற காலம் <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -385,7 +384,7 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-6">
-                                                <label>(iv). Name of the employer<span style="color: red;">*</span></label>
+                                                <label>(iv). Name of the employer</label>
                                                 <br>
                                                 <label for="tamil" class="tamil">தொழில் வழங்குநரின் பெயர்</label>
                                             </div>
@@ -491,7 +490,7 @@
                                                             <small class="text-danger file-error"></small>
                                                         </td>
                                                     </tr>
-                                                    <tr>
+                                                    {{-- <tr>
                                                         <td>(iv)</td>
                                                         <td>
                                                             <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
@@ -512,7 +511,7 @@
                                                             <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
                                                             <p class="text-danger file-error"></p>
                                                         </td>
-                                                    </tr>
+                                                    </tr> --}}
                                                 </table>
                                             </div>
 

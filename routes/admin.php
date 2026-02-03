@@ -56,7 +56,7 @@
         // ----------------------------------------------------------
 
          // -------------------full license---------------------------------------
-            Route::get('/generateFormcontractor_download-pdf/{application_id}', [LicensepdfController::class, 'generateFormcontractor_download'])->name('generateFormcontractor_download.pdf');
+        Route::get('/generateFormcontractor_download-pdf/{application_id}', [LicensepdfController::class, 'generateFormcontractor_download'])->name('generateFormcontractor_download.pdf');
 
         Route::get('/generateFormcontractor_download_tamil-pdf/{application_id}', [LicensepdfController::class, 'generateFormcontractor_download_tamil'])->name('generateFormcontractor_download_tamil.pdf');
 

@@ -223,7 +223,7 @@
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage / Grade</th>
+                                                            <th>Certificate No</th>
                                                             <th class="text-center">Upload Document (Consolidated MarkSheet)
                                                                 <br><span class="file-limit"> File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                             </th>
@@ -292,9 +292,9 @@
                                                         <th>Years of Experience</th>
                                                         <th>Designation</th>
 
-                                                        <th class="text-center">Upload Document (Experience Certificate)
+                                                        {{-- <th class="text-center">Upload Document (Experience Certificate)
                                                             <br><span class="file-limit"> File type: PDF(Min 5 KB To Max 200 KB)</span>
-                                                        </th>
+                                                        </th> --}}
                                                         <th>
                                                             <button type="button" class="btn btn-primary add-more-work">
                                                                 <i class="fa fa-plus"></i>
@@ -314,9 +314,9 @@
                                                             <input autocomplete="off" class="form-control" name="designation[]" type="text">
                                                         </td>
 
-                                                        <td>
+                                                        {{-- <td>
                                                             <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                        </td>
+                                                        </td> --}}
                                                         <td>
                                                             <button type="button" class="btn btn-danger remove-work">
                                                                 <i class="fa fa-trash-o"></i>
@@ -492,7 +492,7 @@
                                                             <small class="text-danger file-error"></small>
                                                         </td>
                                                     </tr>
-                                                    <tr>
+                                                    {{-- <tr>
                                                         <td>(iv)</td>
                                                         <td>
                                                             <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
@@ -513,7 +513,7 @@
                                                             <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
                                                             <p class="text-danger file-error"></p>
                                                         </td>
-                                                    </tr>
+                                                    </tr> --}}
                                                 </table>
                                             </div>
 
