@@ -260,9 +260,8 @@
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage / Grade</th>
-                                                            <th class="text-center">Upload Document (Consolidated
-                                                                MarkSheet)
+                                                            <th>Certificate No</th>
+                                                            <th class="text-center">Upload Document ({{ isset($application_details->form_name) && $application_details->form_name == 'WH' ? 'ITI Certificate' : 'Consolidated MarkSheet' }})
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th>
                                                             <th>
@@ -289,6 +288,9 @@
                                                                     <option value="Diploma" {{ $edu_details->educational_level == 'Diploma' ? 'selected' : '' }}>Diploma</option>
                                                                     <option value="+2" {{ $edu_details->educational_level == '+2' ? 'selected' : '' }}>+2</option>
                                                                     <option value="10" {{ $edu_details->educational_level == '10' ? 'selected' : '' }}>10</option>
+                                                                    @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
+                                                                        <option value="8" {{ $edu_details->educational_level == '8' ? 'selected' : '' }}>8</option>
+                                                                    @endif
                                                                 </select>
                                                             </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]" value="{{ isset($edu_details->institute_name) ? $edu_details->institute_name : '' }}"></td>
@@ -306,8 +308,13 @@
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                            <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" value="{{ isset($edu_details->percentage) ? $edu_details->percentage : '' }}">
-                                                            <span class="error text-danger percentage-error"></span>
+                                                                <input type="text"
+                                                                    class="form-control certificate-input"
+                                                                    name="certificate_no[]"
+                                                                    maxlength="50"
+                                                                    required
+                                                                    value="{{ $edu_details->certificate_no ?? $edu_details->percentage ?? '' }}">
+                                                                <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td>
                                                                 <div class="d-flex align-items-center file-section">
@@ -348,6 +355,9 @@
                                                                     <option value="Diploma">Diploma</option>
                                                                     <option value="+2">+2</option>
                                                                     <option value="10">10</option>
+                                                                    @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
+                                                                        <option value="8">8</option>
+                                                                    @endif
                                                                 </select></td>
                                                             <td><input type="text" class="form-control" name="institute_name[]"></td>
                                                             <td>
@@ -362,8 +372,12 @@
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                            <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" required>
-                                                            <span class="error text-danger percentage-error"></span>
+                                                                <input type="text"
+                                                                    class="form-control certificate-input"
+                                                                    name="certificate_no[]"
+                                                                    maxlength="50"
+                                                                    required>
+                                                                <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                                                             <td>
@@ -382,14 +396,21 @@
                                             <hr>
                                             <div class="row align-items-center head_label">
                                                 <div class="col-12 col-md-12 ">
-                                                    <label> 6. Details of Previous and Current Work experiences <span
-                                                            class="text-label"> <span style="color: red;">*</span> (Upload the Documents)
-                                                        </span></label>
+                                                    <label>
+                                                        6. Details of Previous and Current Work experiences
+                                                        @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
+                                                            <span class="text-label">(Optional)</span>
+                                                        @else
+                                                            <span class="text-label"><span style="color: red;">*</span></span>
+                                                        @endif
+                                                    </label>
                                                     <br>
                                                     <label for="tamil" class="tamil">பெற்றுள்ள
                                                         முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
-                                                        <span class="text-label">(ஆவணங்களை பதிவேற்ற
-                                                            வேண்டும்)</span></label>
+                                                        @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
+                                                            <span class="text-label">(விருப்பமெனில் நிரப்பலாம்)</span>
+                                                        @endif
+                                                    </label>
                                                 </div>
                                             </div>
                                             <div class="table-responsive">
@@ -400,10 +421,6 @@
                                                             <th>Company Name / Contractor</th>
                                                             <th>Years of Experience (Years)</th>
                                                             <th>Designation</th>
-                                                            <th class="text-center">Upload Document (Experience
-                                                                Certificate)
-                                                                <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                            </th>
                                                             <th>
                                                                 <button type="button" class="btn btn-primary add-more-work">
                                                                     <i class="fa fa-plus"></i>
@@ -439,20 +456,6 @@
                                                                 <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
                                                             </td> --}}
                                                             <td>
-                                                                @if (!empty($exp_details->upload_document))
-                                                                    <div class="d-flex align-items-center file-section">
-                                                                        <div>
-                                                                            <a class="text-primary" href="{{ url('public/'.$exp_details->upload_document) }}" target="_blank">
-                                                                                <i class="fa fa-file-pdf-o" style="color: red"></i> View
-                                                                            </a>
-                                                                        </div>
-                                                                        <button class="btn btn-sm btn-danger ml-3 remove-doc_work">Remove</button>
-                                                                    </div>
-                                                                @else
-                                                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                                @endif
-                                                            </td>
-                                                            <td>
                                                                 <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id = "{{ $exp_details->id }}" data-url= "{{ route('delete_experience') }}">
                                                                     <i class="fa fa-minus"></i>
                                                                 </button>
@@ -474,9 +477,6 @@
                                                                 <input autocomplete="off" class="form-control" name="designation[]" type="text">
                                                             </td>
     
-                                                            <td>
-                                                                <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                            </td>
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-work">
                                                                     <i class="fa fa-minus"></i>
@@ -623,7 +623,7 @@
                                                                 }
 
                                                             @endphp
-                                                            <input class="form-control text-box single-line verify-input" id="certificate_no" name="certificate_no" type="text" data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12" value="{{ $application_details->certificate_no }}" 
+                                                            <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12" value="{{ $application_details->certificate_no }}" 
                                                             {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
                                                             <input type="hidden" id="cert_verify" name="cert_verify" value="{{ $application_details->cert_verify }}">
                                                             <span id="licenseError" class="text-danger"></span>
@@ -699,10 +699,6 @@
                                                                     : null;
 
 
-                                                                $decryptedpan = !empty($application_details->pancard)
-                                                                    ? Crypt::decryptString($application_details->pancard)
-                                                                    : null;
-
                                                             @endphp
                                                             <td>
                                                                 <label for="Name">Aadhaar Number <span style="color: red;">*</span></label>
@@ -735,38 +731,6 @@
 
                                                                     <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
                                                                 
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>(iv)</td>
-                                                            <td>
-                                                                <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
-                                                                <br>
-                                                                <label for="tamil" class="tamil">நிரந்தர கணக்கு எண்</label>
-                                                            </td>
-                                                            <td>
-                                                                <input type="text" class="form-control text-box " name="pancard" id="pancard" value="{{ $decryptedpan }}">
-                                                                <p id="pancard-error" class="text-danger"></p>
-                                                            </td>
-                                                            <td>
-                                                                <label for="Name">(v) Upload Pan Card Document <span style="color: red;">*</span></label>
-                                                                <br>
-                                                                <label for="tamil" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும் </label>
-                                                            </td>
-                                                            <td>
-                                                                @if (!empty($application_details->pan_doc))
-                                                                    <div class="pan-doc-container">
-                                                                        <a href="{{ route('document.show', ['type' => 'pan', 'filename' => $application_details->pan_doc]) }}" target="_blank" style="color: #007bff;"><i class="fa fa-file-pdf-o" style="color: red;"></i> View</a>
-                                                                        <button class="btn btn-sm btn-danger ml-3 remove-doc-pan">Remove</button>
-                                                                    </div>
-                                                                @endif
-                                                                <div class="pan-doc-input {{ !empty($application_details->pan_doc) ? 'd-none' : '' }}">
-                                                                    <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
-                                                                    <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
-                                                                    <p class="text-danger file-error"></p>
-                                                                </div>
-
-                                                                <input type="hidden" name="pan_doc_removed" id="pan_doc_removed" value="0">
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -813,8 +777,9 @@
                                                 value="{{ isset($application_details) ? $application_details->license_name : '' }}">
                                             <input type="hidden" id="form_id" name="form_id"
                                                 value="{{ isset($application_details) ? $application_details->form_id : '' }}">
-                                            <input type="hidden" id="amount" name="amount" value="750">
-                                            <input type="hidden" id="appl_type" name="appl_type" value="N">
+                                            <input type="hidden" id="amount" name="amount" value="">
+                                            <input type="hidden" id="appl_type" name="appl_type"
+                                                value="{{ isset($application_details) ? ($application_details->appl_type ?? 'N') : 'N' }}">
                                             {{-- <input type="hidden" id="form_action" name="form_action" value="{{ isset($application_details) ? $application_details->payment_status : '' }}"> --}}
 
                                         </div>
@@ -878,10 +843,32 @@
         $('#age').val(age);
     });
 
+    // Keep hidden #amount dynamic (no static fees in blade)
+    // This uses the existing global `getPaymentsService` from the shared footer include.
+    $(document).ready(async function () {
+        try {
+            if (typeof getPaymentsService !== 'function') return;
+
+            const licence_code = ($('#license_name').val() || '').trim();
+            const appl_type = ($('#appl_type').val() || '').trim();
+            const issued_licence = ($('#license_number').val() || '').trim();
+
+            if (!licence_code || !appl_type) return;
+
+            const data = await getPaymentsService(licence_code, issued_licence, appl_type);
+            if (data && data.basic_fees !== undefined && data.basic_fees !== null && data.basic_fees !== '') {
+                $('#amount').val(data.basic_fees);
+            }
+        } catch (e) {
+            // ignore; popup/payment flow will handle service errors
+        }
+    });
+
     // Add more education row
     $(document).on('click', function(e) {
         let container = document.getElementById("education-container");
         let educationRows = container.querySelectorAll(".education-fields");
+        const isWHForm = "{{ $application_details->form_name ?? '' }}" === 'WH';
 
         if (e.target.closest(".add-more-education")) {
 
@@ -918,6 +905,7 @@
                         <option value="Diploma">Diploma</option>
                         <option value="+2">+2</option>
                         <option value="10">10</option>
+                        ${isWHForm ? '<option value="8">8</option>' : ''}
                     </select>
                 </td>
                 <td><input type="text" class="form-control" name="institute_name[]" required></td>
@@ -927,11 +915,11 @@
                     </select>
                 </td>
                 <td>
-                    <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="100" placeholder="Percentage" required>
-                    <span class="error text-danger percentage-error"></span>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" placeholder="Certificate No" required>
+                    <span class="error text-danger certificate-error"></span>
                 </td>
                 <td>
-                    <input type="file" class="form-control education-file" accept=".pdf,.png,.jpg,.jpeg" required>
+                    <input type="file" class="form-control education-file" name="education_document[]" accept=".pdf,application/pdf" required>
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger remove-education">
@@ -942,10 +930,6 @@
                 <input type="hidden" name="existing_document[]" value="">
             </tr> `;
             $('#education-container').append(newRow);
-
-            $("#education-container .education-fields").each(function (index) {
-                $(this).find(".education-file").attr("name", `education_document[${index}]`);
-            });
 
         }
 
@@ -997,16 +981,12 @@
             }
 
             let serialNo = $('#work-container .work-fields').length + 1;
-            let newRowIndex = serialNo - 1;
             let newRow = `
                     <tr class="work-fields text-center">
                         <td>${serialNo}</td>
                         <td><input type="text" class="form-control" name="work_level[]"></td>
                         <td><input type="number" step="0.1" class="form-control" name="experience[]" min="0" max="50"></td>
                         <td><input type="text" class="form-control" name="designation[]"></td>
-                        <td class="text-center">
-                            <input type="file" class="form-control" name="work_document[${newRowIndex}]" accept=".pdf,.png,.jpg,.jpeg">
-                        </td>
                         <td class="text-center">
                             <button type="button" class="btn btn-danger remove-work">
                                 <i class="fa fa-minus"></i>
@@ -1017,10 +997,6 @@
                     </tr>
                 `;
             $('#work-container').append(newRow);
-
-            $('#work-container .work-fields').each(function (index) {
-                $(this).find('.work-file').attr('name', `work_document[${index}]`);
-            });
         }
 
             if (e.target.closest(".remove-work")) {

@@ -256,9 +256,17 @@
                                                                     @endfor
                                                                 </select>
                                                             </td>
-                                                            <td>
-                                                                <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" required>
+                                                            {{-- <td>
+                                                                <input type="number" class="form-control percentage-input" name="percentage[]" maxlength="20" required>
                                                                 <span class="error text-danger percentage-error"></span>
+                                                            </td> --}}
+                                                            <td>
+                                                                <input type="text"
+                                                                    class="form-control certificate-input"
+                                                                    name="certificate_no[]"
+                                                                    maxlength="50"
+                                                                    required>
+                                                                <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                                                             <td>
@@ -422,7 +430,7 @@
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
-                                                        <input class="form-control text-box single-line verify-input" id="certificate_no" name="certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12">
+                                                        <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12">
                                                         <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                         <span id="licenseError" class="text-danger"></span>
                                                         <span id="license_message" class="mt-1"></span>
@@ -637,8 +645,11 @@
                             .join('')}
                     </select>
                 </td>
-                <td><input type="text" class="form-control" name="percentage[]" required></td>
-                <td><input type="file" class="form-control" name="education_document[]"></td>
+                <td>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" required>
+                    <span class="error text-danger certificate-error"></span>
+                </td>
+                <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                 <td>
                     <button type="button" class="btn btn-danger remove-education">
                         <i class="fa fa-trash-o"></i>
@@ -693,7 +704,6 @@
             <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
                 <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
                 <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
-                <td><input class="form-control" name="work_document[]" type="file"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-work">
                 <i class="fa fa-trash-o"></i>

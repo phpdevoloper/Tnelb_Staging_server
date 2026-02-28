@@ -14,7 +14,7 @@ class Mst_education extends Model
         'educational_level', 
         'institute_name', 
         'year_of_passing', 
-        'percentage', 
+        'certificate_no', 
         'login_id',
         'application_id',
         'edu_serial',

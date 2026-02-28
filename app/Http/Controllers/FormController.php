@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class FormController extends BaseController
@@ -138,7 +139,9 @@ class FormController extends BaseController
         ]);
 
         
-        $request->validate([
+        $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
+
+        $rules = [
             
             // basic fields
             'login_id'             => 'required|string',
@@ -151,12 +154,12 @@ class FormController extends BaseController
             'previously_date'      => 'nullable|date',
             'wireman_details'      => 'nullable|string|max:255',
             'aadhaar'              => 'required|string|digits:12',
-            'pancard'              => 'required|string|size:10',
+            // 'pancard'              => 'required|string|size:10',
             'form_name'            => 'required|string|max:2',
             'license_name'         => 'required|string|max:2',
             'form_id'              => 'required|integer',
             // 'amount'               => 'required|numeric|min:0',
-            'certificate_no'            => 'nullable|string',
+            'competency_certificate_no' => 'nullable|string',
             'certificate_date'              => 'nullable|date',
             
             
@@ -167,29 +170,31 @@ class FormController extends BaseController
             'institute_name.*'     => 'required|string|max:255',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
-            'percentage'           => 'required|array|min:1',
-            'percentage.*'         => 'required|numeric|min:0|max:100',
+            'certificate_no'       => 'required|array|min:1',
+            'certificate_no.*'     => 'required|string|max:50',
             
             // work experience arrays
-            'work_level'           => 'required|array|min:1',
-            'work_level.*'         => 'required|string|max:50',
-            'experience'           => 'required|array|min:1',
-            'experience.*'         => 'required|integer|min:0|max:50',
-            'designation'          => 'required|array|min:1',
-            'designation.*'        => 'required|string|max:100',
+            'work_level'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'work_level.*'         => $isWorkOptional ? 'nullable|string|max:50' : 'required|string|max:50',
+            'experience'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'experience.*'         => $isWorkOptional ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
+            'designation'          => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'designation.*'        => $isWorkOptional ? 'nullable|string|max:100' : 'required|string|max:100',
             
             // single files
             'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50', // 1MB
             'aadhaar_doc'          => 'required|mimes:pdf|min:10|max:250',
-            'pancard_doc'          => 'required|mimes:pdf|min:10|max:250',
+            // 'pancard_doc'          => 'required|mimes:pdf|min:10|max:250',
             
             // multiple files (arrays)
             'education_document'   => 'required|array|min:1',
             'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
-            'work_document'        => 'required|array|min:1',
-            'work_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
+            // 'work_document'        => 'required|array|min:1',
+            // 'work_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
             
-        ], [
+        ];
+
+        $messages = [
             
             // education arrays
             'educational_level.required'    => 'Please add at least one educational qualification.',
@@ -206,11 +211,10 @@ class FormController extends BaseController
             'year_of_passing.*.required'    => 'Year of passing is required.',
             'year_of_passing.*.digits'      => 'Year of passing must be a 4-digit year.',
             
-            'percentage.required'           => 'Please add at least one educational qualification.',
-            'percentage.*.required'         => 'Percentage/Grade is required.',
-            'percentage.*.numeric'          => 'Percentage/Grade must be a number.',
-            'percentage.*.min'              => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'              => 'Percentage/Grade may not exceed 100.',
+            'certificate_no.required'       => 'Please add at least one educational qualification.',
+            'certificate_no.*.required'     => 'Certificate No is required.',
+            'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 50 characters.',
 
             // work experience arrays
             'work_level.required'           => 'Please add at least one work experience.',
@@ -230,13 +234,45 @@ class FormController extends BaseController
             'designation.*.max'             => 'Designation may not be greater than 100 characters.',
             
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'pancard_doc.min' => 'PAN card file is too small.',
             
             'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
             'work_document.*.max'    => 'Experience document must not be greater than 200 kilobytes.',
             
-            'pancard_doc.max' => 'The pancard doc must not be greater than 250 kilobytes.',
-        ]);
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+        $validator->after(function ($validator) use ($request, $isWorkOptional) {
+            if (!$isWorkOptional) {
+                return;
+            }
+
+            $levels = $request->work_level ?? [];
+            $exps = $request->experience ?? [];
+            $designations = $request->designation ?? [];
+
+            $max = max(count($levels), count($exps), count($designations));
+            for ($i = 0; $i < $max; $i++) {
+                $wl = trim((string)($levels[$i] ?? ''));
+                $ex = trim((string)($exps[$i] ?? ''));
+                $des = trim((string)($designations[$i] ?? ''));
+
+                $any = ($wl !== '' || $ex !== '' || $des !== '');
+                if (!$any) {
+                    continue;
+                }
+
+                if ($wl === '') {
+                    $validator->errors()->add("work_level.$i", 'Work level is required.');
+                }
+                if ($ex === '') {
+                    $validator->errors()->add("experience.$i", 'Experience (in years) is required.');
+                }
+                if ($des === '') {
+                    $validator->errors()->add("designation.$i", 'Designation is required.');
+                }
+            }
+        });
+        $validator->validate();
         
         
         $action = $request->input('form_action');
@@ -246,7 +282,6 @@ class FormController extends BaseController
         DB::beginTransaction();
         
         $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-        $encrypted_pancard = Crypt::encryptString($request->pancard);
         
         try {
             // Generate New Application ID
@@ -271,7 +306,6 @@ class FormController extends BaseController
             }
             
             $aadhaarFilename = null;
-            $panFilename = null;
             
             if ($request->hasFile('aadhaar_doc')) {
                 $file = $request->file('aadhaar_doc');
@@ -291,25 +325,6 @@ class FormController extends BaseController
                 file_put_contents($destinationPath . '/' . $aadhaarFilename, $encrypted);
             }
             
-            if ($request->hasFile('pancard_doc')) {
-                $file = $request->file('pancard_doc');
-                
-                $contents = file_get_contents($file->getRealPath());
-                
-                $encrypted = Crypt::encrypt($contents);
-                
-                $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-                
-                $destinationPath = storage_path('app/private_documents');
-                
-                if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                
-                file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-            }
-            
-            
             $form = Mst_Form_s_w::create([
                 'login_id'            => $loginId,
                 'applicant_name'      => $request->applicant_name ?? '',
@@ -325,13 +340,11 @@ class FormController extends BaseController
                 'form_id'             => $request->form_id,
                 'license_name'        => $request->license_name,
                 'aadhaar'             => $encrypted_aadhaar,
-                'pancard'             => $encrypted_pancard,
                 'status'              => 'P',
                 'appl_type'           => $appl_type,
                 'payment_status'      => ($action === 'draft') ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
-                'pan_doc'             => $panFilename,
-                'certificate_no'      => $request->certificate_no,
+                'certificate_no'      => $request->competency_certificate_no,
                 'certificate_date'    => $request->certificate_date,
                 'cert_verify'         => $request->cert_verify ?? '0',
                 'license_verify'      => $request->l_verify ?? '0',
@@ -390,7 +403,7 @@ class FormController extends BaseController
                         'educational_level'  => $level,
                         'institute_name'     => $request->institute_name[$key],
                         'year_of_passing'    => $request->year_of_passing[$key],
-                        'percentage'         => $request->percentage[$key],
+                        'certificate_no'     => $request->certificate_no[$key] ?? null,
                         'application_id'     => $newApplicationId,
                         'edu_serial'         => $newEduSerial,
                         'upload_document'    => $filePath,
@@ -497,11 +510,9 @@ class FormController extends BaseController
             ? 'required|mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
 
-        $pancardDocRule = (!$existingForm->pan_doc)
-            ? 'required|mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
+        $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
 
-        $request->validate([
+        $rules = [
             'login_id'           => 'required|string',
             'applicant_name'     => 'required|string|max:255',
             'fathers_name'       => 'required|string|max:255',
@@ -512,7 +523,6 @@ class FormController extends BaseController
             'previously_date'    => 'nullable|date',
             'wireman_details'    => 'nullable|string|max:255',
             'aadhaar'            => 'required|string|digits:12',
-            'pancard'            => 'required|string|size:10',
             'form_name'          => 'required|string|max:2',
             'license_name'       => 'required|string|max:2',
             'form_id'            => 'required|integer',
@@ -524,33 +534,65 @@ class FormController extends BaseController
             'institute_name.*'     => 'required|string|max:255',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
-            'percentage'           => 'required|array|min:1',
-            'percentage.*'         => 'required|numeric|min:0|max:100',
+            'certificate_no'       => 'required|array|min:1',
+            'certificate_no.*'     => 'required|string|max:50',
 
-            'work_level'           => 'required|array|min:1',
-            'work_level.*'         => 'required|string|max:50',
-            'experience'           => 'required|array|min:1',
-            'experience.*'         => 'required|integer|min:0|max:50',
-            'designation'          => 'required|array|min:1',
-            'designation.*'        => 'required|string|max:100',
+            'work_level'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'work_level.*'         => $isWorkOptional ? 'nullable|string|max:50' : 'required|string|max:50',
+            'experience'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'experience.*'         => $isWorkOptional ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
+            'designation'          => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'designation.*'        => $isWorkOptional ? 'nullable|string|max:100' : 'required|string|max:100',
 
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
-            'pancard_doc'    => $pancardDocRule,
 
             'education_document'   => 'nullable|array',
             'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
 
             'work_document'        => 'nullable|array',
             'work_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
-        ],[
+        ];
+
+        $messages = [
             'education_document.*.max'    => 'Educational document size permitted only 5 KB to 200 KB.',
             'work_document.*.max'    => 'Experience document size permitted only 5 KB to 200 KB.',
 
-            'pancard_doc.max' => 'The pancard doc size permitted only 5 KB to 250 KB.',
+        ];
 
+        $validator = Validator::make($request->all(), $rules, $messages);
+        $validator->after(function ($validator) use ($request, $isWorkOptional) {
+            if (!$isWorkOptional) {
+                return;
+            }
 
-        ]);
+            $levels = $request->work_level ?? [];
+            $exps = $request->experience ?? [];
+            $designations = $request->designation ?? [];
+
+            $max = max(count($levels), count($exps), count($designations));
+            for ($i = 0; $i < $max; $i++) {
+                $wl = trim((string)($levels[$i] ?? ''));
+                $ex = trim((string)($exps[$i] ?? ''));
+                $des = trim((string)($designations[$i] ?? ''));
+
+                $any = ($wl !== '' || $ex !== '' || $des !== '');
+                if (!$any) {
+                    continue;
+                }
+
+                if ($wl === '') {
+                    $validator->errors()->add("work_level.$i", 'Work level is required.');
+                }
+                if ($ex === '') {
+                    $validator->errors()->add("experience.$i", 'Experience (in years) is required.');
+                }
+                if ($des === '') {
+                    $validator->errors()->add("designation.$i", 'Designation is required.');
+                }
+            }
+        });
+        $validator->validate();
 
         DB::beginTransaction();
 
@@ -559,10 +601,8 @@ class FormController extends BaseController
         try {
             
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-            $encrypted_pancard = Crypt::encryptString($request->pancard);
 
             $aadhaarFilename = $existingForm ? $existingForm->aadhaar_doc : null;
-            $panFilename     = $existingForm ? $existingForm->pan_doc     : null;
 
             if ($request->hasFile('aadhaar_doc')) {
             $file = $request->file('aadhaar_doc');
@@ -582,23 +622,6 @@ class FormController extends BaseController
             }
 
 
-            if ($request->hasFile('pancard_doc')) {
-            $file = $request->file('pancard_doc');
-
-            $contents = file_get_contents($file->getRealPath());
-
-            $encrypted = Crypt::encrypt($contents);
-
-            $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-            $destinationPath = storage_path('app/private_documents');
-
-            if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-            }
-
-            file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-            }
-
             // ✅ Update existing draft
             $existingForm->update([
                 'login_id'          => $request->login_id,
@@ -611,11 +634,9 @@ class FormController extends BaseController
                 'previously_date'   => $request->previously_date,
                 'wireman_details'   => $request->wireman_details,
                 'aadhaar'           => $encrypted_aadhaar,
-                'pancard'           => $encrypted_pancard,
                 'aadhaar_doc'       => $aadhaarFilename,
-                'pan_doc'           => $panFilename,
                 'payment_status'    => 'payment',
-                'certificate_no'      => $request->certificate_no,
+                'certificate_no'      => $request->competency_certificate_no,
                 'certificate_date'    => $request->certificate_date,
             ]);
 
@@ -635,7 +656,7 @@ class FormController extends BaseController
                         empty($level) ||
                         empty($request->institute_name[$key] ?? null) ||
                         empty($request->year_of_passing[$key] ?? null) ||
-                        empty($request->percentage[$key] ?? null)
+                        empty($request->certificate_no[$key] ?? null)
                     ) {
                         continue;
                     }
@@ -664,7 +685,7 @@ class FormController extends BaseController
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
                             'year_of_passing'   => $request->year_of_passing[$key],
-                            'percentage'        => $request->percentage[$key],
+                            'certificate_no'    => $request->certificate_no[$key],
                             'upload_document'   => $filePath,
                         ]);
             
@@ -678,7 +699,7 @@ class FormController extends BaseController
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
                             'year_of_passing'   => $request->year_of_passing[$key],
-                            'percentage'        => $request->percentage[$key],
+                            'certificate_no'    => $request->certificate_no[$key],
                             'application_id'    => $applicationId,
                             'edu_serial'        => $newEduSerial,
                             'upload_document'   => $filePath,
@@ -880,10 +901,6 @@ class FormController extends BaseController
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
 
-        $pancardDocRule = ($existingForm && !$existingForm->pan_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
-
             $request->validate([
                 'login_id'           => 'nullable|string',
                 'applicant_name'     => 'nullable|string|max:255',
@@ -905,13 +922,12 @@ class FormController extends BaseController
                 'institute_name.*'     => 'nullable|string|max:255',
                 'year_of_passing'      => 'nullable|array|min:1',
                 'year_of_passing.*'    => 'nullable',
-                'percentage'           => 'nullable|array|min:1',
-                'percentage.*'         => 'nullable|numeric|min:0|max:100',
+                'certificate_no'       => 'nullable|array|min:1',
+                'certificate_no.*'     => 'nullable|string|max:50',
     
     
                 'upload_photo'   => $uploadPhotoRule,
                 'aadhaar_doc'    => $aadhaarDocRule,
-                'pancard_doc'    => $pancardDocRule,
     
                 'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
     
@@ -931,9 +947,8 @@ class FormController extends BaseController
             'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
 
 
-            'percentage.*.numeric'          => 'Percentage/Grade must be a number.',
-            'percentage.*.min'              => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'              => 'Percentage/Grade may not exceed 100.',
+            'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 50 characters.',
 
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
@@ -948,7 +963,6 @@ class FormController extends BaseController
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
 
-            'pancard_doc.max' => 'The pancard doc size permitted only 5 KB to 250 KB',
         ]);
 
         $action = $request->form_action; // "draft" or "submit"
@@ -983,7 +997,6 @@ class FormController extends BaseController
 
 
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-            $encrypted_pancard = Crypt::encryptString($request->pancard);
         
             
             if ($request->hasFile('aadhaar_doc')) {
@@ -1010,29 +1023,6 @@ class FormController extends BaseController
             }
            
              
-            if ($request->hasFile('pancard_doc')) {
-                // ✅ New file uploaded
-                $file = $request->file('pancard_doc');
-                $contents = file_get_contents($file->getRealPath());
-                $encrypted = Crypt::encrypt($contents);
-            
-                $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-                $destinationPath = storage_path('app/private_documents');
-            
-                if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-            
-                file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-            } elseif ($request->input('pan_doc_removed') == "1") {
-                // ✅ Removed but not replaced
-                $panFilename = null;
-            } else {
-                // ✅ Keep the old one
-                $panFilename = $form?->pan_doc ?? null;
-            }
-            
-
             // 🔹 Prepare Data
             $data = [
                 'login_id'          => $loginId,
@@ -1049,13 +1039,11 @@ class FormController extends BaseController
                 'form_id'           => $request->form_id,
                 'license_name'      => $request->license_name,
                 'aadhaar'           => $encrypted_aadhaar ?? null,
-                'pancard'           => $encrypted_pancard ?? null,
                 'appl_type'         => $request->appl_type,
                 'license_number'    => $request->license_number,
                 'payment_status'    => $action === 'draft' ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
-                'pan_doc'             => $panFilename,
-                'certificate_no'      => $request->certificate_no ?? null,
+                'certificate_no'      => $request->competency_certificate_no ?? null,
                 'certificate_date'   => $request->certificate_date ?? null,
                 'application_id'    => $applicationId,
                 'cert_verify'    => $request->cert_verify ?? '0',
@@ -1087,7 +1075,7 @@ class FormController extends BaseController
                         empty($level) &&
                         empty($request->institute_name[$key] ?? null) &&
                         empty($request->year_of_passing[$key] ?? null) &&
-                        empty($request->percentage[$key] ?? null)
+                        empty($request->certificate_no[$key] ?? null)
                     ) {
                         continue; // skip empty row
                     }
@@ -1126,7 +1114,7 @@ class FormController extends BaseController
                             'educational_level' => $level ?? null,
                             'institute_name'    => $request->institute_name[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key] ?? null,
-                            'percentage'        => $request->percentage[$key] ?? null,
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'upload_document'   => $filePath,
                         ]);
                     } else {
@@ -1138,7 +1126,7 @@ class FormController extends BaseController
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
                             'year_of_passing'   => $request->year_of_passing[$key],
-                            'percentage'        => $request->percentage[$key],
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
                             'edu_serial'        => $newEduSerial,
                             'upload_document'   => $filePath,
@@ -1267,10 +1255,6 @@ class FormController extends BaseController
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
 
-        $pancardDocRule = ($existingForm && !$existingForm->pan_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
-
       
 
         $request->validate([
@@ -1294,12 +1278,12 @@ class FormController extends BaseController
             'institute_name.*'     => 'nullable|string|max:255',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
-            'percentage'           => 'nullable|array|min:1',
-            'percentage.*'         => 'nullable|numeric|min:0|max:100',
+            'certificate_no'       => 'nullable|array|min:1',
+            'certificate_no.*'     => 'nullable|string|max:50',
+            'competency_certificate_no' => 'nullable|string',
 
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
-            'pancard_doc'    => $pancardDocRule,
 
             'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
 
@@ -1313,9 +1297,8 @@ class FormController extends BaseController
             'educational_level.*.max'    => 'Educational level may not be greater than 50 characters.',
             'institute_name.*.string'    => 'Institute name must be a valid string.',
             'institute_name.*.max'       => 'Institute name may not be greater than 255 characters.',
-            'percentage.*.numeric'       => 'Percentage/Grade must be a number.',
-            'percentage.*.min'           => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'           => 'Percentage/Grade may not exceed 100.',
+            'certificate_no.*.string'    => 'Certificate No must be a valid text value.',
+            'certificate_no.*.max'       => 'Certificate No may not be greater than 50 characters.',
 
             'work_level.*.string'        => 'Work level must be a valid string.',
             'work_level.*.max'           => 'Work level may not be greater than 50 characters.',
@@ -1326,7 +1309,6 @@ class FormController extends BaseController
             'designation.*.max'          => 'Designation may not be greater than 100 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'pancard_doc.max' => 'The pancard doc size permitted only 5 KB to 250 KB',
         ]);
 
         $action    = $request->form_action; // "draft" or "submit"
@@ -1356,11 +1338,10 @@ class FormController extends BaseController
                 }
             }
 
-            // encrypt aadhaar/pan numbers
+            // encrypt aadhaar
             $encrypted_aadhaar = $request->aadhaar ? Crypt::encryptString($request->aadhaar) : null;
-            $encrypted_pancard = $request->pancard ? Crypt::encryptString($request->pancard) : null;
 
-            // helper to store encrypted private docs (aadhaar/pan)
+            // helper to store encrypted private docs (aadhaar)
             $storeEncryptedPrivate = function(\Illuminate\Http\UploadedFile $file = null) {
                 if (!$file) return null;
                 $contents   = file_get_contents($file->getRealPath());
@@ -1383,17 +1364,6 @@ class FormController extends BaseController
                     ?? Mst_Form_s_w::where('application_id', $id)->value('aadhaar_doc');
             }
 
-            // PAN file: new / removed / keep (fallback to old app if needed)
-            if ($request->hasFile('pancard_doc')) {
-                $panFilename = $storeEncryptedPrivate($request->file('pancard_doc'));
-            } elseif ($request->input('pan_doc_removed') == "1") {
-                $panFilename = null;
-            } else {
-                $panFilename = $form?->pan_doc
-                    ?? Mst_Form_s_w::where('application_id', $id)->value('pan_doc');
-            }
-
-
             // assemble master application data (APPLICATION ENTRY ✅)
             $data = [
                 'login_id'           => $loginId,
@@ -1410,13 +1380,11 @@ class FormController extends BaseController
                 'form_id'            => $request->form_id,
                 'license_name'       => $request->license_name,
                 'aadhaar'            => $encrypted_aadhaar,
-                'pancard'            => $encrypted_pancard,
                 'appl_type'          => $appl_type,           // ensure 'R'
                 'license_number'     => $request->license_number,
                 'payment_status'     => 'draft',
                 'aadhaar_doc'        => $aadhaarFilename ?? null,
-                'pan_doc'            => $panFilename ?? null,
-                'certificate_no'     => $request->certificate_no ?? null,
+                'certificate_no'     => $request->competency_certificate_no ?? null,
                 'certificate_date'   => $request->certificate_date ?? null,
                 'application_id'     => $applicationId,
                 'cert_verify'        => $request->cert_verify ?? '0',
@@ -1451,7 +1419,7 @@ class FormController extends BaseController
                     $levelName  = $level ?? null;
                     $institute  = $request->institute_name[$key] ?? null;
                     $year       = $request->year_of_passing[$key] ?? null;
-                    $percentage = $request->percentage[$key] ?? null;
+                    $certificateNo = $request->certificate_no[$key] ?? null;
 
                     $removed    = isset($request->removed_document[$key]) && $request->removed_document[$key] == '1';
                     $newDoc     = (isset($request->file('education_document')[$key]) && $request->file('education_document')[$key]->isValid())
@@ -1471,7 +1439,7 @@ class FormController extends BaseController
                     }
 
                     // skip only if EVERYTHING is empty (avoid junk rows)
-                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($percentage) || !empty($finalDoc);
+                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($certificateNo) || !empty($finalDoc);
                     if (!$hasAnyData) continue;
 
                     $lastNum++;
@@ -1487,7 +1455,7 @@ class FormController extends BaseController
                         [
                             'institute_name'    => $institute,
                             'year_of_passing'   => $year,
-                            'percentage'        => $percentage,
+                            'certificate_no'    => $certificateNo,
                             'upload_document'   => $finalDoc,
                             'edu_serial'        => $newSerial,
                         ]
@@ -1621,9 +1589,6 @@ class FormController extends BaseController
         $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
-        $pancardDocRule = ($existingForm && !$existingForm->pan_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
             $request->validate([
                 'login_id'           => 'nullable|string',
                 'applicant_name'     => 'nullable|string|max:255',
@@ -1644,11 +1609,11 @@ class FormController extends BaseController
                 'institute_name.*'     => 'nullable|string|max:255',
                 'year_of_passing'      => 'nullable|array|min:1',
                 'year_of_passing.*'    => 'nullable',
-                'percentage'           => 'nullable|array|min:1',
-                'percentage.*'         => 'nullable|numeric|min:0|max:100',
+                'certificate_no'       => 'nullable|array|min:1',
+                'certificate_no.*'     => 'nullable|string|max:50',
+                'competency_certificate_no' => 'nullable|string',
                 'upload_photo'   => $uploadPhotoRule,
                 'aadhaar_doc'    => $aadhaarDocRule,
-                'pancard_doc'    => $pancardDocRule,
     
                 'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
     
@@ -1663,9 +1628,8 @@ class FormController extends BaseController
             'educational_level.*.max'       => 'Educational level may not be greater than 50 characters.',
             'institute_name.*.string'       => 'Institute name must be a valid string.',
             'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
-            'percentage.*.numeric'          => 'Percentage/Grade must be a number.',
-            'percentage.*.min'              => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'              => 'Percentage/Grade may not exceed 100.',
+            'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 50 characters.',
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
             'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
@@ -1675,7 +1639,6 @@ class FormController extends BaseController
             'designation.*.string'          => 'Designation must be a valid string.',
             'designation.*.max'             => 'Designation may not be greater than 100 characters.',
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'pancard_doc.max' => 'The pancard doc size permitted only 5 KB to 250 KB',
         ]);
 
         $action = $request->form_action;
@@ -1704,7 +1667,6 @@ class FormController extends BaseController
                 }
             }
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-            $encrypted_pancard = Crypt::encryptString($request->pancard);
             if ($request->hasFile('aadhaar_doc')) {
                 $file = $request->file('aadhaar_doc');
 
@@ -1732,27 +1694,6 @@ class FormController extends BaseController
                 }
             }
                  
-            if ($request->hasFile('pancard_doc')) {
-                // ✅ New file uploaded
-                $file = $request->file('pancard_doc');
-                $contents = file_get_contents($file->getRealPath());
-                $encrypted = Crypt::encrypt($contents);
-                $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-                $destinationPath = storage_path('app/private_documents');
-                if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-
-            } elseif ($request->input('pan_doc_removed') == "1") {
-                $panFilename = null;
-            } else {
-                $panFilename = $form?->pan_doc ?? null;
-                if ($panFilename == null) {
-                    $panFilename = Mst_Form_s_w::where('application_id', $id)->value('pan_doc');
-                }
-            }
-
             $renewal_form = Mst_Form_s_w::updateOrCreate(
                 [
                     'application_id' => $applicationId
@@ -1772,14 +1713,12 @@ class FormController extends BaseController
                     'form_id'            => $request->form_id,
                     'license_name'       => $request->license_name,
                     'aadhaar'            => $encrypted_aadhaar,
-                    'pancard'            => $encrypted_pancard,
-                    'certificate_no'     => $request->certificate_no ?? null,
+                    'certificate_no'     => $request->competency_certificate_no ?? null,
                     'certificate_date'   => $request->certificate_date ?? null,
                     'appl_type'          => $appl_type,
                     'license_number'     => $request->license_number,
                     'payment_status'     => 'draft',
                     'aadhaar_doc'        => $aadhaarFilename ?? $form?->aadhaar_doc ?? null,
-                    'pan_doc'            => $panFilename ?? $form?->pan_doc ?? null,
                     'cert_verify'        => $request->cert_verify ?? '0',
                     'license_verify'     => $request->l_verify ?? '0',
                     'old_application'    => $id ?? '',
@@ -1822,7 +1761,7 @@ class FormController extends BaseController
                     $levelName  = $level ?? null;
                     $institute  = $request->institute_name[$key] ?? null;
                     $year       = $request->year_of_passing[$key] ?? null;
-                    $percentage = $request->percentage[$key] ?? null;
+                    $certificateNo = $request->certificate_no[$key] ?? null;
 
                     $removed    = isset($request->removed_document[$key]) && $request->removed_document[$key] == '1';
                     $newDoc     = (isset($request->file('education_document')[$key]) && $request->file('education_document')[$key]->isValid())
@@ -1842,7 +1781,7 @@ class FormController extends BaseController
                     }
 
                     // skip only if EVERYTHING is empty (avoid junk rows)
-                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($percentage) || !empty($finalDoc);
+                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($certificateNo) || !empty($finalDoc);
                     if (!$hasAnyData) continue;
 
                     $lastNum++;
@@ -1857,7 +1796,7 @@ class FormController extends BaseController
                         [
                             'institute_name'    => $institute,
                             'year_of_passing'   => $year,
-                            'percentage'        => $percentage,
+                            'certificate_no'    => $certificateNo,
                             'upload_document'   => $finalDoc,
                             'edu_serial'        => $newSerial,
                         ]

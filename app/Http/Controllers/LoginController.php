@@ -279,9 +279,9 @@ $today = now()->toDateString();
 
 $tables = [
     'EA'  => 'tnelb_ea_applications',
-    'ESA' => 'tnelb_esa_applications',
-    'ESB' => 'tnelb_esb_applications',
-    'EB'  => 'tnelb_eb_applications',
+    // 'ESA' => 'tnelb_esa_applications',
+    // 'ESB' => 'tnelb_esb_applications',
+    // 'EB'  => 'tnelb_eb_applications',
 ];
 
 $applicationTables = array_values($tables);
@@ -669,30 +669,30 @@ $workflows_cl = $workflows_cl
 
        
 
-            $esa = DB::table('tnelb_esa_applications as ta')
-                ->join('tnelb_license as l', 'ta.application_id', '=', 'l.application_id')
-                ->leftJoin('tnelb_renewal_license as R', 'ta.application_id', '=', 'R.application_id')
-                ->where('ta.login_id', $loginId)
-                ->select($commonColumns);
+            // $esa = DB::table('tnelb_esa_applications as ta')
+            //     ->join('tnelb_license as l', 'ta.application_id', '=', 'l.application_id')
+            //     ->leftJoin('tnelb_renewal_license as R', 'ta.application_id', '=', 'R.application_id')
+            //     ->where('ta.login_id', $loginId)
+            //     ->select($commonColumns);
 
-            $esb = DB::table('tnelb_esb_applications as ta')
-                ->join('tnelb_license as l', 'ta.application_id', '=', 'l.application_id')
-                ->leftJoin('tnelb_renewal_license as R', 'ta.application_id', '=', 'R.application_id')
-                ->where('ta.login_id', $loginId)
-                ->select($commonColumns);
+            // $esb = DB::table('tnelb_esb_applications as ta')
+            //     ->join('tnelb_license as l', 'ta.application_id', '=', 'l.application_id')
+            //     ->leftJoin('tnelb_renewal_license as R', 'ta.application_id', '=', 'R.application_id')
+            //     ->where('ta.login_id', $loginId)
+            //     ->select($commonColumns);
 
 
-            $eb = DB::table('tnelb_eb_applications as ta')
-                ->join('tnelb_license as l', 'ta.application_id', '=', 'l.application_id')
-                ->leftJoin('tnelb_renewal_license as R', 'ta.application_id', '=', 'R.application_id')
-                ->where('ta.login_id', $loginId)
-                ->select($commonColumns);
+            // $eb = DB::table('tnelb_eb_applications as ta')
+            //     ->join('tnelb_license as l', 'ta.application_id', '=', 'l.application_id')
+            //     ->leftJoin('tnelb_renewal_license as R', 'ta.application_id', '=', 'R.application_id')
+            //     ->where('ta.login_id', $loginId)
+            //     ->select($commonColumns);
 
-            $present_license_ea = $ea
-                ->unionAll($esa)
-                ->unionAll($esb)
-                ->unionAll($eb)
-                ->get();
+            // $present_license_ea = $ea
+            //     ->unionAll($esa)
+            //     ->unionAll($esb)
+            //     ->unionAll($eb)
+            //     ->get();
 
 
 
@@ -738,7 +738,6 @@ $workflows_cl = $workflows_cl
             'workflows_cl',
             'workflows_present',
             'present_license',
-            'present_license_ea',
             'table_applied_form',
             'table_applied_formA',
             'table_applied_form',

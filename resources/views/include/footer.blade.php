@@ -596,6 +596,8 @@ $(document).ready(function() {
             e.preventDefault();
 
             $('.error-message').remove();
+            $('.certificate-error').text('');
+            $('.certificate-input').removeClass('is-invalid');
             let isValid = true;
             let firstErrorField = null;
 
@@ -646,8 +648,8 @@ $(document).ready(function() {
                 let eduLevel = $(this).find('select[name="educational_level[]"]');
                 let instituteName = $(this).find('input[name="institute_name[]"]');
                 let yearOfPassing = $(this).find('select[name="year_of_passing[]"]');
-                let percentage = $(this).find('input[name="percentage[]"]');
-                let educationUpload = $(this).find('input[name="education_document[]"]');
+                let certificateNo = $(this).find('input[name="certificate_no[]"]');
+                let educationUpload = $(this).find('input[name="education_document[]"], input[name^="education_document["]');
 
                 if (eduLevel.length && (eduLevel.val() === null || eduLevel.val() === "")) {
                     eduLevel.after('<span class="error-message text-danger d-block mt-1">Education level is required.</span>');
@@ -667,9 +669,22 @@ $(document).ready(function() {
                     isValid = false;
                 }
 
-                if (percentage.length && (percentage.val().trim() === "" || isNaN(percentage.val()) || percentage.val() < 0 || percentage.val() > 100)) {
-                    percentage.after('<span class="error-message text-danger d-block mt-1">Percentage / Grade is required</span>');
-                    if (!firstErrorField) firstErrorField = percentage;
+                // if (percentage.length && (percentage.val().trim() === "" || isNaN(percentage.val()) || percentage.val() < 0 || percentage.val() > 100)) {
+                //     percentage.after('<span class="error-message text-danger d-block mt-1">Percentage / Grade is required</span>');
+                //     if (!firstErrorField) firstErrorField = percentage;
+                //     isValid = false;
+                // }
+
+                if (certificateNo.length && certificateNo.val().trim() === "") {
+                    const $err = certificateNo.closest('td').find('.certificate-error').first();
+                    if ($err.length) {
+                        $err.text('Certificate No is required.');
+                        certificateNo.addClass('is-invalid');
+                    } else {
+                        // Fallback (in case markup doesn't include certificate-error span)
+                        certificateNo.after('<span class="error-message text-danger d-block mt-1">Certificate No is required.</span>');
+                    }
+                    if (!firstErrorField) firstErrorField = certificateNo;
                     isValid = false;
                 }
 
@@ -697,35 +712,47 @@ $(document).ready(function() {
                 }
             });
 
-            $('#work-container .work-fields').each(function () {
-                let workLevel = $(this).find('input[name="work_level[]"]');
-                let experience = $(this).find('input[name="experience[]"]');
-                let designation = $(this).find('input[name="designation[]"]');
-                let workDocument = $(this).find('input[name="work_document[]"]');
+            const formName = ($('#form_name').val() || '').trim();
+            const workOptional = (formName === 'W' || formName === 'WH' || formName === 'P');
 
-                if (workLevel.length && (workLevel.val() === null || workLevel.val() === "")) {
+            $('#work-container .work-fields').each(function () {
+                const workLevel = $(this).find('input[name="work_level[]"]');
+                const experience = $(this).find('input[name="experience[]"]');
+                const designation = $(this).find('input[name="designation[]"]');
+                const workDocument = $(this).find('input[name="work_document[]"], input[name^="work_document["]');
+
+                const wl = (workLevel.val() || '').trim();
+                const ex = (experience.val() || '').trim();
+                const des = (designation.val() || '').trim();
+
+                // For W/WH forms, the entire work section is optional.
+                // Validate a row only if the user started filling something in that row.
+                const shouldValidateRow = !workOptional || (wl !== '' || ex !== '' || des !== '');
+
+                if (!shouldValidateRow) {
+                    return;
+                }
+
+                if (workLevel.length && wl === "") {
                     workLevel.after('<span class="error-message text-danger d-block mt-1">Please enter the company / contractor name.</span>');
                     if (!firstErrorField) firstErrorField = workLevel;
                     isValid = false;
                 }
 
-                if (experience.length && (experience.val().trim() === "" || isNaN(experience.val()) || parseInt(experience.val()) < 0 || parseInt(experience.val()) > 50)) {
+                if (experience.length && (ex === "" || isNaN(ex) || parseInt(ex) < 0 || parseInt(ex) > 50)) {
                     experience.after('<span class="error-message text-danger d-block mt-1">Year of experience is required.</span>');
                     if (!firstErrorField) firstErrorField = experience;
                     isValid = false;
                 }
 
-                if (designation.length && designation.val().trim() === "") {
+                if (designation.length && des === "") {
                     designation.after('<span class="error-message text-danger d-block mt-1">Designation is required.</span>');
                     if (!firstErrorField) firstErrorField = designation;
                     isValid = false;
                 }
 
-                if (workDocument.length && workDocument.val().trim() === "") {
-                    workDocument.after('<span class="error-message text-danger d-block mt-1">Experience certificate upload is required.</span>');
-                    if (!firstErrorField) firstErrorField = workDocument;
-                    isValid = false;
-                }else if (workDocument.length && workDocument[0].files.length > 0) {
+                // Work document is optional. Validate only if user uploaded a file.
+                if (workDocument.length && workDocument[0].files.length > 0) {
                     const file = workDocument[0].files[0]; // ✅ use raw DOM element
                     if (file) {
                         const allowedType = 'application/pdf';
@@ -787,45 +814,6 @@ $(document).ready(function() {
                 }
             }
 
-            let pancardInput = document.getElementById("pancard");
-            let pancardError = document.getElementById("pancard-error");
-            if (pancardInput && pancardError) {
-                const pancardValue = pancardInput.value.trim();
-                if (pancardValue === "") {
-                    pancardError.textContent = "PAN number is required.";
-                    if (!firstErrorField) firstErrorField = $(pancardInput);
-                    isValid = false;
-                }
-            }
-
-
-            let pancardDocInput = document.getElementById("pancard_doc");
-
-            if (pancardDocInput && $(pancardDocInput).is(":visible")) {
-                if (pancardDocInput && pancardDocInput.files.length === 0) {
-                    $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">PAN card document is required.</span>');
-                    if (!firstErrorField) firstErrorField = $('#pancard_doc');
-                    isValid = false;
-                }else if (pancardDocInput && pancardDocInput.files.length > 0) {
-                    const file = pancardDocInput.files[0];
-                    if (file) {
-                        const allowedType = 'application/pdf';
-                        const maxSize = 250 * 1024;
-                        if (file.type !== allowedType) {
-                            $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for PAN document.</span>');
-                            if (!firstErrorField) firstErrorField = $('#pancard_doc');
-                            isValid = false;
-                        } else if (file.size > maxSize) {
-                            $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 250.</span>');
-                            if (!firstErrorField) firstErrorField = $('#pancard_doc');
-                            isValid = false;
-                        }
-                    }
-                }
-            }
-            
-
-
             if (!$('#declarationCheckbox').is(':checked')) {
                 $('#checkboxError').show();
                 if (!firstErrorField) firstErrorField = $('#checkboxError');
@@ -872,23 +860,6 @@ $(document).ready(function() {
 
 
 
-        $("#pancard").on("keyup", function() {
-            let value = $(this).val().toUpperCase();
-
-            // Limit to 10 characters
-            if (value.length > 10) {
-                value = value.slice(0, 10);
-            }
-
-            $(this).val(value); // Force uppercase and max length
-
-            if (/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value)) {
-                $("#pancard-error").text(""); // valid
-            } else {
-                $("#pancard-error").text("Enter valid 10-character PAN (e.g., ABCDE1234F).");
-            }
-        });
-
         $("#aadhaar").on("input", function() {
             let value = $(this).val();
 
@@ -926,15 +897,7 @@ $(document).ready(function() {
                 });
             }
 
-            if (panInput) {
-                panInput.addEventListener("change", function() {
-                    const panError = panInput.parentElement.querySelector(".error-message");
-
-                    if (this.files.length !== 0 && panError) {
-                        panError.remove();
-                    }
-                });
-            }
+            // PAN document removed
         });
 
         $(document).on('keyup change', '#education-container .education-fields input, #education-container .education-fields select',
@@ -942,6 +905,10 @@ $(document).ready(function() {
             const $field = $(this);
             if ($field.val().trim() !== '') {
                 $field.nextAll('.error-message').first().remove();
+                if ($field.hasClass('certificate-input')) {
+                    $field.closest('td').find('.certificate-error').text('');
+                    $field.removeClass('is-invalid');
+                }
                 $field.closest('.work-fields').find('.error-message').filter(function() {
                     return $(this).text().includes(
                         "Please fill in at least one field");
@@ -1272,9 +1239,7 @@ $(document).ready(function() {
                 $('#aadhaar_doc_error').text("");
             });
 
-            $("#pancard_doc").on("change", function() {
-                $('#pancard_doc_error').text("");
-            });
+            // PAN document removed
 
             $("#gst_doc").on("change", function() {
                 $('#gst_doc_error').text("");
@@ -1283,35 +1248,7 @@ $(document).ready(function() {
             // -------------------end doc--------------------
 
 
-            const pancard = $("#pancard").val().trim().toUpperCase();
-            const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
-
-            if (pancard === "") {
-                $("#pancard_error").text("PAN card number is required.");
-                isValid = false;
-            } else if (!panPattern.test(pancard)) {
-                $("#pancard_error").text("Invalid PAN format (e.g., ABCDE1234F)").css("color", "red");
-                isValid = false;
-            } else {
-                $("#pancard_error").text("");
-            }
-
-            $("#pancard").on("keyup", function() {
-                const value = $(this).val().toUpperCase();
-                $(this).val(value); // Convert input to uppercase automatically
-
-                const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
-
-                if (panPattern.test(value)) {
-                    $("#pancard_error").text("");
-                } else {
-                    $("#pancard_error").text("Invalid PAN format (e.g., ABCDE1234F)").css(
-                        "color", "red");
-                }
-            });
-
-
-
+            // PAN details removed
             const gst_number = $("#gst_number").val().trim().toUpperCase();
 
             if (gst_number === "") {
@@ -1561,7 +1498,6 @@ $(document).ready(function() {
                 applicantName,
                 businessAddress,
                 aadhaar,
-                pancard,
                 gst_number
             });
             console.group("🔍 Form Validation Summary");
@@ -1569,7 +1505,6 @@ $(document).ready(function() {
             console.log("➡ Applicant Name:", applicantName);
             console.log("➡ Business Address:", businessAddress);
             console.log("➡ Aadhaar:", aadhaar);
-            console.log("➡ PAN:", pancard);
             console.log("➡ GST:", gst_number);
             console.log("➡ Authorised Signatory:", authorisedSelected);
             if (authorisedSelected === "yes") {
@@ -2163,18 +2098,23 @@ $(document).ready(function() {
         restrictToLetters("[name='work_level[]']");
         restrictToLetters("[name='Designation[]']");
 
-        document.querySelectorAll(".percentage-input").forEach(input => {
+        document.querySelectorAll(".certificate-input").forEach(input => {
             input.addEventListener("blur", function() {
-                let value = parseFloat(this.value); // Convert to float
-                let errorSpan = this.nextElementSibling;
+                const value = (this.value || "").trim();
+                const errorSpan =
+                    this.parentElement?.querySelector(".certificate-error") ||
+                    this.nextElementSibling;
 
-                if (isNaN(value) || value < 1 || value > 99) {
-                    errorSpan.textContent = "Please enter a valid number between 1 and 99.";
-                    this.classList.add("is-invalid"); // Adds red border
-                } else {
-                    errorSpan.textContent = "";
-                    this.classList.remove("is-invalid");
+                if (!errorSpan) return;
+
+                if (value === "") {
+                    errorSpan.textContent = "Certificate No is required.";
+                    this.classList.add("is-invalid");
+                    return;
                 }
+
+                errorSpan.textContent = "";
+                this.classList.remove("is-invalid");
             });
         });
 
@@ -2346,7 +2286,7 @@ $(document).ready(function() {
                                                     .responseJSON.errors).flat()
                                                 .join("\n");
                                             // alert("Validation errors:\n" + messages);
-                                            Swal.fire("Error", messages, "danger");
+                                            Swal.fire("Error", messages, "error");
                                         } else {
                                             alert("An error occurred: " + xhr
                                                 .responseText);
@@ -2356,7 +2296,7 @@ $(document).ready(function() {
 
                             } else {
                                 Swal.fire("Payment Failed", "Application saved as draft",
-                                    "danger");
+                                    "error");
                             }
                         });
                     } else {
@@ -2371,7 +2311,8 @@ $(document).ready(function() {
 
     }
 
-function getPaymentsService(licence_code,issued_licence,appl_type, callback){
+function getPaymentsService(licence_code,issued_licence,appl_type, options){
+        const silent = !!(options && typeof options === 'object' && options.silent);
         
         return new Promise((resolve, reject) => {
 
@@ -2391,16 +2332,22 @@ function getPaymentsService(licence_code,issued_licence,appl_type, callback){
                     if (response.status == 'success') {
                         resolve(response.fees_details);
                     } else {
-                        Swal.fire("Error", response.message, "danger");
+                        if (!silent) {
+                            Swal.fire("Error", response.message, "error");
+                        }
                         reject(response);
                     }
                 },
                 error: function(xhr) {
                     if (xhr.responseJSON && xhr.responseJSON.errors) {
                         let messages = Object.values(xhr.responseJSON.errors).flat().join("\n");
-                        Swal.fire("Error", messages, "danger");
+                        if (!silent) {
+                            Swal.fire("Error", messages, "error");
+                        }
                     } else {
-                        Swal.fire("An error occurred: " + xhr.responseText);
+                        if (!silent) {
+                            Swal.fire("An error occurred: " + xhr.responseText);
+                        }
                     }
                     reject(xhr);
                 }

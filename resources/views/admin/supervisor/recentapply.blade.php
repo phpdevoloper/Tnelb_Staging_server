@@ -133,7 +133,7 @@
                                             <th>Application Id</th>
                                             <th>Applicant's Name</th>
                                             <th>Form Name</th>
-                                            <th>License of</th>
+                                            <th>Certificate of</th>
                                             <th>Applied On</th>
                                             <th class="no-content">Action</th>
                                         </tr>

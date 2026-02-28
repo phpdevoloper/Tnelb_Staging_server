@@ -200,6 +200,9 @@
                                                             {{-- <th class="text-center">Upload Document (Consolidated MarkSheet)
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th> --}}
+                                                            <th class="text-center">Upload Document (ITI Certificate)
+                                                                <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
+                                                            </th>
                                                             <th>
                                                                 <button type="button" class="btn btn-primary add-more">
                                                                     <i class="fa fa-plus"></i>
@@ -229,7 +232,14 @@
                                                                     </script>
                                                                 </select>
                                                             </td>
-                                                            <td><input type="text" class="form-control" name="percentage[]"></td>
+                                                            <td>
+                                                                <input type="text"
+                                                                    class="form-control certificate-input"
+                                                                    name="certificate_no[]"
+                                                                    maxlength="50"
+                                                                    required>
+                                                                <span class="error text-danger certificate-error"></span>
+                                                            </td>
                                                             <td><input type="file" class="form-control" name="education_document[]"></td>
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-education">
@@ -244,11 +254,11 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-12 ">
-                                                <label>6. Details of Previous and Current Work experiences (Upload the documents) </span></label>
+                                                <label>6. Details of Previous and Current Work experiences <span class="text-label">(Optional)</span></label>
                                                 <br>
                                                 <label for="tamil" class="tamil">பெற்றுள்ள
                                                     முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
-                                                    <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span></label>
+                                                    <span class="text-label">(விருப்பமெனில் நிரப்பலாம்)</span></label>
                                             </div>
 
                                         </div>
@@ -324,7 +334,7 @@
 
                                             </div>
                                             <div class="col-12 col-md-3">
-                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="certificate_no" type="text" placeholder="License Number" maxlength="12">
+                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="competency_certificate_no" type="text" placeholder="License Number" maxlength="12">
                                                 <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                 <span id="licenseError" class="text-danger"></span>
                                                 <span id="license_message" class="mt-1"></span>
@@ -503,7 +513,6 @@
                                     </div>
                                     <input type="hidden" id="form_name" name="form_name" value="W">
                                     <input type="hidden" id="license_name" name="license_name" value="B">
-                                    <input type="hidden" id="amount" name="amount" value="500">
                                     <input type="hidden" id="form_id" name="form_id" value="2">
                                     <input type="hidden" id="appl_type" name="appl_type" value="N">
                                     @csrf
@@ -553,11 +562,8 @@
         document.getElementById('draftPopup').style.display = 'none';
     }
 
-    // Attach event listener to the "Save As Draft" button
-    document.querySelector('.btn-primary').addEventListener('click', function(event) {
-        event.preventDefault(); // Prevent form submission
-        showDraftPopup(); // Show the popup
-    });
+    // Note: Save-as-draft is handled via AJAX in shared scripts.
+    // Avoid attaching a generic ".btn-primary" click handler here (it breaks add-more buttons).
 </script>
 
 <!-- JavaScript -->
@@ -611,7 +617,10 @@
                 .join('')}
                 </select>
                 </td>
-                <td><input type="text" class="form-control" name="percentage[]" required></td>
+                <td>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" required>
+                    <span class="error text-danger certificate-error"></span>
+                </td>
                 <td><input type="file" class="form-control" name="education_document[]"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-education">
@@ -669,7 +678,6 @@
                 <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
                 <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
                 <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
-                <td><input class="form-control" name="work_document[]" type="file"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-work">
                 <i class="fa fa-trash-o"></i>

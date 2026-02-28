@@ -159,7 +159,7 @@
                                                             <th>Degree</th>
                                                             <th>Institution</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage</th>
+                                                            <th>Certificate No</th>
                                                             <th>Documents</th>
                                                         </tr>
                                                     </thead>
@@ -169,15 +169,24 @@
                                                             <td style="max-width: 10%;">{{ $education->educational_level }}</td>
                                                             <td style="width: 20%;">{{ $education->institute_name }}</td>
                                                             <td style="width: 20%;">{{ $education->year_of_passing }}</td>
-                                                            <td style="width: 20%;">{{ $education->percentage }}%</td>
+                                                            @php
+                                                                $certificateNo = data_get($education, 'certificate_no');
+                                                                $percentage = data_get($education, 'percentage');
+                                                            @endphp
+                                                            <td style="width: 20%;">
+                                                                @if($certificateNo !== null && $certificateNo !== '')
+                                                                    {{ $certificateNo }}
+                                                                @elseif($percentage !== null && $percentage !== '')
+                                                                    {{ $percentage }}%
+                                                                @else
+                                                                    N/A
+                                                                @endif
+                                                            </td>
                                                             <td style="text-align:center;">
                                                                 @php
-                                                                // Find the document where education_serial matches
-                                                                $document = DB::table('tnelb_applicants_edu')
-                                                                ->where('application_id', $applicant->application_id)
-                                                                ->first();
-
-
+                                                                    $document = DB::table('tnelb_applicants_edu')
+                                                                        ->where('application_id', $applicant->application_id)
+                                                                        ->first();
                                                                 @endphp
 
                                                                 @if($document && !empty($document->upload_document))
@@ -221,7 +230,6 @@
                                                             <th>Company Name</th>
                                                             <th>Designation</th>
                                                             <th>Years of Experience</th>
-                                                            <th>Documents</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -230,18 +238,6 @@
                                                             <td>{{ $experience->company_name }}</td>
                                                             <td>{{ $experience->designation }}</td>
                                                             <td>{{ $experience->experience }} years</td>
-                                                            <td style="text-align:center;">
-
-                                                                @if($experience->upload_document)
-                                                                <!-- Show Image -->
-                                                                <a href="{{ url($experience->upload_document) }}" target="_blank">
-                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
-                                                                </a>
-                                                                @else
-                                                                    No Documents Uploaded
-                                                                @endif
-                                                               
-                                                            </td>
 
                                                         </tr>
                                                         @empty
@@ -338,10 +334,16 @@
                                             <!-- ----------------------------------------------- -->
                                             <hr>
                                             @php
-                                                $decryptedaadhar = Crypt::decryptString($applicant->aadhaar);
-                                                $decryptedpan    = Crypt::decryptString($applicant->pancard);
-                                                $masked          = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
-                                                $maskedPan       = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : 'Invalid PAN';
+                                                $decryptedaadhar = null;
+                                                try {
+                                                    $decryptedaadhar = !empty($applicant->aadhaar) ? Crypt::decryptString($applicant->aadhaar) : null;
+                                                } catch (\Throwable $e) {
+                                                    $decryptedaadhar = null;
+                                                }
+
+                                                $masked = (is_string($decryptedaadhar) && strlen($decryptedaadhar) === 12)
+                                                    ? str_repeat('X', 8) . substr($decryptedaadhar, -4)
+                                                    : 'N/A';
 
                                             @endphp
 
@@ -350,18 +352,14 @@
                                                     <h6 class="fw-bold mb-0">Aadhaar:</h6>
                                                     <p class="mb-0">
                                                         {{ $masked }}
-                                                        (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}" target="_blank" class="text-primary">
-                                                            <i class="fa fa-file-pdf-o text-danger"></i>
-                                                        </a>)
-                                                    </p>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <h6 class="fw-bold mb-0">PAN:</h6>
-                                                    <p class="mb-0">
-                                                        {{ $maskedPan }}
-                                                        (<a href="{{ route('document.show', ['type' => 'pan', 'filename' => $applicant->pan_doc]) }}" target="_blank" class="text-primary">
-                                                            <i class="fa fa-file-pdf-o text-danger"></i>
-                                                        </a>)
+                                                        @if (!empty($applicant->aadhaar_doc))
+                                                            (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
+                                                                target="_blank" class="text-primary">
+                                                                <i class="fa fa-file-pdf-o text-danger"></i>
+                                                            </a>)
+                                                        @else
+                                                            (No document)
+                                                        @endif
                                                     </p>
                                                 </div>
                                             </div>

@@ -406,9 +406,9 @@ Route::get('/noticeboardcontent/{news_id}', [LoginController::class, 'noticeboar
 
 // --------------------------------propertior-------------
 
-Route::delete('/proprietor/delete/{id}', [PropertiorController::class, 'deleteProprietor']);
+// Route::delete('/proprietor/delete/{id}', [PropertiorController::class, 'deleteProprietor']);
 
-Route::post('/proprietor/update/{id}', [PropertiorController::class, 'updateProprietor'])->name('admin.proprietor.update');
+// Route::post('/proprietor/update/{id}', [PropertiorController::class, 'updateProprietor'])->name('admin.proprietor.update');
 
 Route::get('/form/get-form-cost', [FormController::class, 'getFormCost'])->name('getFormCost');
 //  fees--------------

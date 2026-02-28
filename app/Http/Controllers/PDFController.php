@@ -49,6 +49,19 @@ class PDFController extends Controller
         return nl2br(e($lines[0] ?? '') . "\n" . e($lines[1] ?? '') . "\n" . e($lines[2] ?? ''));
     }
 
+    private function safeDecryptString($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function generateFormPPDF($newApplicationId)
     {
 
@@ -60,15 +73,13 @@ class PDFController extends Controller
         $institutes = TnelbAppsInstitute::where('application_id', $newApplicationId)->get();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->first();
 
-
-        $decryptedaadhar = Crypt::decryptString($form->aadhaar);
-        $decryptedpan = Crypt::decryptString($form->pancard);
-        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
-        $maskedPan = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : 'Invalid PAN';
-
         if (!$form) {
             return redirect()->back()->with('error', 'No records found!');
         }
+
+        $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
+        $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
+        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
 
 
         $mpdf = new \Mpdf\Mpdf([
@@ -228,15 +239,13 @@ class PDFController extends Controller
         $institutes = TnelbAppsInstitute::where('application_id', $newApplicationId)->get();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->first();
 
-
-        $decryptedaadhar = Crypt::decryptString($form->aadhaar);
-        $decryptedpan = Crypt::decryptString($form->pancard);
-        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
-        $maskedPan = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : 'Invalid PAN';
-
         if (!$form) {
             return redirect()->back()->with('error', 'No records found!');
         }
+
+        $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
+        $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
+        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
 
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -411,15 +420,13 @@ class PDFController extends Controller
         $experience = Mst_experience::where('application_id', $newApplicationId)->get();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->first();
 
-
-        $decryptedaadhar = Crypt::decryptString($form->aadhaar);
-        $decryptedpan = Crypt::decryptString($form->pancard);
-        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
-        $maskedPan = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : 'Invalid PAN';
-
         if (!$form) {
             return redirect()->back()->with('error', 'No records found!');
         }
+
+        $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
+        $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
+        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
 
         // $wrap = function ($text, $length = 20) {
         //     return wordwrap($text, $length, '<br>', true);
@@ -507,7 +514,7 @@ class PDFController extends Controller
         $html .= '<h4>5. Details of technical qualification and examination, if any passed by the applicant (certificate in original along with xerox copy to be enclosed for reference and return)</h4>
         <table class="tbl-bordered">
         <tr>
-        <th>S.No</th><th>Education Level</th><th>Institution</th><th>Year of Passing</th><th>Percentage</th>
+        <th>S.No</th><th>Education Level</th><th>Institution</th><th>Year of Passing</th><th>Certificate No</th>
         </tr>';
         foreach ($education as $i => $edu) {
             $html .= '<tr>
@@ -515,7 +522,7 @@ class PDFController extends Controller
                 <td>' . $edu->educational_level . '</td>
                 <td>' . $edu->institute_name . '</td>
                 <td>' . $edu->year_of_passing . '</td>
-                <td>' . $edu->percentage . '%</td>
+                <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
         $html .= '</table>';
@@ -576,7 +583,7 @@ class PDFController extends Controller
 
             $html .= '<tr><td><strong>9. Aadhaar Number</strong></td><td>: ' . $masked . '</td></tr>';
 
-            $html .= '<tr><td><strong>10. PAN Number</strong></td><td>: ' . $maskedPan . '</td></tr>';
+            // $html .= '<tr><td><strong>10. PAN Number</strong></td><td>: ' . $maskedPan . '</td></tr>';
         }else{
             $no = '7';
             if($form->form_name == 'WH'){
@@ -585,8 +592,6 @@ class PDFController extends Controller
                 $html .= '<tr><td><strong>'.$no.'. Do you possess Wireman Competency Certificate / Wireman Helper Competency Certificate issued by this Board? If so furnish the details and surrender the same.</strong></td><td>: ' . $certno . '</td></tr>';
             }
             $html .= '<tr><td><strong>8. Aadhaar Number</strong></td><td>: ' . $masked . '</td></tr>';
-
-            $html .= '<tr><td><strong>9. PAN Number</strong></td><td>: ' . $maskedPan . '</td></tr>';
         }
 
 
@@ -954,7 +959,7 @@ $certificateText = match ($form->form_name) {
                 <th>கல்வி நிலை</th>
                 <th>கல்லூரி / பள்ளி</th>
                 <th>தேர்ச்சி பெற்ற ஆண்டு</th>
-                <th>சதவீதம்</th>
+                <th>சான்றிதழ் எண்</th>
             </tr>';
 
         foreach ($education as $i => $edu) {
@@ -963,7 +968,7 @@ $certificateText = match ($form->form_name) {
                 <td>' . $edu->educational_level . '</td>
                 <td>' . $edu->institute_name . '</td>
                 <td>' . $edu->year_of_passing . '</td>
-                <td>' . $edu->percentage . '%</td>
+                <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
         $html .= '</table>';
@@ -991,7 +996,6 @@ $certificateText = match ($form->form_name) {
         // $previously = ($form->previously_number || $form->previously_date) ? $form->previously_number . ', ' . $form->previously_date : 'NO';
         // $wireman_details = $form->wireman_details ?: 'NO';
         $aadhaar = $form->aadhaar ?: '-';
-        $pancard = $form->pancard ?: '-';
 
         function renderRow($label, $value, $limit = 20)
         {
@@ -1035,22 +1039,15 @@ $certificateText = match ($form->form_name) {
 
         
 
-        $decryptedaadhar = Crypt::decryptString($form->aadhaar);
-        $decryptedaadhar = str_replace(' ', '', $decryptedaadhar);
-        $decryptedpan = Crypt::decryptString($form->pancard);
+        $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
+        $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
         if (strlen($decryptedaadhar) === 12) {
             $masked = str_repeat('X', 8) . substr($decryptedaadhar, -4);
         } else {
             $masked = 'Invalid Aadhaar';
         }
-        if (strlen($decryptedpan) === 10) {
-            $maskedPan = str_repeat('X', 6) . substr($decryptedpan, -4);
-        } else {
-            $maskedPan = 'Invalid PAN';
-        }
 
         $aadhaar = $masked ?: 'இல்லை';
-        $pancard = $maskedPan ?: 'இல்லை';
 
         $l_date = format_date($form->previously_date);
         // Start HTML
@@ -1090,10 +1087,10 @@ $certificateText = match ($form->form_name) {
                 $aadhaar
             );
     
-            $html .= renderRow(
-                '<h4>10. நிரந்தர கணக்கு எண்</h4>',
-                $pancard
-            );
+            // $html .= renderRow(
+            //     '<h4>10. நிரந்தர கணக்கு எண்</h4>',
+            //     $pancard
+            // );
 
         }else{
             $no = '7';
@@ -1113,11 +1110,6 @@ $certificateText = match ($form->form_name) {
             $html .= renderRow(
                 '<h4>8. ஆதார் எண்</h4>',
                 $aadhaar
-            );
-    
-            $html .= renderRow(
-                '<h4>9. நிரந்தர கணக்கு எண்</h4>',
-                $pancard
             );
         }
 
@@ -1156,9 +1148,9 @@ $certificateText = match ($form->form_name) {
       // dd($newApplicationId);
       // exit;
         $form= DB::table('tnelb_ea_applications')->where('application_id', $newApplicationId)->first()
-                ?? DB::table('tnelb_esa_applications')->where('application_id', $newApplicationId)->first()
-                ?? DB::table('tnelb_esb_applications')->where('application_id', $newApplicationId)->first()
-                ?? DB::table('tnelb_eb_applications')->where('application_id', $newApplicationId)->first()
+                // ?? DB::table('tnelb_esa_applications')->where('application_id', $newApplicationId)->first()
+                // ?? DB::table('tnelb_esb_applications')->where('application_id', $newApplicationId)->first()
+                // ?? DB::table('tnelb_eb_applications')->where('application_id', $newApplicationId)->first()
                 ?? Mst_Form_s_w::where('application_id', $newApplicationId)->first()
                 ??TnelbFormP::where('application_id', $newApplicationId)->first();
 

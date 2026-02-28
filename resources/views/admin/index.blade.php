@@ -87,10 +87,12 @@
                                     
                                         <div class="col-12">
                                             <div class="mb-4">
-                                                <img id="captcha-image" src="{{ route('admin.custom.captcha') }}" alt="CAPTCHA">
-                                                <a href="Javascript:void(0);" id="refresh-captcha" class="align-middle" title="refresh">
-                                                    <span class="fas fa-redo-alt align-middle" style="margin-left: 20px; color:brown; font-size:25px;"></span>
-                                                </a>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <img id="captcha-image" src="{{ route('admin.custom.captcha') }}" alt="CAPTCHA" style="border: 1px solid #ddd; border-radius: 4px; padding: 5px;">
+                                                    <a href="javascript:void(0);" id="refresh-captcha" class="captcha-refresh-link" title="Refresh CAPTCHA" aria-label="Refresh CAPTCHA">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     
@@ -133,7 +135,6 @@
     $(document).ready(function () {
         $('#refresh-captcha').on('click', function(e) {
             e.preventDefault();
-            console.log('dfgd');
             $('#captcha-image').attr('src', '{{ route('admin.custom.captcha') }}?' + Date.now());
         });
         
@@ -142,24 +143,18 @@
 
         var username = $('#username').val();
         var password = $('#password').val();
-        var randomnumber = Math.floor((Math.random() * 1000000) + 1);
-        var randompassword = randomnumber + sha512(password);
-        var md5password = sha512(randompassword);
         var captcha = $("#captcha").val();
-
-        $('#password').val(md5password);
 
         $('#login-btn').prop('disabled', true).text('Logging in...');
 
         var data = {
             username: username,
-            randompassword: md5password,
-            randomnumber: randomnumber,
-            captcha:captcha
-        }
+            password: password,
+            captcha: captcha
+        };
 
         $.ajax({
-            url: "{{ route('admin.login') }}", // Laravel login route
+            url: "{{ route('admin.login') }}",
             type: "POST",
             data: data,
             dataType: "json",
@@ -170,52 +165,42 @@
                 withCredentials: true
             },
             success: function (response) {
-                console.log(response);
-                // return false;
-                window.location.href = "{{ route('admin.dashboard') }}"; // Redirect to dashboard on success
+                window.location.href = "{{ route('admin.dashboard') }}";
             },
-        error: function (xhr) {
-    $('#login-btn').prop('disabled', false).text('LOG IN');
-    $('.text-danger').text('');
-    $('#error-message').addClass('d-none');
+            error: function (xhr) {
+                $('#login-btn').prop('disabled', false).text('LOG IN');
+                $('.text-danger').text('');
+                $('#error-message').addClass('d-none');
 
-    let refreshNeeded = false;
+                var refreshCaptcha = false;
 
-   
+                if (xhr.status === 422 || xhr.status === 401 || xhr.status === 403) {
+                    var errors = xhr.responseJSON && xhr.responseJSON.errors ? xhr.responseJSON.errors : {};
+                    $.each(errors, function (key, value) {
+                        var msg = Array.isArray(value) ? value[0] : value;
+                        $('#' + key + '-error').text(msg);
+                        if (String(msg).toLowerCase().includes('captcha')) {
+                            refreshCaptcha = true;
+                        }
+                    });
 
-    if (xhr.status === 422 || xhr.status === 401) {
-        let errors = xhr.responseJSON.errors || {};
-        $.each(errors, function (key, value) {
-            $('#' + key + '-error').text(value[0]);
-            if (value[0].toLowerCase().includes('captcha')) {
-                refreshNeeded = true; // captcha error found
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        $('#error-message').removeClass('d-none').text(xhr.responseJSON.message);
+                        var m = xhr.responseJSON.message.toLowerCase();
+                        if (m.includes('invalid') || m.includes('captcha') || m.includes('inactive')) {
+                            refreshCaptcha = true;
+                        }
+                    }
+                } else {
+                    $('#error-message').removeClass('d-none').text('Invalid Credentials. Please try again.');
+                    refreshCaptcha = true;
+                }
+
+                if (refreshCaptcha) {
+                    $('#captcha-image').attr('src', '{{ route('admin.custom.captcha') }}?' + Date.now());
+                    $('#captcha').val('');
+                }
             }
-        });
-
-        if (xhr.responseJSON.message) {
-            $('#error-message').removeClass('d-none').text(xhr.responseJSON.message);
-
-            if (
-                xhr.responseJSON.message.toLowerCase().includes('invalid login') ||
-                xhr.responseJSON.message.toLowerCase().includes('captcha')
-            ) {
-                refreshNeeded = true;
-            }
-        }
-    } else {
-        $('#error-message').removeClass('d-none').text('Invalid Credentials. Please try again.');
-        refreshNeeded = true;
-    }
-
-     if (refreshNeeded) {
-        setTimeout(function () {
-            location.reload();
-        }, 2000);
-    }
-
-
-}
-
         });
     });
 });

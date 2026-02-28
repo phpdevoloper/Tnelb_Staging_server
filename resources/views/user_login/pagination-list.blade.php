@@ -43,7 +43,7 @@
                     </a>
                 @else
                     @php
-                        $sts = $workflow->status ?? $workflow->app_status;  
+                        $sts = data_get($workflow, 'status') ?? data_get($workflow, 'app_status');
                     @endphp
 
                     @if ($sts == 'P')
@@ -108,7 +108,7 @@
 
             <!-- License Number -->
             <td>
-                @if (!empty($workflow->license_number) && ($workflow->status == 'A' || $workflow->app_status == 'A'))
+                @if (!empty($workflow->license_number) && $sts == 'A')
                     <a href="{{ route('admin.getLicenceDoc.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" 
                         data-bs-toggle="tooltip" data-bs-placement="top" title="View Licence Details">
                         <span class="badge badge-info">{{ $workflow->license_number }}</span>

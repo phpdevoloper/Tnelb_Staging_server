@@ -2,13 +2,19 @@
 @include('admin.include.header')
 @include('admin.include.navbar')
 
+@php
+    $newApplications = $new_applications ?? $workflows ?? collect();
+    $renewalApplications = $renewal ?? collect();
+@endphp
+
 <style>
     /* table th{
         color: #070707 !important;
         background-color: #ccae00 !important;
     }
+    */
 
-     /* Improved heading style */
+    /* Improved heading style */
     .seperator-header h4 {
         background: #ffcc00;
         color: #333;
@@ -121,8 +127,8 @@
             <div class="row">
                 <div class="col-xl-12 col-lg-12 col-sm-12  layout-spacing">
                     <div class="seperator-header layout-top-spacing">
-                        <h4 class="">Pending Applications For {{ $new_applications->first()->form_name ?? 'N/A' }} (License
-                            {{ $new_applications->first()->license_name ?? 'N/A' }} )</h4>
+                        <h4 class="">Pending Applications For {{ $newApplications->first()->form_name ?? 'N/A' }} (License
+                            {{ $newApplications->first()->license_name ?? 'N/A' }} )</h4>
 
                     </div>
                     {{-- <div class="statbox widget box box-shadow"> --}}
@@ -142,19 +148,22 @@
                                         New Applications
                                     </button>
                                 </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="pills-profile-icon-tab" data-bs-toggle="pill"
-                                        data-bs-target="#pills-profile-icon" type="button" role="tab"
-                                        aria-controls="pills-profile-icon" aria-selected="false">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-user">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="12" cy="7" r="4"></circle>
-                                        </svg>
-                                        Renewal Applications
-                                    </button>
-                                </li>
+                                @if ($renewalApplications->isNotEmpty())
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pills-profile-icon-tab" data-bs-toggle="pill"
+                                            data-bs-target="#pills-profile-icon" type="button" role="tab"
+                                            aria-controls="pills-profile-icon" aria-selected="false">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="feather feather-user">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                            Renewal Applications
+                                        </button>
+                                    </li>
+                                @endif
                             </ul>
                             <div class="tab-content" id="pills-tabContent">
                                 <div class="tab-pane fade show active" id="pills-home-icon" role="tabpanel"
@@ -167,14 +176,14 @@
             
                                                 <th>Applicant's Name</th>
                                                 {{-- <th>Form Name</th> --}}
-                                                <th>License of</th>
+                                                <th>Certificate of</th>
                                                 <th>Payment Status</th>
                                                 <th>Applied On</th>
                                                 <th class="no-content">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($new_applications as $key => $application)
+                                            @forelse ($newApplications as $key => $application)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
             
@@ -184,11 +193,11 @@
                                                             {{ $application->application_id }}
                                                         </a>
                                                     </td>
-                                                    <td>{{ $application->applicant_name }}</td>
+                                                    <td>{{ $application->applicant_name ?? 'N/A' }}</td>
                                                     {{-- <td>{{ $application->form_name }}</td> --}}
-                                                    <td>{{ $application->license_name }}</td>
-                                                    <td>Success</td>
-                                                    <td>{{ format_date_other($application->created_at) }}</td>
+                                                    <td>{{ $application->license_name ?? 'N/A' }}</td>
+                                                    <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
+                                                    <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
                                                     <td>
                                                         <a
                                                             href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
@@ -199,55 +208,62 @@
                                                         </a>
                                                     </td>
                                                 </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="tab-pane fade" id="pills-profile-icon" role="tabpanel"
-                                    aria-labelledby="pills-profile-icon-tab" tabindex="0">
-                                    <table id="" class="zero-config table dt-table-hover" style="width:100%">
-                                        <thead>
-                                            <tr>
-                                                <th>S.No</th>
-                                                <th>Application Id</th>
-            
-                                                <th>Applicant's Name</th>
-                                                {{-- <th>Form Name</th> --}}
-                                                <th>License of</th>
-                                                <th>Payment Status</th>
-                                                <th>Applied On</th>
-                                                <th class="no-content">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($renewal as $key => $application)
+                                            @empty
                                                 <tr>
-                                                    <td>{{ $key + 1 }}</td>
-                                                    <td>
-                                                        <a
-                                                            href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
-                                                            {{ $application->application_id }}
-                                                        </a>
-                                                    </td>
-                                                    <td>{{ $application->applicant_name }}</td>
-                                                    {{-- <td>{{ $application->form_name }}</td> --}}
-                                                    <td>{{ $application->license_name }}</td>
-                                                    <td>Success</td>
-                                                    <td>{{ format_date_other($application->created_at) }}</td>
-                                                    <td>
-                                                        <a
-                                                            href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
-                                                            <button type="button" class="btn btn-primary"
-                                                                data-bs-placement="bottom" title="Forward Application">
-                                                                <i class="fa fa-eye"></i>
-                                                            </button>
-                                                        </a>
-                                                    </td>
+                                                    <td colspan="7" class="text-center">No pending applications found.</td>
                                                 </tr>
-                                            @endforeach
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </div>
+                                @if ($renewalApplications->isNotEmpty())
+                                    <div class="tab-pane fade" id="pills-profile-icon" role="tabpanel"
+                                        aria-labelledby="pills-profile-icon-tab" tabindex="0">
+                                        <table id="" class="zero-config table dt-table-hover" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>S.No</th>
+                                                    <th>Application Id</th>
+            
+                                                    <th>Applicant's Name</th>
+                                                    {{-- <th>Form Name</th> --}}
+                                                    <th>Certificate of</th>
+                                                    <th>Payment Status</th>
+                                                    <th>Applied On</th>
+                                                    <th class="no-content">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($renewalApplications as $key => $application)
+                                                    <tr>
+                                                        <td>{{ $key + 1 }}</td>
+                                                        <td>
+                                                            <a
+                                                                href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                                {{ $application->application_id }}
+                                                            </a>
+                                                        </td>
+                                                        <td>{{ $application->applicant_name ?? 'N/A' }}</td>
+                                                        {{-- <td>{{ $application->form_name }}</td> --}}
+                                                        <td>{{ $application->license_name ?? 'N/A' }}</td>
+                                                        <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
+                                                        <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                        <td>
+                                                            <a
+                                                                href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                                <button type="button" class="btn btn-primary"
+                                                                    data-bs-placement="bottom"
+                                                                    title="Forward Application">
+                                                                    <i class="fa fa-eye"></i>
+                                                                </button>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="d-flex justify-content-end m-2">
@@ -264,4 +280,4 @@
     </div>
 </div>
 
-@include('admin.include.footer');
+@include('admin.include.footer')

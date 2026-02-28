@@ -31,25 +31,142 @@ class SupervisorController extends Controller
         return view('admin.dashboards.supervisor', compact('applications'));
     }
 
-    public function view_applications()
+    public function view_applications(Request $request)
     {
-        $userRole = Auth::user()->roles_id; // Supervisor Role ID
+        $staff = Auth::user();
+        if (!$staff) {
+            return abort(403, 'Unauthorized');
+        }
 
-        $workflows = DB::table('tnelb_application_tbl as ta')
-            ->leftJoin('tnelb_forms as f', 'ta.form_id', '=', 'f.id') // Join forms table
-            ->where('ta.form_name', 'Form S') // Filter by Form S
-            ->where('ta.status', 'P') // Only show new applications
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('tnelb_workflow as tw')
-                    ->whereRaw('tw.application_id = ta.application_id'); // Ensure it's NOT in workflow yet
-            })
-            ->select('ta.*', 'f.form_name')
-            ->distinct()
-            ->get();
+        $selectedFormId = (int) ($request->input('form_id') ?? $staff->form_id);
+        if ($selectedFormId <= 0) {
+            return view('admin.supervisor.view', [
+                'workflows' => collect(),
+                'new_applications' => collect(),
+                'renewal' => collect(),
+            ]);
+        }
 
+        $requestedType = strtoupper((string) $request->input('form_type', ''));
+        $applTypeFilter = in_array($requestedType, ['N', 'R'], true) ? $requestedType : null;
 
-        return view('admin.supervisor.recentapply', compact('workflows'));
+        $roleLevel = (int) (optional($staff->role)->role_level ?? 0); // mst_roles.role_level
+        $roleId = (int) ($staff->roles_id ?? 0); // mst_roles.r_id
+
+        // Supervisor (level 1): show fresh paid apps not yet in any workflow table.
+        // Higher roles (Accountant/Secretary/President): show apps currently forwarded to them (latest workflow row).
+        if ($roleLevel === 1) {
+            $query = DB::table('tnelb_application_tbl as ta')
+                ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+                ->where('ta.form_id', $selectedFormId)
+                ->whereIn('ta.status', ['P', 'RE'])
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('tnelb_workflow as tw')
+                        ->whereRaw('tw.application_id = ta.application_id');
+                })
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('tnelb_workflow_a as twa')
+                        ->whereRaw('twa.application_id = ta.application_id');
+                });
+
+            if ($applTypeFilter) {
+                $query->where('ta.appl_type', $applTypeFilter);
+            }
+
+            $workflows = $query
+                ->select(
+                    'ta.*',
+                    DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
+                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                )
+                ->distinct()
+                ->orderByDesc('ta.id')
+                ->get();
+        } else {
+            $previousProcessedBy = match ($roleLevel) {
+                2 => ['S', 'S2'], // Accountant handles after Supervisor/Supervisor2
+                3 => ['A'],       // Secretary handles after Accountant
+                4 => ['SE'],      // President handles after Secretary
+                default => [],
+            };
+
+            $twLast = DB::table('tnelb_workflow')
+                ->select('application_id', DB::raw('MAX(id) as max_id'))
+                ->groupBy('application_id');
+
+            $twaLast = DB::table('tnelb_workflow_a')
+                ->select('application_id', DB::raw('MAX(id) as max_id'))
+                ->groupBy('application_id');
+
+            $currentFromTw = DB::table('tnelb_workflow as tw')
+                ->joinSub($twLast, 'tw_last', function ($join) {
+                    $join->on('tw.application_id', '=', 'tw_last.application_id')
+                        ->on('tw.id', '=', 'tw_last.max_id');
+                })
+                ->where('tw.forwarded_to', $roleId)
+                ->whereIn('tw.appl_status', ['F', 'RF'])
+                ->select('tw.application_id');
+
+            $currentFromTwa = DB::table('tnelb_workflow_a as tw')
+                ->joinSub($twaLast, 'tw_last', function ($join) {
+                    $join->on('tw.application_id', '=', 'tw_last.application_id')
+                        ->on('tw.id', '=', 'tw_last.max_id');
+                })
+                ->where('tw.forwarded_to', $roleId)
+                ->whereIn('tw.appl_status', ['F', 'RF'])
+                ->select('tw.application_id');
+
+            $fallbackAppIds = DB::table('tnelb_application_tbl as ta')
+                ->where('ta.form_id', $selectedFormId)
+                ->whereIn('ta.status', ['F', 'RF'])
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
+                ->when(!empty($previousProcessedBy), function ($q) use ($previousProcessedBy) {
+                    return $q->whereIn('ta.processed_by', $previousProcessedBy);
+                })
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('tnelb_workflow as tw')
+                        ->whereRaw('tw.application_id = ta.application_id');
+                })
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('tnelb_workflow_a as twa')
+                        ->whereRaw('twa.application_id = ta.application_id');
+                })
+                ->select('ta.application_id');
+
+            $currentAppIds = $currentFromTw->union($currentFromTwa)->union($fallbackAppIds);
+
+            $query = DB::query()
+                ->fromSub($currentAppIds, 'cur')
+                ->join('tnelb_application_tbl as ta', 'ta.application_id', '=', 'cur.application_id')
+                ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+                ->where('ta.form_id', $selectedFormId)
+                ->whereIn('ta.payment_status', ['payment', 'paid']);
+
+            if ($applTypeFilter) {
+                $query->where('ta.appl_type', $applTypeFilter);
+            }
+
+            $workflows = $query
+                ->select(
+                    'ta.*',
+                    DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
+                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                )
+                ->distinct()
+                ->orderByDesc('ta.id')
+                ->get();
+        }
+
+        [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
+            return strtoupper((string) ($row->appl_type ?? '')) === 'R';
+        });
+
+        return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal'));
     }
 
     public function view_auditor()
@@ -1015,14 +1132,10 @@ class SupervisorController extends Controller
         $login_id = $application->login_id;
 
 
-        $formname = $application->form_name;
-        // Get form type
-        $formType = DB::table('tnelb_forms')->where('id', $application->form_id)->first();
-
-
-        // if (in_array($formType->form_name, ['FORM S'])) {
-        //     return response()->json(['error' => 'This application cannot be approved by the secretary.'], 403);
-        // }
+        $licenceId = (int) ($application->form_id ?? 0);
+        if ($licenceId <= 0) {
+            return response()->json(['error' => 'Invalid form/licence mapping for this application.'], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -1034,7 +1147,7 @@ class SupervisorController extends Controller
             } else {
                 $processed = 'SE';
             }
-        $appl_type = preg_replace('/\s+/', '', $application->appl_type);
+        $appl_type = strtoupper(preg_replace('/\s+/', '', (string) $application->appl_type));
             DB::table('tnelb_application_tbl')
                 ->where('application_id', $request->application_id)
                 ->update([
@@ -1055,16 +1168,19 @@ class SupervisorController extends Controller
                 // If no renewal record OR existing record already expired -> create new renewal
                 if (!$license_details || $now->greaterThan(Carbon::parse($license_details->expires_at))) {
                     $issuedAt = $now->format('Y-m-d H:i:s');
-                   $formid = DB::table('mst_licences')
-                        ->where('cert_licence_code', 'ESB')
-                        ->where('status', '1')
+
+                    $today = Carbon::today()->toDateString();
+                    $licenseperiod = DB::table('mst_fees_validity')
+                        ->where('licence_id', $licenceId)
+                        ->where('form_type', $appl_type) // N (Fresh) / R (Renewal)
+                        ->where('status', 1)
+                        ->whereDate('validity_start_date', '<=', $today)
+                        ->orderBy('validity_start_date', 'desc')
                         ->first();
 
-                          $licenseperiod = DB::table('mst_fees_validity')
-                        ->where('licence_id', $formid->id)
-                        ->where('form_type', $appl_type)
-                         ->where('validity_start_date','<=', now())
-                        ->first();
+                    if (!$licenseperiod) {
+                        throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$appl_type}).");
+                    }
                         
 
                     // dd($formid->id);
@@ -1073,10 +1189,10 @@ class SupervisorController extends Controller
                         // dd($licenseperiod->validity);
                         // exit;
                    
-                    $monthsToAdd = $licenseperiod->validity ?? 0;
+                    $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
 
 // H:i:s
-                    $expiresAt = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+                    $expiresAt = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
 // dd($expiresAt);
 // exit;
               
@@ -1143,25 +1259,21 @@ class SupervisorController extends Controller
                     $issuedAt = now()->format('Y-m-d H:i:s');
 
                  
-               $formid = DB::table('mst_licences')
-                        ->where('cert_licence_code', 'ESB')
-                        ->where('status', '1')
+                    $today = Carbon::today()->toDateString();
+                    $licenseperiod = DB::table('mst_fees_validity')
+                        ->where('licence_id', $licenceId)
+                        ->where('form_type', $appl_type) // N (Fresh) / R (Renewal)
+                        ->where('status', 1)
+                        ->whereDate('validity_start_date', '<=', $today)
+                        ->orderBy('validity_start_date', 'desc')
                         ->first();
 
-                          $licenseperiod = DB::table('mst_fees_validity')
-                        ->where('licence_id', $formid->id)
-                        ->where('form_type', $appl_type)
-                        ->where('status', '1')
-                        ->first();
+                    if (!$licenseperiod) {
+                        throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$appl_type}).");
+                    }
                         
 
-                    // dd($formid->id);
-                    // exit;
-
-                        // dd($licenseperiod->validity);
-                        // exit;
-                   
-                    $monthsToAdd = $licenseperiod->validity ?? 0;
+                    $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
 
 
                     // dd()

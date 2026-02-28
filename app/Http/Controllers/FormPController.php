@@ -63,11 +63,11 @@ class FormPController extends BaseController
             'applicants_address'   => 'required|string|max:500',
             'd_o_b'                => 'required|date',
             'age'                  => 'required|integer|min:18|max:100',
-            'employer_name'      => 'required|string|max:255',
+            // Optional: user may fill if applicable
+            'employer_name'        => 'nullable|string|max:255',
             'previously_number'    => 'nullable|string',
             'previously_date'      => 'nullable|date',
             'aadhaar'              => 'required|string|digits:12',
-            'pancard'              => 'required|string|size:10',
             'form_name'            => 'required|string|max:2',
             'license_name'         => 'required|string|max:2',
             // 'form_id'              => 'required|integer',
@@ -86,13 +86,13 @@ class FormPController extends BaseController
             'percentage'           => 'required|array|min:1',
             'percentage.*'         => 'required|numeric|min:0|max:100',
 
-            // work experience arrays
-            'work_level'           => 'required|array|min:1',
-            'work_level.*'         => 'required|string|max:50',
-            'experience'           => 'required|array|min:1',
-            'experience.*'         => 'required|integer|min:0|max:50',
-            'designation'          => 'required|array|min:1',
-            'designation.*'        => 'required|string|max:100',
+            // work experience arrays (optional)
+            'work_level'           => 'nullable|array',
+            'work_level.*'         => 'nullable|string|max:50',
+            'experience'           => 'nullable|array',
+            'experience.*'         => 'nullable|integer|min:0|max:50',
+            'designation'          => 'nullable|array',
+            'designation.*'        => 'nullable|string|max:100',
 
 
             // Institute arrays
@@ -108,13 +108,12 @@ class FormPController extends BaseController
             // single files
             'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50', // 1MB
             'aadhaar_doc'          => 'required|mimes:pdf|min:10|max:250',
-            'pancard_doc'          => 'required|mimes:pdf|min:10|max:250',
 
             // multiple files (arrays)
             'education_document'   => 'required|array|min:1',
             'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
-            'work_document'        => 'required|array|min:1',
-            'work_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
+            'work_document'        => 'nullable|array',
+            'work_document.*'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
             'institute_document'        => 'required|array|min:1',
             'institute_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
 
@@ -185,13 +184,11 @@ class FormPController extends BaseController
 
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'pancard_doc.min' => 'PAN card file is too small.',
 
             'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
             'work_document.*.max'    => 'Experience document must not be greater than 200 kilobytes.',
             'institute_document.*.max'    => 'Institure document must not be greater than 200 kilobytes.',
 
-            'pancard_doc.max' => 'The pancard doc must not be greater than 250 kilobytes.',
         ]);
 
 
@@ -207,7 +204,6 @@ class FormPController extends BaseController
         DB::beginTransaction();
 
         $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-        $encrypted_pancard = Crypt::encryptString($request->pancard);
 
         try {
             // Generate New Application ID
@@ -231,7 +227,6 @@ class FormPController extends BaseController
             }
 
             $aadhaarFilename = null;
-            $panFilename = null;
 
             if ($request->hasFile('aadhaar_doc')) {
                 $file = $request->file('aadhaar_doc');
@@ -251,25 +246,6 @@ class FormPController extends BaseController
                 file_put_contents($destinationPath . '/' . $aadhaarFilename, $encrypted);
             }
 
-            if ($request->hasFile('pancard_doc')) {
-                $file = $request->file('pancard_doc');
-
-                $contents = file_get_contents($file->getRealPath());
-
-                $encrypted = Crypt::encrypt($contents);
-
-                $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-
-                $destinationPath = storage_path('app/private_documents');
-
-                if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-
-                file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-            }
-
-
             $form = TnelbFormP::create([
                 'login_id'            => $loginId,
                 'applicant_name'      => $request->applicant_name ?? '',
@@ -285,12 +261,10 @@ class FormPController extends BaseController
                 'form_id'             => $request->form_id,
                 'license_name'        => $request->license_name,
                 'aadhaar'             => $encrypted_aadhaar,
-                'pancard'             => $encrypted_pancard,
                 'app_status'              => 'P',
                 'appl_type'           => $appl_type,
                 'payment_status'      => ($action === 'draft') ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
-                'pan_doc'             => $panFilename,
                 'certificate_no'      => $request->certificate_no,
                 'certificate_date'    => $request->certificate_date,
                 'cert_verify'         => $request->cert_verify ?? '0',
@@ -477,9 +451,6 @@ class FormPController extends BaseController
         $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
-        $pancardDocRule = ($existingForm && !$existingForm->pan_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
         $request->validate([
             'login_id'           => 'nullable|string',
             'applicant_name'     => 'nullable|string|max:255',
@@ -504,7 +475,6 @@ class FormPController extends BaseController
             'percentage.*'         => 'nullable|numeric|min:0|max:100',
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
-            'pancard_doc'    => $pancardDocRule,
 
             'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
 
@@ -531,7 +501,6 @@ class FormPController extends BaseController
             'designation.*.string'          => 'Designation must be a valid string.',
             'designation.*.max'             => 'Designation may not be greater than 100 characters.',
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'pancard_doc.max' => 'The pancard doc size permitted only 5 KB to 250 KB',
         ]);
 
         $action = $request->form_action;
@@ -560,7 +529,6 @@ class FormPController extends BaseController
                 }
             }
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-            $encrypted_pancard = Crypt::encryptString($request->pancard);
             if ($request->hasFile('aadhaar_doc')) {
                 $file = $request->file('aadhaar_doc');
 
@@ -588,26 +556,6 @@ class FormPController extends BaseController
                 }
             }
 
-            if ($request->hasFile('pancard_doc')) {
-                // ✅ New file uploaded
-                $file = $request->file('pancard_doc');
-                $contents = file_get_contents($file->getRealPath());
-                $encrypted = Crypt::encrypt($contents);
-                $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-                $destinationPath = storage_path('app/private_documents');
-                if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-                file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-            } elseif ($request->input('pan_doc_removed') == "1") {
-                $panFilename = null;
-            } else {
-                $panFilename = $form?->pan_doc ?? null;
-                if ($panFilename == null) {
-                    $panFilename = TnelbFormP::where('application_id', $applicationId)->value('pan_doc');
-                }
-            }
-
             $renewal_form = TnelbFormP::updateOrCreate(
                 [
                     'application_id' => $applicationId
@@ -627,14 +575,12 @@ class FormPController extends BaseController
                     'form_id'            => $request->form_id,
                     'license_name'       => $request->license_name,
                     'aadhaar'            => $encrypted_aadhaar,
-                    'pancard'            => $encrypted_pancard,
                     'certificate_no'     => $request->certificate_no ?? null,
                     'certificate_date'   => $request->certificate_date ?? null,
                     'appl_type'          => $appl_type,
                     'license_number'     => $request->license_number,
                     'payment_status'     => 'draft',
                     'aadhaar_doc'        => $aadhaarFilename ?? $form?->aadhaar_doc ?? null,
-                    'pan_doc'            => $panFilename ?? $form?->pan_doc ?? null,
                     'cert_verify'        => $request->cert_verify ?? '0',
                     'license_verify'     => $request->l_verify ?? '0',
                     'old_application'    => $applicationId ?? '',
@@ -967,10 +913,6 @@ class FormPController extends BaseController
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
 
-        $pancardDocRule = ($existingForm && !$existingForm->pan_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
-
         $request->validate([
             'login_id'           => 'nullable|string',
             'applicant_name'     => 'nullable|string|max:255',
@@ -998,7 +940,6 @@ class FormPController extends BaseController
 
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
-            'pancard_doc'    => $pancardDocRule,
 
             'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
 
@@ -1035,7 +976,6 @@ class FormPController extends BaseController
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
 
-            'pancard_doc.max' => 'The pancard doc size permitted only 5 KB to 250 KB',
         ]);
 
         $action = $request->form_action; // "draft" or "submit"
@@ -1069,7 +1009,6 @@ class FormPController extends BaseController
 
 
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-            $encrypted_pancard = Crypt::encryptString($request->pancard);
 
 
             if ($request->hasFile('aadhaar_doc')) {
@@ -1096,29 +1035,6 @@ class FormPController extends BaseController
             }
 
 
-            if ($request->hasFile('pancard_doc')) {
-                // ✅ New file uploaded
-                $file = $request->file('pancard_doc');
-                $contents = file_get_contents($file->getRealPath());
-                $encrypted = Crypt::encrypt($contents);
-
-                $panFilename = time() . '_' . rand(10000, 9999999) . '.bin';
-                $destinationPath = storage_path('app/private_documents');
-
-                if (!is_dir($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-
-                file_put_contents($destinationPath . '/' . $panFilename, $encrypted);
-            } elseif ($request->input('pan_doc_removed') == "1") {
-                // ✅ Removed but not replaced
-                $panFilename = null;
-            } else {
-                // ✅ Keep the old one
-                $panFilename = $form?->pan_doc ?? null;
-            }
-
-
             // 🔹 Prepare Data
             $data = [
                 'login_id'          => $loginId,
@@ -1135,12 +1051,10 @@ class FormPController extends BaseController
                 'form_id'           => $request->form_id,
                 'license_name'      => $request->license_name,
                 'aadhaar'           => $encrypted_aadhaar ?? null,
-                'pancard'           => $encrypted_pancard ?? null,
                 'appl_type'         => $request->appl_type,
                 'license_number'    => $request->license_number,
                 'payment_status'    => $action === 'draft' ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
-                'pan_doc'             => $panFilename,
                 'certificate_no'      => $request->certificate_no ?? null,
                 'certificate_date'   => $request->certificate_date ?? null,
                 'application_id'    => $applicationId,

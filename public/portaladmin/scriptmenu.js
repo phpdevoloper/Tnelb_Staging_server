@@ -181,7 +181,6 @@ $(document).ready(function () {
 
     $('#addnewstaff').on('submit', function (e) {
         e.preventDefault();
-// alert('111');
         var formData = new FormData(this);
 
         $.ajax({

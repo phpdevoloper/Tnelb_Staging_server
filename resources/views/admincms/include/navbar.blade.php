@@ -219,6 +219,30 @@
                     </a>
                 </li> -->
 
+                @endif
+
+
+               {{-- Show the following CMS management menus only for Superadmin users --}}
+                @php
+                    // Prefer flag from controller; fall back to checking the logged-in admin's role_code
+                    $currentStaff = isset($staff) ? $staff : Auth::guard('admin')->user();
+                    $currentRoute = $currentRoute ?? \Illuminate\Support\Facades\Route::currentRouteName();
+                    $roleCode = optional($currentStaff)->role_code ?? optional(optional($currentStaff)->role)->role_code ?? null;
+                    $isSuperadminLocal = isset($isSuperadmin) ? $isSuperadmin : ($roleCode === 'SUPADMIN');
+                @endphp
+                @if($isSuperadminLocal)
+                <li class="menu {{ request()->routeIs('admin.membermaster') ? 'active' : '' }}" style="display:none;">
+                    <a href="{{ route('admin.membermaster') }}" aria-expanded="false" class="dropdown-toggle">
+                        <div class="">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user-check">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <polyline points="17 11 19 13 23 9"></polyline>
+                            </svg>
+                            <span>Add New Member</span>
+                        </div>
+                    </a>
+                </li>
 
                 @php
                     $licence_routes = ['admin.fees_validity', 'admin.licenceCategory', 'admin.view_licences','admin.management'];
@@ -226,7 +250,7 @@
 
 
                 <li class="menu {{ in_array($currentRoute, $licence_routes) ? 'active' : '' }}">
-                    <a href="#licences" data-bs-toggle="collapse" aria-expanded="{{ request()->routeIs('admin.licences') ? 'true' : 'false' }}" class="dropdown-toggle">
+                    <a href="#licences" data-bs-toggle="collapse" aria-expanded="{{ in_array($currentRoute, $licence_routes) ? 'true' : 'false' }}" class="dropdown-toggle">
                         <div class="">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -245,9 +269,7 @@
                     </a>
                     <ul class="collapse submenu list-unstyled {{ in_array($currentRoute, $licence_routes) ? 'show' : '' }}" id="licences" data-bs-parent="#accordionExample">
 
-                        {{-- <li class="{{ $currentRoute == 'admin.licenceCategory' ? 'active' : '' }}">
-                            <a href="{{route('admin.licenceCategory')}}">Category</a>
-                        </li> --}}
+                        
                         <li class="{{ $currentRoute == 'admin.view_licences' ? 'active' : '' }}">
                            <a href="{{route('admin.view_licences')}}">Certificates / Licences</a>
                        </li>
@@ -256,30 +278,8 @@
                                 Fees & Validity Details
                             </a>
                         </li>
-
-                          <!-- <li class="{{ $currentRoute == 'admin.equiplist' ? 'active' : '' }}">
-                            <a href="{{ route('admin.equiplist') }}">
-                                Master Equipment List
-                            </a>
-                        </li> -->
-                        {{-- <li class="{{ $currentRoute == 'admin.management' ? 'active' : '' }}">
-                            <a href="{{route('admin.management')}}">New Link</a>
-                        </li> --}}
+                        
                     </ul>
-                </li>
-
-                     <li class="menu {{ request()->routeIs('admin.equiplist') ? 'active' : '' }}">
-                    <a href="{{ route('admin.equiplist') }}" aria-expanded="false" class="dropdown-toggle">
-                        <div class="">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                            <span>Master Equipment List</span>
-                        </div>
-                    </a>
                 </li>
 
 
@@ -292,12 +292,10 @@
                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
-                            <span>Staff Management</span>
+                            <span>User Management</span>
                         </div>
                     </a>
                 </li>
-
-
                 @endif
 
 

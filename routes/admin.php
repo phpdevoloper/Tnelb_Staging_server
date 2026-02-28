@@ -416,10 +416,12 @@
         // -----------------staffs--------------
 
             Route::get('/stafflist', [StaffController::class, 'index'])->name('stafflist');
-
             Route::post('/staff/insertstaff', [StaffController::class, 'insertStaff'])->name('insertstaff');
-
             Route::post('/staff/updatestaff', [StaffController::class, 'updateStaff'])->name('updatestaff');
+
+            Route::get('/staff/getUserHistory', [StaffController::class, 'getUserHistory']);
+            Route::post('/staff/reset-password', [StaffController::class, 'resetPassword'])->name('reset-password');
+            Route::post('/staff/change-status', [StaffController::class, 'changeStatus'])->name('change-status');
 
         // ---------------Main pages Content--------------------------
 

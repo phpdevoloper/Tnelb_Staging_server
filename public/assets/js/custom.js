@@ -192,7 +192,9 @@ $(document).ready(function () {
 
         $('#education-container .education-fields').each(function () {
 
-            let educationUpload = $(this).find('input[type="file"][name^="education_document["]');
+            let educationUpload = $(this).find(
+                'input[type="file"][name="education_document[]"], input[type="file"][name^="education_document["]'
+            );
 
             if (educationUpload.length && educationUpload[0].files.length > 0) {
                 const file = educationUpload[0].files[0]; // ✅ use raw DOM element
@@ -215,7 +217,9 @@ $(document).ready(function () {
         });
 
         $('#work-container .work-fields').each(function () {
-            let workDocument = $(this).find('input[type="file"][name^="work_document["]');
+            let workDocument = $(this).find(
+                'input[type="file"][name="work_document[]"], input[type="file"][name^="work_document["]'
+            );
 
            if (workDocument.length && workDocument[0].files.length > 0) {
                 const file = workDocument[0].files[0]; // ✅ use raw DOM element
@@ -244,7 +248,6 @@ $(document).ready(function () {
         licenseError.textContent = '';
         dateError.textContent = '';
 
-        $("#pancard-error").text("");
         $("#checkboxError").text("");
 
 
@@ -254,16 +257,16 @@ $(document).ready(function () {
         const aadhaarError = document.getElementById("aadhaar-error");
 
         // get value, remove spaces, and trim
-        const aadhaar = aadhaarInput.value.replace(/\s+/g, '').trim();
+        const aadhaar = aadhaarInput ? aadhaarInput.value.replace(/\s+/g, '').trim() : "";
 
         const aadhaarRegex = /^[2-9]{1}[0-9]{11}$/;
 
-        if (aadhaar !== '' && !aadhaarRegex.test(aadhaar)) {
+        if (aadhaarInput && aadhaarError && aadhaar !== '' && !aadhaarRegex.test(aadhaar)) {
             aadhaarError.textContent =
                 "Please enter a valid 12-digit Aadhaar number (should not start with 0 or 1).";
             if (!firstErrorField) firstErrorField = aadhaar;
             isValid = false;
-        } else {
+        } else if (aadhaarError) {
             aadhaarError.textContent = "";
         }
 
@@ -292,50 +295,7 @@ $(document).ready(function () {
             }
         }
 
-        const pancardInput = document.getElementById("pancard");
-        const pancardError = document.getElementById("pancard-error");
-        const pancardValue = pancardInput.value.trim();
-        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-
-
-        const pancardDocInput = document.getElementById("pancard_doc");
-        
-        if (pancardDocInput && pancardDocInput.files.length > 0) {
-            const file = pancardDocInput.files[0];
-            if (file) {
-                const allowedType = 'application/pdf';
-                const maxSize = 250 * 1024;
-                if (file.type !== allowedType) {
-                    $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for PAN document.</span>');
-                    if (!firstErrorField) firstErrorField = $('#pancard_doc');
-                    isValid = false;
-                } else if (file.size > maxSize) {
-                    $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 250 KB.</span>');
-                    if (!firstErrorField) firstErrorField = $('#pancard_doc');
-                    isValid = false;
-                }
-            }
-        }
-
-
-
-        // PAN document validation if PAN number is entered
-        $("#pancard").on("keyup", function() {
-            let value = $(this).val().toUpperCase();
-
-            // Limit to 10 characters
-            if (value.length > 10) {
-                value = value.slice(0, 10);
-            }
-
-            $(this).val(value); // Force uppercase and max length
-
-            if (/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value)) {
-                $("#pancard-error").text(""); // valid
-            } else {
-                $("#pancard-error").text("Enter valid 10-character PAN (e.g., ABCDE1234F).");
-            }
-        });
+        // PAN details removed
 
 
 
@@ -541,19 +501,7 @@ $(document).ready(function () {
         $('#aadhaar_doc_removed').val('1');
     });
 
-    $(document).on('click', '.remove-doc-pan', function () {
-        let inputHtml = `
-            <div class="pan-doc-input">
-                <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
-                <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
-                <p class="text-danger file-error"></p>
-            </div>
-        `;
-    
-        $(this).closest('.pan-doc-container').replaceWith(inputHtml);
-
-        $('#pan_doc_removed').val('1');
-    });
+    // PAN document removed
 
 
 

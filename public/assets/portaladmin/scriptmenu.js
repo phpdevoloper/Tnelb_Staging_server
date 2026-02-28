@@ -1,3 +1,493 @@
+//User Management form submit
+
+$(document).ready(function ()  {
+
+    console.log('User management script loaded');
+
+    function normalizeFormIds(rawIds) {
+        if (Array.isArray(rawIds)) {
+            return rawIds.map(String);
+        }
+
+        if (typeof rawIds === 'number') {
+            return [String(rawIds)];
+        }
+
+        if (typeof rawIds !== 'string' || rawIds.trim() === '') {
+            return [];
+        }
+
+        const value = rawIds.trim();
+        if (value.startsWith('[') && value.endsWith(']')) {
+            try {
+                return JSON.parse(value).map(String);
+            } catch (e) {
+                // Fallback for malformed JSON-like strings.
+            }
+        }
+
+        return value.split(',').map(id => id.trim()).filter(Boolean);
+    }
+
+    $(document).on('click', '.updateFormNew', function () {
+        let user_id = $(this).data('user_id');
+        let user_name = $(this).data('user_name');
+        let new_form_ids = $(this).data('new_form_ids');
+        
+        // Set values
+        $('#updateNewFormAssign input[name="user_id"]').val(user_id);
+        $('#userNameLable').text(user_name);
+        $('#updateNewFormAssign input[name="assigned_forms[]"]').prop('checked', false);
+
+        let selectedNewFormIds = normalizeFormIds(new_form_ids);
+
+        selectedNewFormIds.forEach(function (id) {
+            $('#updateNewFormAssign input[name="assigned_forms[]"][value="' + id + '"]').prop('checked', true);
+        });
+
+    });
+
+    $('#editFormNew').on('hidden.bs.modal', function () {
+        let $form = $('#updateNewFormAssign');
+        $form[0].reset();
+        $form.find('input[name="assigned_forms[]"]').prop('checked', false);
+        $('#userNameLable').text('');
+    });
+
+    $(document).on('click', '.updateFormRenew', function () {
+        let user_id = $(this).data('user_id');
+        let user_name = $(this).data('user_name');
+        let renewal_form_ids = $(this).data('renewal_form_ids');
+        
+        // Set values
+        $('#updateRenewalForm input[name="user_id"]').val(user_id);
+        $('#userNameLableRenewal').text(user_name);
+        $('#updateRenewalForm input[name="assigned_forms[]"]').prop('checked', false);
+        let selectedRenewalFormIds = normalizeFormIds(renewal_form_ids);
+
+        selectedRenewalFormIds.forEach(function (id) {
+            $('#updateRenewalForm input[name="assigned_forms[]"][value="' + id + '"]').prop('checked', true);
+        });
+    });
+
+    $('#renewalForm').on('hidden.bs.modal', function () {
+        let $form = $('#updateRenewalForm');
+        $form[0].reset();
+        $form.find('input[name="assigned_forms[]"]').prop('checked', false);
+        $('#userNameLableRenewal').text('');
+    });
+    function loadUserHistory(user_id) {
+        const table = $.fn.DataTable.isDataTable('#historyTable')
+            ? $('#historyTable').DataTable()
+            : null;
+
+        $.ajax({
+            url: '/admin/staff/getUserHistory',
+            method: 'GET',
+            data: { user_id: user_id },
+
+            success: function (res) {
+                if (!res.status || res.data.length === 0) {
+                    if (table) {
+                        table.settings()[0].oLanguage.sEmptyTable = 'No history found';
+                        table.clear().draw();
+                    } else {
+                        $('#historyTable tbody').html(
+                            '<tr><td colspan="6" class="text-center text-muted">No history found</td></tr>'
+                        );
+                    }
+                    return;
+                }
+
+                if (table) {
+                    table.settings()[0].oLanguage.sEmptyTable = 'Select a user';
+                    table.clear();
+                }
+
+                $.each(res.data, function (i, row) {
+
+                    let formType = row.form_type === 'N' ? 'New' : 'Renewal';
+                    let status   = row.is_active == 1 ? 'Active' : (row.is_active == 0 ? 'Inactive' : '-');
+                    let formNames = row.form_names ? row.form_names : '-';
+                    let startDate = row.started_at ? row.started_at : '-';
+                    let endDate  = row.ended_at ? row.ended_at : '-';
+
+                    if (table) {
+                        table.row.add([
+                            i + 1,
+                            formType,
+                            formNames,
+                            status,
+                            startDate,
+                            endDate
+                        ]);
+                    }
+                });
+
+                if (table) {
+                    table.draw();
+                }
+            },
+
+            error: function () {
+                if (table) {
+                    table.settings()[0].oLanguage.sEmptyTable = 'Failed to load history';
+                    table.clear().draw();
+                } else {
+                    $('#historyTable tbody').html(
+                        '<tr><td colspan="6" class="text-danger text-center">Failed to load history</td></tr>'
+                    );
+                }
+            }
+        });
+    }
+
+    $(document).on('click', '.getUserHistory', function () {
+
+        let user_id = $(this).data('user_id');
+        console.log(user_id);
+        
+
+        $(this).blur();
+
+        // Open modal immediately
+         $('#userHistoryModal').modal('show');
+
+         loadUserHistory(user_id);
+
+    });
+
+    $(document).on('click', '.editstaffdata', function () {
+
+        let user_id = $(this).data('user_id');
+        $('#resetForm input[name="user_id"]').val(user_id);
+
+    });
+
+    function executeForceDeactivate(userId) {
+        $.ajax({
+            url: BASE_URL + '/admin/staff/change-status',
+            type: 'POST',
+            data: {
+                user_id: userId,
+                status: 2,
+                force_deactivate: 1,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (response.status === true) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated',
+                        text: response.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', response.message || 'Unable to deactivate user', 'error');
+                }
+            },
+            error: function () {
+                Swal.fire('Error', 'Something went wrong while deactivating user', 'error');
+            }
+        });
+    }
+
+    function clearAssignedFormsOnly(userId, currentFormType = null) {
+        const requests = [];
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        const formType = String(currentFormType || '').toUpperCase();
+
+        if (formType === 'N' || formType === 'R') {
+            requests.push($.ajax({
+                url: BASE_URL + '/admin/staff/updatestaff',
+                type: 'POST',
+                data: {
+                    user_id: userId,
+                    form_type: formType,
+                    user_status: 0,
+                    assigned_forms: [],
+                    _token: csrfToken
+                }
+            }));
+        }
+
+        if (!requests.length) {
+            Swal.fire('Info', 'Unable to detect current form type to clear.', 'info');
+            return;
+        }
+
+        $.when.apply($, requests)
+            .done(function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cleared',
+                    text: 'Current form type assignments were cleared successfully.',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            })
+            .fail(function () {
+                Swal.fire('Error', 'Unable to clear assigned forms', 'error');
+            });
+    }
+
+    function promptDeactivateUser(userId, currentFormType = null) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No Forms Selected',
+            text: 'No forms are selected in this update. Do you want to deactivate this user?',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Deactivate',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            const $newBtn = $(`.updateFormNew[data-user_id="${userId}"]`).first();
+            const $renewBtn = $(`.updateFormRenew[data-user_id="${userId}"]`).first();
+            const $row = ($newBtn.length ? $newBtn : $renewBtn).closest('tr');
+
+            let newFormIds = normalizeFormIds($newBtn.data('new_form_ids'));
+            let renewalFormIds = normalizeFormIds($renewBtn.data('renewal_form_ids'));
+
+            let newFormNames = $row.length
+                ? $row.find('.updateFormNew').closest('td').find('.badge').map(function () {
+                    return $(this).text().trim();
+                }).get().filter(Boolean)
+                : [];
+
+            let renewalFormNames = $row.length
+                ? $row.find('.updateFormRenew').closest('td').find('.badge').map(function () {
+                    return $(this).text().trim();
+                }).get().filter(Boolean)
+                : [];
+
+            // If user just submitted one modal with zero selections, treat that form type as empty now.
+            if (currentFormType === 'N') {
+                newFormIds = [];
+                newFormNames = [];
+            } else if (currentFormType === 'R') {
+                renewalFormIds = [];
+                renewalFormNames = [];
+            }
+
+            if (newFormIds.length || renewalFormIds.length) {
+                let warningLines = [];
+
+                if (newFormIds.length) {
+                    warningLines.push(
+                        `<div><strong>Assigned in New:</strong> ${(newFormNames.length ? newFormNames : newFormIds).join(', ')}</div>`
+                    );
+                }
+
+                if (renewalFormIds.length) {
+                    warningLines.push(
+                        `<div><strong>Assigned in Renewal:</strong> ${(renewalFormNames.length ? renewalFormNames : renewalFormIds).join(', ')}</div>`
+                    );
+                }
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Warning',
+                    html: `${warningLines.join('<div style="height:6px;"></div>')}<div style="margin-top:12px;color:#334155;font-weight:500;">Choose what you want to do:</div><div style="margin-top:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:13px;line-height:1.4;text-align:left;"><strong>Note:</strong><ol type="i" style="margin:6px 0 0 18px;padding:0;"><li>Click "Yes, Deactivate" to deactivate the user and clear all assigned forms.</li><li>Click "Clear" to clear only the current modal form assignments.</li><li>Click "Cancel" to keep everything unchanged.</li></ol></div>`,
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Yes, Deactivate',
+                    denyButtonText: 'Clear',
+                    cancelButtonText: 'Cancel'
+                }).then((clearResult) => {
+                    if (clearResult.isConfirmed) {
+                        executeForceDeactivate(userId);
+                        return;
+                    }
+
+                    if (clearResult.isDenied) {
+                        clearAssignedFormsOnly(userId, currentFormType);
+                    }
+                });
+                return;
+            }
+
+            executeForceDeactivate(userId);
+        });
+    }
+
+    function isNoFormsAssignedResponse(xhr, message) {
+        if (xhr.status !== 422) return false;
+        if (!message) return false;
+        return String(message).toLowerCase().includes('no form is assigned');
+    }
+
+    function handleEmptySelectionBeforeSubmit($form) {
+        const selectedCount = $form.find('input[name="assigned_forms[]"]:checked').length;
+        if (selectedCount > 0) return false;
+
+        const userId = $form.find('input[name="user_id"]').val();
+        const currentFormType = String($form.find('input[name="form_type"]').val() || '').toUpperCase();
+        promptDeactivateUser(userId, currentFormType);
+        return true;
+    }
+
+    $("#updateNewFormAssign").on("submit", function (e) {
+        e.preventDefault();
+        let $form = $(this);
+
+        if (handleEmptySelectionBeforeSubmit($form)) {
+            return;
+        }
+
+
+        let formData = new FormData(this);
+
+        $.ajax({
+            url: BASE_URL + "/admin/staff/updatestaff",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                if (response.status === true) {
+
+                    
+                    // Close edit modal
+                    let modal = bootstrap.Modal.getInstance(
+                        document.getElementById('editFormNew')
+                    );
+                    modal.hide();
+            
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated',
+                        text: response.message,
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+
+                $('#updateNewFormAssign')[0].reset();
+                $('#editFormNew').modal('hide');
+            },
+
+            error: function (xhr) {
+                let message = 'Something went wrong!';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.error) {
+                        message = xhr.responseJSON.error;
+                    }
+                }
+
+                if (isNoFormsAssignedResponse(xhr, message)) {
+                    let userId = $('#updateNewFormAssign input[name="user_id"]').val();
+                    promptDeactivateUser(userId, 'N');
+                } else if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = xhr.responseJSON.errors;
+                    let messages = '';
+                    Object.keys(errors).forEach(function (key) {
+                        messages += errors[key][0] + '<br>';
+                    });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        html: messages
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: message
+                    });
+                }
+            }
+        });
+    });
+    $("#updateRenewalForm").on("submit", function (e) {
+        e.preventDefault();
+        let $form = $(this);
+
+        if (handleEmptySelectionBeforeSubmit($form)) {
+            return;
+        }
+
+        let formData = new FormData(this);
+
+        $.ajax({
+            url: BASE_URL + "/admin/staff/updatestaff",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            success: function (response) {
+                if (response.status === true) {
+
+                    
+                    // Close edit modal
+                    let modal = bootstrap.Modal.getInstance(
+                        document.getElementById('renewalForm')
+                    );
+                    modal.hide();
+            
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated',
+                        text: response.message,
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+
+                $('#updateRenewalForm')[0].reset();
+                $('#renewalForm').modal('hide');
+            },
+
+            error: function (xhr) {
+                let message = 'Something went wrong!';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.error) {
+                        message = xhr.responseJSON.error;
+                    }
+                }
+
+                if (isNoFormsAssignedResponse(xhr, message)) {
+                    let userId = $('#updateRenewalForm input[name="user_id"]').val();
+                    promptDeactivateUser(userId, 'R');
+                } else if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errors = xhr.responseJSON.errors;
+                    let messages = '';
+                    Object.keys(errors).forEach(function (key) {
+                        messages += errors[key][0] + '<br>';
+                    });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        html: messages
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: message
+                    });
+                }
+            }
+        });
+    });
+
+});
+
 $(document).ready(function () {
     // Handle English Modal
     $('.edit-newsboard-btn[data-bs-target="#inputFormModalEnglish"]').on('click', function () {
@@ -5210,48 +5700,50 @@ $(document).on("submit", "#editmediaForm", function (e) {
 // --------------media menu----------------------
 let currentPdfTarget = '';
 
-    function openMediaLibraryPdf(fieldId) {
+function openMediaLibraryPdf(fieldId) {
 
-          
-        currentPdfTarget = fieldId;
-      alert(currentPdfTarget);
-        const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModalpdfmenu'));
-        modal.show();
-    }
+        
+    currentPdfTarget = fieldId;
+    alert(currentPdfTarget);
+    const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModalpdfmenu'));
+    modal.show();
+}
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectBtn = document.getElementById('selectImageBtnpdfmenu');
+document.addEventListener('DOMContentLoaded', function () {
+    const selectBtn = document.getElementById('selectImageBtnpdfmenu');
 
-        selectBtn.addEventListener('click', function () {
-            const selected = document.querySelector('input[name="mediaSelect"]:checked');
-            if (!selected) {
-                alert('Please select a PDF.');
-                return;
-            }
+    selectBtn.addEventListener('click', function () {
+        const selected = document.querySelector('input[name="mediaSelect"]:checked');
+        if (!selected) {
+            alert('Please select a PDF.');
+            return;
+        }
 
-            const image = selected.closest('.card').querySelector('.media-image');
-            const filePath = image.getAttribute('data-path');
-            const pdfId = selected.value;
+        const image = selected.closest('.card').querySelector('.media-image');
+        const filePath = image.getAttribute('data-path');
+        const pdfId = selected.value;
 
-            if (currentPdfTarget) {
-                // Set PDF ID as value
-                document.getElementById(currentPdfTarget).value = pdfId;
+        if (currentPdfTarget) {
+            // Set PDF ID as value
+            document.getElementById(currentPdfTarget).value = pdfId;
 
-                // Show preview link
-                const fileName = filePath.split('/').pop();
-                const previewElement = document.getElementById('preview_' + currentPdfTarget);
-                previewElement.innerHTML = `
-                    <a href="${filePath}" target="_blank">
-                        <i class="fa fa-file-pdf-o text-danger"></i> ${fileName}
-                    </a>`;
-            }
+            // Show preview link
+            const fileName = filePath.split('/').pop();
+            const previewElement = document.getElementById('preview_' + currentPdfTarget);
+            previewElement.innerHTML = `
+                <a href="${filePath}" target="_blank">
+                    <i class="fa fa-file-pdf-o text-danger"></i> ${fileName}
+                </a>`;
+        }
 
-            // Hide modal
-            const modalEl = document.getElementById('mediaLibraryModalpdfmenu');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            modalInstance.hide();
-        });
+        // Hide modal
+        const modalEl = document.getElementById('mediaLibraryModalpdfmenu');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        modalInstance.hide();
     });
+});
+
+
 
 
 

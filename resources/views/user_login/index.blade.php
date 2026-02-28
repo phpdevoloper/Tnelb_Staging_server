@@ -116,7 +116,7 @@
                             <div class="project-list-login mt-2">
 
                                 <div class="project-card-login" data-status="en-cours">
-                                    @if (!$present_license && !$present_license_ea)
+                                    @if (!$present_license)
                                     <div class="row">
                                         <div class="col-12">
                                             <p>No Active Licenses</p>
@@ -141,7 +141,7 @@
                                             use Carbon\Carbon;
 
                                             // Merge both collections
-                                            $allLicenses = collect($present_license)->merge($present_license_ea);
+                                            $allLicenses = collect($present_license);
 
                                             $today = Carbon::today();
                                             $licenses = ['C', 'B', 'W', 'WH'];
@@ -164,18 +164,23 @@
 
                                             $applicant_id = $workflow->application_id;
 
-                                            // Get related records
-                                            $banksolvency = \App\Models\Tnelb_banksolvency_a::where('application_id', $applicant_id)
-                                            ->where('status', '1')
-                                            ->first();
+                                            // TEMP: Bank Solvency lookup disabled (table `tnelb_banksolvency_a` missing in DB)
+                                            // $banksolvency = \App\Models\Tnelb_banksolvency_a::where('application_id', $applicant_id)
+                                            //     ->where('status', '1')
+                                            //     ->first();
+                                            $banksolvency = null;
 
-                                            $equipmentlist = \App\Models\Equipment_storetmp_A::where('application_id', $applicant_id)->first();
+                                            // TEMP: Equipment list lookup disabled (table `equipment_storetmp_a` missing in DB)
+                                            // $equipmentlist = \App\Models\Equipment_storetmp_A::where('application_id', $applicant_id)->first();
+                                            $equipmentlist = null;
 
-                                            $staffRecords = DB::table('tnelb_applicant_cl_staffdetails')
-                                            ->where('application_id', $applicant_id)
-                                            ->where('staff_category','QC')
-                                            ->orderBy('id')
-                                            ->get();
+                                            // TEMP: Staff details lookup disabled (table `tnelb_applicant_cl_staffdetails` missing in DB)
+                                            // $staffRecords = DB::table('tnelb_applicant_cl_staffdetails')
+                                            //     ->where('application_id', $applicant_id)
+                                            //     ->where('staff_category', 'QC')
+                                            //     ->orderBy('id')
+                                            //     ->get();
+                                            $staffRecords = collect();
 
                                             $expiredStaffDates = [];
                                             if ($staffRecords->count() > 0) {
@@ -195,10 +200,7 @@
 
 
                                             // Prepare date comparisons
-                                            $bankValidity = !empty($banksolvency?->bank_validity) ? Carbon::parse($banksolvency->bank_validity) : null;
-
-
-                                            $staffValidity = !empty($staffRecord?->cc_validity) ? Carbon::parse($staffRecord->cc_validity) : null;
+                                            $bankValidity = null; // see TEMP note above
                                             @endphp
 
                                             <tr class="text-center">
@@ -629,7 +631,7 @@
                                             ->where('form_code', $workflow->form_name)
                                              ->first();
                                                 @endphp    
-                                                {{ $licence_name_present->licence_name }} <br>
+                                                {{-- {{ $licence_name_present->licence_name }} <br> --}}
                                             [Form {{ strtoupper($workflow->form_name ?? 'NA') }}]
                                             </td>
                                             <td>{{ $workflow->application_id ?? 'N/A' }}</td>

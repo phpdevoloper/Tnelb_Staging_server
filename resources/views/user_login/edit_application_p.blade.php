@@ -764,10 +764,6 @@
                                                                     : null;
 
 
-                                                                $decryptedpan = !empty($application_details->pancard)
-                                                                    ? Crypt::decryptString($application_details->pancard)
-                                                                    : null;
-
                                                             @endphp
                                                             <td>
                                                                 <label for="Name">Aadhaar Number <span style="color: red;">*</span></label>
@@ -800,38 +796,6 @@
 
                                                                     <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
                                                                 
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>(iv)</td>
-                                                            <td>
-                                                                <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
-                                                                <br>
-                                                                <label for="tamil" class="tamil">நிரந்தர கணக்கு எண்</label>
-                                                            </td>
-                                                            <td>
-                                                                <input type="text" class="form-control text-box " name="pancard" id="pancard" value="{{ $decryptedpan }}">
-                                                                <p id="pancard-error" class="text-danger"></p>
-                                                            </td>
-                                                            <td>
-                                                                <label for="Name">(v) Upload Pan Card Document <span style="color: red;">*</span></label>
-                                                                <br>
-                                                                <label for="tamil" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும் </label>
-                                                            </td>
-                                                            <td>
-                                                                @if (!empty($application_details->pan_doc))
-                                                                    <div class="pan-doc-container">
-                                                                        <a href="{{ route('document.show', ['type' => 'pan', 'filename' => $application_details->pan_doc]) }}" target="_blank" style="color: #007bff;"><i class="fa fa-file-pdf-o" style="color: red;"></i> View</a>
-                                                                        <button class="btn btn-sm btn-danger ml-3 remove-doc-pan">Remove</button>
-                                                                    </div>
-                                                                @endif
-                                                                <div class="pan-doc-input {{ !empty($application_details->pan_doc) ? 'd-none' : '' }}">
-                                                                    <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
-                                                                    <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
-                                                                    <p class="text-danger file-error"></p>
-                                                                </div>
-
-                                                                <input type="hidden" name="pan_doc_removed" id="pan_doc_removed" value="0">
                                                             </td>
                                                         </tr>
                                                     </table>

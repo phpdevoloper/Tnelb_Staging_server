@@ -120,7 +120,7 @@
                                                         <th>Degree</th>
                                                         <th>Institution</th>
                                                         <th>Year of Passing</th>
-                                                        <th>Percentage</th>
+                                                        <th>Certificate No</th>
                                                         <th>Documents</th>
                                                     </tr>
                                                 </thead>
@@ -130,7 +130,19 @@
                                                             <td style="max-width: 10%;">{{ $education->educational_level }}</td>
                                                             <td style="width: 20%;">{{ $education->institute_name }}</td>
                                                             <td style="width: 20%;">{{ $education->year_of_passing }}</td>
-                                                            <td style="width: 20%;">{{ $education->percentage }}%</td>
+                                                            @php
+                                                                $certificateNo = data_get($education, 'certificate_no');
+                                                                $percentage = data_get($education, 'percentage');
+                                                            @endphp
+                                                            <td style="width: 20%;">
+                                                                @if($certificateNo !== null && $certificateNo !== '')
+                                                                    {{ $certificateNo }}
+                                                                @elseif($percentage !== null && $percentage !== '')
+                                                                    {{ $percentage }}%
+                                                                @else
+                                                                    N/A
+                                                                @endif
+                                                            </td>
                                                             <td style="text-align:center;">
                                                                 
 

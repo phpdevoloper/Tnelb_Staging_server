@@ -194,8 +194,8 @@
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage / Grade</th>
-                                                            <th class="text-center">Upload Document (Consolidated MarkSheet)
+                                                            <th>Certificate No</th>
+                                                            <th class="text-center">Upload Document (ITI Certificate)
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th>
                                                             <th>
@@ -214,6 +214,7 @@
                                                                     <option value="Diploma">Diploma</option>
                                                                     <option value="+2">+2</option>
                                                                     <option value="10">10</option>
+                                                                    <option value="8">8</option>
                                                                 </select></td>
                                                             <td><input type="text" class="form-control" name="institute_name[]"></td>
                                                             <td>
@@ -228,7 +229,12 @@
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                            <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" required>
+                                                                <input type="text"
+                                                                    class="form-control certificate-input"
+                                                                    name="certificate_no[]"
+                                                                    maxlength="50"
+                                                                    required>
+                                                                <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td><input type="file" class="form-control" name="education_document[]"></td>
                                                             <td>
@@ -245,11 +251,11 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-12 ">
-                                                <label>6. Details of Previous and Current Work experiences <span style="color: red;">*</span> <span class="text-label"> (Upload the documents) </span></label>
+                                                <label>6. Details of Previous and Current Work experiences <span class="text-label">(Optional)</span></label>
                                                 <br>
                                                 <label for="tamil" class="tamil">பெற்றுள்ள
-                                                    முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள் <span style="color: red;">*</span>
-                                                    <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span></label>
+                                                    முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
+                                                    <span class="text-label">(விருப்பமெனில் நிரப்பலாம்)</span></label>
                                             </div>
 
                                         </div>
@@ -262,9 +268,9 @@
                                                         <th>Years of Experience</th>
                                                         <th>Designation</th>
 
-                                                        <th class="text-center">Upload Document (Experience Certificate)
+                                                        {{-- <th class="text-center">Upload Document (Experience Certificate)
                                                             <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                        </th>
+                                                        </th> --}}
                                                         <th>
                                                             <button type="button" class="btn btn-primary add-more-work">
                                                                 <i class="fa fa-plus"></i>
@@ -284,9 +290,9 @@
                                                             <input autocomplete="off" class="form-control" name="designation[]" type="text">
                                                         </td>
 
-                                                        <td>
+                                                        {{-- <td>
                                                             <input class="form-control" name="work_document[]" type="file">
-                                                        </td>
+                                                        </td> --}}
                                                         <td>
                                                             <button type="button" class="btn btn-danger remove-work">
                                                                 <i class="fa fa-trash-o"></i>
@@ -337,7 +343,7 @@
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_number_h" name="certificate_no" type="text" placeholder="Certificate Number" data-is_verify="0">
+                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_number_h" name="competency_certificate_no" type="text" placeholder="Certificate Number" data-is_verify="0">
                                                         <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                         <span id="verify_result"></span>
                                                         <span id="licenseError" class="text-danger"></span>
@@ -412,7 +418,7 @@
                                                             <span class="file-limit"> File type: PDF (Max 250 KB) </span>
                                                         </td>
                                                     </tr>
-                                                    <tr>
+                                                    {{-- <tr>
                                                         <td>(iv)</td>
                                                         <td>
                                                             <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
@@ -431,9 +437,8 @@
                                                         <td>
                                                             <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" value="">
                                                             <span class="file-limit"> File type: PDF (Max 250 KB) </span>
-                                                            {{-- <p class="text-danger file-error"></p> --}}
                                                         </td>
-                                                    </tr>
+                                                    </tr> --}}
                                                 </table>
                                             </div>
 
@@ -468,7 +473,7 @@
                                     </div>
                                     <input type="hidden" id="form_name" name="form_name" value="WH">
                                     <input type="hidden" id="license_name" name="license_name" value="H">
-                                    <input type="hidden" id="amount" name="amount" value="250">
+                                    <input type="hidden" id="amount" name="amount" value="">
                                     <input type="hidden" id="form_id" name="form_id" value="3">
                                     <input type="hidden" id="appl_type" name="appl_type" value="N">
                                     @csrf
@@ -510,21 +515,8 @@
     @include('include.footer')
 
     <script>
-        // Function to show the draft saved popup
-        function showDraftPopup() {
-            document.getElementById('draftPopup').style.display = 'flex';
-        }
-
-        // Function to close the popup
-        function closeDraftPopup() {
-            document.getElementById('draftPopup').style.display = 'none';
-        }
-
-        // Attach event listener to the "Save As Draft" button
-        document.querySelector('.btn-primary').addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent form submission
-            showDraftPopup(); // Show the popup
-        });
+        // Note: Save-as-draft is handled via AJAX in shared scripts.
+        // Avoid attaching a generic ".btn-primary" click handler here (it breaks add-more buttons).
 
 
 
@@ -692,6 +684,7 @@
                 <option value="Diploma">Diploma</option>
                 <option value="+2">+2</option>
                 <option value="10">10</option>
+                <option value="8">8</option>
                 </select></td>
                 <td><input type="text" class="form-control" name="institute_name[]" required></td>
                 <td>
@@ -703,7 +696,8 @@
                 </select>
                 </td>
                 <td>
-                <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" required>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" required>
+                    <span class="error text-danger certificate-error"></span>
                 </td>
                 <td><input type="file" class="form-control" name="education_document[]"></td>
                 <td>
@@ -765,7 +759,6 @@
             <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
             <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
             <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
-            <td><input class="form-control" name="work_document[]" type="file"></td>
             <td>
             <button type="button" class="btn btn-danger remove-work">
             <i class="fa fa-trash-o"></i>
@@ -778,19 +771,36 @@
 
         // Remove row functionality
         if (e.target.closest(".remove-work")) {
-            if (workRows.length <= 1) {
-                $('#work-table').next('.work-error').remove();
-
-                $('<div class="text-danger mt-2 work-error">At least one work experience entry is required.</div>')
-                .insertAfter('#work-table');
-
-                setTimeout(() => {
-                    $('.work-error').fadeOut();
-                }, 7000);
-                // alert("You must have at least one work experience entry.");
-                return;
-            }
             e.target.closest("tr").remove();
         }
+    });
+</script>
+
+<script>
+    // Dynamically set hidden fee amount for Form WH (no static fee)
+    document.addEventListener('DOMContentLoaded', function () {
+        window.certificate_name = window.certificate_name || '';
+
+        const licenceCode = ($('#license_name').val() || '').trim();
+        const applType = ($('#appl_type').val() || '').trim();
+        const issuedLicence = ($('#license_number').val() || '').trim();
+
+        if (!licenceCode || !applType || !$('#amount').length) return;
+
+        $.ajax({
+            url: "{{ route('licences.getPaymentDetails') }}",
+            type: "POST",
+            data: {
+                licence_code: licenceCode,
+                issued_licence: issuedLicence,
+                appl_type: applType,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (response?.status === 'success' && response?.fees_details?.basic_fees !== null && response?.fees_details?.basic_fees !== undefined) {
+                    $('#amount').val(response.fees_details.basic_fees);
+                }
+            }
+        });
     });
 </script>
