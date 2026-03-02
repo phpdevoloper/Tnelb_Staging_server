@@ -189,7 +189,7 @@
             
                                                     <td>
                                                         <a
-                                                            href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                            href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
                                                             {{ $application->application_id }}
                                                         </a>
                                                     </td>
@@ -200,7 +200,7 @@
                                                     <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
                                                     <td>
                                                         <a
-                                                            href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                            href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
                                                             <button type="button" class="btn btn-primary"
                                                                 data-bs-placement="bottom" title="Forward Application">
                                                                 <i class="fa fa-eye"></i>
@@ -239,7 +239,7 @@
                                                         <td>{{ $key + 1 }}</td>
                                                         <td>
                                                             <a
-                                                                href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                                href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
                                                                 {{ $application->application_id }}
                                                             </a>
                                                         </td>
@@ -250,7 +250,7 @@
                                                         <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
                                                         <td>
                                                             <a
-                                                                href="{{ route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                                href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
                                                                 <button type="button" class="btn btn-primary"
                                                                     data-bs-placement="bottom"
                                                                     title="Forward Application">

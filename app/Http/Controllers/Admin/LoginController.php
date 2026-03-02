@@ -375,6 +375,48 @@ class LoginController extends Controller
                 }
                 $pendingCountsMap[$fid][$type] = (int) $row->cnt;
             }
+
+            // Form P uses tnelb_form_p; add its pending counts if Form P is assigned
+            $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
+            if ($formPId > 0 && in_array($formPId, $assignedFormIDs, true)) {
+                if ($isSupervisorRole) {
+                    $formPCounts = DB::table('tnelb_form_p as ta')
+                        ->whereIn('ta.payment_status', ['payment', 'paid'])
+                        ->whereIn('ta.app_status', ['P', 'RE'])
+                        ->whereNotExists(function ($q) {
+                            $q->select(DB::raw(1))
+                                ->from('tnelb_workflow as tw')
+                                ->whereRaw('tw.application_id = ta.application_id');
+                        })
+                        ->selectRaw('ta.appl_type, COUNT(*) as cnt')
+                        ->groupBy('ta.appl_type')
+                        ->get();
+                } else {
+                    $roleId = (int) ($staff->roles_id ?? 0);
+                    $twLast = DB::table('tnelb_workflow')
+                        ->select('application_id', DB::raw('MAX(id) as max_id'))
+                        ->groupBy('application_id');
+                    $formPCounts = DB::table('tnelb_workflow as tw')
+                        ->joinSub($twLast, 'tw_last', function ($join) {
+                            $join->on('tw.application_id', '=', 'tw_last.application_id')
+                                ->on('tw.id', '=', 'tw_last.max_id');
+                        })
+                        ->where('tw.forwarded_to', $roleId)
+                        ->whereIn('tw.appl_status', ['F', 'RF'])
+                        ->join('tnelb_form_p as ta', 'ta.application_id', '=', 'tw.application_id')
+                        ->whereIn('ta.payment_status', ['payment', 'paid'])
+                        ->selectRaw('ta.appl_type, COUNT(*) as cnt')
+                        ->groupBy('ta.appl_type')
+                        ->get();
+                }
+                if (!isset($pendingCountsMap[$formPId])) {
+                    $pendingCountsMap[$formPId] = ['N' => 0, 'R' => 0];
+                }
+                foreach ($formPCounts as $row) {
+                    $type = strtoupper((string) ($row->appl_type ?? '')) === 'R' ? 'R' : 'N';
+                    $pendingCountsMap[$formPId][$type] = (int) ($row->cnt ?? 0);
+                }
+            }
         }
 
         // Build a detailed flat list combining ID + type + licence details

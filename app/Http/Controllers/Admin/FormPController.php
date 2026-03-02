@@ -13,6 +13,8 @@ use App\Models\Admin\WorkflowA;
 
 use App\Models\B_Application;
 use App\Models\MstLicence;
+use App\Models\TnelbFormP;
+use App\Models\Admin\SupervisorModel;
 use App\Models\Tnelb_banksolvency_a;
 use App\Models\TnelbApplicantPhoto;
 use App\Models\TnelbAppsInstitute;
@@ -260,6 +262,202 @@ class FormPController extends Controller
 
 
         return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff','institute_details'));
+    }
+
+    /**
+     * Forward Form P application to next role (uses tnelb_workflow + tnelb_form_p).
+     */
+    public function forwardApplicationformp(Request $request, $role)
+    {
+        $staff = Auth::user();
+        $staffID = Auth::user()->id;
+
+        $request->validate([
+            'application_id' => 'required|string',
+            'processed_by'   => 'required|string',
+            'forwarded_to'   => 'required',
+            'role_id'        => 'required|integer',
+            'checkboxes'     => 'nullable|string',
+            'queryswitch'    => 'nullable|string',
+            'queryType'      => 'nullable|array',
+            'remarks'        => 'nullable|string',
+        ]);
+
+        $applicant = DB::table('tnelb_form_p')->where('application_id', $request->application_id)->first();
+        if (!$applicant) {
+            return response()->json(['status' => 'error', 'message' => 'Applicant not found.'], 404);
+        }
+
+        $queryTypeJson = $request->queryType && is_array($request->queryType) && count($request->queryType) > 0
+            ? json_encode($request->queryType) : null;
+
+        $processed_by = match ($staff->name) {
+            'President'   => 'PR',
+            'Secretary'   => 'SE',
+            'Supervisor'  => 'S',
+            'Supervisor2' => 'S2',
+            'Accountant'  => 'A',
+            default       => abort(403, 'Unauthorized'),
+        };
+
+        $query_status = ($request->queryswitch === 'Yes') ? 'P' : null;
+        $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
+
+        if ($processed_by === 'A') {
+            $last_workflow = SupervisorModel::where('application_id', $request->application_id)
+                ->orderBy('id', 'desc')
+                ->first();
+            if ($last_workflow && $last_workflow->query_status === 'P') {
+                $query_status = 'P';
+                $queryTypeJson = $last_workflow->queries;
+            }
+        }
+
+        $app_status_workflow = ($applicant->app_status ?? '') === 'RE' ? 'RF' : 'F';
+        $status = match ($staff->name) {
+            'President'    => 'A',
+            'Secretary'    => 'F',
+            'Supervisor'   => $app_status_workflow,
+            'Supervisor2'  => $app_status_workflow,
+            'Accountant'   => 'F',
+            default        => 'F',
+        };
+
+        SupervisorModel::create([
+            'application_id' => $request->application_id,
+            'appl_status'    => $app_status_workflow,
+            'processed_by'   => $request->processed_by,
+            'forwarded_to'   => $request->forwarded_to,
+            'role_id'        => $request->role_id,
+            'is_verified'    => $request->checkboxes ?? 'Yes',
+            'query_status'   => $query_status,
+            'remarks'        => $request->remarks,
+            'created_at'     => now(),
+            'login_id'       => $staffID,
+            'queries'        => $queryTypeJson,
+            'raised_by'      => $query_status === 'P' ? $raised_by : '',
+        ]);
+
+        DB::table('tnelb_form_p')
+            ->where('application_id', $request->application_id)
+            ->update([
+                'app_status'   => $status,
+                'processed_by' => $processed_by,
+                'updated_at'   => now(),
+            ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => "Application forwarded to {$role} successfully!",
+        ], 201);
+    }
+
+    /**
+     * Return Form P application to Supervisor.
+     */
+    public function returntoSupervisorformp(Request $request)
+    {
+        $staff = Auth::user();
+        $staffID = Auth::user()->id;
+
+        $request->validate([
+            'application_id' => 'required|string',
+            'return_by'      => 'required|string',
+            'forwarded_to'   => 'required',
+            'checkboxes'     => 'nullable|string',
+            'queryswitch'    => 'nullable|string',
+            'queryType'      => 'nullable|array',
+            'remarks'        => 'nullable|string',
+        ]);
+
+        $exists = DB::table('tnelb_form_p')->where('application_id', $request->application_id)->exists();
+        if (!$exists) {
+            return response()->json(['status' => 'error', 'message' => 'Applicant not found.'], 404);
+        }
+
+        $query_status = null;
+        $queryTypeJson = $request->queryType ? json_encode($request->queryType) : null;
+        if ($request->queryswitch === 'Yes' && !empty($request->queryType)) {
+            $query_status = 'P';
+        }
+
+        $processed_by = match ($staff->name) {
+            'President'  => 'PR',
+            'Secretary'  => 'SE',
+            'Accountant' => 'A',
+            default      => abort(403, 'Unauthorized'),
+        };
+        $raised_by = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
+
+        SupervisorModel::create([
+            'application_id' => $request->application_id,
+            'appl_status'    => 'RE',
+            'processed_by'   => $request->return_by,
+            'forwarded_to'   => $request->forwarded_to,
+            'role_id'        => $staffID,
+            'is_verified'    => $request->checkboxes ?? 'Yes',
+            'query_status'   => $query_status,
+            'remarks'        => $request->remarks,
+            'created_at'     => now(),
+            'login_id'       => $staffID,
+            'queries'        => $queryTypeJson,
+            'raised_by'      => $query_status === 'P' ? $raised_by : '',
+        ]);
+
+        DB::table('tnelb_form_p')
+            ->where('application_id', $request->application_id)
+            ->update([
+                'app_status'   => 'RE',
+                'processed_by' => $processed_by,
+                'updated_at'   => now(),
+            ]);
+
+        $role = DB::table('mst__roles')->where('id', $request->forwarded_to)->value('name');
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Application returned to ' . ($role ?? 'Supervisor') . ' successfully!',
+        ], 201);
+    }
+
+    /**
+     * Reject Form P application.
+     */
+    public function rejectApplicationformp(Request $request)
+    {
+        $request->validate([
+            'application_id' => 'required|string',
+            'appl_status'    => 'required|string|in:RJ',
+            'action_by'       => 'required|string|max:255',
+            'login_id'        => 'required',
+            'reason'          => 'nullable|string',
+        ]);
+
+        $exists = DB::table('tnelb_form_p')->where('application_id', $request->application_id)->exists();
+        if (!$exists) {
+            return response()->json(['success' => false, 'message' => 'Applicant not found.'], 404);
+        }
+
+        DB::table('tnelb_workflow')->insert([
+            'application_id' => $request->application_id,
+            'processed_by'   => $request->action_by,
+            'role_id'        => Auth::user()->roles_id,
+            'appl_status'    => $request->appl_status,
+            'reject_reason'   => $request->reason ?? '',
+            'created_at'     => now(),
+            'login_id'       => $request->login_id,
+        ]);
+
+        DB::table('tnelb_form_p')
+            ->where('application_id', $request->application_id)
+            ->update([
+                'app_status'   => $request->appl_status,
+                'updated_at'   => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Application rejected!',
+        ]);
     }
 
      // forward application-------------------------------------------------------------------

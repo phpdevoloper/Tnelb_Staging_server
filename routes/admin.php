@@ -89,6 +89,9 @@
             Route::post('/profile', [LoginController::class, 'profile'])->name('profile');
             Route::get('/applicants_detail/{applicant_id}', [LoginController::class, 'showApplicantDetails'])->name('applicants_detail');
             Route::get('/applicants_detail_formp/{applicant_id}', [FormPController::class, 'view_application_formp'])->name('application_details_formp');
+            Route::post('/forwardApplicationformp/{role}', [FormPController::class, 'forwardApplicationformp'])->name('forwardApplicationformp');
+            Route::post('/returntoSupervisorformp', [FormPController::class, 'returntoSupervisorformp'])->name('returntoSupervisorformp');
+            Route::post('/rejectApplicationformp', [FormPController::class, 'rejectApplicationformp'])->name('rejectApplicationformp');
 
         // Secretary
             Route::get('/secretary_table', [LoginController::class, 'secretary_table'])->name('secretary_table');

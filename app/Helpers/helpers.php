@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Crypt;
 
 if (!function_exists('format_date_input')) {
     function format_date_input($date)
@@ -55,5 +56,24 @@ function calculateDaysDifference($givenDate)
     return $interval->days;
 }
 
+if (!function_exists('safeDecrypt')) {
+    /**
+     * Safely decrypt a value. Returns null if value is empty or decryption fails.
+     *
+     * @param mixed $value
+     * @return string|null
+     */
+    function safeDecrypt($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+}
 
 ?>

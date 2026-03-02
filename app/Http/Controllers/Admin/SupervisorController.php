@@ -47,6 +47,46 @@ class SupervisorController extends Controller
             ]);
         }
 
+        $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
+        if ($formPId > 0 && $selectedFormId === $formPId) {
+            $roleLevel = (int) (optional($staff->role)->role_level ?? 0);
+            $roleId = (int) ($staff->roles_id ?? 0);
+            $applTypeFilter = in_array($request->input('form_type', ''), ['N', 'R'], true) ? strtoupper((string) $request->input('form_type')) : null;
+            if ($roleLevel === 1) {
+                $query = DB::table('tnelb_form_p as ta')
+                    ->whereIn('ta.payment_status', ['payment', 'paid'])
+                    ->whereIn('ta.app_status', ['P', 'RE'])
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))->from('tnelb_workflow as tw')->whereRaw('tw.application_id = ta.application_id');
+                    })
+                    ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'));
+                if ($applTypeFilter) {
+                    $query->where('ta.appl_type', $applTypeFilter);
+                }
+                $workflows = $query->orderByDesc('ta.id')->get();
+            } else {
+                $twLast = DB::table('tnelb_workflow')->select('application_id', DB::raw('MAX(id) as max_id'))->groupBy('application_id');
+                $currentAppIds = DB::table('tnelb_workflow as tw')
+                    ->joinSub($twLast, 'tw_last', function ($join) {
+                        $join->on('tw.application_id', '=', 'tw_last.application_id')->on('tw.id', '=', 'tw_last.max_id');
+                    })
+                    ->where('tw.forwarded_to', $roleId)->whereIn('tw.appl_status', ['F', 'RF'])->select('tw.application_id');
+                $workflows = DB::query()->fromSub($currentAppIds, 'cur')
+                    ->join('tnelb_form_p as ta', 'ta.application_id', '=', 'cur.application_id')
+                    ->whereIn('ta.payment_status', ['payment', 'paid'])
+                    ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'))->orderByDesc('ta.id')->get();
+                if ($applTypeFilter) {
+                    $workflows = collect($workflows)->filter(function ($row) use ($applTypeFilter) {
+                        return strtoupper((string) ($row->appl_type ?? '')) === $applTypeFilter;
+                    })->values();
+                }
+            }
+            [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
+                return strtoupper((string) ($row->appl_type ?? '')) === 'R';
+            });
+            return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal'));
+        }
+
         $requestedType = strtoupper((string) $request->input('form_type', ''));
         $applTypeFilter = in_array($requestedType, ['N', 'R'], true) ? $requestedType : null;
 

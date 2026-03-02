@@ -239,9 +239,6 @@
                                                     </tbody>
                                                 </table>
 
-                                            <h6 class="mt-3 mb-2 fw-bold">Employer name</h6>
-                                            <p class="mb-2">{{ $applicant->employer_detail ?? '—' }}</p>
-
                                             <h6 class="mt-2 mb-2 fw-bold">Power Station to which he is attached at present</h6>
                                             <div class="table-responsive">
                                                 <table class="table table-bordered">
@@ -277,6 +274,9 @@
                                                     </tbody>
                                                 </table>
                                             </div>
+
+                                            <h6 class="mt-3 mb-2 fw-bold">Employer name</h6>
+                                            <p class="mb-2">{{ $applicant->employer_detail ?? '—' }}</p>
 
                                             <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
                                                 Previous Application No & Date?
@@ -315,28 +315,21 @@
                                             <hr>
                                             @php
                                                 $decryptedaadhar = $applicant->aadhaar ? safeDecrypt($applicant->aadhaar) : '';
-                                                $decryptedpan    = $applicant->pancard ? safeDecrypt($applicant->pancard) : '';
                                                 $masked          = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : ($applicant->aadhaar ? 'Invalid Aadhaar' : '—');
-                                                $maskedPan       = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : ($applicant->pancard ? 'Invalid PAN' : '—');
                                             @endphp
 
                                             <div class="row mb-2">
-                                                <div class="col-md-6">
+                                                <div class="col-md-12">
                                                     <h6 class="fw-bold mb-0">Aadhaar:</h6>
                                                     <p class="mb-0">
                                                         {{ $masked }}
+                                                        @if(!empty($applicant->aadhaar_doc))
                                                         (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}" target="_blank" class="text-primary">
                                                             <i class="fa fa-file-pdf-o text-danger"></i>
                                                         </a>)
-                                                    </p>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <h6 class="fw-bold mb-0">PAN:</h6>
-                                                    <p class="mb-0">
-                                                        {{ $maskedPan }}
-                                                        (<a href="{{ route('document.show', ['type' => 'pan', 'filename' => $applicant->pan_doc]) }}" target="_blank" class="text-primary">
-                                                            <i class="fa fa-file-pdf-o text-danger"></i>
-                                                        </a>)
+                                                        @else
+                                                        (—)
+                                                        @endif
                                                     </p>
                                                 </div>
                                             </div>
@@ -1150,7 +1143,7 @@
                 if (result.isConfirmed) {
                     
                     $.ajax({
-                        url: '{{ route('admin.forwardApplication',["role" => "__ROLE__"]) }}'.replace('__ROLE__', role),
+                        url: '{{ route('admin.forwardApplicationformp',["role" => "__ROLE__"]) }}'.replace('__ROLE__', role),
                         type: 'POST',
                         headers: {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
@@ -1241,7 +1234,7 @@
                     }
 
                     $.ajax({
-                        url: '{{ route('admin.forwardApplication',["role" => "__ROLE__"]) }}'.replace('__ROLE__', role),
+                        url: '{{ route('admin.forwardApplicationformp',["role" => "__ROLE__"]) }}'.replace('__ROLE__', role),
                         type: "POST",
                         headers: {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
@@ -1317,7 +1310,7 @@
         //     }
 
         //     $.ajax({
-        //         url: '{{ route('admin.forwardApplication',["role" => "__ROLE__"]) }}'.replace('__ROLE__', role),
+        //         url: '{{ route('admin.forwardApplicationformp',["role" => "__ROLE__"]) }}'.replace('__ROLE__', role),
         //         type: 'POST',
         //         // contentType: 'application/json',
         //         headers: {
@@ -1410,7 +1403,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: '{{ route('admin.returntoSupervisor') }}',
+                        url: '{{ route('admin.returntoSupervisorformp') }}',
                         type: 'POST',
                         headers: {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
@@ -1538,7 +1531,7 @@
     e.preventDefault();
 
     
-    const rejectAppUrl = "{{ route('admin.rejectApplication') }}";
+    const rejectAppUrl = "{{ route('admin.rejectApplicationformp') }}";
     const APP_URL = "{{ config('app.url') }}";
 
         // clear old errors
