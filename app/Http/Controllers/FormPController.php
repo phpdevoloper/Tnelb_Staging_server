@@ -65,7 +65,7 @@ class FormPController extends BaseController
             'age'                  => 'required|integer|min:18|max:100',
             // Optional: user may fill if applicable
             'employer_name'        => 'nullable|string|max:255',
-            'previously_number'    => 'nullable|string',
+            'previously_number'    => 'nullable|string|max:80',
             'previously_date'      => 'nullable|date',
             'aadhaar'              => 'required|string|digits:12',
             'form_name'            => 'required|string|max:2',
@@ -83,8 +83,8 @@ class FormPController extends BaseController
             'institute_name.*'     => 'required|string|max:255',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
-            'percentage'           => 'required|array|min:1',
-            'percentage.*'         => 'required|numeric|min:0|max:100',
+            'certificate_no'       => 'nullable|array',
+            'certificate_no.*'     => 'nullable|string|max:20',
 
             // work experience arrays (optional)
             'work_level'           => 'nullable|array',
@@ -135,11 +135,8 @@ class FormPController extends BaseController
             'year_of_passing.*.required'    => 'Year of passing is required.',
             'year_of_passing.*.digits'      => 'Year of passing must be a 4-digit year.',
 
-            'percentage.required'           => 'Please add at least one educational qualification.',
-            'percentage.*.required'         => 'Percentage/Grade is required.',
-            'percentage.*.numeric'          => 'Percentage/Grade must be a number.',
-            'percentage.*.min'              => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'              => 'Percentage/Grade may not exceed 100.',
+            'certificate_no.*.string'       => 'Certificate No must be valid text.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
 
             // work experience arrays
             'work_level.required'           => 'Please add at least one work experience.',
@@ -265,8 +262,8 @@ class FormPController extends BaseController
                 'appl_type'           => $appl_type,
                 'payment_status'      => ($action === 'draft') ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
-                'certificate_no'      => $request->certificate_no,
-                'certificate_date'    => $request->certificate_date,
+                'certificate_no'      => is_array($request->certificate_no ?? null) ? null : ($request->certificate_no ?? null),
+                'certificate_date'    => is_array($request->certificate_date ?? null) ? null : ($request->certificate_date ?? null),
                 'cert_verify'         => $request->cert_verify ?? '0',
                 'license_verify'      => $request->l_verify ?? '0',
                 'submitted_date'      => $this->dbNow,
@@ -323,7 +320,7 @@ class FormPController extends BaseController
                         'educational_level'  => $level,
                         'institute_name'     => $request->institute_name[$key],
                         'year_of_passing'    => $request->year_of_passing[$key],
-                        'percentage'         => $request->percentage[$key],
+                        'certificate_no'     => $request->certificate_no[$key] ?? null,
                         'application_id'     => $newApplicationId,
                         'edu_serial'         => $newEduSerial,
                         'upload_document'    => $filePath,
@@ -471,8 +468,8 @@ class FormPController extends BaseController
             'institute_name.*'     => 'nullable|string|max:255',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
-            'percentage'           => 'nullable|array|min:1',
-            'percentage.*'         => 'nullable|numeric|min:0|max:100',
+            'certificate_no'      => 'nullable|array',
+            'certificate_no.*'    => 'nullable|string|max:20',
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
 
@@ -489,9 +486,6 @@ class FormPController extends BaseController
             'educational_level.*.max'       => 'Educational level may not be greater than 50 characters.',
             'institute_name.*.string'       => 'Institute name must be a valid string.',
             'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
-            'percentage.*.numeric'          => 'Percentage/Grade must be a number.',
-            'percentage.*.min'              => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'              => 'Percentage/Grade may not exceed 100.',
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
             'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
@@ -575,8 +569,8 @@ class FormPController extends BaseController
                     'form_id'            => $request->form_id,
                     'license_name'       => $request->license_name,
                     'aadhaar'            => $encrypted_aadhaar,
-                    'certificate_no'     => $request->certificate_no ?? null,
-                    'certificate_date'   => $request->certificate_date ?? null,
+                    'certificate_no'     => is_array($request->certificate_no ?? null) ? null : ($request->certificate_no ?? null),
+                    'certificate_date'   => is_array($request->certificate_date ?? null) ? null : ($request->certificate_date ?? null),
                     'appl_type'          => $appl_type,
                     'license_number'     => $request->license_number,
                     'payment_status'     => 'draft',
@@ -623,7 +617,7 @@ class FormPController extends BaseController
                     $levelName  = $level ?? null;
                     $institute  = $request->institute_name[$key] ?? null;
                     $year       = $request->year_of_passing[$key] ?? null;
-                    $percentage = $request->percentage[$key] ?? null;
+                    $certNo     = $request->certificate_no[$key] ?? null;
 
                     $removed    = isset($request->removed_document[$key]) && $request->removed_document[$key] == '1';
                     $newDoc     = (isset($request->file('education_document')[$key]) && $request->file('education_document')[$key]->isValid())
@@ -643,7 +637,7 @@ class FormPController extends BaseController
                     }
 
                     // skip only if EVERYTHING is empty (avoid junk rows)
-                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($percentage) || !empty($finalDoc);
+                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($certNo) || !empty($finalDoc);
                     if (!$hasAnyData) continue;
 
                     $lastNum++;
@@ -658,7 +652,7 @@ class FormPController extends BaseController
                         [
                             'institute_name'    => $institute,
                             'year_of_passing'   => $year,
-                            'percentage'        => $percentage,
+                            'certificate_no'    => $certNo,
                             'upload_document'   => $finalDoc,
                             'edu_serial'        => $newSerial,
                         ]
@@ -934,8 +928,8 @@ class FormPController extends BaseController
             'institute_name.*'     => 'nullable|string|max:255',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
-            'percentage'           => 'nullable|array|min:1',
-            'percentage.*'         => 'nullable|numeric|min:0|max:100',
+            'certificate_no'      => 'nullable|array',
+            'certificate_no.*'    => 'nullable|string|max:20',
 
 
             'upload_photo'   => $uploadPhotoRule,
@@ -958,10 +952,6 @@ class FormPController extends BaseController
             'institute_name.*.string'       => 'Institute name must be a valid string.',
             'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
 
-
-            'percentage.*.numeric'          => 'Percentage/Grade must be a number.',
-            'percentage.*.min'              => 'Percentage/Grade must be at least 0.',
-            'percentage.*.max'              => 'Percentage/Grade may not exceed 100.',
 
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
@@ -1055,8 +1045,8 @@ class FormPController extends BaseController
                 'license_number'    => $request->license_number,
                 'payment_status'    => $action === 'draft' ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
-                'certificate_no'      => $request->certificate_no ?? null,
-                'certificate_date'   => $request->certificate_date ?? null,
+                'certificate_no'      => is_array($request->certificate_no ?? null) ? null : ($request->certificate_no ?? null),
+                'certificate_date'   => is_array($request->certificate_date ?? null) ? null : ($request->certificate_date ?? null),
                 'application_id'    => $applicationId,
                 'cert_verify'    => $request->cert_verify ?? '0',
                 'license_verify'    => $request->l_verify ?? '0',
@@ -1087,7 +1077,7 @@ class FormPController extends BaseController
                         empty($level) &&
                         empty($request->institute_name[$key] ?? null) &&
                         empty($request->year_of_passing[$key] ?? null) &&
-                        empty($request->percentage[$key] ?? null)
+                        empty($request->certificate_no[$key] ?? null)
                     ) {
                         continue; // skip empty row
                     }
@@ -1126,7 +1116,7 @@ class FormPController extends BaseController
                             'educational_level' => $level ?? null,
                             'institute_name'    => $request->institute_name[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key] ?? null,
-                            'percentage'        => $request->percentage[$key] ?? null,
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'upload_document'   => $filePath,
                         ]);
                     } else {
@@ -1138,7 +1128,7 @@ class FormPController extends BaseController
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
                             'year_of_passing'   => $request->year_of_passing[$key],
-                            'percentage'        => $request->percentage[$key],
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
                             'edu_serial'        => $newEduSerial,
                             'upload_document'   => $filePath,

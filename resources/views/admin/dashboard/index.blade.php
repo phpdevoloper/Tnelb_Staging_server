@@ -371,10 +371,12 @@
                                                         $badge_class = "badge-danger";
                                                     }elseif ($row->form_name == 'WH') {
                                                         $badge_class = "badge-warning";
+                                                    }elseif ($row->form_name == 'P') {
+                                                        $badge_class = "badge-info";
                                                     }
                                                 @endphp
                                                 <td><span class="badge {{ $badge_class }}">FORM {{ $row->form_name }}</span></td>
-                                                <td><a href="{{ route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}">{{ $row->application_id }}</a></td>
+                                                <td><a href="{{ $row->form_name == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}">{{ $row->application_id }}</a></td>
                                                 <td>{{ format_date_other($row->submitted_at) }}</td>
                                                 <td>{{ calculateDaysDifference($row->submitted_at) }} Days</td>
                                                 <td>    @if ($row->processed_by == null)
@@ -424,9 +426,11 @@
                                                             $badge_class = "badge-danger";
                                                         }elseif ($row->form_name == 'WH') {
                                                             $badge_class = "badge-warning";
+                                                        }elseif ($row->form_name == 'P') {
+                                                            $badge_class = "badge-info";
                                                         }
                                                     @endphp
-                                                    <td><a href="{{ route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}"> {{ $row->application_id }} </a></td>
+                                                    <td><a href="{{ $row->form_name == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}"> {{ $row->application_id }} </a></td>
                                                     <td><span class="badge {{ $badge_class }}"> FORM {{ $row->form_name }} </span></td>
                                                     <td>{{ format_date_other($row->submitted_at) }}</td>
 

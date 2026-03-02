@@ -74,6 +74,8 @@ class FormPController extends Controller
                 ->orderByDesc('id')
                 ->first();
 
+            $institute_details = collect([]);
+
             // var_dump($workExperience);die;
 
         } else {
@@ -250,7 +252,7 @@ class FormPController extends Controller
 
         // Determine view based on user role
         $view = match ($staff->name) {
-            'Supervisor','President','Secretary' => 'admin.dashboard.formp.applicants_detail',
+            'Supervisor', 'Supervisor2', 'President', 'Secretary' => 'admin.dashboard.formp.applicants_detail',
             'Accountant'    => 'admin.dashboard.applicants_detail_auditor',
 
             default      => abort(403, 'Unauthorized'),

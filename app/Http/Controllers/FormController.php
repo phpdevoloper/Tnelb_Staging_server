@@ -145,9 +145,9 @@ class FormController extends BaseController
             
             // basic fields
             'login_id'             => 'required|string',
-            'applicant_name'       => 'required|string|max:255',
-            'fathers_name'         => 'required|string|max:255',
-            'applicants_address'   => 'required|string|max:500',
+            'applicant_name'       => 'required|string|max:80',
+            'fathers_name'         => 'required|string|max:80',
+            'applicants_address'   => 'required|string|max:255',
             'd_o_b'                => 'required|date',
             'age'                  => 'required|integer|min:18|max:100',
             'previously_number'    => 'nullable|string',
@@ -159,7 +159,7 @@ class FormController extends BaseController
             'license_name'         => 'required|string|max:2',
             'form_id'              => 'required|integer',
             // 'amount'               => 'required|numeric|min:0',
-            'competency_certificate_no' => 'nullable|string',
+            'competency_certificate_no' => 'nullable|string|max:80',
             'certificate_date'              => 'nullable|date',
             
             
@@ -167,19 +167,19 @@ class FormController extends BaseController
             'educational_level'    => 'required|array|min:1',
             'educational_level.*'  => 'required|string|max:50',
             'institute_name'       => 'required|array|min:1',
-            'institute_name.*'     => 'required|string|max:255',
+            'institute_name.*'     => 'required|string|max:80',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
             'certificate_no'       => 'required|array|min:1',
-            'certificate_no.*'     => 'required|string|max:50',
+            'certificate_no.*'     => 'required|string|max:20',
             
             // work experience arrays
             'work_level'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'work_level.*'         => $isWorkOptional ? 'nullable|string|max:50' : 'required|string|max:50',
+            'work_level.*'         => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             'experience'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
             'experience.*'         => $isWorkOptional ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
             'designation'          => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'designation.*'        => $isWorkOptional ? 'nullable|string|max:100' : 'required|string|max:100',
+            'designation.*'        => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             
             // single files
             'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50', // 1MB
@@ -205,7 +205,7 @@ class FormController extends BaseController
             'institute_name.required'       => 'Please add at least one educational qualification.',
             'institute_name.*.required'     => 'Institute name is required.',
             'institute_name.*.string'       => 'Institute name must be a valid string.',
-            'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
+            'institute_name.*.max'          => 'Institute name may not be greater than 80 characters.',
             
             'year_of_passing.required'      => 'Please add at least one educational qualification.',
             'year_of_passing.*.required'    => 'Year of passing is required.',
@@ -214,13 +214,13 @@ class FormController extends BaseController
             'certificate_no.required'       => 'Please add at least one educational qualification.',
             'certificate_no.*.required'     => 'Certificate No is required.',
             'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
-            'certificate_no.*.max'          => 'Certificate No may not be greater than 50 characters.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
 
             // work experience arrays
             'work_level.required'           => 'Please add at least one work experience.',
             'work_level.*.required'         => 'Work level is required.',
             'work_level.*.string'           => 'Work level must be a valid string.',
-            'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
+            'work_level.*.max'              => 'Work level may not be greater than 80 characters.',
             
             'experience.required'           => 'Please add at least one work experience.',
             'experience.*.required'         => 'Experience (in years) is required.',
@@ -231,9 +231,13 @@ class FormController extends BaseController
             'designation.required'          => 'Please add at least one work experience.',
             'designation.*.required'        => 'Designation is required.',
             'designation.*.string'          => 'Designation must be a valid string.',
-            'designation.*.max'             => 'Designation may not be greater than 100 characters.',
+            'designation.*.max'             => 'Designation may not be greater than 80 characters.',
             
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
+            'applicant_name.max' => 'Applicant name may not be greater than 80 characters.',
+            'fathers_name.max' => 'Father\'s name may not be greater than 80 characters.',
+            'applicants_address.max' => 'Address may not be greater than 255 characters.',
+            'competency_certificate_no.max' => 'Certificate number may not be greater than 80 characters.',
             
             'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
             'work_document.*.max'    => 'Experience document must not be greater than 200 kilobytes.',
@@ -531,18 +535,18 @@ class FormController extends BaseController
             'educational_level'    => 'required|array|min:1',
             'educational_level.*'  => 'required|string|max:50',
             'institute_name'       => 'required|array|min:1',
-            'institute_name.*'     => 'required|string|max:255',
+            'institute_name.*'     => 'required|string|max:80',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
             'certificate_no'       => 'required|array|min:1',
-            'certificate_no.*'     => 'required|string|max:50',
+            'certificate_no.*'     => 'required|string|max:20',
 
             'work_level'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'work_level.*'         => $isWorkOptional ? 'nullable|string|max:50' : 'required|string|max:50',
+            'work_level.*'         => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             'experience'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
             'experience.*'         => $isWorkOptional ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
             'designation'          => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'designation.*'        => $isWorkOptional ? 'nullable|string|max:100' : 'required|string|max:100',
+            'designation.*'        => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
 
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
@@ -919,11 +923,11 @@ class FormController extends BaseController
                 'educational_level'    => 'nullable|array|min:1',
                 'educational_level.*'  => 'nullable|string|max:50',
                 'institute_name'       => 'nullable|array|min:1',
-                'institute_name.*'     => 'nullable|string|max:255',
+                'institute_name.*'     => 'nullable|string|max:80',
                 'year_of_passing'      => 'nullable|array|min:1',
                 'year_of_passing.*'    => 'nullable',
                 'certificate_no'       => 'nullable|array|min:1',
-                'certificate_no.*'     => 'nullable|string|max:50',
+                'certificate_no.*'     => 'nullable|string|max:20',
     
     
                 'upload_photo'   => $uploadPhotoRule,
@@ -944,22 +948,22 @@ class FormController extends BaseController
             'educational_level.*.max'       => 'Educational level may not be greater than 50 characters.',
 
             'institute_name.*.string'       => 'Institute name must be a valid string.',
-            'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
+            'institute_name.*.max'          => 'Institute name may not be greater than 80 characters.',
 
 
             'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
-            'certificate_no.*.max'          => 'Certificate No may not be greater than 50 characters.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
 
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
-            'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
+            'work_level.*.max'              => 'Work level may not be greater than 80 characters.',
 
             'experience.*.integer'          => 'Experience must be an integer.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
 
             'designation.*.string'          => 'Designation must be a valid string.',
-            'designation.*.max'             => 'Designation may not be greater than 100 characters.',
+            'designation.*.max'             => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
 
@@ -1275,12 +1279,12 @@ class FormController extends BaseController
             'educational_level'    => 'nullable|array|min:1',
             'educational_level.*'  => 'nullable|string|max:50',
             'institute_name'       => 'nullable|array|min:1',
-            'institute_name.*'     => 'nullable|string|max:255',
+            'institute_name.*'     => 'nullable|string|max:80',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
             'certificate_no'       => 'nullable|array|min:1',
-            'certificate_no.*'     => 'nullable|string|max:50',
-            'competency_certificate_no' => 'nullable|string',
+            'certificate_no.*'     => 'nullable|string|max:20',
+            'competency_certificate_no' => 'nullable|string|max:80',
 
             'upload_photo'   => $uploadPhotoRule,
             'aadhaar_doc'    => $aadhaarDocRule,
@@ -1296,17 +1300,17 @@ class FormController extends BaseController
             'educational_level.*.string' => 'Educational level must be a valid string.',
             'educational_level.*.max'    => 'Educational level may not be greater than 50 characters.',
             'institute_name.*.string'    => 'Institute name must be a valid string.',
-            'institute_name.*.max'       => 'Institute name may not be greater than 255 characters.',
+            'institute_name.*.max'       => 'Institute name may not be greater than 80 characters.',
             'certificate_no.*.string'    => 'Certificate No must be a valid text value.',
-            'certificate_no.*.max'       => 'Certificate No may not be greater than 50 characters.',
+            'certificate_no.*.max'       => 'Certificate No may not be greater than 20 characters.',
 
             'work_level.*.string'        => 'Work level must be a valid string.',
-            'work_level.*.max'           => 'Work level may not be greater than 50 characters.',
+            'work_level.*.max'           => 'Work level may not be greater than 80 characters.',
             'experience.*.integer'       => 'Experience must be an integer.',
             'experience.*.min'           => 'Experience cannot be negative.',
             'experience.*.max'           => 'Experience may not exceed 50 years.',
             'designation.*.string'       => 'Designation must be a valid string.',
-            'designation.*.max'          => 'Designation may not be greater than 100 characters.',
+            'designation.*.max'          => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
         ]);
@@ -1606,12 +1610,12 @@ class FormController extends BaseController
                 'educational_level'    => 'nullable|array|min:1',
                 'educational_level.*'  => 'nullable|string|max:50',
                 'institute_name'       => 'nullable|array|min:1',
-                'institute_name.*'     => 'nullable|string|max:255',
+                'institute_name.*'     => 'nullable|string|max:80',
                 'year_of_passing'      => 'nullable|array|min:1',
                 'year_of_passing.*'    => 'nullable',
                 'certificate_no'       => 'nullable|array|min:1',
-                'certificate_no.*'     => 'nullable|string|max:50',
-                'competency_certificate_no' => 'nullable|string',
+                'certificate_no.*'     => 'nullable|string|max:20',
+                'competency_certificate_no' => 'nullable|string|max:80',
                 'upload_photo'   => $uploadPhotoRule,
                 'aadhaar_doc'    => $aadhaarDocRule,
     
@@ -1627,17 +1631,17 @@ class FormController extends BaseController
             'educational_level.*.string'    => 'Educational level must be a valid string.',
             'educational_level.*.max'       => 'Educational level may not be greater than 50 characters.',
             'institute_name.*.string'       => 'Institute name must be a valid string.',
-            'institute_name.*.max'          => 'Institute name may not be greater than 255 characters.',
+            'institute_name.*.max'          => 'Institute name may not be greater than 80 characters.',
             'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
-            'certificate_no.*.max'          => 'Certificate No may not be greater than 50 characters.',
+            'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
-            'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
+            'work_level.*.max'              => 'Work level may not be greater than 80 characters.',
             'experience.*.integer'          => 'Experience must be an integer.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
             'designation.*.string'          => 'Designation must be a valid string.',
-            'designation.*.max'             => 'Designation may not be greater than 100 characters.',
+            'designation.*.max'             => 'Designation may not be greater than 80 characters.',
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
         ]);
 

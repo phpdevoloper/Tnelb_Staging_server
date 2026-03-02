@@ -248,7 +248,7 @@ async function showInstructPopup(licence_code,login_id) {
 
                             // ✅ Success condition
                             if (paymentResponse.status === 200) {
-                                showPaymentSuccessPopup(application_id, transactionId, transactionDate, applicantName, amount, form_type, licence_name);
+                                showPaymentSuccessPopup(application_id, transactionId, transactionDate, applicantName, amount, form_type, licence_name, true);
                             } else {
                                 Swal.fire({
                                     title: "Payment Failed",
@@ -450,36 +450,12 @@ $(document).ready(function () {
             }
         });
 
+        // Power Station (work) section is optional – no required validation; only validate file type/size when a file is uploaded
         $('#work-container .work-fields').each(function () {
-            let workLevel = $(this).find('input[name="work_level[]"]');
-            let experience = $(this).find('input[name="experience[]"]');
-            let designation = $(this).find('input[name="designation[]"]');
             let workDocument = $(this).find('input[name="work_document[]"]');
 
-            if (workLevel.length && (workLevel.val() === null || workLevel.val() === "")) {
-                workLevel.after('<span class="error-message text-danger d-block mt-1">Please enter the power station name.</span>');
-                if (!firstErrorField) firstErrorField = workLevel;
-                isValid = false;
-            }
-
-            if (experience.length && (experience.val().trim() === "" || isNaN(experience.val()) || parseInt(experience.val()) < 0 || parseInt(experience.val()) > 50)) {
-                experience.after('<span class="error-message text-danger d-block mt-1">Year of experience is required.</span>');
-                if (!firstErrorField) firstErrorField = experience;
-                isValid = false;
-            }
-
-            if (designation.length && designation.val().trim() === "") {
-                designation.after('<span class="error-message text-danger d-block mt-1">Designation is required.</span>');
-                if (!firstErrorField) firstErrorField = designation;
-                isValid = false;
-            }
-
-            if (workDocument.length && workDocument.val().trim() === "") {
-                workDocument.after('<span class="error-message text-danger d-block mt-1">Experience certificate upload is required.</span>');
-                if (!firstErrorField) firstErrorField = workDocument;
-                isValid = false;
-            } else if (workDocument.length && workDocument[0].files.length > 0) {
-                const file = workDocument[0].files[0]; // ✅ use raw DOM element
+            if (workDocument.length && workDocument[0].files.length > 0) {
+                const file = workDocument[0].files[0];
                 if (file) {
                     const allowedType = 'application/pdf';
                     const minSize = 5 * 1024;   // 5 KB
@@ -563,16 +539,7 @@ $(document).ready(function () {
         });
 
 
-        let employer_name = document.getElementById("employer_name");
-        if (employer_name && employer_name.value.trim() === "") {
-            employer_name.insertAdjacentHTML(
-                'afterend',
-                '<span class="error-message text-danger d-block mt-1">Employer Name is required.</span>'
-            );
-
-            if (!firstErrorField) firstErrorField = $(employer_name);
-            isValid = false;
-        }
+        // Employer name is optional – no required validation
 
         console.log(isValid);
 
@@ -821,7 +788,8 @@ $(document).ready(function () {
         let employer_name = $(this).val().trim();
         let nameRegex = /^[A-Za-z\s.]+$/; // Adds dot support
 
-        if (employer_name === "" || !nameRegex.test(employer_name)) {
+        // Only validate format when user has entered something (field is optional)
+        if (employer_name !== "" && !nameRegex.test(employer_name)) {
             $(this).after('<span class="error-message text-danger d-block mt-1">Enter a valid Employer Name.</span>');
             if (!firstErrorField) firstErrorField = $(this);
             isValid = false;

@@ -159,7 +159,7 @@
                                                             <th>Degree</th>
                                                             <th>Institution</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage</th>
+                                                            <th>Certificate No</th>
                                                             <th>Documents</th>
                                                         </tr>
                                                     </thead>
@@ -169,35 +169,20 @@
                                                             <td style="max-width: 10%;">{{ $education->educational_level }}</td>
                                                             <td style="width: 20%;">{{ $education->institute_name }}</td>
                                                             <td style="width: 20%;">{{ $education->year_of_passing }}</td>
-                                                            <td style="width: 20%;">{{ $education->percentage }}%</td>
+                                                            <td style="width: 20%;">{{ $education->certificate_no ?? '—' }}</td>
                                                             <td style="text-align:center;">
+                                                                @if(!empty($education->upload_document))
                                                                 @php
-                                                                // Find the document where education_serial matches
-                                                                $document = DB::table('tnelb_applicants_edu')
-                                                                ->where('application_id', $applicant->application_id)
-                                                                ->first();
-
-
+                                                                    $fileExtension = pathinfo($education->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
                                                                 @endphp
-
-                                                                @if($document && !empty($document->upload_document))
-                                                                @php
-                                                                // Get file extension
-                                                                $fileExtension = pathinfo($document->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
-                                                                @endphp
-
-                                                                @if(in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif']))
-                                                                <!-- Show Image -->
-                                                                <img src="data:image/{{ $fileExtension }};base64,{{ base64_encode($document->upload_document) }}"
-                                                                    alt="Education Document" width="100">
-                                                                @elseif($fileExtension === 'pdf')
-                                                                <!-- Provide a PDF Download Link -->
-                                                                <a href="{{ url($document->upload_document) }}" target="_blank">
+                                                                @if(in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif']))
+                                                                <img src="{{ url($education->upload_document) }}" alt="Education Document" width="100">
+                                                                @elseif(strtolower($fileExtension) === 'pdf')
+                                                                <a href="{{ url($education->upload_document) }}" target="_blank">
                                                                     <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
-
                                                                 </a>
                                                                 @else
-                                                                No Documents Uploaded
+                                                                <a href="{{ url($education->upload_document) }}" target="_blank"><i class="fa fa-file-o"></i></a>
                                                                 @endif
                                                                 @else
                                                                 No Documents Uploaded
@@ -248,90 +233,77 @@
                                                         </tr>
                                                         @empty
                                                         <tr>
-                                                            <td colspan="3" class="text-center">No work experience available.</td>
+                                                            <td colspan="5" class="text-center">No institute details available.</td>
                                                         </tr>
                                                         @endforelse
                                                     </tbody>
                                                 </table>
-                                                @if ($applicant->form_name == 'S')
-                                                <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
-                                                    Electrical Assistant Qualification Certificate
-                                                </h6>
 
-                                                <div class="row">
-                                                    <div class="col-lg-6 col-6">
-                                                        <p class="mb-1"><strong>License Number / Date :</strong></p>
-                                                    </div>
+                                            <h6 class="mt-3 mb-2 fw-bold">Employer name</h6>
+                                            <p class="mb-2">{{ $applicant->employer_detail ?? '—' }}</p>
 
-                                                    <div class="col-lg-6 col-6">
-                                                        @php
-                                                            if (empty($applicant->previously_number) || empty($applicant->previously_date)) {
-                                                                $value = 'No';
-                                                            } else {
-                                                                $value = 'Yes, ' .($applicant->previously_number ?: '') . ' , ' .
-                                                                         (!empty($applicant->previously_date) ? format_date($applicant->previously_date) : '');
-                                                            }
-
-                                                        @endphp
-
-                                                        <p class="mb-1">
-                                                            @if($value === 'No')
-                                                                {{ $value }}
-                                                            @else
-                                                                {!! $value !!}
-                                                                
-                                                                     @if ($applicant->adminlverify == null)
-                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_number }}" data-license_date="{{ $applicant->previously_date }}" data-type="License" style="cursor: pointer;">Verify</span>                       
-                                                                        @elseif($applicant->adminlverify == 1)
-                                                                            <span class="text-success ms-2">(Valid License.)</span>
-                                                                        @elseif($applicant->adminlverify == 2)
-                                                                            <span class="text-danger ms-2">(Invalid License.)</span>
-                                                                        @endif                
-                                                               
-                                                            @endif
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            @endif
-
-                                            <h6 class="mt-2 mb-2 fw-bold">Power Station to which he is aattached at present</h6>
-
+                                            <h6 class="mt-2 mb-2 fw-bold">Power Station to which he is attached at present</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Company / Power Station</th>
+                                                            <th>Designation</th>
+                                                            <th>Years of Experience</th>
+                                                            <th>Document</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse ($workExperience as $exp)
+                                                        <tr>
+                                                            <td>{{ $exp->company_name ?? '—' }}</td>
+                                                            <td>{{ $exp->designation ?? '—' }}</td>
+                                                            <td>{{ $exp->experience ?? '—' }}</td>
+                                                            <td style="text-align:center;">
+                                                                @if(!empty($exp->upload_document))
+                                                                <a href="{{ url($exp->upload_document) }}" target="_blank">
+                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                </a>
+                                                                @else
+                                                                — 
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        @empty
+                                                        <tr>
+                                                            <td colspan="4" class="text-center">No work experience available.</td>
+                                                        </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
 
                                             <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
-                                                @if (in_array($applicant->form_name,['S','W']))
-                                                    Wireman C.C /
-                                                @endif 
                                                 Previous Application No & Date?
                                             </h6>
-
                                             <div class="row">
                                                 <div class="col-lg-6 col-6">
                                                     <p class="mb-1"><strong>Application Number / Date:</strong></p>
                                                 </div>
-
                                                 <div class="col-lg-6 col-6">
                                                     @php
-                                                        if (empty($applicant->certificate_no) || empty($applicant->certificate_date)) {
-                                                            $cert_no = 'No';
+                                                        if (empty($applicant->previously_number) && empty($applicant->previously_date)) {
+                                                            $prev_val = 'No';
                                                         } else {
-                                                            $cert_no = 'Yes, ' . $applicant->certificate_no . ' , ' . format_date($applicant->certificate_date);
+                                                            $prev_val = 'Yes, ' . ($applicant->previously_number ?? '') . ' , ' .
+                                                                (!empty($applicant->previously_date) ? format_date($applicant->previously_date) : '');
                                                         }
                                                     @endphp
-                                                
                                                     <p class="mb-1">
-                                                        @if($cert_no === 'No')
-                                                            {{ $cert_no }}
+                                                        @if($prev_val === 'No')
+                                                            {{ $prev_val }}
                                                         @else
-                                                            {!! $cert_no !!}
-
-                                                            @php
-                                                                //var_dump($applicant);die;
-                                                            @endphp
-                                                            @if ($applicant->admincverify == null)
-                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>                       
-                                                            @elseif($applicant->admincverify == 1)
+                                                            {!! $prev_val !!}
+                                                            @if (($applicant->adminlverify ?? null) === null)
+                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_number }}" data-license_date="{{ $applicant->previously_date }}" data-type="License" style="cursor: pointer;">Verify</span>
+                                                            @elseif($applicant->adminlverify == 1)
                                                                 <span class="text-success ms-2">(Valid License.)</span>
-                                                            @elseif($applicant->admincverify == 2)
+                                                            @elseif($applicant->adminlverify == 2)
                                                                 <span class="text-danger ms-2">(Invalid License.)</span>
                                                             @endif
                                                         @endif
@@ -342,11 +314,10 @@
                                             <!-- ----------------------------------------------- -->
                                             <hr>
                                             @php
-                                                $decryptedaadhar = safeDecrypt($applicant->aadhaar);
-                                                $decryptedpan    = safeDecrypt($applicant->pancard);
-                                                $masked          = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
-                                                $maskedPan       = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : 'Invalid PAN';
-
+                                                $decryptedaadhar = $applicant->aadhaar ? safeDecrypt($applicant->aadhaar) : '';
+                                                $decryptedpan    = $applicant->pancard ? safeDecrypt($applicant->pancard) : '';
+                                                $masked          = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : ($applicant->aadhaar ? 'Invalid Aadhaar' : '—');
+                                                $maskedPan       = strlen($decryptedpan) === 10 ? str_repeat('X', 6) . substr($decryptedpan, -4) : ($applicant->pancard ? 'Invalid PAN' : '—');
                                             @endphp
 
                                             <div class="row mb-2">

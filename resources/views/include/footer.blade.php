@@ -163,7 +163,7 @@
 <div class="scroll-to-top scroll-to-target" data-target="html"><span class="icon-arrow"></span></div>
 
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  -->
 <script src="{{ url('assets/js/jquery.js') }}"></script>
 <script src="{{ url('assets/js/scriptnew.js') }}"></script>
 <script src="{{ url('assets/js/popper.min.js') }}"></script>
@@ -771,6 +771,76 @@ $(document).ready(function() {
                     }
                 }
             });
+
+            // Max length validation for competency form (S/W/WH/P) – validate all text/number fields
+            if ($('#competency_form_ws').length) {
+                $('#competency_form_ws').find('input[maxlength], textarea[maxlength]').each(function () {
+                    var $el = $(this);
+                    var max = parseInt($el.attr('maxlength'), 10);
+                    if (isNaN(max)) return;
+                    var val = ($el.val() || '').trim();
+                    if (val.length > max) {
+                        $el.after('<span class="error-message text-danger d-block mt-1">Maximum ' + max + ' characters allowed.</span>');
+                        if (!firstErrorField) firstErrorField = $el;
+                        isValid = false;
+                    }
+                });
+                $('#competency_form_ws').find('input[type="number"][max]').each(function () {
+                    var $el = $(this);
+                    var maxVal = parseInt($el.attr('max'), 10);
+                    var val = $el.val();
+                    if (val !== '' && !isNaN(maxVal) && parseInt(val, 10) > maxVal) {
+                        $el.after('<span class="error-message text-danger d-block mt-1">Value cannot exceed ' + maxVal + '.</span>');
+                        if (!firstErrorField) firstErrorField = $el;
+                        isValid = false;
+                    }
+                });
+                $('#competency_form_ws').find('input[type="number"][min]').each(function () {
+                    var $el = $(this);
+                    var minVal = parseInt($el.attr('min'), 10);
+                    var val = $el.val();
+                    if (val !== '' && !isNaN(minVal) && parseInt(val, 10) < minVal) {
+                        $el.after('<span class="error-message text-danger d-block mt-1">Value cannot be less than ' + minVal + '.</span>');
+                        if (!firstErrorField) firstErrorField = $el;
+                        isValid = false;
+                    }
+                });
+            }
+
+            // Same max length / min-max validation for Form P
+            if ($('#competency_form_p').length) {
+                $('#competency_form_p').find('input[maxlength], textarea[maxlength]').each(function () {
+                    var $el = $(this);
+                    var max = parseInt($el.attr('maxlength'), 10);
+                    if (isNaN(max)) return;
+                    var val = ($el.val() || '').trim();
+                    if (val.length > max) {
+                        $el.after('<span class="error-message text-danger d-block mt-1">Maximum ' + max + ' characters allowed.</span>');
+                        if (!firstErrorField) firstErrorField = $el;
+                        isValid = false;
+                    }
+                });
+                $('#competency_form_p').find('input[type="number"][max]').each(function () {
+                    var $el = $(this);
+                    var maxVal = parseInt($el.attr('max'), 10);
+                    var val = $el.val();
+                    if (val !== '' && !isNaN(maxVal) && parseInt(val, 10) > maxVal) {
+                        $el.after('<span class="error-message text-danger d-block mt-1">Value cannot exceed ' + maxVal + '.</span>');
+                        if (!firstErrorField) firstErrorField = $el;
+                        isValid = false;
+                    }
+                });
+                $('#competency_form_p').find('input[type="number"][min]').each(function () {
+                    var $el = $(this);
+                    var minVal = parseInt($el.attr('min'), 10);
+                    var val = $el.val();
+                    if (val !== '' && !isNaN(minVal) && parseInt(val, 10) < minVal) {
+                        $el.after('<span class="error-message text-danger d-block mt-1">Value cannot be less than ' + minVal + '.</span>');
+                        if (!firstErrorField) firstErrorField = $el;
+                        isValid = false;
+                    }
+                });
+            }
 
             let aadhaarInput = document.getElementById("aadhaar");
             let aadhaarError = document.getElementById("aadhaar-error");
@@ -2687,7 +2757,9 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
         }
     }
                                             
-    function showPaymentSuccessPopup(loginId, transactionId, transactionDate, applicantName, amount,form_type,licence_name) {
+    function showPaymentSuccessPopup(loginId, transactionId, transactionDate, applicantName, amount,form_type,licence_name, isFormP) {
+        isFormP = (typeof isFormP !== 'undefined' && isFormP === true);
+        window.paymentIsFormP = isFormP;
 
         // alert(applicantName);
         $("#ps_applicantName_competency").text(applicantName);
@@ -2800,7 +2872,21 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
     // }
 
     function downloadPDF(language) {
-        let url = (language === 'tamil') ? `${BASE_URL}/generateTamilPDF/${window.paymentAppId}` : `${BASE_URL}/generate-pdf/${window.paymentAppId}`;
+        if (!window.paymentAppId) {
+            alert("Application ID not found!");
+            return;
+        }
+        let url;
+        if (window.paymentIsFormP) {
+            // Form P (Competency) application PDF routes
+            url = (language === 'tamil')
+                ? `${BASE_URL}/generatePDFFormPTA/${window.paymentAppId}`
+                : `${BASE_URL}/generate-pdf-p/${window.paymentAppId}`;
+        } else {
+            url = (language === 'tamil')
+                ? `${BASE_URL}/generateTamilPDF/${window.paymentAppId}`
+                : `${BASE_URL}/generate-pdf/${window.paymentAppId}`;
+        }
         window.open(url, '_blank');
     }
 

@@ -28,6 +28,13 @@
     .swal2-popup li ul{
         margin-left: 15px;
     }
+
+    /* Ensure Font Awesome icons show inside buttons (e.g. add/remove education/work) */
+    .comp_certificate .btn .fa,
+    .comp_certificate .btn i.fa {
+        font-family: 'FontAwesome';
+        display: inline-block;
+    }
 </style>
 <section class="">
     <div class="container">
@@ -114,7 +121,7 @@
                                                         </div>
 
                                                         <div class="col-12 col-md-8 ">
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="Fathers_Name" name="fathers_name" type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="50">
+                                                            <input autocomplete="off" class="form-control text-box single-line" id="Fathers_Name" name="fathers_name" type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="80">
                                                             <span class="error-message text-danger"></span>
                                                         </div>
                                                     </div>
@@ -133,7 +140,7 @@
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <!-- <input autocomplete="off" class="form-control text-box single-line" id="Applicant_Name" name="Applicant_Name" type="text" value=""> -->
-                                                            <textarea rows="3" class="form-control " id="applicants_address" name="applicants_address" maxlength="250">{{Auth::user()->address}}</textarea>
+                                                            <textarea rows="3" class="form-control " id="applicants_address" name="applicants_address" maxlength="255">{{Auth::user()->address}}</textarea>
                                                             <span id="applicants_address_error" class="text-danger error"></span>
                                                         </div>
                                                     </div>
@@ -200,7 +207,7 @@
                                                             {{-- <th class="text-center">Upload Document (Consolidated MarkSheet)
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th> --}}
-                                                            <th class="text-center">Upload Document (ITI Certificate)
+                                                            <th class="text-center">Upload Document
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th>
                                                             <th>
@@ -214,13 +221,11 @@
                                                         <tr class="education-fields">
                                                             <td> <select class="form-control" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
-                                                                    <option value="PG">PG</option>
-                                                                    <option value="UG">UG</option>
-                                                                    <option value="Diploma">Diploma</option>
-                                                                    <option value="+2">+2</option>
-                                                                    <option value="10">10</option>
+                                                                    <option value="Up to 8th Standard">Up to 8th Standard</option>
+                                                                    <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
+                                                                    <option value="ITI Certificate">ITI Certificate</option>
                                                                 </select></td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]"></td>
+                                                            <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -236,7 +241,7 @@
                                                                 <input type="text"
                                                                     class="form-control certificate-input"
                                                                     name="certificate_no[]"
-                                                                    maxlength="50"
+                                                                    maxlength="20"
                                                                     required>
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
@@ -254,7 +259,7 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-12 ">
-                                                <label>6. Details of Previous and Current Work experiences <span class="text-label">(Optional)</span></label>
+                                                <label>6. Details of Previous and Current Work experiences</label>
                                                 <br>
                                                 <label for="tamil" class="tamil">பெற்றுள்ள
                                                     முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
@@ -284,13 +289,13 @@
                                                 <tbody id="work-container">
                                                     <tr class="work-fields">
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80">
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number">
+                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50">
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80">
                                                         </td>
 
                                                         {{-- <td>
@@ -334,7 +339,7 @@
 
                                             </div>
                                             <div class="col-12 col-md-3">
-                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="competency_certificate_no" type="text" placeholder="License Number" maxlength="12">
+                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="competency_certificate_no" type="text" placeholder="License Number" maxlength="80">
                                                 <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                 <span id="licenseError" class="text-danger"></span>
                                                 <span id="license_message" class="mt-1"></span>
@@ -398,7 +403,7 @@
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="wireman_details" name="wireman_details" type="text" placeholder="License Number" value="">
+                                                        <input autocomplete="off" class="form-control text-box single-line" id="wireman_details" name="wireman_details" type="text" placeholder="License Number" value="" maxlength="80">
                                                     </div>
 
                                                 </div>
@@ -602,13 +607,11 @@
             newRow.innerHTML = `
                 <td><select class="form-control" name="educational_level[]" required>
                 <option selected disabled>Select Education</option>
-                <option value="PG">PG</option>
-                <option value="UG">UG</option>
-                <option value="Diploma">Diploma</option>
-                <option value="+2">+2</option>
-                <option value="10">10</option>
+                <option value="Up to 8th Standard">Up to 8th Standard</option>
+                <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
+                <option value="ITI Certificate">ITI Certificate</option>
                 </select></td>
-                <td><input type="text" class="form-control" name="institute_name[]" required></td>
+                <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
                 <td>
                 <select name="year_of_passing[]" class="form-control" required>
                 <option value="0">Select Year</option>
@@ -618,7 +621,7 @@
                 </select>
                 </td>
                 <td>
-                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" required>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" required>
                     <span class="error text-danger certificate-error"></span>
                 </td>
                 <td><input type="file" class="form-control" name="education_document[]"></td>
@@ -675,9 +678,9 @@
             newRow.classList.add("work-fields");
 
             newRow.innerHTML = `
-                <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
-                <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
-                <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
+                <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
+                <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50"></td>
+                <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-work">
                 <i class="fa fa-trash-o"></i>

@@ -49,6 +49,13 @@
     .swal2-popup li ul {
         margin-left: 15px;
     }
+
+    /* Ensure Font Awesome icons show inside buttons (e.g. add/remove education/work) */
+    .comp_certificate .btn .fa,
+    .comp_certificate .btn i.fa {
+        font-family: 'FontAwesome';
+        display: inline-block;
+    }
 </style>
 
 <section class="">
@@ -145,7 +152,7 @@
 
                                                         <div class="col-12 col-md-8">
                                                             <input autocomplete="off" class="form-control text-box single-line" id="Fathers_Name" name="fathers_name"
-                                                                type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="50">
+                                                                type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="80">
                                                             {{-- <div id="Fathers_Name_count" class="text-muted mt-1" style="font-size: 0.9rem;color:red!important;">0/50</div> --}}
 
                                                             <span class="error-message text-danger"></span>
@@ -166,7 +173,7 @@
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <!-- <input autocomplete="off" class="form-control text-box single-line" id="Applicant_Name" name="Applicant_Name" type="text" value=""> -->
-                                                            <textarea rows="3" class="form-control " id="applicants_address" name="applicants_address" maxlength="250">{{Auth::user()->address}}</textarea>
+                                                            <textarea rows="3" class="form-control " id="applicants_address" name="applicants_address" maxlength="255">{{Auth::user()->address}}</textarea>
                                                             <span id="applicants_address_error" class="text-danger error"></span>
                                                         </div>
                                                     </div>
@@ -240,11 +247,10 @@
                                                                     <option selected disabled>Select Education</option>
                                                                     <option value="PG">PG</option>
                                                                     <option value="UG">UG</option>
-                                                                    <option value="Diploma">Diploma</option>
-                                                                    <option value="+2">+2</option>
-                                                                    <option value="10">10</option>
+                                                                    <option value="B.E">B.E</option>
+                                                                    <option value="M.E">M.E</option>
                                                                 </select></td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]"></td>
+                                                            <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -264,7 +270,7 @@
                                                                 <input type="text"
                                                                     class="form-control certificate-input"
                                                                     name="certificate_no[]"
-                                                                    maxlength="50"
+                                                                    maxlength="20"
                                                                     required>
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
@@ -313,13 +319,13 @@
                                                 <tbody id="work-container">
                                                     <tr class="work-fields">
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80">
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number">
+                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50">
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80">
                                                         </td>
 
                                                         {{-- <td>
@@ -364,7 +370,7 @@
 
                                                     </div>
                                                     <div class="col-12 col-md-2">
-                                                        <input autocomplete="off" class="form-control text-box single-line verify-input" id="previously_number" name="previously_number" type="text" data-type="license" data-error="#licenseError" data-msg="#license_messagdfde" placeholder="License Number" value="">
+                                                        <input autocomplete="off" class="form-control text-box single-line verify-input" id="previously_number" name="previously_number" type="text" data-type="license" data-error="#licenseError" data-msg="#license_messagdfde" placeholder="License Number" value="" maxlength="80">
                                                         <input type="hidden" id="l_verify" name="l_verify" value="0">
                                                         <span id="licenseError" class="text-danger"></span>
                                                         <span id="verify_result"></span>
@@ -430,7 +436,7 @@
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
-                                                        <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12">
+                                                        <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="80">
                                                         <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                         <span id="licenseError" class="text-danger"></span>
                                                         <span id="license_message" class="mt-1"></span>
@@ -628,15 +634,14 @@
                 let newRow = document.createElement("tr");
                 newRow.classList.add("education-fields");
                 newRow.innerHTML = `
-                <td><select class="form-control" name="educational_level[]" required>
+<td><select class="form-control" name="educational_level[]" required>
                         <option selected disabled>Select Education</option>
                         <option value="PG">PG</option>
                         <option value="UG">UG</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="+2">+2</option>
-                        <option value="10">10</option>
-                    </select></td>
-                <td><input type="text" class="form-control" name="institute_name[]" required></td>
+                        <option value="B.E">B.E</option>
+                        <option value="M.E">M.E</option>
+                </select></td>
+                <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
                 <td>
                     <select name="year_of_passing[]" class="form-control" required>
                         <option value="0">Select Year</option>
@@ -646,7 +651,7 @@
                     </select>
                 </td>
                 <td>
-                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" required>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" required>
                     <span class="error text-danger certificate-error"></span>
                 </td>
                 <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
@@ -701,9 +706,9 @@
                 newRow.classList.add("work-fields");
 
                 newRow.innerHTML = `
-            <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
-                <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
-                <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
+            <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
+                <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50"></td>
+                <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-work">
                 <i class="fa fa-trash-o"></i>

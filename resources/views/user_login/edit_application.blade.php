@@ -50,6 +50,13 @@
     .swal2-popup li ul {
         margin-left: 15px;
     }
+
+    /* Ensure Font Awesome icons show inside buttons (e.g. add/remove education/work) */
+    .comp_certificate .btn .fa,
+    .comp_certificate .btn i.fa {
+        font-family: 'FontAwesome';
+        display: inline-block;
+    }
 </style>
 
 
@@ -283,13 +290,21 @@
                                                             <td>
                                                                 <select class="form-control" name="educational_level[]">
                                                                     <option disabled {{ empty($edu_details->educational_level) ? 'selected' : '' }}>Select Education</option>
-                                                                    <option value="PG" {{ $edu_details->educational_level == 'PG' ? 'selected' : '' }}>PG</option>
-                                                                    <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
-                                                                    <option value="Diploma" {{ $edu_details->educational_level == 'Diploma' ? 'selected' : '' }}>Diploma</option>
-                                                                    <option value="+2" {{ $edu_details->educational_level == '+2' ? 'selected' : '' }}>+2</option>
-                                                                    <option value="10" {{ $edu_details->educational_level == '10' ? 'selected' : '' }}>10</option>
-                                                                    @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
-                                                                        <option value="8" {{ $edu_details->educational_level == '8' ? 'selected' : '' }}>8</option>
+                                                                    @if (isset($application_details->form_name) && in_array($application_details->form_name, ['W', 'WH']))
+                                                                        <option value="Up to 8th Standard" {{ $edu_details->educational_level == 'Up to 8th Standard' ? 'selected' : '' }}>Up to 8th Standard</option>
+                                                                        <option value="Wireman Helper(H) Certificate" {{ $edu_details->educational_level == 'Wireman Helper(H) Certificate' ? 'selected' : '' }}>Wireman Helper(H) Certificate</option>
+                                                                        <option value="ITI Certificate" {{ $edu_details->educational_level == 'ITI Certificate' ? 'selected' : '' }}>ITI Certificate</option>
+                                                                    @else
+                                                                        <option value="PG" {{ $edu_details->educational_level == 'PG' ? 'selected' : '' }}>PG</option>
+                                                                        <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
+                                                                        <option value="B.E" {{ $edu_details->educational_level == 'B.E' ? 'selected' : '' }}>B.E</option>
+                                                                        <option value="M.E" {{ $edu_details->educational_level == 'M.E' ? 'selected' : '' }}>M.E</option>
+                                                                        <option value="Diploma" {{ $edu_details->educational_level == 'Diploma' ? 'selected' : '' }}>Diploma</option>
+                                                                        <option value="+2" {{ $edu_details->educational_level == '+2' ? 'selected' : '' }}>+2</option>
+                                                                        <option value="10" {{ $edu_details->educational_level == '10' ? 'selected' : '' }}>10</option>
+                                                                        @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
+                                                                            <option value="8" {{ $edu_details->educational_level == '8' ? 'selected' : '' }}>8</option>
+                                                                        @endif
                                                                     @endif
                                                                 </select>
                                                             </td>
@@ -311,7 +326,7 @@
                                                                 <input type="text"
                                                                     class="form-control certificate-input"
                                                                     name="certificate_no[]"
-                                                                    maxlength="50"
+                                                                    maxlength="20"
                                                                     required
                                                                     value="{{ $edu_details->certificate_no ?? $edu_details->percentage ?? '' }}">
                                                                 <span class="error text-danger certificate-error"></span>
@@ -350,13 +365,21 @@
                                                             <td>1</td>
                                                             <td> <select class="form-control" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
-                                                                    <option value="PG">PG</option>
-                                                                    <option value="UG">UG</option>
-                                                                    <option value="Diploma">Diploma</option>
-                                                                    <option value="+2">+2</option>
-                                                                    <option value="10">10</option>
-                                                                    @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
-                                                                        <option value="8">8</option>
+                                                                    @if (isset($application_details->form_name) && in_array($application_details->form_name, ['W', 'WH']))
+                                                                        <option value="Up to 8th Standard">Up to 8th Standard</option>
+                                                                        <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
+                                                                        <option value="ITI Certificate">ITI Certificate</option>
+                                                                    @else
+                                                                        <option value="PG">PG</option>
+                                                                        <option value="UG">UG</option>
+                                                                        <option value="B.E">B.E</option>
+                                                                        <option value="M.E">M.E</option>
+                                                                        <option value="Diploma">Diploma</option>
+                                                                        <option value="+2">+2</option>
+                                                                        <option value="10">10</option>
+                                                                        @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
+                                                                            <option value="8">8</option>
+                                                                        @endif
                                                                     @endif
                                                                 </select></td>
                                                             <td><input type="text" class="form-control" name="institute_name[]"></td>
@@ -375,7 +398,7 @@
                                                                 <input type="text"
                                                                     class="form-control certificate-input"
                                                                     name="certificate_no[]"
-                                                                    maxlength="50"
+                                                                    maxlength="20"
                                                                     required>
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
@@ -869,6 +892,7 @@
         let container = document.getElementById("education-container");
         let educationRows = container.querySelectorAll(".education-fields");
         const isWHForm = "{{ $application_details->form_name ?? '' }}" === 'WH';
+            const isWOrWHForm = "{{ $application_details->form_name ?? '' }}" === 'W' || isWHForm;
 
         if (e.target.closest(".add-more-education")) {
 
@@ -900,12 +924,7 @@
                 <td> 
                     <select class="form-control" name="educational_level[]" required>
                         <option value="">Select Education</option>
-                        <option value="PG">PG</option>
-                        <option value="UG">UG</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="+2">+2</option>
-                        <option value="10">10</option>
-                        ${isWHForm ? '<option value="8">8</option>' : ''}
+                        ${isWOrWHForm ? '<option value="Up to 8th Standard">Up to 8th Standard</option><option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option><option value="ITI Certificate">ITI Certificate</option>' : '<option value="PG">PG</option><option value="UG">UG</option><option value="B.E">B.E</option><option value="M.E">M.E</option><option value="Diploma">Diploma</option><option value="+2">+2</option><option value="10">10</option>' + (isWHForm ? '<option value="8">8</option>' : '')}
                     </select>
                 </td>
                 <td><input type="text" class="form-control" name="institute_name[]" required></td>
@@ -915,7 +934,7 @@
                     </select>
                 </td>
                 <td>
-                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="50" placeholder="Certificate No" required>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" placeholder="Certificate No" required>
                     <span class="error text-danger certificate-error"></span>
                 </td>
                 <td>

@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
     <!-- Stylesheets -->
     <link href="{{ asset('assets/css/bootstrap.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/font-awesome-4.7.0/css/font-awesome.min.css') }}">
+    <!-- CDN fallback so icon font files load (local /fonts/ may be incomplete) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/responsive.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/color-2.css') }}" rel="stylesheet">

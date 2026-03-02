@@ -147,7 +147,7 @@
 
                                                         <div class="col-12 col-md-8 ">
                                                             <input autocomplete="off" class="form-control text-box single-line" id="Fathers_Name" name="fathers_name"
-                                                                type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="50">
+                                                                type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="80">
                                                                 {{-- <div id="Fathers_Name_count" class="text-muted mt-1" style="font-size: 0.9rem;color:red!important;">0/50</div> --}}
 
                                                             <span class="error-message text-danger"></span>
@@ -168,7 +168,7 @@
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <!-- <input autocomplete="off" class="form-control text-box single-line" id="Applicant_Name" name="Applicant_Name" type="text" value=""> -->
-                                                            <textarea rows="3" class="form-control " id="applicants_address" name="applicants_address" maxlength="250">{{Auth::user()->address}}</textarea>
+                                                            <textarea rows="3" class="form-control " id="applicants_address" name="applicants_address" maxlength="255">{{Auth::user()->address}}</textarea>
                                                             <span id="applicants_address_error" class="text-danger error"></span>
                                                         </div>
                                                     </div>
@@ -245,7 +245,7 @@
                                                                     <option value="DiplomaM">Diploma(Mechanical)</option>
                                                                     <option value="DiplomaE">Diploma(Electrical)</option>
                                                                 </select></td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]"></td>
+                                                            <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -258,8 +258,7 @@
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                            <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" required>
-                                                            <span class="error text-danger percentage-error"></span>
+                                                            <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" placeholder="Certificate No">
                                                             </td>
                                                             <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                                                             <td>
@@ -307,10 +306,10 @@
                                                             <input autocomplete="off" class="form-control" name="institute_name[]" type="text">
                                                         </td> --}}
                                                         <td>
-                                                            <textarea autocomplete="off" class="form-control" name="institute_name_address[]" id="institute_name_address[]" cols="5" rows="3"></textarea>
+                                                            <textarea autocomplete="off" class="form-control" name="institute_name_address[]" id="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea>
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="duration[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="duration[]" type="number" min="0" max="50" placeholder="0-50">
                                                         </td>
                                                         <td>
                                                             <input autocomplete="off" class="form-control" name="from_date[]" type="date">
@@ -333,7 +332,7 @@
                                         <hr>
                                         <div class="row align-items-center head_label">
                                             <div class="col-12 col-md-12 ">
-                                                <label>(iii). Power Station to which he is aattached at present <span class="text-label">(Upload the documents)</span></label>
+                                                <label>(iii). Power Station to which he is attached at present <span class="text-label">(Upload the documents)</span></label>
                                                 <br>
                                                 <label for="tamil" class="tamil">பெற்றுள்ள விண்ணப்பதாரர் பயிற்சி பெற்ற நிறுவனம் மற்றும் பயிற்சி பெற்ற காலம் <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span>
                                                 </label>
@@ -360,13 +359,13 @@
                                                 <tbody id="work-container">
                                                     <tr class="work-fields">
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80">
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number">
+                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50">
                                                         </td>
                                                         <td>
-                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text">
+                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80">
                                                         </td>
 
                                                         <td>
@@ -389,7 +388,7 @@
                                                 <label for="tamil" class="tamil">தொழில் வழங்குநரின் பெயர்</label>
                                             </div>
                                             <div class="col-12 col-md-6">
-                                                <textarea class="form-control" name="employer_name" id="employer_name" cols="5" rows="3"></textarea>
+                                                <textarea class="form-control" name="employer_name" id="employer_name" cols="5" rows="3" maxlength="255"></textarea>
                                             </div>
                                         </div>
                                         <hr>
@@ -421,7 +420,7 @@
 
                                                     </div>
                                                     <div class="col-12 col-md-2">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="previously_number" type="text" data-type="license" placeholder="Application Number" value="">
+                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="previously_number" type="text" data-type="license" placeholder="Application Number" value="" maxlength="80">
                                                         <span id="licenseError" class="text-danger"></span>
                                                     </div>
                                                     <div class="col-12 col-md-1 text-md-right">
@@ -634,7 +633,7 @@
                         <option value="DiplomaM">Diploma(Mechanical)</option>
                         <option value="DiplomaE">Diploma(Electrical)</option>
                     </select></td>
-                <td><input type="text" class="form-control" name="institute_name[]" required></td>
+                <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
                 <td>
                     <select name="year_of_passing[]" class="form-control" required>
                         <option value="0">Select Year</option>
@@ -643,8 +642,8 @@
                             .join('')}
                     </select>
                 </td>
-                <td><input type="text" class="form-control" name="percentage[]" required></td>
-                <td><input type="file" class="form-control" name="education_document[]"></td>
+                <td><input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" placeholder="Certificate No"></td>
+                <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                 <td>
                     <button type="button" class="btn btn-danger remove-education">
                         <i class="fa fa-trash-o"></i>
@@ -696,10 +695,10 @@
             newRow.classList.add("work-fields");
 
             newRow.innerHTML = `
-            <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
-                <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
-                <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
-                <td><input class="form-control" name="work_document[]" type="file"></td>
+            <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
+                <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50"></td>
+                <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
+                <td><input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-work">
                 <i class="fa fa-trash-o"></i>
@@ -710,19 +709,10 @@
                 container.appendChild(newRow);
             }
 
-            // Remove row functionality
+            // Remove row functionality – Power Station is optional, so allow removing all rows
             if (e.target.closest(".remove-work")) {
                 if (workRows.length <= 1) {
-                    $('#work-table').next('.work-error').remove();
-
-                $('<div class="text-danger mt-2 work-error">At least one work experience entry is required.</div>')
-                .insertAfter('#work-table');
-
-                setTimeout(() => {
-                    $('.work-error').fadeOut();
-                }, 7000);
-
-                // alert("You must have at least one work experience entry.");
+                    e.target.closest("tr").remove();
                     return;
                 }
                 e.target.closest("tr").remove();
@@ -752,15 +742,15 @@
             newRow.classList.add("institute-fields");
 
             newRow.innerHTML = `
-            <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" id="institute_name_address[]" cols="5" rows="3"></textarea></td>
-            <td><input type="number" step="0.1" class="form-control" name="duration[]" min="0" max="50"></td>    
-            <td><input type="date" class="form-control" name="from_date[]"></td>
+            <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
+            <td><input type="number" class="form-control" name="duration[]" min="0" max="50" placeholder="0-50"></td>
+                <td><input type="date" class="form-control" name="from_date[]"></td>
                 <td><input type="date" class="form-control" name="to_date[]"></td>
                 <td class="text-center">
                     <input type="file" class="form-control" name="institute_document[]" accept=".pdf,.png,.jpg,.jpeg">
                 </td>
                 <td>
-                <button type="button" class="btn btn-danger remove-inst-row">
+                <button type="button" class="btn btn-danger remove-institute">
                 <i class="fa fa-trash-o"></i>
                 </button>
                 </td>

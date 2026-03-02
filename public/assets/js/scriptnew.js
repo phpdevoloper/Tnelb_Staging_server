@@ -56,15 +56,17 @@ let swiper;
         const stopBtn = document.querySelector(".stop-slider");
         let isPaused = false;
 
-        stopBtn.addEventListener("click", function () {
-            if (!isPaused) {
-                swiper.autoplay.stop();
-                stopBtn.innerHTML = '<i class="fa fa-play"></i>';
-            } else {
-                swiper.autoplay.start();
-                stopBtn.innerHTML = '<i class="fa fa-pause"></i>';
-            }
-            isPaused = !isPaused;
-        });
+        if (stopBtn) {
+            stopBtn.addEventListener("click", function () {
+                if (!isPaused) {
+                    swiper.autoplay.stop();
+                    stopBtn.innerHTML = '<i class="fa fa-play"></i>';
+                } else {
+                    swiper.autoplay.start();
+                    stopBtn.innerHTML = '<i class="fa fa-pause"></i>';
+                }
+                isPaused = !isPaused;
+            });
+        }
     });
 
