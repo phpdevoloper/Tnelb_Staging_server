@@ -70,6 +70,20 @@ use Illuminate\Support\Facades\Auth;
             color: red;
         }
 
+        /* Ensure native calendar icon is visible for date inputs (Chrome/Edge WebKit).
+           Our bootstrap.css sets -webkit-appearance:listbox for date inputs, which can hide the picker icon. */
+        .apply-form input[type="date"] {
+            -webkit-appearance: initial !important;
+            appearance: auto !important;
+            padding-right: 2.25rem; /* leave room for indicator */
+        }
+        .apply-form input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 1 !important;
+            display: block !important;
+            visibility: visible !important;
+            cursor: pointer;
+        }
+
         .swal2-icon-content {
             font-size: 1.75em;
         }

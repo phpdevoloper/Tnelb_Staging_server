@@ -212,9 +212,9 @@ class FormController extends BaseController
             'year_of_passing.*.digits'      => 'Year of passing must be a 4-digit year.',
             
             'certificate_no.required'       => 'Please add at least one educational qualification.',
-            'certificate_no.*.required'     => 'Certificate No is required.',
-            'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
-            'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
+            'certificate_no.*.required'         => 'Certificate No is required.',
+            'certificate_no.*.string'           => 'Certificate No must be a valid text value.',
+            'certificate_no.*.max'              => 'Certificate No may not be greater than 20 characters.',
 
             // work experience arrays
             'work_level.required'           => 'Please add at least one work experience.',
@@ -659,8 +659,7 @@ class FormController extends BaseController
                     if (
                         empty($level) ||
                         empty($request->institute_name[$key] ?? null) ||
-                        empty($request->year_of_passing[$key] ?? null) ||
-                        empty($request->certificate_no[$key] ?? null)
+                        empty($request->year_of_passing[$key] ?? null)
                     ) {
                         continue;
                     }
@@ -689,7 +688,7 @@ class FormController extends BaseController
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
                             'year_of_passing'   => $request->year_of_passing[$key],
-                            'certificate_no'    => $request->certificate_no[$key],
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'upload_document'   => $filePath,
                         ]);
             
@@ -703,7 +702,7 @@ class FormController extends BaseController
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
                             'year_of_passing'   => $request->year_of_passing[$key],
-                            'certificate_no'    => $request->certificate_no[$key],
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
                             'edu_serial'        => $newEduSerial,
                             'upload_document'   => $filePath,

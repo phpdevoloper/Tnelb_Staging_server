@@ -688,7 +688,7 @@
                                                                 }
 
                                                             @endphp
-                                                            <input class="form-control text-box single-line verify-input" id="certificate_no" name="certificate_no" type="text" data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12" value="{{ $application_details->certificate_no }}" 
+                                                            <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12" value="{{ $application_details->certificate_no }}"
                                                             {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
                                                             <input type="hidden" id="cert_verify" name="cert_verify" value="{{ $application_details->cert_verify }}">
                                                             <span id="licenseError" class="text-danger"></span>

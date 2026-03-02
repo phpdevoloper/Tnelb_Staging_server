@@ -319,27 +319,37 @@
                                                 <label for="tamil" class="tamil">இதற்கு முன்னாள் விண்ணப்பம் செய்து கம்பியாட்கள் தகுதி சான்றிதழ் / மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெற்றுஉள்ளதா ஆம் என்றால் அதன் எண் மற்றும் நாளைக் குறிப்பிடுக
                                                 </label>
                                             </div>
+                                            @php
+                                                $oldCertNo = (string) request('old_cert_no', '');
+                                                $oldCertNo = trim($oldCertNo);
+                                                $oldExpiryRaw = (string) request('old_expiry_date', '');
+                                                $oldExpiryRaw = trim($oldExpiryRaw);
+                                                $oldExpiry = $oldExpiryRaw !== ''
+                                                    ? \Carbon\Carbon::parse($oldExpiryRaw)->format('Y-m-d')
+                                                    : '';
+                                                $hasOldPrefill = $oldCertNo !== '';
+                                            @endphp
                                             <div class="col-md-3">
                                                 <label class="container">
                                                     <div class="form-check form-check-inline">
-                                                        <input class="form-check-input toggle-details" type="radio" name="wireman_license" id="wireman_license_yes" data-target="#previously_details" value="yes">
+                                                        <input class="form-check-input toggle-details" type="radio" name="wireman_license" id="wireman_license_yes" data-target="#previously_details" value="yes" {{ $hasOldPrefill ? 'checked' : '' }}>
                                                         <label class="form-check-label" for="yesOption">Yes</label>
                                                     </div>
                                                       
                                                     <div class="form-check form-check-inline">
-                                                        <input class="form-check-input toggle-details" type="radio" name="wireman_license" id="wireman_license_no" data-target="#previously_details" value="no" checked>
+                                                        <input class="form-check-input toggle-details" type="radio" name="wireman_license" id="wireman_license_no" data-target="#previously_details" value="no" {{ $hasOldPrefill ? '' : 'checked' }}>
                                                         <label class="form-check-label" for="noOption">No</label>
                                                     </div>
                                                 </label>
                                             </div>
                                         </div>
-                                        <div class="row align-items-center" id="previously_details" style="display: none;">
+                                        <div class="row align-items-center" id="previously_details" style="display: {{ $hasOldPrefill ? 'flex' : 'none' }};">
                                             <div class="col-12 col-md-2 text-md-right">
                                                 <label> License Number <span style="color: red;">*</span></label>
 
                                             </div>
                                             <div class="col-12 col-md-3">
-                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="competency_certificate_no" type="text" placeholder="License Number" maxlength="80">
+                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="competency_certificate_no" type="text" placeholder="License Number" maxlength="80" value="{{ $oldCertNo }}">
                                                 <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                 <span id="licenseError" class="text-danger"></span>
                                                 <span id="license_message" class="mt-1"></span>
@@ -350,7 +360,7 @@
                                             <div class="col-12 col-md-6">
                                                 <div class="row">
                                                     <div class="col-md-4">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_date" name="certificate_date" type="date">
+                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_date" name="certificate_date" type="date" value="{{ $oldExpiry }}">
                                                         <span id="dateError" class="text-danger"></span>
                                                     </div>
                                                     <div class="col-md-2">

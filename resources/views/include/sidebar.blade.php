@@ -127,10 +127,40 @@
                         <a class="nav-link d-flex align-items-center" href="{{ route('apply-form-b') }}"><i class="fa fa-arrow-circle-o-right"></i>Electrical Contractor License 'EB' [Form B]</a>
                     </li>
 
-
                 </ul>
             </div>
         </li>
+
+        <hr>
+        <li class="nav-item">
+            <a class="nav-link d-flex justify-content-between align-items-center collapsed" data-toggle="collapse"
+                href="#oldRenewalsMenu" role="button" aria-expanded="true" aria-controls="oldRenewalsMenu">
+                <span>
+                    <i class="fa fa-refresh me-2"></i> Old Renewals
+                </span>
+                <span>
+                    <i class="fas fa-chevron-down caret-icon"></i>
+                </span>
+            </a>
+            <div class="collapse collapse-menu show" id="oldRenewalsMenu">
+                <ul class="nav flex-column old-renewals-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('old_certificate_renewal') }}">
+                            <i class="fa fa-arrow-circle-o-right"></i> Old Certificate Renewal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('old_contractor_renewal') }}">
+                            <i class="fa fa-arrow-circle-o-right"></i> Old Contractor Renewal
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+
+        <div class="eight">
+            <span><i class="fa fa-file-text-o me-2"></i> Others</span>
+        </div>
 
         <li class="nav-item">
             <a class="nav-link" href="{{ route('expiry_date_change') }}"><i class="fa fa-arrow-circle-o-right"></i>

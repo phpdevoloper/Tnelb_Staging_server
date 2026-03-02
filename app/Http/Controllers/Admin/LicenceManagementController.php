@@ -298,7 +298,7 @@ class LicenceManagementController extends BaseController
             // var_dump($licence->id,$appl_type,$issued_licence);die;
             //    dd($request->all());
             // exit;
-            // dd($licence);die;
+            // dd($licence->id,$appl_type,$issued_licence);die;
             if ($appl_type === 'R') {
 
                 //   dd($issued_licence);

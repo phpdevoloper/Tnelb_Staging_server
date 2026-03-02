@@ -35,6 +35,8 @@ use App\Http\Controllers\CertificatedatechangeController;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\OldCertificateRenewalController;
+use App\Http\Controllers\OldContractorRenewalController;
 
 // ------------------------ Public Pages ------------------------
 
@@ -456,6 +458,24 @@ Route::post('/check_ealicence_validity', [LicenseController::class, 'check_ealic
  Route::get('/previous_licence_date_change', [CertificatedatechangeController::class, 'index'])->name('previous_licence_date_change');
  Route::post('/get-expiry', [CertificatedatechangeController::class, 'getExpiry'])->name('get.expiry');
 Route::post('/update-expiry', [CertificatedatechangeController::class, 'updateExpiry'])->name('update.expiry');
+
+
+
+ // Old certificate renewal
+    Route::get('/old_certificate_renewal', [OldCertificateRenewalController::class, 'index'])->name('old_certificate_renewal');
+    Route::post('/old_certificate_renewal/verify', [OldCertificateRenewalController::class, 'verify'])->name('old_certificate_renewal.verify');
+    Route::post('/old_certificate_renewal/submit', [OldCertificateRenewalController::class, 'submit'])->name('old_certificate_renewal.submit');
+    Route::get('/old_certificate_renewal/select-form', [OldCertificateRenewalController::class, 'selectForm'])->name('old_certificate_renewal.select_form');
+    // Alias route (as used by users): /old_certificate_renewal/form
+    Route::get('/old_certificate_renewal/form', [OldCertificateRenewalController::class, 'selectForm'])->name('old_certificate_renewal.form');
+    Route::get('/old_certificate_renewal/form/s', [OldCertificateRenewalController::class, 'oldRenewalFormS'])->name('old_renewal.form_s');
+    Route::get('/old_certificate_renewal/form/w', [OldCertificateRenewalController::class, 'oldRenewalFormW'])->name('old_renewal.form_w');
+    Route::get('/old_certificate_renewal/form/wh', [OldCertificateRenewalController::class, 'oldRenewalFormWH'])->name('old_renewal.form_wh');
+
+// Old contractor renewal (page only)
+    Route::get('/old_contractor_renewal', [OldContractorRenewalController::class, 'index'])->name('old_contractor_renewal');
+    Route::post('/old_contractor_renewal/verify', [OldContractorRenewalController::class, 'verify'])->name('old_contractor_renewal.verify');
+    Route::post('/old_contractor_renewal/submit', [OldContractorRenewalController::class, 'submit'])->name('old_contractor_renewal.submit');
 
 
 

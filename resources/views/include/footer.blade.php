@@ -275,14 +275,18 @@ $(document).ready(function() {
 
         const dobInput = document.getElementById('d_o_b');
 
-        var fp = flatpickr(dobInput, {
-            dateFormat: "d-m-Y",
-            // mode: "range"
-        });
+        // Only attach flatpickr + DD-MM-YYYY validation on non-native date inputs.
+        // On pages using <input type="date"> we rely on the browser picker and page-specific logic.
+        if (dobInput && dobInput.type !== 'date') {
+            flatpickr(dobInput, {
+                dateFormat: "d-m-Y",
+                // mode: "range"
+            });
 
-        // also trigger validation for manual typing
-        dobInput.addEventListener('keyup', () => validateDOB(dobInput.value));
-        dobInput.addEventListener('change', () => validateDOB(dobInput.value));
+            // also trigger validation for manual typing
+            dobInput.addEventListener('keyup', () => validateDOB(dobInput.value));
+            dobInput.addEventListener('change', () => validateDOB(dobInput.value));
+        }
 
 
         $('#previously_number').on('keyup', function () {
@@ -320,6 +324,11 @@ $(document).ready(function() {
         const ageInput = document.getElementById('age');
         const errorElement = document.getElementById("dob-error");
         const errorMessage = $('.error-message').first().text('');
+
+        // If the page uses native date input, don't run DD-MM-YYYY validation here.
+        if (dobInput && dobInput.type === 'date') {
+            return;
+        }
 
         const err = document.querySelector('#d_o_b + .error-message');
         if (err) err.textContent = '';

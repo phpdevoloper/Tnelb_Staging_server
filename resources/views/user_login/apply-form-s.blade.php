@@ -417,26 +417,36 @@
                                                         <label for="No">No</label>
                                                     </div> -->
 
+                                                    @php
+                                                        $oldCertNo = (string) request('old_cert_no', '');
+                                                        $oldCertNo = trim($oldCertNo);
+                                                        $oldExpiryRaw = (string) request('old_expiry_date', '');
+                                                        $oldExpiryRaw = trim($oldExpiryRaw);
+                                                        $oldExpiry = $oldExpiryRaw !== ''
+                                                            ? \Carbon\Carbon::parse($oldExpiryRaw)->format('Y-m-d')
+                                                            : '';
+                                                        $hasOldPrefill = $oldCertNo !== '';
+                                                    @endphp
                                                     <div class="col-md-3">
                                                         <div class="form-check form-check-inline">
-                                                            <input class="form-check-input toggle-details" type="radio" name="previous_certificate" id="yesOption" data-target="#wireman_details" value="yes">
+                                                            <input class="form-check-input toggle-details" type="radio" name="previous_certificate" id="yesOption" data-target="#wireman_details" value="yes" {{ $hasOldPrefill ? 'checked' : '' }}>
                                                             <label class="form-check-label" for="yesOption">Yes</label>
                                                         </div>
 
                                                         <div class="form-check form-check-inline">
-                                                            <input class="form-check-input toggle-details" type="radio" name="previous_certificate" id="noOption" data-target="#wireman_details" value="no" checked>
+                                                            <input class="form-check-input toggle-details" type="radio" name="previous_certificate" id="noOption" data-target="#wireman_details" value="no" {{ $hasOldPrefill ? '' : 'checked' }}>
                                                             <label class="form-check-label" for="noOption">No</label>
                                                         </div>
                                                     </div>
 
                                                 </div>
-                                                <div class="row mt-3" id="wireman_details" style="display: none;">
+                                                <div class="row mt-3" id="wireman_details" style="display: {{ $hasOldPrefill ? 'flex' : 'none' }};">
                                                     <div class="col-12 col-md-4 text-md-right">
                                                         <label>Wireman / Supervisor Competency Certificate Number <span style="color: red;">*</span></label>
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
-                                                        <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="80">
+                                                        <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="80" value="{{ $oldCertNo }}">
                                                         <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                         <span id="licenseError" class="text-danger"></span>
                                                         <span id="license_message" class="mt-1"></span>
@@ -446,7 +456,7 @@
                                                         <label>Date <span style="color: red;">*</span></label>
                                                     </div>
                                                     <div class="col-12 col-md-3">
-                                                        <input class="form-control text-box single-line verify-date" id="certificate_date" name="certificate_date" data-error="#certDateError" type="date">
+                                                        <input class="form-control text-box single-line verify-date" id="certificate_date" name="certificate_date" data-error="#certDateError" type="date" value="{{ $oldExpiry }}">
                                                         <span id="certDateError" class="text-danger"></span>
                                                     </div>
                                                     <div>
