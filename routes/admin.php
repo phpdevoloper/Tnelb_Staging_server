@@ -65,6 +65,9 @@
 
         Route::get('/generate-pdf/{application_id}', [LicensepdfController::class, 'generatePDF'])->name('generate.pdf');
         Route::get('/generate-licence-tamil/{application_id}', [LicensepdfController::class, 'generateLicenceTamil'])->name('competency-certificate-tamil.pdf');
+        // Form P specific licence streaming (encrypted PDFs)
+        Route::get('/formp/licence/en/{application_id}', [LicensepdfController::class, 'streamFormPLicenceEn'])->name('formp.licence.en');
+        Route::get('/formp/licence/ta/{application_id}', [LicensepdfController::class, 'streamFormPLicenceTa'])->name('formp.licence.ta');
         Route::get('/generateLicensePDF/{application_id}', [LicensepdfController::class, 'generateLicensePDF'])->name('generateLicensePDF');
 
         //New Licence card
@@ -92,6 +95,7 @@
             Route::post('/forwardApplicationformp/{role}', [FormPController::class, 'forwardApplicationformp'])->name('forwardApplicationformp');
             Route::post('/returntoSupervisorformp', [FormPController::class, 'returntoSupervisorformp'])->name('returntoSupervisorformp');
             Route::post('/rejectApplicationformp', [FormPController::class, 'rejectApplicationformp'])->name('rejectApplicationformp');
+            Route::post('/approveApplicationformp', [FormPController::class, 'approveApplicationformp'])->name('approveApplicationformp');
 
         // Secretary
             Route::get('/secretary_table', [LoginController::class, 'secretary_table'])->name('secretary_table');

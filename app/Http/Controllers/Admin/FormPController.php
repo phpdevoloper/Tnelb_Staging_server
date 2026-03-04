@@ -22,6 +22,7 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FormPController extends Controller
 {
@@ -169,30 +170,16 @@ class FormPController extends Controller
                 ->first();
         }
         if ($staff->name === "Secretary") {
+            // For Form P, always allow Secretary to forward to President
+            $nextForwardUser = DB::table('mst__staffs__tbls')
+                ->where('name', 'President')
+                ->select('name', 'roles_id')
+                ->first();
 
-            if ($applicant->form_id == 1) {
-
-                $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'President')
-                    ->select('name', 'roles_id')
-                    ->first();
-
-                $returnForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Supervisor')
-                    ->select('name', 'roles_id')
-                    ->first();
-            } else {
-
-                $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Secretary')
-                    ->select('name', 'roles_id')
-                    ->first();
-
-                $returnForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Supervisor')
-                    ->select('name', 'roles_id')
-                    ->first();
-            }
+            $returnForwardUser = DB::table('mst__staffs__tbls')
+                ->where('name', 'Supervisor')
+                ->select('name', 'roles_id')
+                ->first();
         }
 
         if ($staff->name === "President") {
@@ -1501,5 +1488,238 @@ class FormPController extends Controller
             'equipmentlist',
             'showbankWarning'
         ));
+    }
+
+       // ---------------approve Form P application--------------------
+
+    public function approveApplicationformp(Request $request)
+    {
+        $request->validate([
+            'application_id' => 'required|string',
+            'processed_by'   => 'required|string',
+            'remarks'        => 'nullable|string',
+        ]);
+
+        $application = DB::table('tnelb_form_p')
+            ->where('application_id', $request->application_id)
+            ->first();
+
+        if (!$application) {
+            return response()->json(['error' => 'Application not found.'], 404);
+        }
+
+        $login_id  = $application->login_id ?? null;
+        $appl_type = strtoupper(trim($application->appl_type ?? 'N')); // N or R
+
+        // Get licence config for Form P (cert_licence_code = 'P')
+        $licenceId = (int) DB::table('mst_licences')
+            ->where('cert_licence_code', 'P')
+            ->value('id');
+
+        if ($licenceId <= 0) {
+            return response()->json(['error' => 'Licence configuration for Form P not found.'], 422);
+        }
+
+        // If licence already exists for this Form P application (fresh case),
+        // do not approve again – inform the user instead.
+        if ($appl_type === 'N') {
+            $existingLicence = DB::table('tnelb_license')
+                ->where('application_id', $request->application_id)
+                ->first();
+
+            if ($existingLicence) {
+                return response()->json([
+                    'error' => 'Licence already exists for this application ID, so it cannot be approved again.',
+                ], 422);
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Determine processed_by based on the current user
+            $processed = match (Auth::user()->name) {
+                'President' => 'PR',
+                'Secretary' => 'SE',
+                default     => 'SE',
+            };
+
+            // -------------------- BASIC APPLICATION UPDATE --------------------
+            DB::table('tnelb_form_p')
+                ->where('application_id', $request->application_id)
+                ->update([
+                    'app_status'   => 'A',
+                    'processed_by' => $processed,
+                    'updated_at'   => now(),
+                ]);
+
+        // -------------------- GET LICENCE VALIDITY MONTHS --------------------
+            $today = Carbon::today()->toDateString();
+            $licenseperiod = DB::table('mst_fees_validity')
+                ->where('licence_id', $licenceId)
+                ->where('form_type', $appl_type)
+                ->where('status', 1)
+                ->whereDate('validity_start_date', '<=', $today)
+                ->orderBy('validity_start_date', 'desc')
+                ->first();
+
+            if ($licenseperiod) {
+                $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
+            } else {
+                // Fallback: no configured validity → treat as 0 months but still approve
+                $monthsToAdd = 0;
+                Log::warning('No validity configuration found for Form P licence; defaulting to 0 months', [
+                    'licence_id' => $licenceId,
+                    'form_type'  => $appl_type,
+                ]);
+            }
+
+            $issuedAt  = null;
+            $expiresAt = null;
+            $newSerial = null;
+
+            // -------------------- NORMAL EXPIRY CALCULATION + LICENSE CREATION --------------------
+            if ($appl_type === 'R') {
+                // Renewal → base expiry from previous renewal or today
+                $oldApplicationId = $application->old_application ?? null;
+
+                $oldExpiry = $oldApplicationId
+                    ? DB::table('tnelb_renewal_license')
+                        ->where('application_id', $oldApplicationId)
+                        ->value('expires_at')
+                    : null;
+
+                $baseExpiry = $oldExpiry
+                    ? Carbon::parse($oldExpiry)
+                    : now();
+
+                $issuedAt  = $baseExpiry->copy()->format('Y-m-d H:i:s');
+                $expiresAt = $baseExpiry->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+
+                // Prefer existing licence number on the application, otherwise fall back to last licence
+                $newSerial = $application->license_number
+                    ?? DB::table('tnelb_license')
+                        ->where('application_id', $oldApplicationId)
+                        ->value('license_number');
+
+                if (!$newSerial) {
+                    // As a final fallback, generate a fresh licence number
+                    $prefix    = $application->license_name ?? 'P';
+                    $yearMonth = now()->format('Ym');
+                    $lastSerial = DB::table('tnelb_license')
+                        ->where('license_number', 'LIKE', "L{$prefix}{$yearMonth}%")
+                        ->orderBy('license_number', 'desc')
+                        ->value('license_number');
+
+                    if ($lastSerial) {
+                        $lastNumber = (int) substr($lastSerial, -5);
+                        $nextNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+                    } else {
+                        $nextNumber = '00001';
+                    }
+
+                    $newSerial = "L{$prefix}{$yearMonth}{$nextNumber}";
+                }
+
+                DB::table('tnelb_renewal_license')->insert([
+                    'login_id'       => $login_id,
+                    'license_number' => $newSerial,
+                    'application_id' => $request->application_id,
+                    'issued_by'      => $request->processed_by,
+                    'issued_at'      => $issuedAt,
+                    'expires_at'     => $expiresAt,
+                    'created_at'     => now(),
+                ]);
+            } else {
+                // Fresh → issue today + configured months
+                // First check if licence already exists for this application (idempotent behaviour)
+                $existingLicence = DB::table('tnelb_license')
+                    ->where('application_id', $request->application_id)
+                    ->first();
+
+                if ($existingLicence) {
+                    // Reuse existing licence details, do NOT insert again
+                    $newSerial = $existingLicence->license_number;
+                    $issuedAt  = $existingLicence->issued_at;
+                    $expiresAt = $existingLicence->expires_at;
+                } else {
+                    $prefix    = $application->license_name ?? 'P';
+                    $yearMonth = now()->format('Ym');
+
+                    $lastSerial = DB::table('tnelb_license')
+                        ->where('license_number', 'LIKE', "L{$prefix}{$yearMonth}%")
+                        ->orderBy('license_number', 'desc')
+                        ->value('license_number');
+
+                    if ($lastSerial) {
+                        $lastNumber = (int) substr($lastSerial, -5);
+                        $nextNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+                    } else {
+                        $nextNumber = '00001';
+                    }
+
+                    $newSerial = "L{$prefix}{$yearMonth}{$nextNumber}";
+                    $issuedAt  = now()->format('Y-m-d H:i:s');
+                    $expiresAt = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+
+                    DB::table('tnelb_license')->insert([
+                        'application_id' => $request->application_id,
+                        'license_number' => $newSerial,
+                        'issued_by'      => $request->processed_by,
+                        'issued_at'      => $issuedAt,
+                        'expires_at'     => $expiresAt,
+                    ]);
+                }
+
+                // Also store licence number back on Form P application for reference
+                DB::table('tnelb_form_p')
+                    ->where('application_id', $request->application_id)
+                    ->update([
+                        'license_number' => $newSerial,
+                    ]);
+            }
+
+            // -------------------- WORKFLOW LOG --------------------
+            DB::table('tnelb_workflow')->insert([
+                'application_id' => $request->application_id,
+                'processed_by'   => $request->processed_by,
+                'role_id'        => Auth::user()->roles_id,
+                'appl_status'    => 'A',
+                'remarks'        => $request->remarks ?? 'No remarks provided',
+                'forwarded_to'   => Auth::user()->roles_id,
+                'created_at'     => now(),
+            ]);
+
+            // -------------------- LICENCE PDF (best-effort) --------------------
+            $pdfUrlEn = null;
+            try {
+                $pdfUrlEn = app(LicensepdfController::class)->generateFormPLicencePdfs($request->application_id);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to generate Form P licence PDF after approval', [
+                    'application_id' => $request->application_id,
+                    'error'          => $e->getMessage(),
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status'         => 'success',
+                'message'        => $appl_type === 'R'
+                    ? "Renewal approved till " . date('d/m/Y', strtotime($expiresAt))
+                    : "License issued till " . date('d/m/Y', strtotime($expiresAt)),
+                'license_number' => $newSerial,
+                'issued_at'      => $issuedAt,
+                'expires_at'     => $expiresAt,
+                'license_pdf_en_url' => $pdfUrlEn,
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Approval failed',
+                'msg'   => $e->getMessage(),
+            ], 500);
+        }
     }
 }

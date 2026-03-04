@@ -375,7 +375,8 @@ class SupervisorController extends Controller
             ->select('*')
             ->first();
 
-
+        $applicantStatus = $applicant ? $applicant->status : null;
+        $isReturnedApplication = $applicantStatus === 'RE';
 
         $queryTypeJson = $request->queryType && is_array($request->queryType) && count($request->queryType) > 0
             ? json_encode($request->queryType) : null;
@@ -425,19 +426,19 @@ class SupervisorController extends Controller
 
 
         $status = match ($staff->name) {
-            'President' => 'A',
-            'Secretary'  => $formType->form_id == 1 ? 'F' : 'A',
-            'Supervisor' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor2' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Accountant'    => 'F',
-            default      => abort(403, 'Unauthorized'),
+            'President'   => 'A',
+            'Secretary'   => $formType->form_id == 1 ? 'F' : 'A',
+            'Supervisor'  => $isReturnedApplication ? 'RF' : 'F',
+            'Supervisor2' => $isReturnedApplication ? 'RF' : 'F',
+            'Accountant'  => 'F',
+            default       => abort(403, 'Unauthorized'),
         };
 
 
         // Insert data into tnelb_workflow table
         $workflow = SupervisorModel::create([ // Ensure this is the correct model
             'application_id' => $request->application_id,
-            'appl_status'    => $applicant->status == 'RE' ? 'RF' : 'F', // Forwarded
+            'appl_status'    => $isReturnedApplication ? 'RF' : 'F', // Forwarded
             'processed_by'   => $request->processed_by,
             'forwarded_to'   => $request->forwarded_to,
             'role_id'        => $request->role_id,
@@ -494,13 +495,10 @@ class SupervisorController extends Controller
 
         $applicant = EA_Application_model::where('application_id', $request->application_id)
             ->select('*')
-          
             ->first();
 
-         
-
-
-
+        $applicantStatus = $applicant ? $applicant->application_status : null;
+        $isReturnedApplication = $applicantStatus === 'RE';
         $queryTypeJson = $request->queryType && is_array($request->queryType) && count($request->queryType) > 0
             ? json_encode($request->queryType) : null;
 
@@ -561,13 +559,13 @@ class SupervisorController extends Controller
 
 
         $status = match ($staff->name) {
-            'President' => 'A',
+            'President'   => 'A',
             // 'Secretary'  => $formType->form_id == 1 ? 'F' : 'A',
-            'Secretary' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor2' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Accountant'    => 'F',
-            default      => abort(403, 'Unauthorized'),
+            'Secretary'   => $isReturnedApplication ? 'RF' : 'F',
+            'Supervisor'  => $isReturnedApplication ? 'RF' : 'F',
+            'Supervisor2' => $isReturnedApplication ? 'RF' : 'F',
+            'Accountant'  => 'F',
+            default       => abort(403, 'Unauthorized'),
         };
 
         // dd($request->queryswitch);
@@ -575,9 +573,9 @@ class SupervisorController extends Controller
         // die;
 
         // Insert data into tnelb_workflow table
-          $workflow = WorkflowA::create([ // Ensure this is the correct model
+        $workflow = WorkflowA::create([ // Ensure this is the correct model
             'application_id' => $request->application_id,
-            'appl_status'    => $applicant->status == 'RE' ? 'RF' : 'F', // Forwarded
+            'appl_status'    => $isReturnedApplication ? 'RF' : 'F', // Forwarded
             'processed_by'   => $request->processed_by,
             'forwarded_to'   => $request->forwarded_to,
             'role_id'        => $request->role_id,
@@ -773,30 +771,6 @@ class SupervisorController extends Controller
                 ]);
             }
 
-            /* -------------------- WORKFLOW -------------------- */
-
-//            $workflow_change = DB::table('tnelb_workflow_a')->insert([
-//                 'application_id' => $request->application_id,
-//                 'processed_by'   => $request->processed_by,
-//                 'role_id'        => Auth::user()->roles_id,
-//                 'appl_status'    => 'A',
-//                 'remarks'        => $request->remarks ?? 'No remarks provided',
-//                 'forwarded_to'   => $request->forwarded_to,
-//                 'created_at'     => now(),
-//             ]);
-
-
-
-//          $workflow_change1 = WorkflowA::where('application_id', $request->application_id)
-//               ->where('processed_by', $request->processed_by)
-//               ->where('role_id', $request->role_id)
-//                 ->orderByDesc('id')
-//                 ->limit(1)
-//                 ->update([
-//                     'created_at' => DB::raw('NOW()'),
-//                 ]);
-// dd($workflow_change1->created_at);exit;
-
 
                $workflowId = DB::table('tnelb_workflow_a')->insertGetId([
         'application_id' => $request->application_id,
@@ -838,6 +812,7 @@ class SupervisorController extends Controller
             ], 500);
         }
     }
+    
     public function approveApplicationForma_beforepopup_bk(Request $request)
     {
 
@@ -1221,25 +1196,12 @@ class SupervisorController extends Controller
                     if (!$licenseperiod) {
                         throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$appl_type}).");
                     }
-                        
-
-                    // dd($formid->id);
-                    // exit;
-
-                        // dd($licenseperiod->validity);
-                        // exit;
                    
                     $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
 
-// H:i:s
                     $expiresAt = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
-// dd($expiresAt);
-// exit;
-              
 
                     // safe fallback if licenseperiod missing
-                    // $yearsToAdd = $licenseperiod->renewal_period ?? 1;
-                    // $expiresAt = $now->copy()->addYears($yearsToAdd)->format('Y-m-d H:i:s');
 
                     DB::table('tnelb_renewal_license')->insert([
                         'login_id'       => $login_id,
@@ -1265,20 +1227,13 @@ class SupervisorController extends Controller
                 $license_details = DB::table('tnelb_license')
                     ->where('application_id', $request->application_id)
                     ->first();
-
                      
-
                 if ($license_details) {
-
-                    //                    dd('exist');
-                    // exit;
                     // use existing license
                     $newSerial = $license_details->license_number;
                     $issuedAt = $license_details->issued_at;
                     $expiresAt = $license_details->expires_at;
-                } else {
-                    //                                dd('new');
-                    // exit;
+                } else {                        
                     // create new license
                     $prefix = $application->license_name;
                     $yearMonth = date('Ym');
@@ -1312,27 +1267,9 @@ class SupervisorController extends Controller
                         throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$appl_type}).");
                     }
                         
-
                     $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
 
-
-                    // dd()
-
-// H:i:s
                     $expiresAt = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
-                        // dd($expiresAt);
-                        // exit;
-                    // dd($licenseperiod->validity);
-                    // exit;
-
-                    //   dd([
-                    //     'issuedAt'   => $issuedAt,
-                    //     'expiresAt'  => $expiresAt,
-                    //     'newSerial'  => $newSerial,
-                    //     'app_id'     => $request->application_id,
-                    //     'processed'  => $request->processed_by,
-                    // ]);
-                    //             exit;
                     DB::table('tnelb_license')->insert([
                         'application_id' => $request->application_id,
                         'license_number' => $newSerial,
@@ -1342,7 +1279,15 @@ class SupervisorController extends Controller
                     ]);
                 }
             }
-
+            // Generate Licence PDF, encrypt it, and store its path (non-blocking)
+            try {
+                app(LicensepdfController::class)->generatePDF($request->application_id);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to generate/store encrypted licence PDF after approval', [
+                    'application_id' => $request->application_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             DB::table('tnelb_workflow')->insert([
                 'application_id' => $request->application_id,
@@ -1378,8 +1323,6 @@ class SupervisorController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            // return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
-            //\log()::error("Approve Application Error: " . $e->getMessage()); // Log the exact error
             return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
         }
     }

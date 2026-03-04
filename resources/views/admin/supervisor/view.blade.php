@@ -5,6 +5,10 @@
 @php
     $newApplications = $new_applications ?? $workflows ?? collect();
     $renewalApplications = $renewal ?? collect();
+    $requestedType = strtoupper((string) request()->query('form_type', ''));
+    $isRenewalOnly = $requestedType === 'R';
+    $isNewOnly = $requestedType === 'N';
+    $firstApp = $newApplications->first() ?? $renewalApplications->first();
 @endphp
 
 <style>
@@ -127,32 +131,45 @@
             <div class="row">
                 <div class="col-xl-12 col-lg-12 col-sm-12  layout-spacing">
                     <div class="seperator-header layout-top-spacing">
-                        <h4 class="">Pending Applications For {{ $newApplications->first()->form_name ?? 'N/A' }} (License
-                            {{ $newApplications->first()->license_name ?? 'N/A' }} )</h4>
+                        <h4 class="">
+                            @if($isRenewalOnly)
+                                Pending Renewal Applications For {{ $firstApp->form_name ?? 'N/A' }}
+                            @elseif($isNewOnly)
+                                Pending New Applications For {{ $firstApp->form_name ?? 'N/A' }}
+                            @else
+                                Pending Applications For {{ $firstApp->form_name ?? 'N/A' }}
+                            @endif
+                            (License {{ $firstApp->license_name ?? 'N/A' }})
+                        </h4>
 
                     </div>
                     {{-- <div class="statbox widget box box-shadow"> --}}
                     <div class="widget-content widget-content-area br-8">
                         <div class="simple-pill" style="padding: 5px 15px;">
                             <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="pills-home-icon-tab" data-bs-toggle="pill"
-                                        data-bs-target="#pills-home-icon" type="button" role="tab"
-                                        aria-controls="pills-home-icon" aria-selected="true">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
-                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                        </svg>
-                                        New Applications
-                                    </button>
-                                </li>
-                                @if ($renewalApplications->isNotEmpty())
+                                @if(!$isRenewalOnly)
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="pills-profile-icon-tab" data-bs-toggle="pill"
+                                        <button class="nav-link {{ $isNewOnly || $renewalApplications->isEmpty() ? 'active' : '' }}"
+                                            id="pills-home-icon-tab" data-bs-toggle="pill"
+                                            data-bs-target="#pills-home-icon" type="button" role="tab"
+                                            aria-controls="pills-home-icon"
+                                            aria-selected="{{ $isNewOnly || $renewalApplications->isEmpty() ? 'true' : 'false' }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
+                                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                            </svg>
+                                            New Applications
+                                        </button>
+                                    </li>
+                                @endif
+                                @if ((!$isNewOnly) && ($isRenewalOnly || $renewalApplications->isNotEmpty()))
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link {{ $isRenewalOnly ? 'active' : '' }}" id="pills-profile-icon-tab" data-bs-toggle="pill"
                                             data-bs-target="#pills-profile-icon" type="button" role="tab"
-                                            aria-controls="pills-profile-icon" aria-selected="false">
+                                            aria-controls="pills-profile-icon"
+                                            aria-selected="{{ $isRenewalOnly ? 'true' : 'false' }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                                 stroke-linecap="round" stroke-linejoin="round"
@@ -166,7 +183,8 @@
                                 @endif
                             </ul>
                             <div class="tab-content" id="pills-tabContent">
-                                <div class="tab-pane fade show active" id="pills-home-icon" role="tabpanel"
+                                @if(!$isRenewalOnly)
+                                <div class="tab-pane fade {{ $isNewOnly || $renewalApplications->isEmpty() ? 'show active' : '' }}" id="pills-home-icon" role="tabpanel"
                                     aria-labelledby="pills-home-icon-tab" tabindex="0">
                                     <table id="zero-config" class="table dt-table-hover" style="width:100%">
                                         <thead>
@@ -216,8 +234,9 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                @if ($renewalApplications->isNotEmpty())
-                                    <div class="tab-pane fade" id="pills-profile-icon" role="tabpanel"
+                                @endif
+                                @if ((!$isNewOnly) && ($isRenewalOnly || $renewalApplications->isNotEmpty()))
+                                    <div class="tab-pane fade {{ $isRenewalOnly ? 'show active' : '' }}" id="pills-profile-icon" role="tabpanel"
                                         aria-labelledby="pills-profile-icon-tab" tabindex="0">
                                         <table id="" class="zero-config table dt-table-hover" style="width:100%">
                                             <thead>
@@ -234,7 +253,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($renewalApplications as $key => $application)
+                                                @forelse ($renewalApplications as $key => $application)
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
                                                         <td>
@@ -259,7 +278,11 @@
                                                             </a>
                                                         </td>
                                                     </tr>
-                                                @endforeach
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="7" class="text-center">No pending applications found.</td>
+                                                    </tr>
+                                                @endforelse
                                             </tbody>
                                         </table>
                                     </div>

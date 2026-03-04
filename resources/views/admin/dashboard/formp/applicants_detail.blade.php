@@ -1066,7 +1066,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: '{{ route('admin.approveApplication') }}',
+                        url: '{{ route('admin.approveApplicationformp') }}',
                         type: 'POST',
                         headers: {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
@@ -1095,9 +1095,15 @@
                             // $('#licenseExpiry').text(response.license_expiry);
                         },
                         error: function (xhr) {
-                            let errorMessage = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "An unexpected error occurred.";
-                            $('#errorMessage').text(errorMessage);
-                            $('#errorModal').modal('show');
+                            let errorMessage = xhr.responseJSON && xhr.responseJSON.error
+                                ? xhr.responseJSON.error
+                                : "An unexpected error occurred.";
+
+                            Swal.fire({
+                                icon: "warning",
+                                title: "Warning",
+                                text: errorMessage,
+                            });
                         }
                     });
                 }

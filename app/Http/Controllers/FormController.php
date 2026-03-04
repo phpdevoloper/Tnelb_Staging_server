@@ -140,6 +140,9 @@ class FormController extends BaseController
 
         
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
+        $educationLevelRule = ($request->form_name === 'S')
+            ? 'required|string|in:UG,PG|max:50'
+            : 'required|string|max:50';
 
         $rules = [
             
@@ -165,7 +168,7 @@ class FormController extends BaseController
             
             // education arrays
             'educational_level'    => 'required|array|min:1',
-            'educational_level.*'  => 'required|string|max:50',
+            'educational_level.*'  => $educationLevelRule,
             'institute_name'       => 'required|array|min:1',
             'institute_name.*'     => 'required|string|max:80',
             'year_of_passing'      => 'required|array|min:1',
@@ -238,8 +241,9 @@ class FormController extends BaseController
             'fathers_name.max' => 'Father\'s name may not be greater than 80 characters.',
             'applicants_address.max' => 'Address may not be greater than 255 characters.',
             'competency_certificate_no.max' => 'Certificate number may not be greater than 80 characters.',
+            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
             
-            'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
+             'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
             'work_document.*.max'    => 'Experience document must not be greater than 200 kilobytes.',
             
         ];
@@ -515,6 +519,9 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
+        $educationLevelRule = ($request->form_name === 'S')
+            ? 'required|string|in:UG,PG|max:50'
+            : 'required|string|max:50';
 
         $rules = [
             'login_id'           => 'required|string',
@@ -533,7 +540,7 @@ class FormController extends BaseController
             'amount'             => 'required|numeric|min:0',
 
             'educational_level'    => 'required|array|min:1',
-            'educational_level.*'  => 'required|string|max:50',
+            'educational_level.*'  => $educationLevelRule,
             'institute_name'       => 'required|array|min:1',
             'institute_name.*'     => 'required|string|max:80',
             'year_of_passing'      => 'required|array|min:1',
@@ -561,6 +568,9 @@ class FormController extends BaseController
         $messages = [
             'education_document.*.max'    => 'Educational document size permitted only 5 KB to 200 KB.',
             'work_document.*.max'    => 'Experience document size permitted only 5 KB to 200 KB.',
+            'd_o_b.after_or_equal' => 'Date of Birth must not be more than 100 years ago.',
+            'd_o_b.before_or_equal' => 'Age must be at least 18 years.',
+            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
 
         ];
 
@@ -904,13 +914,17 @@ class FormController extends BaseController
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
 
+            $educationLevelRuleDraft = ($request->form_name === 'S')
+                ? 'nullable|string|in:UG,PG|max:50'
+                : 'nullable|string|max:50';
+
             $request->validate([
                 'login_id'           => 'nullable|string',
                 'applicant_name'     => 'nullable|string|max:255',
                 'fathers_name'       => 'nullable|string|max:255',
                 'applicants_address' => 'nullable|string|max:500',
                 'd_o_b'              => 'nullable|date',
-                'age'                => 'integer|min:18|max:100',
+                'age'                => 'nullable|integer|min:18|max:100',
                 'previously_number'  => 'nullable|string',
                 'previously_date'    => 'nullable|date',
                 'wireman_details'    => 'nullable|string|max:255',
@@ -920,7 +934,7 @@ class FormController extends BaseController
                 'amount'             => 'nullable|numeric|min:0',
     
                 'educational_level'    => 'nullable|array|min:1',
-                'educational_level.*'  => 'nullable|string|max:50',
+                'educational_level.*'  => $educationLevelRuleDraft,
                 'institute_name'       => 'nullable|array|min:1',
                 'institute_name.*'     => 'nullable|string|max:80',
                 'year_of_passing'      => 'nullable|array|min:1',
@@ -965,6 +979,7 @@ class FormController extends BaseController
             'designation.*.max'             => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
+            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
 
         ]);
 
@@ -1258,6 +1273,9 @@ class FormController extends BaseController
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
 
+        $educationLevelRuleDraft = ($request->form_name === 'S')
+            ? 'nullable|string|in:UG,PG|max:50'
+            : 'nullable|string|max:50';
       
 
         $request->validate([
@@ -1266,7 +1284,7 @@ class FormController extends BaseController
             'fathers_name'       => 'nullable|string|max:255',
             'applicants_address' => 'nullable|string|max:500',
             'd_o_b'              => 'nullable|date',
-            'age'                => 'integer|min:18|max:100',
+            'age'                => 'nullable|integer|min:18|max:100',
             'previously_number'  => 'nullable|string',
             'previously_date'    => 'nullable|date',
             'wireman_details'    => 'nullable|string|max:255',
@@ -1276,7 +1294,7 @@ class FormController extends BaseController
             'amount'             => 'nullable|numeric|min:0',
 
             'educational_level'    => 'nullable|array|min:1',
-            'educational_level.*'  => 'nullable|string|max:50',
+            'educational_level.*'  => $educationLevelRuleDraft,
             'institute_name'       => 'nullable|array|min:1',
             'institute_name.*'     => 'nullable|string|max:80',
             'year_of_passing'      => 'nullable|array|min:1',
@@ -1312,6 +1330,7 @@ class FormController extends BaseController
             'designation.*.max'          => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
+            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
         ]);
 
         $action    = $request->form_action; // "draft" or "submit"

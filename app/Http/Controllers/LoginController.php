@@ -387,6 +387,13 @@ foreach ($tables as $formCode => $tableName) {
             $workflow->renewal_application_id = $renewalApplicationId;
             $workflow->is_under_validity_period = $isValid;
 
+            // Resolve full licence name for display (try form_code e.g. EA, then form_name e.g. A)
+            $licenceRow = DB::table('mst_licences')->where('form_code', $formCode)->first()
+                ?? DB::table('mst_licences')->where('form_code', $workflow->form_name ?? '')->first();
+            $workflow->licence_display_name = $licenceRow && !empty(trim($licenceRow->licence_name ?? ''))
+                ? $licenceRow->licence_name
+                : ('Form ' . $formCode);
+
             return $workflow;
         });
 

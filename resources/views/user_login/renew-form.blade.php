@@ -213,6 +213,8 @@
                                                                     <input class="form-control text-box single-line"
                                                                         type="date" autocomplete="off"
                                                                         id="d_o_b" name="d_o_b"
+                                                                        min="{{ \Carbon\Carbon::now()->subYears(100)->format('Y-m-d') }}"
+                                                                        max="{{ \Carbon\Carbon::now()->subYears(18)->format('Y-m-d') }}"
                                                                         value="{{ !empty($application_details->d_o_b) ? \Carbon\Carbon::parse($application_details->d_o_b)->format('Y-m-d') : '' }}">
                                                                     <span id="dob-error" class="text-danger d-block mt-1" style="display: none;"></span>
                                                                 </div>
@@ -229,7 +231,7 @@
                                                                 <div class="col-12 col-md-7">
                                                                     <input autocomplete="off"
                                                                         class="form-control text-box single-line"
-                                                                        id="age" name="age" type="number" value="{{ isset($application_details) ? $application_details->age : '' }}"
+                                                                        id="age" name="age" type="number" min="18" max="100" value="{{ isset($application_details) ? $application_details->age : '' }}"
                                                                         readonly>
                                                                 </div>
                                                             </div>
@@ -287,9 +289,6 @@
                                                                     <option disabled {{ empty($edu_details->educational_level) ? 'selected' : '' }}>Select Education</option>
                                                                     <option value="PG" {{ $edu_details->educational_level == 'PG' ? 'selected' : '' }}>PG</option>
                                                                     <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
-                                                                    <option value="Diploma" {{ $edu_details->educational_level == 'Diploma' ? 'selected' : '' }}>Diploma</option>
-                                                                    <option value="+2" {{ $edu_details->educational_level == '+2' ? 'selected' : '' }}>+2</option>
-                                                                    <option value="10" {{ $edu_details->educational_level == '10' ? 'selected' : '' }}>10</option>
                                                                 </select>
                                                             </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]" value="{{ isset($edu_details->institute_name) ? $edu_details->institute_name : '' }}"></td>
@@ -346,9 +345,6 @@
                                                                     <option selected disabled>Select Education</option>
                                                                     <option value="PG">PG</option>
                                                                     <option value="UG">UG</option>
-                                                                    <option value="Diploma">Diploma</option>
-                                                                    <option value="+2">+2</option>
-                                                                    <option value="10">10</option>
                                                                 </select></td>
                                                             <td><input type="text" class="form-control" name="institute_name[]"></td>
                                                             <td>
@@ -832,16 +828,42 @@
 <script>
     // Age calculation on DOB change
     $('#d_o_b').on('change', function() {
-        const dob = new Date($(this).val());
+        const dobVal = $(this).val();
+        const errorEl = $('#dob-error');
+        errorEl.hide().text('');
+
+        if (!dobVal) {
+            $('#age').val('');
+            return;
+        }
+
+        // Use midnight to avoid timezone shifts
+        const dob = new Date(dobVal + 'T00:00:00');
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (isNaN(dob.getTime())) {
+            $('#age').val('');
+            errorEl.text('Please select a valid Date of Birth.').show();
+            return;
+        }
+
+        if (dob > today) {
+            $('#age').val('');
+            errorEl.text('Date of Birth cannot be in the future.').show();
+            return;
+        }
+
         let age = today.getFullYear() - dob.getFullYear();
         const monthDiff = today.getMonth() - dob.getMonth();
-
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
             age--;
         }
 
         $('#age').val(age);
+        if (age < 18 || age > 100) {
+            errorEl.text('Age must be between 18 and 100.').show();
+        }
     });
 
     // Add more education row
@@ -881,9 +903,6 @@
                         <option value="">Select Education</option>
                         <option value="PG">PG</option>
                         <option value="UG">UG</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="+2">+2</option>
-                        <option value="10">10</option>
                     </select>
                 </td>
                 <td><input type="text" class="form-control" name="institute_name[]" required></td>

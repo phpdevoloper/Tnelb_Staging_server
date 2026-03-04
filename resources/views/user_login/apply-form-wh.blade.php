@@ -156,7 +156,7 @@
                                                                     <label for="tamil" class="tamil">பிறந்த நாள்,மாதம், வருடம்</label>
                                                                 </div>
                                                                 <div class="col-12 col-md-5">
-                                                                    <input autocomplete="off" class="form-control text-box single-line" id="d_o_b" name="d_o_b" type="date" placeholder="DD/MM/YYYY" value="{{ isset($application) ? $application->d_o_b : '' }}">
+                                                                    <input autocomplete="off" class="form-control text-box single-line" id="d_o_b" name="d_o_b" type="text" placeholder="DD/MM/YYYY" value="{{ isset($application) ? $application->d_o_b : '' }}">
                                                                     <span id="dob-error" class="text-danger"></span>
                                                                 </div>
                                                             </div>
@@ -529,8 +529,7 @@
     <script>
         // Note: Save-as-draft is handled via AJAX in shared scripts.
         // Avoid attaching a generic ".btn-primary" click handler here (it breaks add-more buttons).
-
-
+        const licenseError = document.getElementById('licenseError');
 
         $('#previously_number_h').on('keyup', function () {
         const value = $(this).val().trim().toUpperCase();
@@ -541,13 +540,13 @@
 
         if (value === '') {
             licenseError.textContent = 'License Number is Required';
-            return; // ✅ Stop further checks if empty
+            return;
         }
 
         if (!regex.test(value)) {
             licenseError.textContent = 'Invalid License Number';
         } else {
-            licenseError.textContent = ''; // ✅ Clear error when valid
+            licenseError.textContent = '';
         }
     });
 
@@ -567,7 +566,6 @@
         const licenseNumber = $('#previously_number_h').val().trim().toUpperCase();
         const date = $('#previously_date_h').val().trim();
         const regex = /^(H|LWH)\d+$/;
-        
 
         licenseError.textContent = '';
         $('#dateError').text('');

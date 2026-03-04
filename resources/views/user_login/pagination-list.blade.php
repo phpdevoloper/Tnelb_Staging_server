@@ -113,8 +113,19 @@
                         data-bs-toggle="tooltip" data-bs-placement="top" title="View Licence Details">
                         <span class="badge badge-info">{{ $workflow->license_number }}</span>
                     </a>
-                    <a href="{{ route('admin.generate.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence card"><i class="fa fa-download"></i></a>
-                    <a href="{{ route('admin.competency-certificate-tamil.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence PDF Tamil"><i class="fa fa-download"></i></a>
+
+                    @if ($workflow->form_name == 'P')
+                        {{-- Form P: stream encrypted English and Tamil licence PDFs from private storage --}}
+                        <a href="{{ route('admin.formp.licence.en', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info" data-bs-toggle="tooltip" data-bs-placement="top" title="Download Form P Licence card (English)">
+                            <i class="fa fa-download"></i>
+                        </a>
+                        <a href="{{ route('admin.formp.licence.ta', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info" data-bs-toggle="tooltip" data-bs-placement="top" title="Download Form P Licence PDF Tamil">
+                            <i class="fa fa-download"></i>
+                        </a>
+                    @else
+                        <a href="{{ route('admin.generate.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence card"><i class="fa fa-download"></i></a>
+                        <a href="{{ route('admin.competency-certificate-tamil.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence PDF Tamil"><i class="fa fa-download"></i></a>
+                    @endif
                     <br>
 
                     @if (!empty($workflow->renewals))

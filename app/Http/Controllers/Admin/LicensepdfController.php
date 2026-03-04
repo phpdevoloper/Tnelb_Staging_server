@@ -12,7 +12,11 @@ use App\Models\TnelbAppsInstitute;
 use App\Models\TnelbFormP;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Mpdf\Mpdf;
 
 use Mpdf\QrCode\QrCode;
@@ -143,10 +147,12 @@ class LicensepdfController extends Controller
     
         // Write HTML to PDF
         $mpdf->WriteHTML($html);
-    
-        // Output PDF
-        return response($mpdf->Output('Application_Details.pdf', 'I'))
-            ->header('Content-Type', 'application/pdf');
+
+        $fileName = ($applicant->license_number ?? $application_id) . '_SUMMARY.pdf';
+
+        return response($mpdf->Output($fileName, 'I'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $fileName . '"');
     }
 
     
@@ -442,10 +448,36 @@ class LicensepdfController extends Controller
                 </div>
             </div>';
         $mpdf->WriteHTML($backHtml);
-        return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
+        $fileNameEn = ($applicant->license_number ?? $application_id) . '_EN.pdf';
+        $pdfBinaryEn = $mpdf->Output($fileNameEn, 'S');
+
+        // Build Tamil PDF in the same request
+        $pdfBinaryTa = $this->generateLicenceTamil($application_id, true);
+
+        // Encrypt and store both securely
+        $encryptedPathEn = 'private_documents/license_pdfs/' . $application_id . '_en.pdf.enc';
+        Storage::disk('local')->put($encryptedPathEn, Crypt::encryptString($pdfBinaryEn));
+
+        $encryptedPathTa = null;
+        if (is_string($pdfBinaryTa) && $pdfBinaryTa !== '') {
+            $encryptedPathTa = 'private_documents/license_pdfs/' . $application_id . '_ta.pdf.enc';
+            Storage::disk('local')->put($encryptedPathTa, Crypt::encryptString($pdfBinaryTa));
+        }
+
+        // Save paths to `tnelb_license.license_pdf`
+        $valueToStore = $encryptedPathTa
+            ? json_encode(['en' => $encryptedPathEn, 'ta' => $encryptedPathTa], JSON_UNESCAPED_SLASHES)
+            : $encryptedPathEn;
+
+        $this->storeEncryptedLicensePdfPath($application_id, $valueToStore);
+
+        // Stream English PDF to browser (existing behavior)
+        return response($pdfBinaryEn)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $fileNameEn . '"');
     }
 
-    public function generateLicenceTamil($application_id)
+    public function generateLicenceTamil($application_id, bool $returnBinary = false)
     {
         $application = DB::table('tnelb_application_tbl')
         ->where('application_id', $application_id)
@@ -491,7 +523,7 @@ class LicensepdfController extends Controller
             ->first();
         }
         if (!$applicant) {
-            return back()->with('error', 'Application not found.');
+            return $returnBinary ? null : back()->with('error', 'Application not found.');
         }
 
         if($applicant->license_name == 'B'){
@@ -755,7 +787,498 @@ class LicensepdfController extends Controller
                 </div>
             </div>';
         $mpdf->WriteHTML($backHtml);
+
+        if ($returnBinary) {
+            return $mpdf->Output('Application_Details.pdf', 'S');
+        }
+
         return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
+    }
+
+    private function storeEncryptedLicensePdfPath($applicationId, string $value): void
+    {
+        try {
+            if (!Schema::hasTable('tnelb_license') || !Schema::hasColumn('tnelb_license', 'license_pdf')) {
+                return;
+            }
+
+            $updated = DB::table('tnelb_license')
+                ->where('application_id', $applicationId)
+                ->update(['license_pdf' => $value]);
+
+            if ((int) $updated === 0) {
+                Log::warning('No tnelb_license row updated for license_pdf', [
+                    'application_id' => $applicationId,
+                    'value' => $value,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to store encrypted license PDF path', [
+                'application_id' => $applicationId,
+                'value' => $value,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Stream encrypted English Form P licence PDF from private storage.
+     */
+    public function streamFormPLicenceEn(string $applicationId)
+    {
+        // Ensure licence and PDF paths exist; if not, (re)generate them
+        $licence = DB::table('tnelb_license')
+            ->where('application_id', $applicationId)
+            ->first();
+
+        if (!$licence || empty($licence->license_pdf_en)) {
+            // Best-effort regenerate
+            $this->generateFormPLicencePdfs($applicationId);
+            $licence = DB::table('tnelb_license')
+                ->where('application_id', $applicationId)
+                ->first();
+        }
+
+        if (!$licence || empty($licence->license_pdf_en)) {
+            abort(404, 'Form P English licence PDF not found.');
+        }
+
+        try {
+            $encryptedPath = $licence->license_pdf_en;
+            $encryptedData = Storage::disk('local')->get($encryptedPath);
+            $pdfBinary     = Crypt::decryptString($encryptedData);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to stream Form P English licence PDF', [
+                'application_id' => $applicationId,
+                'path'           => $licence->license_pdf_en ?? null,
+                'error'          => $e->getMessage(),
+            ]);
+            abort(500, 'Unable to open licence PDF.');
+        }
+
+        $fileName = basename($encryptedPath, '.enc');
+        return response($pdfBinary)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
+    }
+
+    /**
+     * Stream encrypted Tamil Form P licence PDF from private storage.
+     */
+    public function streamFormPLicenceTa(string $applicationId)
+    {
+        // Ensure licence and PDF paths exist; if not, (re)generate them
+        $licence = DB::table('tnelb_license')
+            ->where('application_id', $applicationId)
+            ->first();
+
+        if (!$licence || empty($licence->license_pdf_ta)) {
+            // Best-effort regenerate (will set both en & ta)
+            $this->generateFormPLicencePdfs($applicationId);
+            $licence = DB::table('tnelb_license')
+                ->where('application_id', $applicationId)
+                ->first();
+        }
+
+        if (!$licence || empty($licence->license_pdf_ta)) {
+            abort(404, 'Form P Tamil licence PDF not found.');
+        }
+
+        try {
+            $encryptedPath = $licence->license_pdf_ta;
+            $encryptedData = Storage::disk('local')->get($encryptedPath);
+            $pdfBinary     = Crypt::decryptString($encryptedData);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to stream Form P Tamil licence PDF', [
+                'application_id' => $applicationId,
+                'path'           => $licence->license_pdf_ta ?? null,
+                'error'          => $e->getMessage(),
+            ]);
+            abort(500, 'Unable to open licence PDF.');
+        }
+
+        $fileName = basename($encryptedPath, '.enc');
+        return response($pdfBinary)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$fileName.'"');
+    }
+
+    /**
+     * Generate English and Tamil licence PDFs specifically for Form P applications.
+     * Stores paths in `tnelb_license.license_pdf_en` and `license_pdf_ta` and
+     * returns the public URL to the English PDF (for UI display).
+     */
+    public function generateFormPLicencePdfs(string $applicationId): ?string
+    {
+        // Fetch Form P application
+        $formP = DB::table('tnelb_form_p')
+            ->where('application_id', $applicationId)
+            ->first();
+
+        if (!$formP) {
+            Log::warning('generateFormPLicencePdfs: Form P application not found', [
+                'application_id' => $applicationId,
+            ]);
+            return null;
+        }
+
+        $applType = strtoupper(trim($formP->appl_type ?? 'N')); // N or R
+
+        // Determine licence source (fresh vs renewal)
+        if ($applType === 'R') {
+            $licence = DB::table('tnelb_renewal_license')
+                ->where('application_id', $applicationId)
+                ->first();
+        } else {
+            $licence = DB::table('tnelb_license')
+                ->where('application_id', $applicationId)
+                ->first();
+        }
+
+        if (!$licence) {
+            Log::warning('generateFormPLicencePdfs: licence record not found for Form P', [
+                'application_id' => $applicationId,
+                'appl_type'      => $applType,
+            ]);
+            return null;
+        }
+
+        $applicantPhoto = TnelbApplicantPhoto::where('application_id', $applicationId)->first();
+
+        // Normalized applicant data for template
+        $applicant = (object) [
+            'application_id'    => $formP->application_id,
+            'name'              => $formP->applicant_name,
+            'fathers_name'      => $formP->fathers_name,
+            'applicants_address'=> $formP->applicants_address,
+            'd_o_b'             => $formP->d_o_b,
+            'age'               => $formP->age,
+            'license_name'      => $formP->license_name,
+            'form_name'         => $formP->form_name,
+            'license_number'    => $licence->license_number,
+            'issued_by'         => $licence->issued_by,
+            'issued_at'         => $licence->issued_at,
+            'expires_at'        => $licence->expires_at,
+        ];
+
+        // ---------- English card ----------
+        $mpdfEn = new \Mpdf\Mpdf([
+            'mode'         => 'utf-8',
+            'format'       => [80.80, 120.55],
+            'orientation'  => 'L',
+            'margin_top'    => 0,
+            'margin_bottom' => 0,
+            'margin_left'   => 0,
+            'margin_right'  => 0,
+        ]);
+
+        $mpdfEn->SetTitle('TNELB Form P Licence ' . $applicant->license_number);
+        $mpdfEn->WriteHTML('
+            <style>
+                @page { size: 110.55mm 70.80mm; margin: 0; }
+                body { margin: 0; padding: 0; width: 120.55mm; height: 80.80mm; font-family: helvetica; overflow: hidden; }
+                .card { width: 120.55mm; height: 80.80mm; border: 0.4mm solid #000; box-sizing: border-box; }
+                .header { height: 11mm; color: #003366; text-align: center; font-size: 10.5pt; font-weight: bold; padding: 2mm; box-sizing: border-box; }
+                .content { padding: 3mm; font-size: 7pt; box-sizing: border-box; }
+                .photo { width: 22mm; height: 22mm; border: 0.3mm solid #000; box-sizing: border-box; overflow: hidden; }
+                .info-table { font-size: 9pt; border-collapse: collapse; }
+                .info-table td { padding: 1mm; vertical-align: top; }
+                .info-table .lbl { width: 25mm; font-weight: bold; }
+                .info-table .colon { width: 2mm; text-align: center; }
+                .footer { margin-top: 5mm; text-align: center; font-size: 6pt; }
+            </style>
+        ', \Mpdf\HTMLParserMode::HEADER_CSS);
+
+        $photoPath = !empty($applicantPhoto->upload_path) ? public_path($applicantPhoto->upload_path) : null;
+        $qrValue   = 'TNELB FORM P ' . $applicant->license_number;
+
+        $enHtml = '
+        <div class="card">
+            <div class="header">
+                TAMIL NADU ELECTRICAL LICENCING BOARD<br>
+                Thiru Vi. Ka. Indl. Estate, Guindy, Chennai - 600 032.
+            </div>
+            <div class="content">
+                <table width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="70%" valign="top">
+                            <table class="info-table">
+                                <tr>
+                                    <td class="lbl">C.No</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->license_number.'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">D.O.I</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.date('d M Y', strtotime($applicant->issued_at)).'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">Validity</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.format_date($applicant->issued_at).'<small style="font-weight: bold;"> To </small>'.format_date($applicant->expires_at).'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">Name</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->name.'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">F/H Name</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->fathers_name.'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">Date of Birth</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.date('d M Y', strtotime($applicant->d_o_b)).'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">Address</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->applicants_address.'</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td width="30%" valign="top">
+                            <table width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td align="center">
+                                        <div class="photo">
+                                            '.($photoPath
+                                                ? '<img src="'.$photoPath.'" style="width:22mm; height:22mm; object-fit:cover;">'
+                                                : '').'
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td height="3mm"></td></tr>
+                                <tr>
+                                    <td align="center">
+                                        <barcode code="'.$qrValue.'" type="QR" size="0.6" error="M" />
+                                    </td>
+                                </tr>
+                                <tr><td height="4mm"></td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="footer">
+                Issued by TNELB | Tamil Nadu
+            </div>
+        </div>';
+
+        $mpdfEn->WriteHTML($enHtml);
+
+        // Back side simple text for Form P
+        $mpdfEn->AddPage('L');
+        $mpdfEn->WriteHTML('
+            <div class="card">
+                <div class="content" style="font-size:9.5pt; line-height:1.4;">
+                    <div style="text-align:right; font-size:7pt; margin-bottom:2mm;">
+                        Visit us at : www.tnelb.gov.in
+                    </div>
+                    <div style="margin-top:4mm;text-align: justify;">
+                        The holder of this Form P competence certificate is authorised to work in connection with the operation and maintenance of power generating stations as per the regulations of the Tamil Nadu Electrical Licensing Board.
+                    </div>
+                    <br><br><br><br>
+                    <table width="100%" style="margin-top:15mm;">
+                        <tr>
+                            <td width="45%" style="text-align:left;">
+                                <div style="height:12mm;"></div>
+                                <strong>Secretary</strong>
+                            </td>
+                            <td width="55%" style="text-align:right;">
+                                <div style="height:12mm;"></div>
+                                <strong>President</strong>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        ');
+
+        $fileNameEn      = $applicationId . '_FORMP_EN.pdf';
+        $pdfBinaryEn     = $mpdfEn->Output($fileNameEn, 'S');
+        // Store encrypted English PDF in private storage
+        $encryptedPathEn = 'private_documents/license_pdfs/' . $fileNameEn . '.enc';
+        Storage::disk('local')->put($encryptedPathEn, Crypt::encryptString($pdfBinaryEn));
+
+        // ---------- Tamil card (simplified) ----------
+        // Reuse the same Tamil font configuration as the existing Tamil licence generator
+        $defaultConfig   = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $fontDirs        = $defaultConfig['fontDir'];
+        $defaultFontCfg  = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $fontData        = $defaultFontCfg['fontdata'];
+
+        $mpdfTa = new \Mpdf\Mpdf([
+            'mode'         => 'utf-8',
+            'format'       => [80.80, 120.55],
+            'orientation'  => 'L',
+            'margin_top'    => 0,
+            'margin_bottom' => 0,
+            'margin_left'   => 0,
+            'margin_right'  => 0,
+            'fontDir'       => array_merge($fontDirs, [
+                public_path('fonts'),
+            ]),
+            'fontdata'      => array_merge($fontData, [
+                'notosanstamil' => [
+                    'R' => 'NotoSansTamil-Regular.ttf',
+                ],
+            ]),
+            'default_font' => 'notosanstamil',
+        ]);
+
+        $mpdfTa->autoScriptToLang = true;
+        $mpdfTa->autoLangToFont   = true;
+
+        $mpdfTa->SetTitle('TNELB Form P Licence ' . $applicant->license_number);
+        $mpdfTa->WriteHTML('
+            <style>
+                @page { size: 110.55mm 70.80mm; margin: 0; }
+                body { margin: 0; padding: 0; width: 120.55mm; height: 80.80mm; font-family: notosanstamil; overflow: hidden; }
+                .card { width: 120.55mm; height: 80.80mm; border: 0.4mm solid #000; box-sizing: border-box; }
+                .header { height: 11mm; color: #003366; text-align: center; font-size: 9pt; font-weight: bold; padding: 2mm; box-sizing: border-box; }
+                .content { padding: 3mm; font-size: 7pt; box-sizing: border-box; }
+                .photo { width: 22mm; height: 22mm; border: 0.3mm solid #000; box-sizing: border-box; overflow: hidden; }
+                .info-table { font-size: 8pt; border-collapse: collapse; }
+                .info-table td { padding: 1mm; vertical-align: top; }
+                .info-table .lbl { width: 28mm; font-weight: bold; }
+                .info-table .colon { width: 2mm; text-align: center; }
+                .footer { margin-top: 5mm; text-align: center; font-size: 6pt; }
+            </style>
+        ', \Mpdf\HTMLParserMode::HEADER_CSS);
+
+        $taHtml = '
+        <div class="card">
+            <div class="header">
+                தமிழ்நாடு மின்அனுமதி வாரியம்<br>
+                திரு வி.க. தொழிற் பகுதி, கிண்டி, சென்னை - 600 032.
+            </div>
+            <div class="content">
+                <table width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="70%" valign="top">
+                            <table class="info-table">
+                                <tr>
+                                    <td class="lbl">சான்றிதழ் எண்</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->license_number.'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">வழங்கிய தேதி</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.date('d-m-Y', strtotime($applicant->issued_at)).'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">செல்லுபடியாகும் தேதி</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.format_date($applicant->issued_at).' முதல் '.format_date($applicant->expires_at).'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">பெயர்</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->name.'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">தந்தை/கணவர் பெயர்</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->fathers_name.'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">முகவரி</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->applicants_address.'</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td width="30%" valign="top">
+                            <table width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td align="center">
+                                        <div class="photo">
+                                            '.($photoPath
+                                                ? '<img src="'.$photoPath.'" style="width:22mm; height:22mm; object-fit:cover;">'
+                                                : '').'
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td height="3mm"></td></tr>
+                                <tr>
+                                    <td align="center">
+                                        <barcode code="'.$qrValue.'" type="QR" size="0.6" error="M" />
+                                    </td>
+                                </tr>
+                                <tr><td height="4mm"></td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="footer">
+                தமிழ்நாடு மின்அனுமதி வாரியத்தால் வழங்கப்பட்டது
+            </div>
+        </div>';
+
+        // Back side content (Tamil explanation + signatures), similar to other Tamil licences
+        $backTaHtml = '
+            <div class="card">
+                <div class="content" style="font-size:9.5pt; line-height:1.4; font-family:notosanstamil;">
+                    <div style="text-align:right; font-size:7pt; margin-bottom:2mm;">
+                        எங்களை தொடர்பு கொள்ள : www.tnelb.gov.in
+                    </div>
+                    <div style="margin-top:4mm; text-align: justify;">
+                        இச்சான்றிதழ் பெற்றவர் மின் உற்பத்தி நிலையங்களில் (Form P திறன் சான்றிதழ்) 
+                        பணிபுரிய தகுதி பெற்றவர் என்பதையும், தமிழ்நாடு மின்அனுமதி வாரியம் 
+                        நிர்ணயித்த விதிமுறைகளின்படி செயல்பட வேண்டும் என்பதையும் அறிவிக்கப்படுகிறது.
+                    </div>
+
+                    <br><br><br><br>
+
+                    <!-- SIGNATURE AREA -->
+                    <table width="100%" style="margin-top:15mm;">
+                        <tr>
+                            <td width="45%" style="text-align:left;">
+                                <div style="height:12mm;"></div>
+                                <strong>செயலாளர்</strong>
+                            </td>
+                            <td width="55%" style="text-align:right;">
+                                <div style="height:12mm;"></div>
+                                <strong>தலைவர்</strong>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>';
+
+        // Front + explicit page break + back on page 2
+        $mpdfTa->WriteHTML($taHtml . '<pagebreak />' . $backTaHtml);
+        $fileNameTa     = $applicationId . '_FORMP_TA.pdf';
+        $pdfBinaryTa    = $mpdfTa->Output($fileNameTa, 'S');
+        // Store encrypted Tamil PDF in private storage
+        $encryptedPathTa = 'private_documents/license_pdfs/' . $fileNameTa . '.enc';
+        Storage::disk('local')->put($encryptedPathTa, Crypt::encryptString($pdfBinaryTa));
+
+        // Update paths in tnelb_license table
+        try {
+            DB::table('tnelb_license')
+                ->where('application_id', $applicationId)
+                ->update([
+                    'license_pdf_en' => $encryptedPathEn,
+                    'license_pdf_ta' => $encryptedPathTa,
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to update licence PDF paths for Form P', [
+                'application_id' => $applicationId,
+                'path_en'        => $encryptedPathEn,
+                'path_ta'        => $encryptedPathTa,
+                'error'          => $e->getMessage(),
+            ]);
+        }
+
+        // Return stored encrypted path for English PDF so UI can show/reference it
+        return $encryptedPathEn;
     }
 
     public function generateLicensePDF($application_id)

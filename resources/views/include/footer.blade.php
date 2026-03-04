@@ -616,6 +616,34 @@ $(document).ready(function() {
                 dobEl.after(errorMsg);
                 if (!firstErrorField) firstErrorField = dobEl;
                 isValid = false;
+            } else if (dobEl.length) {
+                const dobStr = dobEl.val();
+                const dob = new Date(dobStr + 'T00:00:00');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (isNaN(dob.getTime())) {
+                    dobEl.after('<span class="error-message text-danger d-block mt-1">Please select a valid Date of Birth.</span>');
+                    if (!firstErrorField) firstErrorField = dobEl;
+                    isValid = false;
+                } else {
+                    let age = today.getFullYear() - dob.getFullYear();
+                    const monthDiff = today.getMonth() - dob.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                        age--;
+                    }
+                    $('#age').val(age);
+
+                    if (dob > today) {
+                        dobEl.after('<span class="error-message text-danger d-block mt-1">Date of Birth cannot be in the future.</span>');
+                        if (!firstErrorField) firstErrorField = dobEl;
+                        isValid = false;
+                    } else if (age < 18 || age > 100) {
+                        $('#age').after('<span class="error-message text-danger d-block mt-1">Age must be between 18 and 100.</span>');
+                        if (!firstErrorField) firstErrorField = $('#age');
+                        isValid = false;
+                    }
+                }
             }
 
             let nameRegex = /^[A-Za-z\s]+$/;
@@ -664,6 +692,17 @@ $(document).ready(function() {
                     eduLevel.after('<span class="error-message text-danger d-block mt-1">Education level is required.</span>');
                     if (!firstErrorField) firstErrorField = eduLevel;
                     isValid = false;
+                } else if (eduLevel.length) {
+                    let formName = ($('#form_name').val() || '').toString().toUpperCase();
+                    if (formName === 'S') {
+                        const allowed = ['UG', 'PG'];
+                        const val = (eduLevel.val() || '').toString().toUpperCase();
+                        if (val !== '' && !allowed.includes(val)) {
+                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only UG/PG degrees are allowed.</span>');
+                            if (!firstErrorField) firstErrorField = eduLevel;
+                            isValid = false;
+                        }
+                    }
                 }
 
                 if (instituteName.length && instituteName.val().trim() === "") {
