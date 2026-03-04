@@ -799,8 +799,17 @@ $(document).ready(function() {
                     isValid = false;
                 }
 
-                // Work document is optional. Validate only if user uploaded a file.
-                if (workDocument.length && workDocument[0].files.length > 0) {
+                // For S form (non-optional work), experience document is required
+                // when the row is filled. For W / WH / P, it's optional (validate only if uploaded).
+                const hasFile = workDocument.length && workDocument[0].files.length > 0;
+                const existingDocInput = $(this).find('input[name="existing_work_document[]"]');
+                const hasExistingDoc = existingDocInput.length && (existingDocInput.val() || '').trim() !== '';
+
+                if (!workOptional && shouldValidateRow && !hasFile && !hasExistingDoc) {
+                    workDocument.after('<span class="error-message text-danger d-block mt-1">Experience document is required.</span>');
+                    if (!firstErrorField) firstErrorField = workDocument.length ? workDocument : designation;
+                    isValid = false;
+                } else if (hasFile) {
                     const file = workDocument[0].files[0]; // ✅ use raw DOM element
                     if (file) {
                         const allowedType = 'application/pdf';
@@ -948,7 +957,7 @@ $(document).ready(function() {
                 $('#upload_photo').after('<span class="error-message text-danger d-block mt-1">Photo upload is required.</span>');
                 if (!firstErrorField) firstErrorField = $('#upload_photo');
                 isValid = false;
-            }else if (photoInput && photoInput.files.length > 0) {
+            } else if (photoInput && photoInput.files.length > 0) {
                 const file = photoInput.files[0];
                 if (file) {
                     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -965,7 +974,33 @@ $(document).ready(function() {
                 }
             }
 
+            // Signature validation (required only when marked required)
+            let signInput = document.getElementById("upload_sign");
+            if (signInput && $(signInput).is(':visible')) {
+                $(signInput).nextAll('.error-message').remove();
+                const isRequiredSign = signInput.hasAttribute('required');
 
+                if (isRequiredSign && signInput.files.length === 0) {
+                    $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Signature upload is required.</span>');
+                    if (!firstErrorField) firstErrorField = $('#upload_sign');
+                    isValid = false;
+                } else if (signInput.files.length > 0) {
+                    const sfile = signInput.files[0];
+                    if (sfile) {
+                        const sAllowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                        const sMaxSize = 50 * 1024;
+                        if (!sAllowedTypes.includes(sfile.type)) {
+                            $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Only JPG, JPEG, or PNG images are allowed for signature upload.</span>');
+                            if (!firstErrorField) firstErrorField = $('#upload_sign');
+                            isValid = false;
+                        } else if (sfile.size > sMaxSize) {
+                            $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Signature file size permitted only 5 KB to 50 KB.</span>');
+                            if (!firstErrorField) firstErrorField = $('#upload_sign');
+                            isValid = false;
+                        }
+                    }
+                }
+            }
 
             if (!isValid && firstErrorField) {
                 $('html, body').animate({ scrollTop: firstErrorField.offset().top - 100 }, 500);
@@ -1080,8 +1115,33 @@ $(document).ready(function() {
             if ($field.val()) {
                 $field.nextAll('.error-message').first().remove();
             }
+
+            // Simple photo preview if a preview element is present on the page
+            const previewEl = document.getElementById('photo_preview');
+            if (!previewEl) return;
+
+            const input = this;
+            if (!input.files || !input.files[0]) {
+                previewEl.style.display = 'none';
+                previewEl.src = '';
+                return;
+            }
+
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewEl.src = e.target.result;
+                previewEl.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
         });
 
+        $("#upload_sign").on("input change", function() {
+            const $field = $(this);
+            if ($field.val()) {
+                $field.nextAll('.error-message').first().remove();
+            }
+        });
 
 
         $('#closePopup').on('click', function() {

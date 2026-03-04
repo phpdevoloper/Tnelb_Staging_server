@@ -169,7 +169,7 @@
                                                             </label>
                                                             <br>
                                                             <label for="tamil" class="tamil">விண்ணப்பதாரர் முகவரி
-                                                                <span class="text-label">(தெளிவாக இருக்க வேண்டும்)</span></label>
+                                                                <span class="text-label">(தெளிவாக இருத்தல் வேண்டும்)</span></label>
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <!-- <input autocomplete="off" class="form-control text-box single-line" id="Applicant_Name" name="Applicant_Name" type="text" value=""> -->
@@ -198,7 +198,7 @@
                                                         <div class="col-12 col-lg-5">
                                                             <div class="row align-items-center">
                                                                 <div class="col-12 col-md-5">
-                                                                    <label for="Name">4. (ii) Age <span style="color: red;">*</span></label><br>
+                                                                    <label for="Name">4. (ii) Age</label><br>
                                                                     <label for="tamil" class="tamil"> வயது</label>
                                                                 </div>
                                                                 <div class="col-12 col-md-7">
@@ -231,7 +231,7 @@
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
                                                             <th>Certificate No</th>
-                                                            <th class="text-center">Upload Document (Consolidated MarkSheet)
+                                                            <th class="text-center">Upload Document
                                                                 <br><span class="file-limit"> File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                             </th>
                                                             <th>
@@ -305,10 +305,9 @@
                                                         <th>Company Name / Contractor</th>
                                                         <th>Years of Experience</th>
                                                         <th>Designation</th>
-
-                                                        {{-- <th class="text-center">Upload Document (Experience Certificate)
+                                                        <th class="text-center">Upload Document (Experience Certificate)
                                                             <br><span class="file-limit"> File type: PDF(Min 5 KB To Max 200 KB)</span>
-                                                        </th> --}}
+                                                        </th>
                                                         <th>
                                                             <button type="button" class="btn btn-primary add-more-work">
                                                                 <i class="fa fa-plus"></i>
@@ -327,10 +326,9 @@
                                                         <td>
                                                             <input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80">
                                                         </td>
-
-                                                        {{-- <td>
+                                                        <td>
                                                             <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                        </td> --}}
+                                                        </td>
                                                         <td>
                                                             <button type="button" class="btn btn-danger remove-work">
                                                                 <i class="fa fa-trash-o"></i>
@@ -478,82 +476,61 @@
 
                                         <div class="row">
                                             <div class="col-12 col-md-12">
-                                                <table class="table">
+                                                <table class="table mb-0">
                                                     <tr>
-                                                        <td>(i)</td>
-                                                        <td>
-                                                            <label for="Name">Upload Photo <span style="color: red;">*</span></label>
+                                                        <td style="width:5%; vertical-align: middle;">(i)</td>
+                                                        <td style="width:25%; vertical-align: middle;">
+                                                            <label for="upload_photo">Upload Photo <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்
-                                                            </label>
+                                                            <label for="upload_photo" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்</label>
                                                         </td>
-                                                        <td></td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" value="" accept=".jpg,.jpeg,.png">
-                                                            <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <td colspan="3">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="flex-grow-1" style="max-width:280px;">
+                                                                    <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                    <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                                </div>
+                                                                <div class="ms-3">
+                                                                    <img id="photo_preview" src="" alt="Photo preview" style="display:none; width:100px; height:120px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">
+                                                                </div>
+                                                            </div>
                                                         </td>
-                                                        <td></td>
                                                     </tr>
                                                     <tr>
-                                                        <td>(ii)</td>
-                                                        <td>
-                                                            <label for="Name">Aadhaar Number <span style="color: red;">*</span></label>
+                                                        <td style="vertical-align: middle;">(ii)</td>
+                                                        <td style="vertical-align: middle;">
+                                                            <label for="aadhaar">Aadhaar Number <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">ஆதார் எண்</label>
+                                                            <label for="aadhaar" class="tamil">ஆதார் எண்</label>
                                                         </td>
-                                                        <td>
-                                                            <input type="text" class="form-control text-box" name="aadhaar" id="aadhaar" maxlength="14">
+                                                        <td style="width:20%;">
+                                                            <input type="text" class="form-control text-box" name="aadhaar" id="aadhaar" maxlength="14" style="max-width:260px;">
                                                             <span id="aadhaar-error" class="text-danger"></span>
                                                         </td>
-                                                        <td>
-                                                            <label for="Name">(iii) Upload Aadhaar Document <span style="color: red;">*</span></label>
+                                                        <td style="vertical-align: middle;">
+                                                            <label for="aadhaar_doc">(iii) Upload Aadhaar Document <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
+                                                            <label for="aadhaar_doc" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
                                                         </td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
-                                                            <span class="file-limit"> File type: PDF (Max 250 KB) </span>
+                                                        <td style="width:25%;">
+                                                            <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf" style="max-width:280px;">
+                                                            <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
                                                             <small class="text-danger file-error"></small>
                                                         </td>
                                                     </tr>
-                                                    {{-- <tr>
-                                                        <td>(iv)</td>
-                                                        <td>
-                                                            <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
+                                                    <tr>
+                                                        <td style="vertical-align: middle;">(iii)</td>
+                                                        <td style="vertical-align: middle;">
+                                                            <label for="upload_sign">Upload Signature <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">நிரந்தர கணக்கு எண்</label>
+                                                            <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                         </td>
-                                                        <td>
-                                                            <input type="text" class="form-control text-box " name="pancard" id="pancard">
-                                                            <p id="pancard-error" class="text-danger"></p>
+                                                        <td colspan="3">
+                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" style="max-width:280px;" required>
+                                                            <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
                                                         </td>
-                                                        <td>
-                                                            <label for="Name">(v) Upload Pan Card Document <span style="color: red;">*</span></label>
-                                                            <br>
-                                                            <label for="tamil" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும் </label>
-                                                        </td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
-                                                            <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
-                                                            <p class="text-danger file-error"></p>
-                                                        </td>
-                                                    </tr> --}}
+                                                    </tr>
                                                 </table>
-                                            </div>
-
-                                            <div class="col-12 col-md-6 " style="display: none;">
-                                                <div class="row align-items-center">
-                                                    <div class="col-12 col-md-5 ">
-                                                        <label for="Name">(ii) Upload Signature
-                                                        </label>
-                                                        <br>
-                                                        <label for="tamil" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
-                                                    </div>
-                                                    <div class="col-12 col-md-7">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept="pdf/*">
-                                                        <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                         <hr>
@@ -564,8 +541,8 @@
 
                                                     <span class="checkmark"></span>
                                                     <div>
-                                                        I hereby declare that all the details mentioned above are correct and true to the best of my knowledge. I request you to issue me the qualification certificate.<span style="color: red;">*</span><br>
-                                                        <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.</span>
+                                                        I hereby declare that the particulars stated above are correct and true to the best of my knowledge. <br> I request that I may be granted a Supervisor Competency Certificate.<span style="color: red;">*</span><br>
+                                                        <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். <br> எனக்கு மேற்பார்வையாளர் திறன் சான்றிதழ் வழங்குமாறு கேட்டுக்கொள்கிறேன்.</span>
                                                     </div>
 
                                                 </div>
@@ -717,8 +694,9 @@
 
                 newRow.innerHTML = `
             <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
-                <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50"></td>
+                <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max  ="50" placeholder="0-50"></td>
                 <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
+                <td><input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf"></td>
                 <td>
                 <button type="button" class="btn btn-danger remove-work">
                 <i class="fa fa-trash-o"></i>

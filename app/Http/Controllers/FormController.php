@@ -13,6 +13,7 @@ use App\Models\MstLicence;
 use App\Models\Payment;
 use App\Models\Tnelb_Renewals;
 use App\Models\TnelbApplicantPhoto;
+use App\Models\TnelbApplicantsSign;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -185,15 +186,18 @@ class FormController extends BaseController
             'designation.*'        => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             
             // single files
-            'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50', // 1MB
+            'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50',
+            'upload_sign'          => 'required|image|mimes:jpg,jpeg,png|max:50',
             'aadhaar_doc'          => 'required|mimes:pdf|min:10|max:250',
             // 'pancard_doc'          => 'required|mimes:pdf|min:10|max:250',
             
             // multiple files (arrays)
             'education_document'   => 'required|array|min:1',
             'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
-            // 'work_document'        => 'required|array|min:1',
-            // 'work_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
+            'work_document'        => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
+            'work_document.*'      => $isWorkOptional
+                ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200'
+                : 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
             
         ];
 
@@ -244,7 +248,9 @@ class FormController extends BaseController
             'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
             
              'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
-            'work_document.*.max'    => 'Experience document must not be greater than 200 kilobytes.',
+            'work_document.required'           => 'Please upload at least one experience document.',
+            'work_document.*.required'         => 'Experience document is required.',
+            'work_document.*.max'              => 'Experience document must not be greater than 200 kilobytes.',
             
         ];
 
@@ -468,6 +474,25 @@ class FormController extends BaseController
                     'upload_path'    => 'attached_documents/' . $photoPath,
                 ]);
             }
+
+            // process signature
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signDestination = public_path('attached_documents');
+                if (!is_dir($signDestination)) {
+                    mkdir($signDestination, 0755, true);
+                }
+                $signFile->move($signDestination, $signName);
+
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'      => $loginId,
+                        'uploaded_doc'  => 'attached_documents/' . $signName,
+                    ]
+                );
+            }
             
             
             
@@ -510,9 +535,11 @@ class FormController extends BaseController
             return response()->json(['status' => 'error', 'message' => 'Draft not found!'], 404);
         }
 
-        $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
-            ? 'image|mimes:jpg,jpeg,png|max:50'
-            : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+            $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
+        ? 'image|mimes:jpg,jpeg,png|max:50'
+        : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+            $uploadSignRule = 'nullable|image|mimes:jpg,jpeg,png|max:50';
+        $uploadSignRule = 'nullable|image|mimes:jpg,jpeg,png|max:50';
 
         $aadhaarDocRule = (!$existingForm->aadhaar_doc)
             ? 'required|mimes:pdf|max:250'
@@ -556,6 +583,7 @@ class FormController extends BaseController
             'designation.*'        => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
 
             'upload_photo'   => $uploadPhotoRule,
+            'upload_sign'    => $uploadSignRule,
             'aadhaar_doc'    => $aadhaarDocRule,
 
             'education_document'   => 'nullable|array',
@@ -794,6 +822,36 @@ class FormController extends BaseController
                 );
             }
 
+            // 🔹 Save Signature if New Upload
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
+
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
+                    ]
+                );
+            }
+
+            // 🔹 Save Signature if New Upload
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
+
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
+                    ]
+                );
+            }
+
             DB::commit();
 
             return response()->json([
@@ -944,6 +1002,7 @@ class FormController extends BaseController
     
     
                 'upload_photo'   => $uploadPhotoRule,
+                'upload_sign'    => $uploadSignRule,
                 'aadhaar_doc'    => $aadhaarDocRule,
     
                 'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
@@ -1268,6 +1327,8 @@ class FormController extends BaseController
         $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
             ? 'image|mimes:jpg,jpeg,png|max:50'
             : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+        $uploadSignRule = 'nullable|image|mimes:jpg,jpeg,png|max:50';
+        $uploadSignRule = 'nullable|image|mimes:jpg,jpeg,png|max:50';
 
         $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
             ? 'mimes:pdf|max:250'
@@ -1304,6 +1365,7 @@ class FormController extends BaseController
             'competency_certificate_no' => 'nullable|string|max:80',
 
             'upload_photo'   => $uploadPhotoRule,
+            'upload_sign'    => $uploadSignRule,
             'aadhaar_doc'    => $aadhaarDocRule,
 
             'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
@@ -1565,6 +1627,21 @@ class FormController extends BaseController
                 }
             }
 
+            // Signature (insert/update for this renewal app_id)
+            if ($request->hasFile('upload_sign') && $request->file('upload_sign')->isValid()) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
+
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
+                    ]
+                );
+            }
+
             
 
             DB::commit();
@@ -1635,6 +1712,7 @@ class FormController extends BaseController
                 'certificate_no.*'     => 'nullable|string|max:20',
                 'competency_certificate_no' => 'nullable|string|max:80',
                 'upload_photo'   => $uploadPhotoRule,
+                'upload_sign'    => $uploadSignRule,
                 'aadhaar_doc'    => $aadhaarDocRule,
     
                 'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
