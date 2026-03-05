@@ -51,10 +51,8 @@ class FormController extends BaseController
     }
 
 
- public function editApplication($appl_id)
+    public function editApplication($appl_id)
     {
-
-
         if (!Auth::check()) {
             return redirect()->route('logout');
         }
@@ -106,11 +104,6 @@ class FormController extends BaseController
             ->orderBy('id', 'asc')
             ->get();
 
-        $apps_doc = DB::table('tnelb_applicants_doc')
-            ->where('application_id', $appl_id)
-            ->select('*')
-            ->get();
-
 
         $license_details = DB::table('tnelb_license')
             ->where('application_id', $appl_id)
@@ -119,16 +112,22 @@ class FormController extends BaseController
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
 
-        $proof_doc = Mst_documents::where('application_id', $appl_id)->first();
+        $proof_doc = TnelbApplicantsSign::where('application_id', $appl_id)->first();
 
         $applicationid = $appl_id;
 
-        // dd($licence_name->licence_name);
-        // exit;
-      
-
-        return view('user_login.edit_application', compact('applicationid', 'application_details', 'edu_details', 'exp_details', 'apps_doc', 'license_details', 'applicant_photo', 'proof_doc',
-    'fees_details', 'form_details', 'licence_name'));
+        return view('user_login.edit_application', compact(
+            'applicationid',
+            'application_details',
+            'edu_details',
+            'exp_details',
+            'license_details',
+            'applicant_photo',
+            'proof_doc',
+            'fees_details',
+            'form_details',
+            'licence_name'
+        ));
 
     }
 
@@ -503,11 +502,11 @@ class FormController extends BaseController
                 'message' => 'Form submitted successfully!',
                 'application_id' => $applicationId,
                 'applicantName' => $form->applicant_name,
-                'form_name' => $form->form_name,
+                'form_name'    => $form->form_name,
                 'licence_name' => $licence_details['licence_name'],
                 'type_of_apps' => $licence_details['category_name'],
-                'form_type' => $licence_details['form_type'] == 'N'?'FRESH':'RENEWAL',
-                'date_apps'      => $this->dbNow
+                'form_type'    => $licence_details['form_type'] == 'N' ? 'FRESH' : 'RENEWAL',
+                'date_apps'    => Carbon::parse($this->dbNow)->format('d-m-Y')
             ]);
             
         } catch (\Exception $e) {
@@ -965,8 +964,11 @@ class FormController extends BaseController
         }
 
         $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
-        ? 'image|mimes:jpg,jpeg,png|max:50'
-        : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+            ? 'image|mimes:jpg,jpeg,png|max:50'
+            : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+
+        // Signature is optional for draft submit; file is validated only if present
+        $uploadSignRule = 'nullable|image|mimes:jpg,jpeg,png|max:50';
 
         $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
             ? 'mimes:pdf|max:250'
@@ -1653,7 +1655,7 @@ class FormController extends BaseController
                 'applicantName'  => $form->applicant_name,
                 'form_name'      => $form->form_name,
                 'licence_name'   => $type_of_apps->licence_name,
-                'date_apps'      => $this->dbNow
+                'date_apps'      => Carbon::parse($this->dbNow)->format('d-m-Y')
             ]);
 
         } catch (\Exception $e) {
@@ -1683,8 +1685,12 @@ class FormController extends BaseController
             return response()->json(['status' => 'error', 'message' => 'Draft not found!'], 404);
         }
         $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
-        ? 'image|mimes:jpg,jpeg,png|max:50'
-        : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+            ? 'image|mimes:jpg,jpeg,png|max:50'
+            : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+
+        // Signature is optional on edit; existing signature is kept if no new file
+        $uploadSignRule = 'nullable|image|mimes:jpg,jpeg,png|max:50';
+
         $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
             ? 'mimes:pdf|max:250'
             : 'nullable|mimes:pdf|max:250';
@@ -1835,22 +1841,14 @@ class FormController extends BaseController
             ->select('*')
             ->get()
             ->toArray();
-            // var_dump($renewal_form->license_name);die;
-
-            // var_dump($form_details);
-            // var_dump($renewal_form->license_name);die;
+        
             $current_form = collect($form_details)->firstWhere('cert_licence_code', $renewal_form->license_name);
             $category_type = collect($form_category)->firstWhere('id', $current_form['category_id']);
 
             $licence_details['licence_name'] = $current_form['licence_name'];
-            // var_dump($licence_details);die;
+        
             $licence_details['category_name'] = $category_type['category_name'];
             $licence_details['form_type'] = $renewal_form->appl_type;
-
-
-            // var_dump($licence_details);die;
-
-
 
             // Update Education Records
             if ($request->has('educational_level')) {
@@ -1975,11 +1973,11 @@ class FormController extends BaseController
                 'message' => 'Form submitted successfully!',
                 'application_id' => $applicationId,
                 'applicantName' => $renewal_form->applicant_name,
-                'form_name' => $renewal_form->form_name,
+                'form_name'    => $renewal_form->form_name,
                 'licence_name' => $licence_details['licence_name'],
                 'type_of_apps' => $licence_details['category_name'],
-                'form_type' => $licence_details['form_type'] == 'N'?'FRESH':'RENEWAL',
-                'date_apps'      => $this->dbNow
+                'form_type'    => $licence_details['form_type'] == 'N' ? 'FRESH' : 'RENEWAL',
+                'date_apps'    => Carbon::parse($this->dbNow)->format('d-m-Y')
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

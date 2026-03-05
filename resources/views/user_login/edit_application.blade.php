@@ -268,7 +268,7 @@
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
                                                             <th>Certificate No</th>
-                                                            <th class="text-center">Upload Document ({{ isset($application_details->form_name) && $application_details->form_name == 'WH' ? 'ITI Certificate' : 'Consolidated MarkSheet' }})
+                                                            <th class="text-center">Upload Document
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th>
                                                             <th>
@@ -335,8 +335,7 @@
                                                                 <div class="d-flex align-items-center file-section">
                                                                     @if (!empty($edu_details->upload_document))
                                                                     <div>
-                                                                        <?php //var_dump(!empty($edu_details->upload_document)); ?>
-                                                                            <a class="text-primary" href="{{ url('public/'. $edu_details->upload_document) }}" target="_blank">
+                                                                            <a class="text-primary" href="{{ asset($edu_details->upload_document) }}" target="_blank">
                                                                                 <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                             </a>
                                                                         </div>
@@ -444,6 +443,12 @@
                                                             <th>Company Name / Contractor</th>
                                                             <th>Years of Experience (Years)</th>
                                                             <th>Designation</th>
+                                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                                <th class="text-center">
+                                                                    Upload Document (Experience Certificate)
+                                                                    <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
+                                                                </th>
+                                                            @endif
                                                             <th>
                                                                 <button type="button" class="btn btn-primary add-more-work">
                                                                     <i class="fa fa-plus"></i>
@@ -467,17 +472,30 @@
                                                             <td>
                                                                 <input autocomplete="off" class="form-control" name="designation[]" type="text" value="{{ isset($exp_details->designation) && !empty($exp_details->designation) ? $exp_details->designation : '' }}">
                                                             </td>
-    
-                                                            {{-- <td>
-                                                                @if (isset($exp_details->upload_document) && $exp_details->upload_document)
-                                                                        <a class="text-primary"
-                                                                            href="{{ url(('public/'.$exp_details->upload_document) }}"
-                                                                            target="_blank"><i
-                                                                                class="fa fa-file-pdf-o"
-                                                                                style="color: red"></i> View </a><br>
-                                                                @endif
-                                                                <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                            </td> --}}
+                                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                            <td>
+                                                                <div class="d-flex align-items-center file-section">
+                                                                    @if (!empty($exp_details->upload_document))
+                                                                        <div class="work-doc-container">
+                                                                            <a class="text-primary"
+                                                                               href="{{ asset($exp_details->upload_document) }}"
+                                                                               target="_blank">
+                                                                                <i class="fa fa-file-pdf-o" style="color: red"></i> View
+                                                                            </a>
+                                                                            <button type="button" class="btn btn-sm btn-danger ml-3 remove-work-doc">Remove</button>
+                                                                        </div>
+                                                                        <div class="work-doc-input d-none">
+                                                                            <input class="form-control mt-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                        </div>
+                                                                    @else
+                                                                        <div class="work-doc-container d-none"></div>
+                                                                        <div class="work-doc-input">
+                                                                            <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                            </td>
+                                                            @endif
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id = "{{ $exp_details->id }}" data-url= "{{ route('delete_experience') }}">
                                                                     <i class="fa fa-minus"></i>
@@ -485,6 +503,7 @@
                                                             </td>
                                                             <input type="hidden" name="work_id[]" value="{{ $exp_details->id ?? '' }}">
                                                             <input type="hidden" name="existing_work_document[]" value="{{ $exp_details->upload_document ?? '' }}">
+                                                            <input type="hidden" name="removed_document_work[]" value="0">
                                                         </tr>
                                                         @endforeach
                                                         @else
@@ -499,7 +518,16 @@
                                                             <td>
                                                                 <input autocomplete="off" class="form-control" name="designation[]" type="text">
                                                             </td>
-    
+                                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                            <td>
+                                                                <div class="d-flex align-items-center file-section">
+                                                                    <div class="work-doc-container d-none"></div>
+                                                                    <div class="work-doc-input">
+                                                                        <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            @endif
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-work">
                                                                     <i class="fa fa-minus"></i>
@@ -508,6 +536,7 @@
 
                                                             <input type="hidden" name="work_id[]">
                                                             <input type="hidden" name="existing_work_document[]">
+                                                            <input type="hidden" name="removed_document_work[]" value="0">
                                                         </tr>
                                                         @endif
                                                     </tbody>
@@ -679,97 +708,119 @@
                                             </div>
 
                                             <hr>
-                                            <div class="row align-items-center">
-                                                <div class="col-12 col-md-12 ">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-12 col-md-6 ">
-                                                            <label for="Name">{{ isset($application_details->form_name) && in_array($application_details->form_name, ['WH','W']) ? $sno = '8' : $sno = '9'  }}. (i) Upload Passport Size Photo <span
-                                                                    style="color: red;">*</span></label>
-                                                            <br>
-                                                            <label for="tamil" class="tamil">பாஸ்போர்ட் அளவு
-                                                                புகைப்படம் பதிவேற்ற</label>
-                                                        </div>
-                                                        <div
-                                                            class="col-12 col-md-6 d-flex flex-column align-items-center text-center">
-                                                            @if ( !empty($applicant_photo->upload_path))
-                                                                <img src="{{ url($applicant_photo->upload_path) }}"
-                                                                    id="preview_applicant"
-                                                                    class="img-fluid border mb-2"
-                                                                    style="max-width: 100px;" alt="Applicant Photo">
-                                                                    <button type="button" class="btn btn-primary btn-sm mb-2" onclick="togglePhotoInput()">Edit/Upload Photo</button>
-                                                            @endif
+                                            <div class="row align-items-start">
+                                                {{-- Photo column --}}
+                                                <div class="col-12 col-md-4 mb-3 p-3">
+                                                    <label for="upload_photo">
+                                                        {{ isset($application_details->form_name) && in_array($application_details->form_name, ['WH','W']) ? $sno = '8' : $sno = '9'  }}.
+                                                        (i) Upload Passport Size Photo <span style="color: red;">*</span>
+                                                    </label>
+                                                    <br>
+                                                    <label for="upload_photo" class="tamil">பாஸ்போர்ட் அளவு புகைப்படம் பதிவேற்ற</label>
 
-                                                            <div id="photo-input-wrapper" style="{{ !empty($applicant_photo->upload_path) ? 'display: none;' : 'display: block;' }}; width: 100%; max-width: 300px;">
-                                                                <span class="file-limit"> File type: JPG, PNG (Max 50
-                                                                    KB) </span>
-                                                                <input autocomplete="off" class="form-control text-box single-line mb-1" id="upload_photo" name="upload_photo" type="file" accept="image/*">
-                                                                <span class="error-message text-danger"></span>
-                                                            </div>
+                                                    <div class="mt-2 text-center">
+                                                        @if (!empty($applicant_photo->upload_path))
+                                                            <img src="{{ url($applicant_photo->upload_path) }}"
+                                                                 id="preview_applicant"
+                                                                 class="img-fluid border mb-2"
+                                                                 style="max-width: 100px; border-radius:4px;"
+                                                                 alt="Applicant Photo">
+                                                            <button type="button"
+                                                                    class="btn btn-primary btn-sm mb-2"
+                                                                    onclick="togglePhotoInput()">Edit/Upload Photo</button>
+                                                        @endif
+
+                                                        <div id="photo-input-wrapper"
+                                                             style="{{ !empty($applicant_photo->upload_path) ? 'display: none;' : 'display: block;' }}; width: 100%; max-width: 280px; margin: 0 auto;">
+                                                            <span class="file-limit d-block text-start">File type: JPG, PNG (Max 50 KB)</span>
+                                                            <input autocomplete="off"
+                                                                   class="form-control text-box single-line mb-1"
+                                                                   id="upload_photo"
+                                                                   name="upload_photo"
+                                                                   type="file"
+                                                                   accept="image/*">
+                                                            <span class="error-message text-danger d-block text-start"></span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div class="row">
-                                                <div class="col-12 col-md-12">
-                                                    <table class="table">
-                                                        <tr>
-                                                            <td>(ii)</td>
-                                                            @php
+                                                {{-- Aadhaar column --}}
+                                                <div class="col-12 col-md-4 mb-3 p-3">
+                                                    @php
+                                                        $decryptedaadhar = !empty($application_details->aadhaar)
+                                                            ? Crypt::decryptString($application_details->aadhaar)
+                                                            : null;
+                                                    @endphp
 
-                                                                $decryptedaadhar = !empty($application_details->aadhaar)
-                                                                    ? Crypt::decryptString($application_details->aadhaar)
-                                                                    : null;
+                                                    <div class="mb-3">
+                                                        <label for="aadhaar">(ii) Aadhaar Number <span style="color: red;">*</span></label>
+                                                        <br>
+                                                        <label for="aadhaar" class="tamil">ஆதார் எண்</label>
+                                                        <input type="text"
+                                                               class="form-control text-box mt-1"
+                                                               name="aadhaar"
+                                                               id="aadhaar"
+                                                               maxlength="14"
+                                                               value="{{ $decryptedaadhar }}">
+                                                        <span id="aadhaar-error" class="text-danger"></span>
+                                                    </div>
 
-
-                                                            @endphp
-                                                            <td>
-                                                                <label for="Name">Aadhaar Number <span style="color: red;">*</span></label>
-                                                                <br>
-                                                                <label for="tamil" class="tamil">ஆதார் எண்</label>
-                                                            </td>
-                                                            <td>
-                                                                <input type="text" class="form-control text-box" name="aadhaar" id="aadhaar" maxlength="14" value="{{ $decryptedaadhar }}">
-                                                                <span id="aadhaar-error" class="text-danger"></span>
-                                                            </td>
-                                                            <td>
-                                                                <label for="Name">(iii) Upload Aadhaar Document <span style="color: red;">*</span></label>
-                                                                <br>
-                                                                <label for="tamil" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
-                                                            </td>
-                                                            <td>
-                                                                @if (!empty($application_details->aadhaar_doc))
-                                                                    <div class="aadhaar-doc-container">
-                                                                        <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $application_details->aadhaar_doc]) }}" target="_blank" style="color: #007bff;">
-                                                                            <i class="fa fa-file-pdf-o" style="color: red;"></i> View
-                                                                        </a>
-                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-docs">Remove</button>
-                                                                    </div>
-                                                                @endif
-                                                                    <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }}">
-                                                                        <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
-                                                                        <span class="file-limit"> File type: PDF (Max 250 KB) </span>
-                                                                        <small class="text-danger file-error"></small>
-                                                                    </div>
-
-                                                                    <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
-                                                                
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </div>
-    
-                                                <div class="col-12 col-md-6 " style="display: none;">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-12 col-md-5 ">
-                                                            <label for="Name">(ii) Upload Signature
-                                                            </label>
-                                                            <br>
-                                                            <label for="tamil" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+                                                    <div>
+                                                        <label for="aadhaar_doc">(iii) Upload Aadhaar Document <span style="color: red;">*</span></label>
+                                                        <br>
+                                                        <label for="aadhaar_doc" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
+                                                        @if (!empty($application_details->aadhaar_doc))
+                                                            <div class="aadhaar-doc-container mt-1 d-flex align-items-center">
+                                                                <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $application_details->aadhaar_doc]) }}"
+                                                                   target="_blank"
+                                                                   style="color: #007bff;">
+                                                                    <i class="fa fa-file-pdf-o" style="color: red;"></i> View
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-docs">Remove</button>
+                                                            </div>
+                                                        @endif
+                                                        <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }} mt-1">
+                                                            <input autocomplete="off"
+                                                                   class="form-control text-box single-line"
+                                                                   id="aadhaar_doc"
+                                                                   name="aadhaar_doc"
+                                                                   type="file"
+                                                                   accept=".pdf,application/pdf">
+                                                            <span class="file-limit d-block"> File type: PDF (Max 250 KB) </span>
+                                                            <small class="text-danger file-error"></small>
                                                         </div>
-                                                        <div class="col-12 col-md-7">
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept="pdf/*">
-                                                            <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
+                                                    </div>
+                                                </div>
+
+                                                {{-- Signature column --}}
+                                                <div class="col-12 col-md-4 mb-3 p-3">
+                                                    <label for="upload_sign">(iv) Upload Signature</label>
+                                                    <br>
+                                                    <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+
+                                                    <div class="mt-2 text-center">
+                                                        @if(!empty($proof_doc?->uploaded_doc))
+                                                            <img src="{{ asset($proof_doc->uploaded_doc) }}"
+                                                                 id="preview_signature"
+                                                                 class="img-fluid border mb-2"
+                                                                 style="max-width: 120px; max-height: 60px; border:1px solid #ccc; border-radius:4px;"
+                                                                 alt="Uploaded Signature">
+                                                            <button type="button"
+                                                                    class="btn btn-primary btn-sm mb-2"
+                                                                    onclick="toggleSignInput()">Edit/Upload Signature</button>
+                                                        @endif
+
+                                                        <div id="sign-input-wrapper"
+                                                             style="{{ !empty($proof_doc?->uploaded_doc) ? 'display: none;' : 'display: block;' }}; width: 100%; max-width: 280px; margin: 0 auto;">
+                                                            <span class="file-limit d-block text-start"> File type: JPG, PNG (Max 50 KB) </span>
+                                                            <input autocomplete="off"
+                                                                   class="form-control text-box single-line mb-1"
+                                                                   id="upload_sign"
+                                                                   name="upload_sign"
+                                                                   type="file"
+                                                                   accept=".jpg,.jpeg,.png">
+                                                            <span class="error-message text-danger d-block text-start"></span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -778,20 +829,16 @@
                                             <div>
                                                 <label class="container">
                                                     <div class="declaration-container">
-                                                        <input type="checkbox" id="declarationCheckbox" required>
+                                                        <input type="checkbox" id="declarationCheckbox" required {{ isset($application) ? 'checked' : '' }}>
+
                                                         <span class="checkmark"></span>
                                                         <div>
-                                                            I hereby declare that all the details mentioned above are
-                                                            correct and true to the best of my knowledge. I request you
-                                                            to issue me the qualification certificate. <span style="color: red;">*</span><br>
-                                                            <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே
-                                                                குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும்
-                                                                உண்மையானவை எனவும் உறுதி கூறுகிறேன். தகுதி சான்றிதழ்
-                                                                எனக்கு வழங்குமாறு வேண்டுகிறேன்.</span>
+                                                            I hereby declare that the particulars stated above are correct and true to the best of my knowledge. <br> I request that I may be granted a Supervisor Competency Certificate.<span style="color: red;">*</span><br>
+                                                            <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். <br> எனக்கு மேற்பார்வையாளர் திறன் சான்றிதழ் வழங்குமாறு கேட்டுக்கொள்கிறேன்.</span>
                                                         </div>
+
                                                     </div>
-                                                    <p id="checkboxError" style="color: red; display: none;">Please
-                                                        check the declaration box before proceeding.</p>
+                                                    <span id="checkboxError" class="text-danger" style="display: none;">Please check the declaration box before proceeding.</span>
                                                 </label>
                                             </div>
                                             <input type="hidden" id="form_name" name="form_name"
@@ -849,6 +896,32 @@
     function togglePhotoInput() {
         const inputWrapper = document.getElementById('photo-input-wrapper');
         inputWrapper.style.display = inputWrapper.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+<script>
+    document.getElementById('upload_sign').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const preview = document.getElementById('preview_signature');
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function toggleSignInput() {
+        const inputWrapper = document.getElementById('sign-input-wrapper');
+        if (inputWrapper) {
+            inputWrapper.style.display = inputWrapper.style.display === 'none' ? 'block' : 'none';
+        }
     }
 </script>
 <script>
@@ -1000,12 +1073,22 @@
             }
 
             let serialNo = $('#work-container .work-fields').length + 1;
+            const isSForm = "{{ $application_details->form_name ?? '' }}" === 'S';
             let newRow = `
                     <tr class="work-fields text-center">
                         <td>${serialNo}</td>
                         <td><input type="text" class="form-control" name="work_level[]"></td>
                         <td><input type="number" step="0.1" class="form-control" name="experience[]" min="0" max="50"></td>
                         <td><input type="text" class="form-control" name="designation[]"></td>
+                        ${isSForm ? `
+                        <td>
+                            <div class="d-flex align-items-center file-section">
+                                <div class="work-doc-container d-none"></div>
+                                <div class="work-doc-input">
+                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                </div>
+                            </div>
+                        </td>` : ''}
                         <td class="text-center">
                             <button type="button" class="btn btn-danger remove-work">
                                 <i class="fa fa-minus"></i>
@@ -1013,6 +1096,7 @@
                         </td>
                         <input type="hidden" name="work_id[]">
                         <input type="hidden" name="existing_work_document[]">
+                        <input type="hidden" name="removed_document_work[]" value="0">
                     </tr>
                 `;
             $('#work-container').append(newRow);
@@ -1038,7 +1122,14 @@
 
             }
 
-
+            // Handle removing existing work documents (toggle like education)
+            if ($(e.target).closest('.remove-work-doc').length) {
+                e.preventDefault();
+                const row = $(e.target).closest('tr');
+                row.find('.work-doc-container').addClass('d-none');
+                row.find('.work-doc-input').removeClass('d-none');
+                row.find('input[name="removed_document_work[]"]').val('1');
+            }
 
     });
 

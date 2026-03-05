@@ -618,7 +618,26 @@ $(document).ready(function() {
                 isValid = false;
             } else if (dobEl.length) {
                 const dobStr = dobEl.val();
-                const dob = new Date(dobStr + 'T00:00:00');
+
+                let dob;
+                const inputType = dobEl.attr('type');
+
+                // If native date input (YYYY-MM-DD), parse directly
+                if (inputType === 'date') {
+                    dob = new Date(dobStr + 'T00:00:00');
+                } else {
+                    // Expect DD-MM-YYYY for text inputs (flatpickr)
+                    const match = dobStr.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+                    if (match) {
+                        const dd = parseInt(match[1], 10);
+                        const mm = parseInt(match[2], 10);
+                        const yyyy = parseInt(match[3], 10);
+                        dob = new Date(yyyy, mm - 1, dd);
+                    } else {
+                        dob = new Date(''); // force invalid
+                    }
+                }
+
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
@@ -2673,7 +2692,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                     if (saveResponse.status === "success") {
 
                         
-                        let form_type = appl_type === 'R' ? 'Renewal' : 'Fresh';
+                        let form_type = appl_type === 'R' ? 'Renewal Application' : 'New Application';
 
                         const login_id = window.login_id || "{{ auth()->user()->login_id ?? '' }}";
                         const application_id = saveResponse.application_id;
@@ -2685,7 +2704,8 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                         const amount = total_fees;
                         const licence_name = saveResponse.licence_name || 'N/A';
 
-                        console.log(application_id);
+                        //console.log(transactionDate);
+                        
                         // const serviceCharge = 10;
                         // let lateFee = typeof lateFee !== "undefined" ? lateFee : 0;
                         // let total_charge = Number(amount) + Number(serviceCharge);
@@ -2755,7 +2775,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                                 actions: 'd-flex justify-content-around mt-3',
                             },
                             buttonsStyling: false,
-                            footer: '<div><span style="font-size: 13px;">Note: </span><span style="font-size: 13px;color: red;">Total Amount will be including service charges of payment gateway as applicable</span>',
+                            footer: '<div><span style="font-size: 13px;">Note: </span><span style="font-size: 13px;color: red;">The total amount is exclusive of applicable payment gateway service charges.</span>',
                             preConfirm: async () => {
                                 const paymentResponse = await $.ajax({
                                     url: "{{ route('payment.updatePayment') }}",
@@ -2808,7 +2828,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                                     timer: 3000, // Auto close in 3 seconds
                                     timerProgressBar: true
                                 }).then(() => {
-                                    window.location.href = "BASE_URL/dashboard";
+                                    window.location.href = BASE_URL+"/dashboard";
                                 }); // your redirect URL
                             }
                         });

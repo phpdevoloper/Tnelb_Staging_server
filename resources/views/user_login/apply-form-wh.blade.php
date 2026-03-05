@@ -64,7 +64,7 @@
                                             Application for Wireman Helper Competency Certificate
                                         </h5>
                                         <h5 class="card-title_apply text-white text-uppercase mt-2" >
-                                            மின் கம்பி உதவியாளர் தகுதிச் சான்றிதழ் பெறுவதற்கான விண்ணப்பம
+                                            மின் கம்பி உதவியாளர் தகுதிச் சான்றிதழ் பெறுவதற்கான விண்ணப்பம்
                                         </h5>
                                         <h6 class="card-title_apply text-white mt-2 form-title">FORM - WH / Certificate H</h4>
                                     </div>
@@ -136,7 +136,7 @@
                                                             </label>
                                                             <br>
                                                             <label for="tamil" class="tamil">விண்ணப்பதாரர் முகவரி
-                                                                <span class="text-label">(தெளிவாக இருக்க வேண்டும்)</span></label>
+                                                                <span class="text-label">(தெளிவாக இருத்தல் வேண்டும்)</span></label>
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <!-- <input autocomplete="off" class="form-control text-box single-line" id="Applicant_Name" name="Applicant_Name" type="text" value=""> -->
@@ -165,7 +165,7 @@
                                                         <div class="col-12 col-lg-5">
                                                             <div class="row align-items-center">
                                                                 <div class="col-12 col-md-5 ">
-                                                                    <label for="Name">4. (ii) Age <span style="color: red;">*</span></label>
+                                                                    <label for="Name">4. (ii) Age </label>
                                                                     <br>
                                                                     <label for="tamil" class="tamil"> வயது</label>
                                                                 </div>
@@ -214,13 +214,15 @@
                                                     </thead>
                                                     <tbody id="education-container">
                                                         <tr class="education-fields">
-                                                            <td> <select class="form-control" name="educational_level[]">
+                                                            <td>
+                                                                <select class="form-control educational-level-select" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
                                                                     <option value="Up to 8th Standard">Up to 8th Standard</option>
-                                                                    <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
+                                                                    <option value="Wireman Helper Examination">Wireman Helper Examination</option>
                                                                     <option value="ITI Certificate">ITI Certificate</option>
-                                                                </select></td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
+                                                                </select>
+                                                            </td>
+                                                            <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" value="Dept of Employment & Training"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -304,7 +306,6 @@
                                                 </tbody>
                                             </table>
                                         </div>
-
                                         <hr>
                                         <div class="row align-items-center">
                                             <div class="col-12 col-md-12 ">
@@ -690,10 +691,10 @@
                 <td><select class="form-control" name="educational_level[]" required>
                 <option selected disabled>Select Education</option>
                 <option value="Up to 8th Standard">Up to 8th Standard</option>
-                <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
+                <option value="Wireman Helper Examination">Wireman Helper Examination</option>
                 <option value="ITI Certificate">ITI Certificate</option>
                 </select></td>
-                <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
+                <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" value="Dept of Employment &amp; Training" required></td>
                 <td>
                 <select name="year_of_passing[]" class="form-control" required>
                 <option value="0">Select Year</option>

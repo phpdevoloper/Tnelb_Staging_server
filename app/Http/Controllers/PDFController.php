@@ -412,7 +412,7 @@ class PDFController extends Controller
     
     public function generatePDF($newApplicationId)
     {
-
+        
         $form = Mst_Form_s_w::where('application_id', $newApplicationId)->first();
 
         // var_dump(format_date($form->previously_number));die;
@@ -445,24 +445,34 @@ class PDFController extends Controller
             h3, h4, p { margin: 4px 0; }
             table { border-collapse: collapse; width: 100%; margin-top: 6px; }
             td, th { padding: 4px; vertical-align: top; }
-            .label { width: 35%; text-align: left; font-weight: bold; }
+            .label { width: 35%; text-align: left;}
             .value { width: 40%; text-align: left; }
-            .tbl-bordered td, .tbl-bordered th { border: 1px solid #000; text-align: center; }
-            .tbl-no-border td { border: none; padding-bottom: 12px; } /* ⬅ spacing between rows */
+            .tbl-bordered td, .tbl-bordered th { border: 1px solid #000; }
+            .tbl-bordered th { text-align: center; }
+            .tbl-bordered td { text-align: left; }
+            .tbl-bordered th:first-child,
+            .tbl-bordered td:first-child { width: 8%; text-align: center; }
+            .tbl-no-border td { border: none; padding-bottom: 12px; } /* spacing between rows */
             .photo-cell { text-align:center; }
+            .section-table { width: 90%; margin-left: 25px; }
+            .question-table { width: 100%; margin-left: 0; }
+            .question-table td { vertical-align: top; padding: 2px 4px; }
+            .question-table td.q-no { width: 5%; text-align: right; padding-right: 6px; }
+            .question-table td.q-text { width: 65%; text-align: left; }
+            .question-table td.q-value { width: 30%; text-align: left; }
         </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
     
         $certificateText = match ($form->form_name) {
-            'S' => 'Application for Competency Certificate for Supervisor',
-            'W' => 'Application for Competency Certificate for Wireman',
-            'WH' => 'Application for Competency Certificate for Wireman Helper',
-            default => 'Application for Competency Certificate',
+            'S' => 'Acknowledgement Slip for Supervisor Competency Certificate',
+            'W' => 'Acknowledgement Slip for Wireman Competency Certificate',
+            'WH' => 'Acknowledgement Slip for Wireman Helper Competency Certificate',
+            default => 'Acknowledgement Slip for Competency Certificate',
         };
     
         $html = '
         <h3 style="text-align:center;">GOVERNMENT OF TAMILNADU</h3>
         <h4 style="text-align:center;">THE ELECTRICAL LICENSING BOARD</h4>
-        <p style="text-align:center;">Thiru.Vi.Ka.Indl.Estate, Guindy, Chennai – 600032.</p>
+        <p style="text-align:center;">Thiru.Vi.Ka.Industrial.Estate, Guindy, Chennai – 600032.</p>
         <h4 style="text-align:center;">Form "' . $form->form_name . ($form->appl_type == 'R' ? '" - Renewal' : '"') . '</h4>
         <p style="text-align:center;">' . $certificateText . '</p>
         <h4 style="text-align:center;">Application Number: <strong>' . $form->application_id . '</strong></h4>';
@@ -505,13 +515,14 @@ class PDFController extends Controller
              </td>
         </tr>
         <tr>
-            <td class="label">4. Date of birth and age along with evidence</td>
+            <td class="label">4. Date of birth and age</td>
             <td class="value">: ' . $form->d_o_b . ' (' . $form->age . ' years)</td>
         </tr>
         </table>';
     
         // Education
-        $html .= '<h4>5. Details of technical qualification and examination, if any passed by the applicant (certificate in original along with xerox copy to be enclosed for reference and return)</h4>
+        $html .= '<h4>5. Details of technical qualification and examination, if any passed by the applicant</h4>
+        <div class="section-table">
         <table class="tbl-bordered">
         <tr>
         <th>S.No</th><th>Education Level</th><th>Institution</th><th>Year of Passing</th><th>Certificate No</th>
@@ -525,10 +536,11 @@ class PDFController extends Controller
                 <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
-        $html .= '</table>';
+        $html .= '</table></div>';
     
         // Experience
-        $html .= '<h4>6. Details of past and present employer name and experience along with evidence</h4>
+        $html .= '<h4>6. Details of past and present experience</h4>
+        <div class="section-table">
         <table class="tbl-bordered">
         <tr>
         <th>S.No</th><th>Company Name</th><th>Experience (Years)</th><th>Designation</th>
@@ -541,7 +553,7 @@ class PDFController extends Controller
                 <td>' . $exp->designation . '</td>
             </tr>';
         }
-        $html .= '</table>';
+        $html .= '</table></div>';
 
         
     
@@ -569,40 +581,62 @@ class PDFController extends Controller
         // <td>: ' . $value . '</td>
         // </tr>';
     
-        $html .= '<table width="100%" cellpadding="5" cellspacing="0" style="margin-top:10px;">';
+        $html .= '<table width="100%" cellpadding="5" cellspacing="0" class="question-table" style="margin-top:10px;">';
 
         if ($form->form_name == 'S') {
-            $html .= '<tr><td width="70%"><strong>7. Have previously applied for Electrical Assistant Qualification Certificate and if yes then mention its number and date</strong></td><td>: ' . $value . '</td></tr>';
+            $html .= '<tr>
+                <td class="q-no">7.</td>
+                <td class="q-text">Have you made any previous application? If So, State Reference No and date.</td>
+                <td class="q-value">: ' . $value . '</td>
+            </tr>';
         }
 
 
 
         if ($form->form_name == 'S') {
             $no = '8';
-            $html .= '<tr><td><strong>'.$no.'. Do you possess Wireman Competency Certificate / Supervisor Competency Certificate issued by this Board? If so furnish the details and surrender the same.</strong></td><td>: ' . ($form->form_name == 'S' ? $certno : $value) . '</td></tr>';
+            $html .= '<tr>
+                <td class="q-no">' . $no . '.</td>
+                <td class="q-text">Do you possess Wireman Competency Certificate / Wireman Helper Competency Certificate issued by this Board? If so furnish the details and surrender the same.</td>
+                <td class="q-value">: ' . ($form->form_name == 'S' ? $certno : $value) . '</td>
+            </tr>';
 
-            $html .= '<tr><td><strong>9. Aadhaar Number</strong></td><td>: ' . $masked . '</td></tr>';
+            $html .= '<tr>
+                <td class="q-no">9.</td>
+                <td class="q-text">Aadhaar Number</td>
+                <td class="q-value">: ' . $masked . '</td>
+            </tr>';
 
             // $html .= '<tr><td><strong>10. PAN Number</strong></td><td>: ' . $maskedPan . '</td></tr>';
-        }else{
+        } else {
             $no = '7';
-            if($form->form_name == 'WH'){
-                $html .= '<tr><td><strong>'.$no.'. Do you possess Wireman Helper Competency Certificate issued by this Board? If so furnish the details and surrender the same.</strong></td><td>: ' . ($form->form_name == 'WH' ? $certno : $value) . '</td></tr>';
-            }else{
-                $html .= '<tr><td><strong>'.$no.'. Do you possess Wireman Competency Certificate / Wireman Helper Competency Certificate issued by this Board? If so furnish the details and surrender the same.</strong></td><td>: ' . $certno . '</td></tr>';
+            if ($form->form_name == 'WH') {
+                $html .= '<tr>
+                    <td class="q-no">' . $no . '.</td>
+                    <td class="q-text">Do you possess Wireman Helper Competency Certificate issued by this Board? If so furnish the details and surrender the same.</td>
+                    <td class="q-value">: ' . ($form->form_name == 'WH' ? $certno : $value) . '</td>
+                </tr>';
+            } else {
+                $html .= '<tr>
+                    <td class="q-no">' . $no . '.</td>
+                    <td class="q-text">Do you possess Wireman Competency Certificate / Wireman Helper Competency Certificate issued by this Board? If so furnish the details and surrender the same.</td>
+                    <td class="q-value">: ' . $certno . '</td>
+                </tr>';
             }
-            $html .= '<tr><td><strong>8. Aadhaar Number</strong></td><td>: ' . $masked . '</td></tr>';
+            $html .= '<tr>
+                <td class="q-no">8.</td>
+                <td class="q-text">Aadhaar Number</td>
+                <td class="q-value">: ' . $masked . '</td>
+            </tr>';
         }
 
 
        
         $html .= '</table>';
     
-        $html .= '<p class="mt-2">I hereby declare that all details mentioned above are correct and true to the best of my knowledge. I request that I may be granted a Supervisor Competency Certificate.</p>
-        <br><br><br>
+        $html .= '<br><br><br>
         <p><strong>Place:</strong> Chennai</p>
-        <p><strong>Date:</strong> ' . date('d-m-Y') . '</p>
-        <p style="text-align:right;"><strong>Signature of the Candidate</strong></p>';
+        <p><strong>Date:</strong> ' . date('d-m-Y') . '</p>';
     
         $mpdf->WriteHTML($html);
         return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
@@ -1155,13 +1189,10 @@ $certificateText = match ($form->form_name) {
                 ??TnelbFormP::where('application_id', $newApplicationId)->first();
 
         $license_name= DB::table('mst_licences')->where('form_code', $form->form_name)->first();
-        // $form = Mst_Form_s_w::where('application_id', $newApplicationId)->first();
-//  dd($license_name);
-//       exit;
 
         $education = Mst_education::where('application_id', $newApplicationId)->get();
         $experience = Mst_experience::where('application_id', $newApplicationId)->get();
-        $documents = Mst_documents::where('application_id', $newApplicationId)->first();
+        // $documents = Mst_documents::where('application_id', $newApplicationId)->first();
         $payment = DB::table('payments')->where('application_id', $newApplicationId)->first();
 
 

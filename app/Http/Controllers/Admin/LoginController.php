@@ -259,12 +259,15 @@ class LoginController extends Controller
             ->values()
             ->all();
 
+        
+
         // Look up licence / form details for those IDs
         $licences = DB::table('mst_licences as f')
             ->whereIn('f.id', $assignedFormIDs)
             ->select(
                 'f.id',
                 'f.form_name',
+                'f.form_code',
                 'f.licence_name',
                 'f.cert_licence_code as color_code',
                 'f.category_id'
@@ -274,6 +277,15 @@ class LoginController extends Controller
 
         $roleLevel = (int) (optional($staff->role)->role_level ?? 0);
         $isSupervisorRole = $roleLevel === 1;
+
+        // Identify contractor categories from LicenceCategory table (used later for both
+        // pending counts and card classification). Fallback to name check if none found.
+        $contractorCategoryIds = \App\Models\Admin\LicenceCategory::whereRaw("LOWER(category_name) LIKE ?", ['%contractor%'])
+            ->pluck('id')
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->all();
 
         // Pending application counts:
         // - Supervisor/Supervisor2: new/renewal apps not yet in any workflow table
@@ -331,7 +343,7 @@ class LoginController extends Controller
                 // infer who should handle it based on the hierarchy:
                 // Supervisor -> Accountant -> Secretary -> President
                 $previousProcessedBy = match ($roleLevel) {
-                    2 => ['S', 'S2'], // Accountant handles after Supervisor/Supervisor2
+                    2 => ['S'], // Accountant handles after Supervisor/Supervisor2
                     3 => ['A'],       // Secretary handles after Accountant
                     4 => ['SE'],      // President handles after Secretary
                     default => [],
@@ -376,6 +388,8 @@ class LoginController extends Controller
                 $pendingCountsMap[$fid][$type] = (int) $row->cnt;
             }
 
+            
+
             // Form P uses tnelb_form_p; add its pending counts if Form P is assigned
             $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
             if ($formPId > 0 && in_array($formPId, $assignedFormIDs, true)) {
@@ -416,6 +430,65 @@ class LoginController extends Controller
                     $type = strtoupper((string) ($row->appl_type ?? '')) === 'R' ? 'R' : 'N';
                     $pendingCountsMap[$formPId][$type] = (int) ($row->cnt ?? 0);
                 }
+            }
+
+            // Contractor licences (Form A/B & their variants) use dedicated EA/EB tables.
+            // Add their pending counts so contractor cards can display New/Renewal correctly.
+            $contractorLicences = $licences->filter(function ($lic) use ($contractorCategoryIds) {
+                if (!empty($contractorCategoryIds)) {
+                    return in_array((int) ($lic->category_id ?? 0), $contractorCategoryIds, true);
+                }
+                return stripos($lic->licence_name ?? '', 'contractor') !== false;
+            });
+            
+            if ($contractorLicences->isNotEmpty()) {
+                // Map licence code (EA, EB, etc) to one or more mst_licences IDs
+                $contractorFormToIds = $contractorLicences
+                    ->groupBy('cert_licence_code')
+                    ->map(function ($group) {
+                        return $group->pluck('id')->all();
+                    });
+                    
+
+                $contractorCounts = collect();
+
+                // EA (A/SA) and EB (B/SB) application tables share the same structure
+                $contractorTables = ['tnelb_ea_applications'];
+
+                foreach ($contractorTables as $tbl) {
+                    $rows = DB::table($tbl . ' as ta')
+                        ->whereIn('ta.application_status', ['P', 'RE'])
+                        ->whereIn('ta.payment_status', ['payment', 'paid'])
+                        ->selectRaw('ta.form_name, ta.appl_type, COUNT(*) as cnt')
+                        ->groupBy('ta.form_name', 'ta.appl_type')
+                        ->get();
+
+                    $contractorCounts = $contractorCounts->merge($rows);
+                }
+                
+
+                
+
+                foreach ($contractorCounts as $row) {
+                    $formCode = strtoupper((string) ($row->form_name ?? ''));
+                    
+                    if (empty($formCode) || !isset($contractorFormToIds[$formCode])) {
+                        continue;
+                    }
+
+                    $type = strtoupper((string) ($row->appl_type ?? '')) === 'R' ? 'R' : 'N';
+                    $cnt  = (int) ($row->cnt ?? 0);
+
+
+                    foreach ($contractorFormToIds[$formCode] as $licId) {
+                      
+                        if (!isset($pendingCountsMap[$licId])) {
+                            $pendingCountsMap[$licId] = ['N' => 0, 'R' => 0];
+                        }
+                        $pendingCountsMap[$licId][$type] += $cnt;
+                    }
+                }
+                
             }
         }
 
@@ -461,24 +534,31 @@ class LoginController extends Controller
             })
             ->values()
             ->all();
+        
 
 
         $formColors = [
-            'C' => 'bg-yellow',
-            'B' => 'bg-red',
-            'H' => 'bg-H',
-            'P' => 'bg-green',
+            'C'  => 'bg-yellow',
+            'B'  => 'bg-red',
+            'H'  => 'bg-H',
+            'P'  => 'bg-green',
             'EA' => 'bg-thickgreen',
             'SA' => 'bg-thickgreen',
         ];
 
-        // Classify: Contractor (by name) → Amendments (by LicenceCategory) → Competency (rest)
+        // Classify: Contractor (by category/name) → Amendments (by LicenceCategory) → Competency (rest)
         $summaryCollection = collect($assignedFormSummary);
 
-        $contractorCardsCollection = $summaryCollection->filter(function ($item) {
-            $name = mb_strtolower($item['licence_name'] ?? '');
-            return strpos($name, 'contractor') !== false;
-        })->values();
+        $contractorCardsCollection = $summaryCollection
+            ->filter(function ($item) use ($contractorCategoryIds) {
+                if (!empty($contractorCategoryIds)) {
+                    return in_array((int) ($item['category_id'] ?? 0), $contractorCategoryIds, true);
+                }
+
+                $name = mb_strtolower($item['licence_name'] ?? '');
+                return strpos($name, 'contractor') !== false;
+            })
+            ->values();
 
         $contractorIds = $contractorCardsCollection->pluck('id')->all();
 
@@ -511,7 +591,10 @@ class LoginController extends Controller
         })->values();
 
         $competencyCards = $competencyCardsCollection->all();
+        
         $contractorCards = $contractorCardsCollection->all();
+        
+        
         $amendmentCards = $amendmentCardsCollection->all();
 
         return view('admin.dashboard.staff_dashboard', compact(
