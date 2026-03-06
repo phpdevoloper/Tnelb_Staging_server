@@ -1087,6 +1087,14 @@ $(document).ready(function() {
                 }).remove();
             }
         });
+        
+        // Clear Certificate No error styling when the user focuses the field,
+        // so validation does not appear to be "triggered" just by clicking in/out.
+        $(document).on('focus', '.certificate-input', function () {
+            const $field = $(this);
+            $field.closest('td').find('.certificate-error').text('');
+            $field.removeClass('is-invalid');
+        });
     
 
         $(document).on('keyup change','#work-container .work-fields input, #work-container .work-fields select',
@@ -1160,6 +1168,25 @@ $(document).ready(function() {
             if ($field.val()) {
                 $field.nextAll('.error-message').first().remove();
             }
+
+            // Simple signature preview if a preview element is present on the page
+            const previewEl = document.getElementById('sign_preview');
+            if (!previewEl) return;
+
+            const input = this;
+            if (!input.files || !input.files[0]) {
+                previewEl.style.display = 'none';
+                previewEl.src = '';
+                return;
+            }
+
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewEl.src = e.target.result;
+                previewEl.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
         });
 
 
@@ -2294,27 +2321,6 @@ $(document).ready(function() {
         restrictToLetters("[name='institute_name[]']");
         restrictToLetters("[name='work_level[]']");
         restrictToLetters("[name='Designation[]']");
-
-        document.querySelectorAll(".certificate-input").forEach(input => {
-            input.addEventListener("blur", function() {
-                const value = (this.value || "").trim();
-                const errorSpan =
-                    this.parentElement?.querySelector(".certificate-error") ||
-                    this.nextElementSibling;
-
-                if (!errorSpan) return;
-
-                if (value === "") {
-                    errorSpan.textContent = "Certificate No is required.";
-                    this.classList.add("is-invalid");
-                    return;
-                }
-
-                errorSpan.textContent = "";
-                this.classList.remove("is-invalid");
-            });
-        });
-
 
         // Form validation on submit
         // document.getElementById("competency_form_ws").addEventListener("submit", function(event) {

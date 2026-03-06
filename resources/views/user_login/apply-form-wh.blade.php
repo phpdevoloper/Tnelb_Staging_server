@@ -254,67 +254,13 @@
                                             </div>
                                         </div>
 
-                                        <hr>
-                                        <div class="row align-items-center head_label">
-                                            <div class="col-12 col-md-12 ">
-                                                <label>6. Details of Previous and Current Work experiences</label>
-                                                <br>
-                                                <label for="tamil" class="tamil">பெற்றுள்ள முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்</label>
-                                            </div>
-
-                                        </div>
-
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered" id="work-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Company Name / Contractor</th>
-                                                        <th>Years of Experience</th>
-                                                        <th>Designation</th>
-
-                                                        {{-- <th class="text-center">Upload Document (Experience Certificate)
-                                                            <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                        </th> --}}
-                                                        <th>
-                                                            <button type="button" class="btn btn-primary add-more-work">
-                                                                <i class="fa fa-plus"></i>
-                                                            </button>
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="work-container">
-                                                    <tr class="work-fields">
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80">
-                                                        </td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50">
-                                                        </td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80">
-                                                        </td>
-
-                                                        {{-- <td>
-                                                            <input class="form-control" name="work_document[]" type="file">
-                                                        </td> --}}
-                                                        <td>
-                                                            <button type="button" class="btn btn-danger remove-work">
-                                                                <i class="fa fa-trash-o"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <hr>
                                         <div class="row align-items-center">
                                             <div class="col-12 col-md-12 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-9 ">
-                                                        <label for="Name">7. Have you applied for and obtained a Certificate of Qualification for Wireman Helper ? If yes, please state its number and date.
-                                                        </label>
+                                                        <label for="Name">6. Have you applied for and obtained a Certificate of Qualification for Wireman Helper ? If yes, please state its number and validity.</label>
                                                         <br>
-                                                        <label for="tamil" class="tamil">இதற்கு முன்னாள் விண்ணப்பம் செய்து மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெற்றுஉள்ளதா ஆம் என்றால் அதன் எண் மற்றும் நாளைக் குறிப்பிடுக
+                                                        <label for="tamil" class="tamil">இதற்கு முன்னாள் விண்ணப்பம் செய்து மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக
                                                         </label>
                                                     </div>
 
@@ -385,7 +331,7 @@
                                         <hr>
                                         <div class="row align-items-center head_label mt-2">
                                             <div class="col-12 col-md-12">
-                                                <label>8. Upload Documents <span style="color: red;">*</span></label>
+                                                <label>7. Upload Documents <span style="color: red;">*</span></label>
                                                 <br>
                                                 <label for="tamil" class="tamil">ஆவணங்களைப் பதிவேற்றவும்
                                                 </label>
@@ -396,19 +342,23 @@
                                             <div class="col-12 col-md-12">
                                                 <table class="table">
                                                     <tr>
-                                                        <td>(i)</td>
-                                                        <td>
-                                                            <label for="Name">Upload Photo <span style="color: red;">*</span></label>
+                                                        <td style="width:5%; vertical-align: middle;">(i)</td>
+                                                        <td style="width:25%; vertical-align: middle;">
+                                                            <label for="upload_photo">Upload Photo <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்
-                                                            </label>
+                                                            <label for="upload_photo" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்</label>
                                                         </td>
-                                                        <td></td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" value="" accept="image/*">
-                                                            <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <td colspan="3">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="flex-grow-1" style="max-width:280px;">
+                                                                    <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                    <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                                </div>
+                                                                <div class="ms-3">
+                                                                    <img id="photo_preview" src="" alt="Photo preview" style="display:none; width:100px; height:120px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">
+                                                                </div>
+                                                            </div>
                                                         </td>
-                                                        <td></td>
                                                     </tr>
                                                     <tr>
                                                         <td>(ii)</td>
@@ -455,17 +405,23 @@
                                                 </table>
                                             </div>
 
-                                            <div class="col-12 col-md-6 " style="display: none;">
+                                            <div class="col-12 col-md-6 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-5 ">
-                                                        <label for="Name">(ii) Upload Signature
-                                                        </label>
+                                                        <label for="upload_sign">(ii) Upload Signature</label>
                                                         <br>
-                                                        <label for="tamil" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+                                                        <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                     </div>
                                                     <div class="col-12 col-md-7">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" value="" accept="image/*">
-                                                        <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-grow-1" style="max-width:280px;">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" required>
+                                                                <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <img id="sign_preview" src="" alt="Signature preview" style="display:none; width:100px; height:50px; object-fit:contain; border:1px solid #ccc; border-radius:4px;">
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -477,8 +433,8 @@
                                                     <input type="checkbox" id="declarationCheckbox" required {{ isset($application) ? 'checked' : '' }}>
 
                                                     <span class="checkmark"></span>
-                                                    I hereby declare that all the details mentioned above are correct and true to the best of my knowledge. I request you to issue me the qualification certificate.<br>
-                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.
+                                                    I hereby declare that all the details mentioned above are correct and true to the best of my knowledge. I request that I may be granted a Wireman Helper Competency Certificate.<br>
+                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். மின்கம்பி உதவியாளர் தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.
                                                 </div>
                                                 <p id="checkboxError" class="text-danger" style="display: none;">Please check the declaration box before proceeding.</p>
                                             </label>

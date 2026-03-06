@@ -415,134 +415,136 @@
                                                     </tbody>
                                                 </table>
                                             </div>
-                                            <hr>
-                                            <div class="row align-items-center head_label">
-                                                <div class="col-12 col-md-12 ">
-                                                    <label>
-                                                        6. Details of Previous and Current Work experiences
-                                                        @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
-                                                            <span class="text-label">(Optional)</span>
-                                                        @else
-                                                            <span class="text-label"><span style="color: red;">*</span></span>
-                                                        @endif
-                                                    </label>
-                                                    <br>
-                                                    <label for="tamil" class="tamil">பெற்றுள்ள
-                                                        முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
-                                                        @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
-                                                            <span class="text-label">(விருப்பமெனில் நிரப்பலாம்)</span>
-                                                        @endif
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered table-striped" id="work-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>S.No</th>
-                                                            <th>Company Name / Contractor</th>
-                                                            <th>Years of Experience (Years)</th>
-                                                            <th>Designation</th>
-                                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
-                                                                <th class="text-center">
-                                                                    Upload Document (Experience Certificate)
-                                                                    <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                                </th>
+                                            @if (!isset($application_details->form_name) || $application_details->form_name !== 'WH')
+                                                <hr>
+                                                <div class="row align-items-center head_label">
+                                                    <div class="col-12 col-md-12 ">
+                                                        <label>
+                                                            6. Details of Previous and Current Work experiences
+                                                            @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
+                                                                <span class="text-label">(Optional)</span>
+                                                            @else
+                                                                <span class="text-label"><span style="color: red;">*</span></span>
                                                             @endif
-                                                            <th>
-                                                                <button type="button" class="btn btn-primary add-more-work">
-                                                                    <i class="fa fa-plus"></i>
-                                                                </button>
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="work-container">
-                                                        @if ($exp_details->isNotEmpty())
-                                                        @foreach ($exp_details as $exp_details)
-                                                        <tr class="work-fields text-center">
-                                                            <td>
-                                                                {{ $loop->iteration }}
-                                                            </td>
-                                                            <td>
-                                                                <input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ isset($exp_details->company_name) && !empty($exp_details->company_name) ? $exp_details->company_name : '' }}">
-                                                            </td>
-                                                            <td>
-                                                                <input autocomplete="off" class="form-control" name="experience[]" type="number" value="{{ isset($exp_details->experience) && !empty($exp_details->experience) ? $exp_details->experience : '' }}">
-                                                            </td>
-                                                            <td>
-                                                                <input autocomplete="off" class="form-control" name="designation[]" type="text" value="{{ isset($exp_details->designation) && !empty($exp_details->designation) ? $exp_details->designation : '' }}">
-                                                            </td>
-                                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
-                                                            <td>
-                                                                <div class="d-flex align-items-center file-section">
-                                                                    @if (!empty($exp_details->upload_document))
-                                                                        <div class="work-doc-container">
-                                                                            <a class="text-primary"
-                                                                               href="{{ asset($exp_details->upload_document) }}"
-                                                                               target="_blank">
-                                                                                <i class="fa fa-file-pdf-o" style="color: red"></i> View
-                                                                            </a>
-                                                                            <button type="button" class="btn btn-sm btn-danger ml-3 remove-work-doc">Remove</button>
-                                                                        </div>
-                                                                        <div class="work-doc-input d-none">
-                                                                            <input class="form-control mt-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                                        </div>
-                                                                    @else
+                                                        </label>
+                                                        <br>
+                                                        <label for="tamil" class="tamil">பெற்றுள்ள
+                                                            முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
+                                                            @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
+                                                                <span class="text-label">(விருப்பமெனில் நிரப்பலாம்)</span>
+                                                            @endif
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped" id="work-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>S.No</th>
+                                                                <th>Company Name / Contractor</th>
+                                                                <th>Years of Experience (Years)</th>
+                                                                <th>Designation</th>
+                                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                                    <th class="text-center">
+                                                                        Upload Document (Experience Certificate)
+                                                                        <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
+                                                                    </th>
+                                                                @endif
+                                                                <th>
+                                                                    <button type="button" class="btn btn-primary add-more-work">
+                                                                        <i class="fa fa-plus"></i>
+                                                                    </button>
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="work-container">
+                                                            @if ($exp_details->isNotEmpty())
+                                                            @foreach ($exp_details as $exp_details)
+                                                            <tr class="work-fields text-center">
+                                                                <td>
+                                                                    {{ $loop->iteration }}
+                                                                </td>
+                                                                <td>
+                                                                    <input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ isset($exp_details->company_name) && !empty($exp_details->company_name) ? $exp_details->company_name : '' }}">
+                                                                </td>
+                                                                <td>
+                                                                    <input autocomplete="off" class="form-control" name="experience[]" type="number" value="{{ isset($exp_details->experience) && !empty($exp_details->experience) ? $exp_details->experience : '' }}">
+                                                                </td>
+                                                                <td>
+                                                                    <input autocomplete="off" class="form-control" name="designation[]" type="text" value="{{ isset($exp_details->designation) && !empty($exp_details->designation) ? $exp_details->designation : '' }}">
+                                                                </td>
+                                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                                <td>
+                                                                    <div class="d-flex align-items-center file-section">
+                                                                        @if (!empty($exp_details->upload_document))
+                                                                            <div class="work-doc-container">
+                                                                                <a class="text-primary"
+                                                                                   href="{{ asset($exp_details->upload_document) }}"
+                                                                                   target="_blank">
+                                                                                    <i class="fa fa-file-pdf-o" style="color: red"></i> View
+                                                                                </a>
+                                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-work-doc">Remove</button>
+                                                                            </div>
+                                                                            <div class="work-doc-input d-none">
+                                                                                <input class="form-control mt-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                            </div>
+                                                                        @else
+                                                                            <div class="work-doc-container d-none"></div>
+                                                                            <div class="work-doc-input">
+                                                                                <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+                                                                </td>
+                                                                @endif
+                                                                <td>
+                                                                    <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id = "{{ $exp_details->id }}" data-url= "{{ route('delete_experience') }}">
+                                                                        <i class="fa fa-minus"></i>
+                                                                    </button>
+                                                                </td>
+                                                                <input type="hidden" name="work_id[]" value="{{ $exp_details->id ?? '' }}">
+                                                                <input type="hidden" name="existing_work_document[]" value="{{ $exp_details->upload_document ?? '' }}">
+                                                                <input type="hidden" name="removed_document_work[]" value="0">
+                                                            </tr>
+                                                            @endforeach
+                                                            @else
+                                                            <tr class="work-fields text-center">
+                                                                <td>1</td>
+                                                                <td>
+                                                                    <input autocomplete="off" class="form-control" name="work_level[]" type="text">
+                                                                </td>
+                                                                <td>
+                                                                    <input autocomplete="off" class="form-control" name="experience[]" type="number">
+                                                                </td>
+                                                                <td>
+                                                                    <input autocomplete="off" class="form-control" name="designation[]" type="text">
+                                                                </td>
+                                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                                <td>
+                                                                    <div class="d-flex align-items-center file-section">
                                                                         <div class="work-doc-container d-none"></div>
                                                                         <div class="work-doc-input">
                                                                             <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
                                                                         </div>
-                                                                    @endif
-                                                                </div>
-                                                            </td>
-                                                            @endif
-                                                            <td>
-                                                                <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id = "{{ $exp_details->id }}" data-url= "{{ route('delete_experience') }}">
-                                                                    <i class="fa fa-minus"></i>
-                                                                </button>
-                                                            </td>
-                                                            <input type="hidden" name="work_id[]" value="{{ $exp_details->id ?? '' }}">
-                                                            <input type="hidden" name="existing_work_document[]" value="{{ $exp_details->upload_document ?? '' }}">
-                                                            <input type="hidden" name="removed_document_work[]" value="0">
-                                                        </tr>
-                                                        @endforeach
-                                                        @else
-                                                        <tr class="work-fields text-center">
-                                                            <td>1</td>
-                                                            <td>
-                                                                <input autocomplete="off" class="form-control" name="work_level[]" type="text">
-                                                            </td>
-                                                            <td>
-                                                                <input autocomplete="off" class="form-control" name="experience[]" type="number">
-                                                            </td>
-                                                            <td>
-                                                                <input autocomplete="off" class="form-control" name="designation[]" type="text">
-                                                            </td>
-                                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
-                                                            <td>
-                                                                <div class="d-flex align-items-center file-section">
-                                                                    <div class="work-doc-container d-none"></div>
-                                                                    <div class="work-doc-input">
-                                                                        <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
                                                                     </div>
-                                                                </div>
-                                                            </td>
-                                                            @endif
-                                                            <td>
-                                                                <button type="button" class="btn btn-danger remove-work">
-                                                                    <i class="fa fa-minus"></i>
-                                                                </button>
-                                                            </td>
+                                                                </td>
+                                                                @endif
+                                                                <td>
+                                                                    <button type="button" class="btn btn-danger remove-work">
+                                                                        <i class="fa fa-minus"></i>
+                                                                    </button>
+                                                                </td>
 
-                                                            <input type="hidden" name="work_id[]">
-                                                            <input type="hidden" name="existing_work_document[]">
-                                                            <input type="hidden" name="removed_document_work[]" value="0">
-                                                        </tr>
-                                                        @endif
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <hr>
+                                                                <input type="hidden" name="work_id[]">
+                                                                <input type="hidden" name="existing_work_document[]">
+                                                                <input type="hidden" name="removed_document_work[]" value="0">
+                                                            </tr>
+                                                            @endif
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <hr>
+                                            @endif
                                             <div class="row align-items-center" style=" {{ isset($application_details->form_name) && $application_details->form_name == 'S' ? 'display: flex;' : 'display: none;' }}">
                                                 <div class="col-12 col-md-12 ">
                                                     <div class="row align-items-center">
@@ -643,7 +645,16 @@
                                                                 @endif
                                                                 
                                                             @endif
-                                                            <label for="Name">{{ isset($application_details->form_name) && $application_details->form_name == 'S' ? '8':'7' }}. Do you possess {{ $cert_name }} issued by this Board? If so furnish the details and surrender the same.</label>
+                                                            @php
+                                                                if (isset($application_details->form_name) && $application_details->form_name == 'S') {
+                                                                    $questionNumber = 8;
+                                                                } elseif (isset($application_details->form_name) && $application_details->form_name == 'WH') {
+                                                                    $questionNumber = 6;
+                                                                } else {
+                                                                    $questionNumber = 7;
+                                                                }
+                                                            @endphp
+                                                            <label for="Name">{{ $questionNumber }}. Do you possess {{ $cert_name }} issued by this Board? If so furnish the details and surrender the same.</label>
                                                             <br>
                                                             <label for="tamil" class="tamil">இந்த வாரியம் வழங்கிய கம்பி இணைப்பாளர் திறன் சான்றிதழ் / மேற்பார்வையாளர் திறன் சான்றிதழ் உங்களிடம் உள்ளதா? இருந்தால், அதன் விவரங்களை வழங்கி, அதனை ஒப்படைக்கவும்.</label>
                                                         </div>
