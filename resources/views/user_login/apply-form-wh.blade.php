@@ -298,7 +298,7 @@
                                                 </div>
                                                 <div class="row" id="previously_details" style="display: {{ $hasOldPrefill ? 'flex' : 'none' }};">
                                                     <div class="col-12 col-md-2 text-md-right">
-                                                        <label> License Number <span style="color: red;">*</span></label>
+                                                        <label> Certificate Number <span style="color: red;">*</span></label>
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
@@ -431,10 +431,11 @@
                                             <label class="container">
                                                 <div class="declaration-container">
                                                     <input type="checkbox" id="declarationCheckbox" required {{ isset($application) ? 'checked' : '' }}>
-
-                                                    <span class="checkmark"></span>
-                                                    I hereby declare that all the details mentioned above are correct and true to the best of my knowledge. I request that I may be granted a Wireman Helper Competency Certificate.<br>
-                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். மின்கம்பி உதவியாளர் தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.
+                                                    <div>
+                                                        <span class="checkmark"></span>
+                                                        I hereby declare that all the details mentioned above are correct and true to the best of my knowledge.<br> I request that I may be granted a Wireman Helper Competency Certificate.<br>
+                                                        <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன்.<br>எனக்கு மின்கம்பி உதவியாளர் தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.</span>
+                                                    </div>
                                                 </div>
                                                 <p id="checkboxError" class="text-danger" style="display: none;">Please check the declaration box before proceeding.</p>
                                             </label>

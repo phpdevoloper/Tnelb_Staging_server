@@ -83,10 +83,15 @@ class PDFController extends Controller
 
 
         $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'default_font_size' => 10,
-            'default_font' => 'helvetica',
+            'mode'             => 'utf-8',
+            'format'           => 'A4',
+            'default_font_size'=> 10,
+            'default_font'     => 'helvetica',
+            // Tighter, consistent page margins for better visual balance
+            'margin_left'      => 15,
+            'margin_right'     => 15,
+            'margin_top'       => 18,
+            'margin_bottom'    => 18,
         ]);
     
         $mpdf->WriteHTML('
@@ -409,7 +414,6 @@ class PDFController extends Controller
         return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
     }
 
-    
     public function generatePDF($newApplicationId)
     {
         
@@ -488,7 +492,7 @@ class PDFController extends Controller
         } else {
             $html .= '<p>No Photo</p>';
         }
-     $address = $form->applicants_address ?? '';
+        $address = $form->applicants_address ?? '';
 
         $words = preg_split('/\s+/', trim($address));
         $formattedAddress = '';
@@ -538,22 +542,24 @@ class PDFController extends Controller
         }
         $html .= '</table></div>';
     
-        // Experience
-        $html .= '<h4>6. Details of past and present experience</h4>
-        <div class="section-table">
-        <table class="tbl-bordered">
-        <tr>
-        <th>S.No</th><th>Company Name</th><th>Experience (Years)</th><th>Designation</th>
-        </tr>';
-        foreach ($experience as $i => $exp) {
-            $html .= '<tr>
-                <td>' . ($i + 1) . '</td>
-                <td>' . $exp->company_name . '</td>
-                <td>' . $exp->experience . '</td>
-                <td>' . $exp->designation . '</td>
+        // Experience (skip for WH form – this form has no Question 6 for experience)
+        if ($form->form_name !== 'WH') {
+            $html .= '<h4>6. Details of past and present experience</h4>
+            <div class="section-table">
+            <table class="tbl-bordered">
+            <tr>
+            <th>S.No</th><th>Company Name</th><th>Experience (Years)</th><th>Designation</th>
             </tr>';
+            foreach ($experience as $i => $exp) {
+                $html .= '<tr>
+                    <td>' . ($i + 1) . '</td>
+                    <td>' . $exp->company_name . '</td>
+                    <td>' . $exp->experience . '</td>
+                    <td>' . $exp->designation . '</td>
+                </tr>';
+            }
+            $html .= '</table></div>';
         }
-        $html .= '</table></div>';
 
         
     
@@ -594,6 +600,8 @@ class PDFController extends Controller
 
 
         if ($form->form_name == 'S') {
+            // For Form S, after Q6 (experience) we have:
+            // Q7 - previous application, Q8 - certificate, Q9 - Aadhaar
             $no = '8';
             $html .= '<tr>
                 <td class="q-no">' . $no . '.</td>
@@ -609,7 +617,10 @@ class PDFController extends Controller
 
             // $html .= '<tr><td><strong>10. PAN Number</strong></td><td>: ' . $maskedPan . '</td></tr>';
         } else {
-            $no = '7';
+            // For other forms:
+            // W / P : Q6 - experience, Q7 - certificate, Q8 - Aadhaar
+            // WH    : (no experience) so Q6 - certificate, Q7 - Aadhaar
+            $no = ($form->form_name == 'WH') ? '6' : '7';
             if ($form->form_name == 'WH') {
                 $html .= '<tr>
                     <td class="q-no">' . $no . '.</td>
@@ -623,8 +634,9 @@ class PDFController extends Controller
                     <td class="q-value">: ' . $certno . '</td>
                 </tr>';
             }
+            $aadhaarNo = ($form->form_name == 'WH') ? '7' : '8';
             $html .= '<tr>
-                <td class="q-no">8.</td>
+                <td class="q-no">' . $aadhaarNo . '.</td>
                 <td class="q-text">Aadhaar Number</td>
                 <td class="q-value">: ' . $masked . '</td>
             </tr>';

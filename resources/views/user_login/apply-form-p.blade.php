@@ -56,6 +56,13 @@
         color: #227e37;
         font-weight: 700;
     }
+
+    /* Ensure Font Awesome icons show inside buttons (e.g. add/remove institute/work rows) */
+    .comp_certificate .btn .fa,
+    .comp_certificate .btn i.fa {
+        font-family: 'FontAwesome';
+        display: inline-block;
+    }
 </style>
 
 <section class="">
@@ -451,21 +458,25 @@
 
                                         <div class="row">
                                             <div class="col-12 col-md-12">
-                                                <table class="table">
+                                                <table class="table mb-0">
                                                     <tr>
-                                                        <td>(i)</td>
-                                                        <td>
-                                                            <label for="Name">Upload Photo <span style="color: red;">*</span></label>
+                                                        <td style="width:5%; vertical-align: middle;">(i)</td>
+                                                        <td style="width:25%; vertical-align: middle;">
+                                                            <label for="upload_photo">Upload Photo <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்
-                                                            </label>
+                                                            <label for="upload_photo" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்</label>
                                                         </td>
-                                                        <td></td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" value="" accept=".jpg,.jpeg,.png">
-                                                            <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <td colspan="3">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="flex-grow-1" style="max-width:280px;">
+                                                                    <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                    <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                                </div>
+                                                                <div class="ms-3">
+                                                                    <img id="photo_preview" src="" alt="Photo preview" style="display:none; width:100px; height:120px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">
+                                                                </div>
+                                                            </div>
                                                         </td>
-                                                        <td></td>
                                                     </tr>
                                                     <tr>
                                                         <td>(ii)</td>
@@ -514,17 +525,23 @@
                                                 </table>
                                             </div>
 
-                                            <div class="col-12 col-md-6 " style="display: none;">
+                                            <div class="col-12 col-md-6 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-5 ">
-                                                        <label for="Name">(ii) Upload Signature
-                                                        </label>
+                                                        <label for="upload_sign">(ii) Upload Signature <span style="color: red;">*</span></label>
                                                         <br>
-                                                        <label for="tamil" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+                                                        <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                     </div>
                                                     <div class="col-12 col-md-7">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept="pdf/*">
-                                                        <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-grow-1" style="max-width:280px;">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" required>
+                                                                <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <img id="sign_preview" src="" alt="Signature preview" style="display:none; width:100px; height:50px; object-fit:contain; border:1px solid #ccc; border-radius:4px;">
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -561,12 +578,7 @@
 
                                 </div>
 
-                                <div class="text-center mb-2">
-                                   <span style="color: red">(Please read the instructions carefully in the declaration popup before proceeding with the payment.</span>
-                                   <span target="_blank">or click here <i class="fa fa-file-pdf-o" style="color: red;"></i> (7.1 KB)</span>
-                                   English | <a href="{{url('assets/pdf/form_a_notes.pdf')}}" class="text-success" target="_blank">தமிழ்</a>
-                                   <span style="color:red">).</span>
-                               </div>
+                                
                                 <div class="row mt-5">
                                     <div class="offset-md-5 col-12 col-md-6">
                                         <div class="form-group">

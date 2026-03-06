@@ -658,10 +658,33 @@ $(document).ready(function () {
             }
         }
 
+        // Signature validation for Form P (required)
+        let signInput = document.getElementById("upload_sign");
+        if (signInput && $(signInput).is(':visible')) {
+            $(signInput).nextAll('.error-message').remove();
+            const isRequiredSign = signInput.hasAttribute('required');
 
-    
-
-
+            if (isRequiredSign && signInput.files.length === 0) {
+                $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Signature upload is required.</span>');
+                if (!firstErrorField) firstErrorField = $('#upload_sign');
+                isValid = false;
+            } else if (signInput.files.length > 0) {
+                const sfile = signInput.files[0];
+                if (sfile) {
+                    const sAllowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                    const sMaxSize = 50 * 1024;
+                    if (!sAllowedTypes.includes(sfile.type)) {
+                        $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Only JPG, JPEG, or PNG images are allowed for signature upload.</span>');
+                        if (!firstErrorField) firstErrorField = $('#upload_sign');
+                        isValid = false;
+                    } else if (sfile.size > sMaxSize) {
+                        $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Signature file size permitted only 5 KB to 50 KB.</span>');
+                        if (!firstErrorField) firstErrorField = $('#upload_sign');
+                        isValid = false;
+                    }
+                }
+            }
+        }
         if (!isValid && firstErrorField) {
             $('html, body').animate({ scrollTop: firstErrorField.offset().top - 100 }, 500);
             return;

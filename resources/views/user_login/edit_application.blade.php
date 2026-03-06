@@ -246,11 +246,14 @@
                                                 </div>
                                             </div>
                                             <hr>
+                                            @php $formName = $application_details->form_name ?? ''; @endphp
                                             <div class="row align-items-center head_label">
                                                 <div class="col-12 col-md-12 ">
-                                                    <label> 5. Applicant's Educational/ Technical Qualification and pass
+                                                    <label>
+                                                        5. Applicant's Educational/ Technical Qualification and pass
                                                         details <span class="text-label"><span style="color: red;">*</span> (Upload the Documents)
-                                                        </span></label>
+                                                        </span>
+                                                    </label>
                                                     <br>
                                                     <label for="tamil" class="tamil">விண்ணப்பதாரரின் தொழில்நுட்ப
                                                         தேர்ச்சி மற்றும் தேர்ச்சி பற்றிய விவரங்கள்
@@ -288,12 +291,29 @@
                                                         <tr class="education-fields text-center">
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>
+                                                                @php $formName = $application_details->form_name ?? ''; @endphp
                                                                 <select class="form-control" name="educational_level[]">
                                                                     <option disabled {{ empty($edu_details->educational_level) ? 'selected' : '' }}>Select Education</option>
-                                                                    @if (isset($application_details->form_name) && in_array($application_details->form_name, ['W', 'WH']))
+                                                                    @if ($formName === 'S')
+                                                                        <option value="PG" {{ $edu_details->educational_level == 'PG' ? 'selected' : '' }}>PG</option>
+                                                                        <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
+                                                                        <option value="B.E" {{ $edu_details->educational_level == 'B.E' ? 'selected' : '' }}>B.E</option>
+                                                                        <option value="M.E" {{ $edu_details->educational_level == 'M.E' ? 'selected' : '' }}>M.E</option>
+                                                                    @elseif ($formName === 'W')
+                                                                        <option value="NTC" {{ $edu_details->educational_level == 'NTC' ? 'selected' : '' }}>NTC</option>
+                                                                        <option value="Provisional" {{ $edu_details->educational_level == 'Provisional' ? 'selected' : '' }}>Provisional</option>
+                                                                        <option value="Ex-Serviceman" {{ $edu_details->educational_level == 'Ex-Serviceman' ? 'selected' : '' }}>Ex-Serviceman</option>
+                                                                        <option value="H to B" {{ $edu_details->educational_level == 'H to B' ? 'selected' : '' }}>H to B</option>
+                                                                        <option value="SCVT" {{ $edu_details->educational_level == 'SCVT' ? 'selected' : '' }}>SCVT</option>
+                                                                    @elseif ($formName === 'WH')
                                                                         <option value="Up to 8th Standard" {{ $edu_details->educational_level == 'Up to 8th Standard' ? 'selected' : '' }}>Up to 8th Standard</option>
-                                                                        <option value="Wireman Helper(H) Certificate" {{ $edu_details->educational_level == 'Wireman Helper(H) Certificate' ? 'selected' : '' }}>Wireman Helper(H) Certificate</option>
+                                                                        <option value="Wireman Helper Examination" {{ $edu_details->educational_level == 'Wireman Helper Examination' ? 'selected' : '' }}>Wireman Helper Examination</option>
                                                                         <option value="ITI Certificate" {{ $edu_details->educational_level == 'ITI Certificate' ? 'selected' : '' }}>ITI Certificate</option>
+                                                                    @elseif ($formName === 'P')
+                                                                        <option value="BEM" {{ $edu_details->educational_level == 'BEM' ? 'selected' : '' }}>B.E(Mechanical)</option>
+                                                                        <option value="BEE" {{ $edu_details->educational_level == 'BEE' ? 'selected' : '' }}>B.E(Electrical)</option>
+                                                                        <option value="DiplomaM" {{ $edu_details->educational_level == 'DiplomaM' ? 'selected' : '' }}>Diploma(Mechanical)</option>
+                                                                        <option value="DiplomaE" {{ $edu_details->educational_level == 'DiplomaE' ? 'selected' : '' }}>Diploma(Electrical)</option>
                                                                     @else
                                                                         <option value="PG" {{ $edu_details->educational_level == 'PG' ? 'selected' : '' }}>PG</option>
                                                                         <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
@@ -302,9 +322,6 @@
                                                                         <option value="Diploma" {{ $edu_details->educational_level == 'Diploma' ? 'selected' : '' }}>Diploma</option>
                                                                         <option value="+2" {{ $edu_details->educational_level == '+2' ? 'selected' : '' }}>+2</option>
                                                                         <option value="10" {{ $edu_details->educational_level == '10' ? 'selected' : '' }}>10</option>
-                                                                        @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
-                                                                            <option value="8" {{ $edu_details->educational_level == '8' ? 'selected' : '' }}>8</option>
-                                                                        @endif
                                                                     @endif
                                                                 </select>
                                                             </td>
@@ -350,7 +367,7 @@
 
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-education remove_edu" data-edu_id = "{{ $edu_details->id }}" data-url= "{{ route('delete_education') }}">
-                                                                    <i class="fa fa-minus"></i>
+                                                                    <i class="fa fa-trash-o"></i>
                                                                 </button>
                                                             </td>
 
@@ -362,12 +379,30 @@
                                                         @else
                                                         <tr class="education-fields text-center">
                                                             <td>1</td>
-                                                            <td> <select class="form-control" name="educational_level[]">
+                                                            <td>
+                                                                @php $formName = $application_details->form_name ?? ''; @endphp
+                                                                <select class="form-control" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
-                                                                    @if (isset($application_details->form_name) && in_array($application_details->form_name, ['W', 'WH']))
+                                                                    @if ($formName === 'S')
+                                                                        <option value="PG">PG</option>
+                                                                        <option value="UG">UG</option>
+                                                                        <option value="B.E">B.E</option>
+                                                                        <option value="M.E">M.E</option>
+                                                                    @elseif ($formName === 'W')
+                                                                        <option value="NTC">NTC</option>
+                                                                        <option value="Provisional">Provisional</option>
+                                                                        <option value="Ex-Serviceman">Ex-Serviceman</option>
+                                                                        <option value="H to B">H to B</option>
+                                                                        <option value="SCVT">SCVT</option>
+                                                                    @elseif ($formName === 'WH')
                                                                         <option value="Up to 8th Standard">Up to 8th Standard</option>
-                                                                        <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
+                                                                        <option value="Wireman Helper Examination">Wireman Helper Examination</option>
                                                                         <option value="ITI Certificate">ITI Certificate</option>
+                                                                    @elseif ($formName === 'P')
+                                                                        <option value="BEM">B.E(Mechanical)</option>
+                                                                        <option value="BEE">B.E(Electrical)</option>
+                                                                        <option value="DiplomaM">Diploma(Mechanical)</option>
+                                                                        <option value="DiplomaE">Diploma(Electrical)</option>
                                                                     @else
                                                                         <option value="PG">PG</option>
                                                                         <option value="UG">UG</option>
@@ -376,11 +411,9 @@
                                                                         <option value="Diploma">Diploma</option>
                                                                         <option value="+2">+2</option>
                                                                         <option value="10">10</option>
-                                                                        @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
-                                                                            <option value="8">8</option>
-                                                                        @endif
                                                                     @endif
-                                                                </select></td>
+                                                                </select>
+                                                            </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
@@ -404,7 +437,7 @@
                                                             <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-education">
-                                                                    <i class="fa fa-minus"></i>
+                                                                    <i class="fa fa-trash-o"></i>
                                                                 </button>
                                                             </td>
 
@@ -417,10 +450,15 @@
                                             </div>
                                             @if (!isset($application_details->form_name) || $application_details->form_name !== 'WH')
                                                 <hr>
+                                                @php
+                                                    // Question number for Work Experience:
+                                                    // S: 6, W: 6, P: 6, WH: no work section
+                                                    $workQuestionNo = 6;
+                                                @endphp
                                                 <div class="row align-items-center head_label">
                                                     <div class="col-12 col-md-12 ">
                                                         <label>
-                                                            6. Details of Previous and Current Work experiences
+                                                            {{ $workQuestionNo }}. Details of Previous and Current Work experiences
                                                             @if(isset($application_details->form_name) && in_array($application_details->form_name, ['W','WH']))
                                                                 <span class="text-label">(Optional)</span>
                                                             @else
@@ -450,7 +488,7 @@
                                                                         <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                                     </th>
                                                                 @endif
-                                                                <th>
+                                                                <th class="text-center">
                                                                     <button type="button" class="btn btn-primary add-more-work">
                                                                         <i class="fa fa-plus"></i>
                                                                     </button>
@@ -499,7 +537,7 @@
                                                                 @endif
                                                                 <td>
                                                                     <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id = "{{ $exp_details->id }}" data-url= "{{ route('delete_experience') }}">
-                                                                        <i class="fa fa-minus"></i>
+                                                                        <i class="fa fa-trash-o"></i>
                                                                     </button>
                                                                 </td>
                                                                 <input type="hidden" name="work_id[]" value="{{ $exp_details->id ?? '' }}">
@@ -531,7 +569,7 @@
                                                                 @endif
                                                                 <td>
                                                                     <button type="button" class="btn btn-danger remove-work">
-                                                                        <i class="fa fa-minus"></i>
+                                                                        <i class="fa fa-trash-o"></i>
                                                                     </button>
                                                                 </td>
 
@@ -624,17 +662,32 @@
                                                 </div>
                                             </div>
                                             <hr>
-                                            <div class="row align-items-center">
+                                                @php
+                                                    // Question number for "Do you possess ..." varies by form:
+                                                    // S: 8, WH: 6, W: 8, P/others: 7
+                                                    if ($formName === 'S') {
+                                                        $questionNumber = 8;
+                                                    } elseif ($formName === 'WH') {
+                                                        $questionNumber = 6;
+                                                    } elseif ($formName === 'W') {
+                                                        $questionNumber = 8;
+                                                    } elseif ($formName === 'P') {
+                                                        $questionNumber = 7;
+                                                    } else {
+                                                        $questionNumber = 7;
+                                                    }
+                                                @endphp
+                                                <div class="row align-items-center">
                                                 <div class="col-12 col-md-12">
                                                     <div class="row align-items-center">
                                                         <div class="col-12 col-md-9 ">
-                                                            @if (isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                            @if ($formName === 'S')
                                                                 @php
                                                                     $cert_name = 'Wireman Competency Certificate / Supervisor Competency Certificate';
                                                                 @endphp
 
                                                             @else
-                                                                @if (isset($application_details->form_name) && $application_details->form_name == 'WH')
+                                                                @if ($formName === 'WH')
                                                                     @php
                                                                     $cert_name = 'Wireman Helper Competency Certificate';
                                                                     @endphp
@@ -718,13 +771,27 @@
                                                 </div>
                                             </div>
 
+                                            @php
+                                                // Question number for Upload Documents:
+                                                // S: 9, W: 8, WH: 7, P: 7 (matches individual form layouts)
+                                                if ($formName === 'S') {
+                                                    $uploadQuestionNo = 9;
+                                                } elseif ($formName === 'W') {
+                                                    $uploadQuestionNo = 8;
+                                                } elseif ($formName === 'WH') {
+                                                    $uploadQuestionNo = 7;
+                                                } elseif ($formName === 'P') {
+                                                    $uploadQuestionNo = 7;
+                                                } else {
+                                                    $uploadQuestionNo = 9;
+                                                }
+                                            @endphp
                                             <hr>
                                             <div class="row align-items-start">
                                                 {{-- Photo column --}}
                                                 <div class="col-12 col-md-4 mb-3 p-3">
                                                     <label for="upload_photo">
-                                                        {{ isset($application_details->form_name) && in_array($application_details->form_name, ['WH','W']) ? $sno = '8' : $sno = '9'  }}.
-                                                        (i) Upload Passport Size Photo <span style="color: red;">*</span>
+                                                        {{ $uploadQuestionNo }}. (i) Upload Passport Size Photo <span style="color: red;">*</span>
                                                     </label>
                                                     <br>
                                                     <label for="upload_photo" class="tamil">பாஸ்போர்ட் அளவு புகைப்படம் பதிவேற்ற</label>
@@ -844,8 +911,44 @@
 
                                                         <span class="checkmark"></span>
                                                         <div>
-                                                            I hereby declare that the particulars stated above are correct and true to the best of my knowledge. <br> I request that I may be granted a Supervisor Competency Certificate.<span style="color: red;">*</span><br>
-                                                            <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். <br> எனக்கு மேற்பார்வையாளர் திறன் சான்றிதழ் வழங்குமாறு கேட்டுக்கொள்கிறேன்.</span>
+                                                            @php $formName = $application_details->form_name ?? ''; @endphp
+                                                            @if ($formName === 'S')
+                                                                I hereby declare that the particulars stated above are correct and true to the best of my knowledge. <br>
+                                                                I request that I may be granted a Supervisor Competency Certificate.<span style="color: red;">*</span><br>
+                                                                <span class="tamil">
+                                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன்.
+                                                                    <br> எனக்கு மேற்பார்வையாளர் திறன் சான்றிதழ் வழங்குமாறு கேட்டுக்கொள்கிறேன்.
+                                                                </span>
+                                                            @elseif ($formName === 'W')
+                                                                I hereby declare that all the details mentioned above are correct and true to the best of my knowledge.<br>
+                                                                I request that I may be granted a Wireman Helper Competency Certificate.<br>
+                                                                <span class="tamil">
+                                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன்.
+                                                                    <br>எனக்கு மின்கம்பியாளர் தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.
+                                                                </span>
+                                                            @elseif ($formName === 'WH')
+                                                                I hereby declare that all the details mentioned above are correct and true to the best of my knowledge.<br>
+                                                                I request that I may be granted a Wireman Helper Competency Certificate.<br>
+                                                                <span class="tamil">
+                                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன்.
+                                                                    <br>எனக்கு மின்கம்பி உதவியாளர் தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.
+                                                                </span>
+                                                            @elseif ($formName === 'P')
+                                                                I hereby declare that the particulars stated above are correct and true to the best of my knowledge.<span style="color: red;">*</span><br>
+                                                                I request that I may be granted a Power Generating Station Operation and maintenance Competency Certificate.<br>
+                                                                <span class="tamil">
+                                                                    என் அறிவின் படி மேலே குறிப்பிட்டுள்ள விவரங்கள் அனைத்தும் சரியானதும் உண்மையானதுமாக இருப்பதாக நான் இங்கே அறிவிக்கிறேன்.
+                                                                </span>
+                                                                <br>
+                                                                <span class="tamil">
+                                                                    மின்சாரம் உற்பத்தி நிலையத்தின் செயல்பாடு மற்றும் பராமரிப்பு திறன் சான்றிதழை எனக்கு வழங்குமாறு நான் கேட்டுக்கொள்கிறேன்.
+                                                                </span>
+                                                            @else
+                                                                I hereby declare that the particulars stated above are correct and true to the best of my knowledge. <br>
+                                                                <span class="tamil">
+                                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன்.
+                                                                </span>
+                                                            @endif
                                                         </div>
 
                                                     </div>
@@ -1026,7 +1129,7 @@
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger remove-education">
-                        <i class="fa fa-minus"></i>
+                        <i class="fa fa-trash-o"></i>
                     </button>
                 </td>
                 <input type="hidden" name="edu_id[]" value="">
@@ -1102,7 +1205,7 @@
                         </td>` : ''}
                         <td class="text-center">
                             <button type="button" class="btn btn-danger remove-work">
-                                <i class="fa fa-minus"></i>
+                                <i class="fa fa-trash-o"></i>
                             </button>
                         </td>
                         <input type="hidden" name="work_id[]">

@@ -479,9 +479,12 @@ class FormController extends BaseController
                 $signFile = $request->file('upload_sign');
                 $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
                 $signDestination = public_path('attached_documents');
+
+                // Do NOT auto-create folder; fail with a clear message instead
                 if (!is_dir($signDestination)) {
-                    mkdir($signDestination, 0755, true);
+                    throw new \Exception('Signature upload folder "public/attached_documents" does not exist. Please contact the administrator.');
                 }
+
                 $signFile->move($signDestination, $signName);
 
                 TnelbApplicantsSign::updateOrCreate(
@@ -1284,8 +1287,23 @@ class FormController extends BaseController
                 TnelbApplicantPhoto::updateOrCreate(
                     ['application_id' => $applicationId],
                     [
-                        'login_id' => $loginId,
+                        'login_id'    => $loginId,
                         'upload_path' => 'attached_documents/' . $photoName,
+                    ]
+                );
+            }
+
+            // 🔹 Save Signature if New Upload (for all forms, including Form W)
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
+
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
                     ]
                 );
             }

@@ -136,7 +136,7 @@
                                                             </label>
                                                             <br>
                                                             <label for="tamil" class="tamil">விண்ணப்பதாரர் முகவரி
-                                                                <span class="text-label">(தெளிவாக இருக்க வேண்டும்)</span></label>
+                                                                <span class="text-label">(தெளிவாக இருத்தல் வேண்டும்)</span></label>
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <!-- <input autocomplete="off" class="form-control text-box single-line" id="Applicant_Name" name="Applicant_Name" type="text" value=""> -->
@@ -204,9 +204,6 @@
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
                                                             <th>Certificate No</th>
-                                                            {{-- <th class="text-center">Upload Document (Consolidated MarkSheet)
-                                                                <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
-                                                            </th> --}}
                                                             <th class="text-center">Upload Document
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th>
@@ -219,12 +216,16 @@
                                                     </thead>
                                                     <tbody id="education-container">
                                                         <tr class="education-fields">
-                                                            <td> <select class="form-control" name="educational_level[]">
+                                                            <td> 
+                                                                <select class="form-control educational-level-select" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
-                                                                    <option value="Up to 8th Standard">Up to 8th Standard</option>
-                                                                    <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
-                                                                    <option value="ITI Certificate">ITI Certificate</option>
-                                                                </select></td>
+                                                                    <option value="NTC">NTC</option>
+                                                                    <option value="Provisional">Provisional</option>
+                                                                    <option value="Ex-Serviceman">Ex-Serviceman</option>
+                                                                    <option value="H to B">H to B</option>
+                                                                    <option value="SCVT">SCVT</option>
+                                                                </select>
+                                                            </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
@@ -263,7 +264,7 @@
                                                 <br>
                                                 <label for="tamil" class="tamil">பெற்றுள்ள
                                                     முந்தைய மற்றும் தற்போதைய அனுபவங்களின் விவரங்கள்
-                                                    <span class="text-label">(விருப்பமெனில் நிரப்பலாம்)</span></label>
+                                                </label>
                                             </div>
 
                                         </div>
@@ -313,10 +314,10 @@
                                         <hr>
                                         <div class="row align-items-center">
                                             <div class="col-12 col-md-9 ">
-                                                <label for="Name">7. Have you applied for and obtained a Certificate of Qualification for Wireman / Wireman Helper ? If yes, please state its number and date.
+                                                <label for="Name">7. Have you applied for and obtained a Certificate of Qualification for Wireman / Wireman Helper ? If yes, please state its number and validity.
                                                 </label>
                                                 <br>
-                                                <label for="tamil" class="tamil">இதற்கு முன்னாள் விண்ணப்பம் செய்து கம்பியாட்கள் தகுதி சான்றிதழ் / மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெற்றுஉள்ளதா ஆம் என்றால் அதன் எண் மற்றும் நாளைக் குறிப்பிடுக
+                                                <label for="tamil" class="tamil">இதற்கு முன்னாள் விண்ணப்பம் செய்து மின்கம்பியாளர் தகுதி சான்றிதழ் / மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக
                                                 </label>
                                             </div>
                                             @php
@@ -345,7 +346,7 @@
                                         </div>
                                         <div class="row align-items-center" id="previously_details" style="display: {{ $hasOldPrefill ? 'flex' : 'none' }};">
                                             <div class="col-12 col-md-2 text-md-right">
-                                                <label> License Number <span style="color: red;">*</span></label>
+                                                <label> Ceritificate Number <span style="color: red;">*</span></label>
 
                                             </div>
                                             <div class="col-12 col-md-3">
@@ -434,21 +435,25 @@
 
                                         <div class="row">
                                             <div class="col-12 col-md-12">
-                                                <table class="table">
+                                                <table class="table mb-0">
                                                     <tr>
-                                                        <td>(i)</td>
-                                                        <td>
-                                                            <label for="Name">Upload Photo <span style="color: red;">*</span></label>
+                                                        <td style="width:5%; vertical-align: middle;">(i)</td>
+                                                        <td style="width:25%; vertical-align: middle;">
+                                                            <label for="upload_photo">Upload Photo <span style="color: red;">*</span></label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்
-                                                            </label>
+                                                            <label for="upload_photo" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்</label>
                                                         </td>
-                                                        <td></td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" value="" accept="image/*">
-                                                            <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <td colspan="3">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="flex-grow-1" style="max-width:280px;">
+                                                                    <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                    <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                                </div>
+                                                                <div class="ms-3">
+                                                                    <img id="photo_preview" src="" alt="Photo preview" style="display:none; width:100px; height:120px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">
+                                                                </div>
+                                                            </div>
                                                         </td>
-                                                        <td></td>
                                                     </tr>
                                                     <tr>
                                                         <td>(ii)</td>
@@ -496,17 +501,23 @@
                                                 </table>
                                             </div>
 
-                                            <div class="col-12 col-md-6 " style="display: none;">
+                                            <div class="col-12 col-md-6 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-5 ">
-                                                        <label for="Name">(ii) Upload Signature
-                                                        </label>
+                                                        <label for="upload_sign">(ii) Upload Signature <span style="color: red;">*</span></label>
                                                         <br>
-                                                        <label for="tamil" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+                                                        <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                     </div>
                                                     <div class="col-12 col-md-7">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" value="" accept="image/*">
-                                                        <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-grow-1" style="max-width:280px;">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" required>
+                                                                <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <img id="sign_preview" src="" alt="Signature preview" style="display:none; width:100px; height:50px; object-fit:contain; border:1px solid #ccc; border-radius:4px;">
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -516,11 +527,12 @@
 
                                             <label class="container">
                                                 <div class="declaration-container">
-                                                <input type="checkbox" id="declarationCheckbox" required {{ isset($application) ? 'checked' : '' }}>
-
-                                                    <span class="checkmark"></span>
-                                                    I hereby declare that all the details mentioned above are correct and true to the best of my knowledge. I request you to issue me the qualification certificate.<br>
-                                                    என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன். தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.
+                                                    <input type="checkbox" id="declarationCheckbox" required {{ isset($application) ? 'checked' : '' }}>
+                                                    <div>
+                                                        <span class="checkmark"></span>
+                                                        I hereby declare that all the details mentioned above are correct and true to the best of my knowledge.<br> I request that I may be granted a Wireman Helper Competency Certificate.<br>
+                                                        <span class="tamil">என் அறிவுக்கு எட்டியவரை மேலே குறிப்பிட்டுள்ள விவரங்கள் யாவும் சரியானவை எனவும் உண்மையானவை எனவும் உறுதி கூறுகிறேன்.<br>எனக்கு மின்கம்பியாளர் தகுதி சான்றிதழ் எனக்கு வழங்குமாறு வேண்டுகிறேன்.</span>
+                                                    </div>
                                                 </div>
                                                 <span id="checkboxError" class="text-danger" style="display: none;">Please check the declaration box before proceeding.</span>
                                             </label>
@@ -617,9 +629,11 @@
             newRow.innerHTML = `
                 <td><select class="form-control" name="educational_level[]" required>
                 <option selected disabled>Select Education</option>
-                <option value="Up to 8th Standard">Up to 8th Standard</option>
-                <option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option>
-                <option value="ITI Certificate">ITI Certificate</option>
+                <option value="NTC">NTC</option>
+                <option value="Provisional">Provisional</option>
+                <option value="Ex-Serviceman">Ex-Serviceman</option>
+                <option value="H to B">H to B</option>
+                <option value="SCVT">SCVT</option>
                 </select></td>
                 <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
                 <td>
