@@ -6,10 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\FeesValidity;
 use App\Models\Admin\Mst_equipment_tbl;
 use Illuminate\Http\Request;
-
-
-
-use App\Models\Admin\WorkflowA;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\B_Application;
 use App\Models\MstLicence;
@@ -21,7 +19,6 @@ use App\Models\TnelbAppsInstitute;
 use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FormPController extends Controller
@@ -67,9 +64,9 @@ class FormPController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
@@ -95,9 +92,9 @@ class FormPController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
@@ -249,6 +246,82 @@ class FormPController extends Controller
 
 
         return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff','institute_details'));
+    }
+
+    /**
+     * View completed Form P application in read-only mode (no action buttons).
+     */
+    public function view_completed_formp($applicant_id)
+    {
+        $staff = Auth::user();
+        if (!$staff) {
+            return abort(403, 'Unauthorized');
+        }
+
+        // Applicant from Form P table (completed only) with payment details
+        $applicant = DB::table('tnelb_form_p')
+            ->leftJoin('payments', 'tnelb_form_p.application_id', '=', 'payments.application_id')
+            ->where('tnelb_form_p.application_id', $applicant_id)
+            ->where('tnelb_form_p.app_status', 'A')
+            ->select('tnelb_form_p.*', 'payments.*')
+            ->first();
+
+        if (!$applicant) {
+            return abort(404, 'Applicant not found');
+        }
+
+        // Educational qualifications
+        $educationalQualifications = DB::table('tnelb_applicants_edu')
+            ->where('application_id', $applicant_id)
+            ->orderBy('year_of_passing', 'desc')
+            ->get();
+
+        // Work experience
+        $workExperience = DB::table('tnelb_applicants_exp')
+            ->where('application_id', $applicant_id)
+            ->get();
+
+        // Documents
+        $documents = Schema::hasTable('mst_documents')
+            ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+            : collect([]);
+
+        // Latest applicant photo if available
+        $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
+            ->whereNotNull('upload_path')
+            ->orderByDesc('id')
+            ->first();
+
+        $user_entry = $applicant;
+
+        // Workflow for this Form P application
+        $workflows = DB::table('tnelb_workflow')
+            ->leftJoin('tnelb_form_p', 'tnelb_workflow.application_id', '=', 'tnelb_form_p.application_id')
+            ->leftJoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
+            ->where('tnelb_workflow.application_id', $applicant_id)
+            ->select('tnelb_workflow.*', 'mst__roles.name', 'tnelb_form_p.form_name', 'tnelb_form_p.license_name')
+            ->orderBy('tnelb_workflow.id', 'desc')
+            ->get();
+
+        // All queries for display (read-only)
+        $queries = DB::table('tnelb_query_applicable as qa')
+            ->leftJoin('tnelb_form_p as ta', 'qa.application_id', '=', 'ta.application_id')
+            ->where('qa.application_id', $applicant_id)
+            ->select('qa.*')
+            ->orderByDesc('qa.id')
+            ->get();
+
+        return view('admin.dashboard.formp.applicants_detail_completed', compact(
+            'applicant',
+            'educationalQualifications',
+            'workExperience',
+            'uploadedPhoto',
+            'documents',
+            'workflows',
+            'queries',
+            'user_entry',
+            'staff'
+        ));
     }
 
     /**

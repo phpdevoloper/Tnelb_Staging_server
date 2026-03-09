@@ -145,11 +145,12 @@
                                                             </td>
                                                             <td style="text-align:center;">
                                                                 @php
-                                                                // Find the document where education_serial matches
-                                                                $document = DB::table('tnelb_applicants_doc')
-                                                                ->where('application_id', $applicant->application_id)
-                                                                ->where('education_serial', $education->edu_serial)
-                                                                ->first();
+                                                                $document = \Illuminate\Support\Facades\Schema::hasTable('mst_documents')
+                                                                    ? DB::table('mst_documents')
+                                                                        ->where('application_id', $applicant->application_id)
+                                                                        ->where('education_serial', $education->edu_serial)
+                                                                        ->first()
+                                                                    : null;
                                                                 @endphp
 
                                                                 @if($document && !empty($document->education_doc))
@@ -204,11 +205,12 @@
                                                             <td>{{ $experience->experience }} years</td>
                                                             <td style="text-align:center;">
                                                                 @php
-                                                                // Find the document matching experience_serial
-                                                                $document = DB::table('tnelb_applicants_doc')
-                                                                ->where('application_id', $applicant->application_id)
-                                                                ->where('experience_serial', $experience->exp_serial)
-                                                                ->first();
+                                                                $document = \Illuminate\Support\Facades\Schema::hasTable('mst_documents')
+                                                                    ? DB::table('mst_documents')
+                                                                        ->where('application_id', $applicant->application_id)
+                                                                        ->where('experience_serial', $experience->exp_serial)
+                                                                        ->first()
+                                                                    : null;
                                                                 @endphp
 
                                                                 @if($document && !empty($document->experience_doc))

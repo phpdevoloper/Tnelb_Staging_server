@@ -12,6 +12,7 @@ use App\Models\Mst_documents;
 use App\Models\TnelbApplicantPhoto;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use TCPDF;
 use Mpdf\Mpdf;
 use Stichoza\GoogleTranslate\GoogleTranslate;
@@ -37,7 +38,9 @@ class PDFRenewalController extends Controller
         }
         
         
-        $documents = Mst_documents::where('application_id', $newApplicationId)->get();
+        $documents = Schema::hasTable('mst_documents')
+            ? Mst_documents::where('application_id', $newApplicationId)->get()
+            : collect([]);
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->get();
 
@@ -445,7 +448,9 @@ class PDFRenewalController extends Controller
         }
         
         
-        $documents = Mst_documents::where('application_id', $newApplicationId)->get();
+        $documents = Schema::hasTable('mst_documents')
+            ? Mst_documents::where('application_id', $newApplicationId)->get()
+            : collect([]);
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->get();
 
@@ -699,7 +704,9 @@ class PDFRenewalController extends Controller
         $form = Mst_Form_s_w::where('application_id', $newApplicationId)->first();
         $education = Mst_education::where('application_id', $newApplicationId)->get();
         $experience = Mst_experience::where('application_id', $newApplicationId)->get();
-        $documents = Mst_documents::where('application_id', $newApplicationId)->first();
+        $documents = Schema::hasTable('mst_documents')
+            ? Mst_documents::where('application_id', $newApplicationId)->first()
+            : null;
         $payment = DB::table('payments')->where('application_id', $newApplicationId)->first();
 
 
