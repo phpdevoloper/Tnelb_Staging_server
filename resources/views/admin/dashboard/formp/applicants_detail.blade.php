@@ -1500,7 +1500,7 @@
         });
 
 
-        // Return to Applicant modal: validate and confirm (API can be wired later)
+        // Return to Applicant modal: validate and call API (Form P)
         $('#confirmReturnToApplicantModalBtn').on('click', function () {
             var selected = [];
             $('.return-to-applicant-query:checked').each(function () { selected.push($(this).val()); });
@@ -1510,15 +1510,40 @@
                 $('#returnToApplicantQueryError').show();
                 return;
             }
-            Swal.fire({
-                icon: 'info',
-                title: 'Return to Applicant',
-                html: 'Selected: <strong>' + selected.join(', ') + '</strong>' + (remarks ? '<br>Remarks: ' + remarks : '') + '<br><br>Backend integration will be done in the next step.',
-                confirmButtonText: 'OK'
-            }).then(function () {
-                $('#returnToApplicantModal').modal('hide');
-                $('.return-to-applicant-query').prop('checked', false);
-                $('#returnToApplicantRemarks').val('');
+            var applicationId = @json($applicant->application_id);
+            $.ajax({
+                url: '{{ route('admin.returnToApplicantFormp') }}',
+                type: 'POST',
+                headers: { "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content") },
+                data: {
+                    application_id: applicationId,
+                    'return_applicant_query[]': selected,
+                    remarks: remarks
+                },
+                success: function (response) {
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message,
+                            confirmButtonText: 'OK',
+                            allowOutsideClick: false
+                        }).then(function () {
+                            $('#returnToApplicantModal').modal('hide');
+                            $('.return-to-applicant-query').prop('checked', false);
+                            $('#returnToApplicantRemarks').val('');
+                            window.location.href = "{{ route('admin.dashboard') }}";
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                        ? xhr.responseJSON.message
+                        : (xhr.responseJSON && xhr.responseJSON.error
+                            ? xhr.responseJSON.error
+                            : 'An unexpected error occurred.');
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                }
             });
         });
 

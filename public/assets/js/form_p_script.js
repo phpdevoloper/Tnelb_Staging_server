@@ -658,17 +658,35 @@ $(document).ready(function () {
             }
         }
 
-        // Signature validation for Form P (required)
+        // Signature validation for Form P
         let signInput = document.getElementById("upload_sign");
         if (signInput && $(signInput).is(':visible')) {
             $(signInput).nextAll('.error-message').remove();
             const isRequiredSign = signInput.hasAttribute('required');
 
+            // Base rule: required only when input has required attribute (new application)
             if (isRequiredSign && signInput.files.length === 0) {
                 $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Signature upload is required.</span>');
                 if (!firstErrorField) firstErrorField = $('#upload_sign');
                 isValid = false;
-            } else if (signInput.files.length > 0) {
+            }
+
+            // Additional rule for returned applications: if query reason says "Signature is missing"
+            if (window.returnApplicationQueryReasons) {
+                const reasons = window.returnApplicationQueryReasons || [];
+                if (reasons.indexOf('Signature is missing') !== -1) {
+                    const signWrapper = document.getElementById('sign-input-wrapper');
+                    const hasSign = (signInput.files && signInput.files.length > 0) ||
+                        (signWrapper && signWrapper.style.display === 'none');
+                    if (!hasSign) {
+                        $('#upload_sign').after('<span class="error-message text-danger d-block mt-1">Please upload Signature.</span>');
+                        if (!firstErrorField) firstErrorField = $('#upload_sign');
+                        isValid = false;
+                    }
+                }
+            }
+
+            if (signInput.files.length > 0) {
                 const sfile = signInput.files[0];
                 if (sfile) {
                     const sAllowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -852,6 +870,37 @@ $(document).ready(function () {
     });
 
 
+    // Preview for photo and signature (new application Form P)
+    $('#upload_photo').on('change', function (e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const img = document.getElementById('photo_preview');
+                if (img) {
+                    img.src = ev.target.result;
+                    img.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('#upload_sign').on('change', function (e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const img = document.getElementById('sign_preview');
+                if (img) {
+                    img.src = ev.target.result;
+                    img.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
     // Save As Draft
 
     $('#DraftBtn').on('click', function(e) {
@@ -996,7 +1045,7 @@ $(document).ready(function () {
 
         const pancardInput = document.getElementById("pancard");
         const pancardError = document.getElementById("pancard-error");
-        const pancardValue = pancardInput.value.trim();
+        const pancardValue = pancardInput ? pancardInput.value.trim() : "";
         const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
 
 

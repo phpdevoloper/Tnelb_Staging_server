@@ -102,11 +102,17 @@
 
                                                 <!-- Right Side: Applicant Photo -->
                                                 <div class="col-md-4 text-center">
-                                                    @if(isset($uploadedPhoto) && !empty($uploadedPhoto->upload_path))
-                                                        <img src="{{ url($uploadedPhoto->upload_path) }}"
+                                                    @php
+                                                        $photo = $uploadedPhoto ?? $applicant_photo ?? null;
+                                                        $photoPath = $photo && !empty($photo->upload_path) ? $photo->upload_path : null;
+                                                    @endphp
+                                                    @if($photoPath)
+                                                        <img src="{{ asset($photoPath) }}"
                                                              alt="Applicant Photo"
                                                              class="img-fluid rounded border"
-                                                             style="width: 150px; height: 200px; object-fit: cover;">
+                                                             style="width: 150px; height: 200px; object-fit: cover;"
+                                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                        <p class="text-muted mb-0" style="display: none;">No photo available</p>
                                                     @else
                                                         <p class="text-muted">No photo available</p>
                                                     @endif
@@ -140,10 +146,16 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-lg-3">
-                                                    @if(isset($uploadedPhoto) && !empty($uploadedPhoto->upload_path))
-                                                    <img src="{{ url($uploadedPhoto->upload_path) }}"
+                                                    @php
+                                                        $photoAlt = $uploadedPhoto ?? $applicant_photo ?? null;
+                                                        $photoPathAlt = $photoAlt && !empty($photoAlt->upload_path) ? $photoAlt->upload_path : null;
+                                                    @endphp
+                                                    @if($photoPathAlt)
+                                                    <img src="{{ asset($photoPathAlt) }}"
                                                         alt="Applicant Photo"
-                                                        class="img-fluid rounded" width="150" style="border:1px solid;">
+                                                        class="img-fluid rounded" width="150" style="border:1px solid;"
+                                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                    <p style="display: none;">No photo available</p>
                                                     @else
                                                     <p>No photo available</p>
                                                     @endif

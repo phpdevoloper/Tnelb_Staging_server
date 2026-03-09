@@ -407,6 +407,100 @@ class FormPController extends Controller
     }
 
     /**
+     * Return Form P application back to the applicant with query.
+     * Mirrors ApplicationController::returnToApplicant but uses tnelb_form_p / app_status.
+     */
+    public function returnToApplicantFormp(Request $request)
+    {
+        $staff = Auth::user();
+        $staffID = $staff?->id;
+
+        if (!$staff || !$staffID) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 401);
+        }
+
+        $request->validate([
+            'application_id'           => 'required|string',
+            'return_applicant_query'   => 'required|array|min:1',
+            'return_applicant_query.*' => 'required|string|max:255',
+            'remarks'                  => 'nullable|string|max:500',
+        ]);
+
+        $applicant = DB::table('tnelb_form_p')
+            ->where('application_id', $request->application_id)
+            ->first();
+
+        if (!$applicant) {
+            return response()->json(['status' => 'error', 'message' => 'Application not found.'], 404);
+        }
+
+        $processed_by = match ($staff->name) {
+            'President' => 'PR',
+            'Secretary' => 'SE',
+            default     => null,
+        };
+
+        if ($processed_by === null) {
+            return response()->json(['status' => 'error', 'message' => 'Only Secretary or President can return to applicant.'], 403);
+        }
+
+        $queryList     = $request->return_applicant_query;
+        $queryTypeJson = is_array($queryList) ? json_encode($queryList) : json_encode([$queryList]);
+        $remarks       = $request->remarks ?? '';
+
+        // Log return-to-applicant for audit
+        DB::table('tnelb_return_to_applicant_log')->insert([
+            'application_id'        => $request->application_id,
+            'returned_by_staff_id'  => $staffID,
+            'returned_by_role'      => $processed_by,
+            'returned_by_name'      => $staff->name ?? null,
+            'query_types'           => $queryTypeJson,
+            'remarks'               => $remarks,
+            'created_at'            => now(),
+            'updated_at'            => now(),
+        ]);
+
+        // Workflow entry marking returned to applicant (QU)
+        SupervisorModel::create([
+            'application_id' => $request->application_id,
+            'appl_status'    => 'QU',
+            'processed_by'   => $processed_by,
+            'forwarded_to'   => null,
+            'role_id'        => $staff->roles_id,
+            'is_verified'    => 'Yes',
+            'query_status'   => 'P',
+            'remarks'        => $remarks,
+            'created_at'     => now(),
+            'login_id'       => $staffID,
+            'queries'        => $queryTypeJson,
+            'raised_by'      => $processed_by,
+        ]);
+
+        // Store query for other views
+        DB::table('tnelb_query_applicable')->insert([
+            'application_id' => $request->application_id,
+            'query_type'     => $queryTypeJson,
+            'raised_by'      => $processed_by,
+            'query_status'   => 'P',
+            'created_at'     => now(),
+        ]);
+
+        // Mark Form P app as under query (QU) for applicant
+        DB::table('tnelb_form_p')
+            ->where('application_id', $request->application_id)
+            ->update([
+                'app_status'   => 'QU',
+                'processed_by' => $processed_by,
+                'updated_at'   => now(),
+            ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Application returned to applicant with query successfully!',
+        ], 201);
+    }
+
+    /**
      * Reject Form P application.
      */
     public function rejectApplicationformp(Request $request)

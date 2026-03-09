@@ -849,7 +849,7 @@
                                                 <div class="col-12 col-md-4 mb-3 p-3">
                                                     @php
                                                         $decryptedaadhar = !empty($application_details->aadhaar)
-                                                            ? Crypt::decryptString($application_details->aadhaar)
+                                                            ? safeDecrypt($application_details->aadhaar)
                                                             : null;
                                                     @endphp
 

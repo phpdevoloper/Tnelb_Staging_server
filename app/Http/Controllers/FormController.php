@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class FormController extends BaseController
 {
@@ -753,7 +754,7 @@ class FormController extends BaseController
         $loginId = $request->login_id;
 
         try {
-            
+
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
 
             $aadhaarFilename = $existingForm ? $existingForm->aadhaar_doc : null;
@@ -920,38 +921,60 @@ class FormController extends BaseController
                 }
             }
 
-            // 🔹 Save Photo if New Upload
+            // 🔹 Save Photo if New Upload (with robust upload checks)
             if ($request->hasFile('upload_photo')) {
-                $photoName = 'user_' . time() . '.' . $request->file('upload_photo')->getClientOriginalExtension();
-                $request->file('upload_photo')->move(public_path('attached_documents'), $photoName);
+                $photoFile = $request->file('upload_photo');
+
+                if (!$photoFile->isValid()) {
+                    Log::warning('Photo upload failed in draft_update', [
+                        'application_id' => $applicationId,
+                        'login_id'       => $loginId,
+                        'client_name'    => $photoFile->getClientOriginalName(),
+                        'error_code'     => $photoFile->getError(),
+                        'error_message'  => $photoFile->getErrorMessage(),
+                    ]);
+                    throw new \RuntimeException('Photo upload failed: ' . $photoFile->getErrorMessage());
+                }
+
+                // Enforce maximum 50 KB (sizes are in bytes)
+                $sizeKb = $photoFile->getSize() / 1024;
+                if ($sizeKb > 50) {
+                    throw new \RuntimeException('Photo size permitted up to 50 KB.');
+                }
+
+                $photoName = 'user_' . time() . '.' . $photoFile->getClientOriginalExtension();
+                $photoFile->move(public_path('attached_documents'), $photoName);
 
                 TnelbApplicantPhoto::updateOrCreate(
                     ['application_id' => $applicationId],
                     [
-                        'login_id' => $loginId,
-                        'upload_path' => 'attached_documents/' . $photoName,
+                        'login_id'   => $loginId,
+                        'upload_path'=> 'attached_documents/' . $photoName,
                     ]
                 );
             }
 
-            // 🔹 Save Signature if New Upload
+            // 🔹 Save Signature if New Upload (with robust upload checks)
             if ($request->hasFile('upload_sign')) {
                 $signFile = $request->file('upload_sign');
-                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
-                $signFile->move(public_path('attached_documents'), $signName);
 
-                TnelbApplicantsSign::updateOrCreate(
-                    ['application_id' => $applicationId],
-                    [
-                        'login_id'     => $loginId,
-                        'uploaded_doc' => 'attached_documents/' . $signName,
-                    ]
-                );
-            }
+                if (!$signFile->isValid()) {
+                    Log::warning('Signature upload failed in draft_update', [
+                        'application_id' => $applicationId,
+                        'login_id'       => $loginId,
+                        'client_name'    => $signFile->getClientOriginalName(),
+                        'error_code'     => $signFile->getError(),
+                        'error_message'  => $signFile->getErrorMessage(),
+                    ]);
+                    throw new \RuntimeException('Signature upload failed: ' . $signFile->getErrorMessage());
+                }
 
-            // 🔹 Save Signature if New Upload
-            if ($request->hasFile('upload_sign')) {
-                $signFile = $request->file('upload_sign');
+                // Enforce maximum 50 KB (sizes are in bytes)
+                $signSizeKb = $signFile->getSize() / 1024;
+                if ($signSizeKb > 50) {
+                    throw new \RuntimeException('Signature size permitted up to 50 KB.');
+                }
+
                 $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
                 $signFile->move(public_path('attached_documents'), $signName);
 

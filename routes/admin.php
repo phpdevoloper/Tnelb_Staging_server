@@ -94,6 +94,7 @@
             Route::get('/applicants_detail_formp/{applicant_id}', [FormPController::class, 'view_application_formp'])->name('application_details_formp');
             Route::post('/forwardApplicationformp/{role}', [FormPController::class, 'forwardApplicationformp'])->name('forwardApplicationformp');
             Route::post('/returntoSupervisorformp', [FormPController::class, 'returntoSupervisorformp'])->name('returntoSupervisorformp');
+            Route::post('/returnToApplicantFormp', [FormPController::class, 'returnToApplicantFormp'])->name('returnToApplicantFormp');
             Route::post('/rejectApplicationformp', [FormPController::class, 'rejectApplicationformp'])->name('rejectApplicationformp');
             Route::post('/approveApplicationformp', [FormPController::class, 'approveApplicationformp'])->name('approveApplicationformp');
 

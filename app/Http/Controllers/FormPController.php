@@ -107,7 +107,7 @@ class FormPController extends BaseController
 
             // single files
             'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50', // 1MB
-            'aadhaar_doc'          => 'required|mimes:pdf|min:10|max:250',
+            'aadhaar_doc'          => 'nullable|mimes:pdf|max:250',
 
             // multiple files (arrays)
             'education_document'   => 'required|array|min:1',
@@ -445,9 +445,7 @@ class FormPController extends BaseController
         $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
             ? 'image|mimes:jpg,jpeg,png|max:50'
             : 'nullable|image|mimes:jpg,jpeg,png|max:50';
-        $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
+        $aadhaarDocRule = 'nullable|mimes:pdf|max:250';
         $request->validate([
             'login_id'           => 'nullable|string',
             'applicant_name'     => 'nullable|string|max:255',
@@ -852,14 +850,36 @@ class FormPController extends BaseController
         $proof_doc = Mst_documents::where('application_id', $appl_id)->first();
 
         $institutes = TnelbAppsInstitute::where('application_id', $appl_id)
-        ->where('institute_status', 1)
-        ->get();
+            ->where('institute_status', 1)
+            ->get();
 
         $applicationid = $appl_id;
 
+        // Load pending queries (for returned applications with app_status = QU)
+        $queries = DB::table('tnelb_query_applicable')
+            ->where('application_id', $appl_id)
+            ->where('query_status', 'P')
+            ->orderByDesc('id')
+            ->get();
 
+        $queryReasonsForValidation = [];
+        foreach ($queries as $q) {
+            $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
+            if (is_array($items)) {
+                foreach ($items as $item) {
+                    if (is_string($item) && $item !== '') {
+                        $queryReasonsForValidation[] = $item;
+                    }
+                }
+            }
+        }
+        $queryReasonsForValidation = array_values(array_unique($queryReasonsForValidation));
 
-        return view('user_login.edit_application_p', compact(
+        $view = (isset($application_details->app_status) && $application_details->app_status === 'QU')
+            ? 'user_login.edit_returned_application_p'
+            : 'user_login.edit_application_p';
+
+        return view($view, compact(
             'applicationid',
             'application_details',
             'edu_details',
@@ -868,7 +888,9 @@ class FormPController extends BaseController
             'license_details',
             'applicant_photo',
             'proof_doc',
-            'institutes'
+            'institutes',
+            'queries',
+            'queryReasonsForValidation'
         ));
     }
 
@@ -903,9 +925,7 @@ class FormPController extends BaseController
             ? 'image|mimes:jpg,jpeg,png|max:50'
             : 'nullable|image|mimes:jpg,jpeg,png|max:50';
 
-        $aadhaarDocRule = ($existingForm && !$existingForm->aadhaar_doc)
-            ? 'mimes:pdf|max:250'
-            : 'nullable|mimes:pdf|max:250';
+        $aadhaarDocRule = 'nullable|mimes:pdf|max:250';
 
         $request->validate([
             'login_id'           => 'nullable|string',

@@ -60,8 +60,16 @@
     <div class="container">
         <ul id="breadcrumb">
             <li><a href="{{ route('dashboard') }}"><span class="fa fa-home"> </span> Dashboard</a></li>
-            <li><a href="#"><span class=" fa fa-info-circle"> </span> Form {{ $application_details->form_name }}</a></li>
-
+            <li>
+                <a href="#">
+                    <span class=" fa fa-info-circle"> </span>
+                    @if(isset($application_details->app_status) && $application_details->app_status === 'QU')
+                        Correct and resubmit – Form {{ $application_details->form_name }}
+                    @else
+                        Form {{ $application_details->form_name }}
+                    @endif
+                </a>
+            </li>
         </ul>
     </div>
 </section>
@@ -72,26 +80,56 @@
                 <div class="col-lg-12 col-12">
                     <div class="apply-card apply-card-info" data-select2-id="14">
                         <div class="apply-card-header" style="background-color: rgb(3 90 179); padding: 15px;">
-                                <div class="row">
-                                    <div class="col-lg-12 col-12">
-                                        <div class="text-center text-white text-uppercase font-weight-bold">
-                                            <h5 class="card-title_apply text-white text-uppercase font-weight-bold" >
-                                                Application for Power Generating Station Operation & Maintenance Competency Certificate
-                                            </h5>
-                                     
-                                            <h6 class="card-title_apply text-white mt-2 form-title">FORM - P / Certificate P</h4>
-                                            <small>DRAFT</small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-lg-12 col-12 text-right">
-                                        <span class="text-white font-weight-bold" target="_blank"> Instructions 
-                                           </span> <a href="{{url('assets/pdf/form_p_notes.pdf')}}" class="text-white" target="_blank">English <i class="fa fa-file-pdf-o" ></i>  (8 KB)</a>
+                            <div class="row">
+                                <div class="col-lg-12 col-12">
+                                    <div class="text-center text-white text-uppercase font-weight-bold">
+                                        <h5 class="card-title_apply text-white text-uppercase font-weight-bold">
+                                            Application for Power Generating Station Operation & Maintenance Competency Certificate
+                                        </h5>
+                                        <h6 class="card-title_apply text-white mt-2 form-title">
+                                            FORM '{{ $application_details->form_name }}' / Certificate 'P' –
+                                            @if(isset($application_details->app_status) && $application_details->app_status === 'QU')
+                                                Correct and resubmit
+                                            @else
+                                                Draft
+                                            @endif
+                                        </h6>
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="row">
+                                <div class="col-lg-12 col-12 text-right">
+                                    <span class="text-white font-weight-bold" target="_blank"> Instructions 
+                                       </span> <a href="{{url('assets/pdf/form_p_notes.pdf')}}" class="text-white" target="_blank">English <i class="fa fa-file-pdf-o" ></i>  (8 KB)</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if(isset($queries) && $queries->isNotEmpty())
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <div class="alert alert-warning mb-3" role="alert">
+                                    <h6 class="alert-heading font-weight-bold mb-2">
+                                        <i class="fa fa-exclamation-triangle"></i> Query raised – please correct and resubmit
+                                    </h6>
+                                    <p class="mb-1">The following issue(s) were reported. Please correct and submit again:</p>
+                                    <ul class="mb-0 pl-4">
+                                        @foreach($queries as $q)
+                                            @php
+                                                $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
+                                                $items = is_array($items) ? $items : [$items];
+                                            @endphp
+                                            @foreach($items as $item)
+                                                <li>{{ is_string($item) ? $item : '' }}</li>
+                                            @endforeach
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="apply-card-body">
                             <form id="competency_form_p" enctype="multipart/form-data">
                                 <div class="row">
@@ -438,9 +476,9 @@
                                             <hr>
                                             <div class="row align-items-center head_label">
                                                 <div class="col-12 col-md-12 ">
-                                                    <label>(iii). Power Station to which he is aattached at present <span style="color: red;">*</span> <span class="text-label">(Upload the documents)</span></label>
+                                                    <label>(iii). Power Station to which he is aattached at present <span class="text-label">(Upload the documents)</span></label>
                                                     <br>
-                                                     <label for="tamil" class="tamil">தற்போது பணியாற்றும் மின்சார நிலையம் மற்றும் பயிற்சி பெற்ற காலம்<span style="color: red;">*</span>
+                                                     <label for="tamil" class="tamil">தற்போது பணியாற்றும் மின்சார நிலையம் மற்றும் பயிற்சி பெற்ற காலம்
                                                         <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span>
                                                     </label>
                                                 </div>
@@ -546,9 +584,9 @@
                                             <hr>
                                             <div class="row align-items-center head_label">
                                                 <div class="col-12 col-md-6">
-                                                    <label>(iv). Name of the employer<span style="color: red;">*</span> <span class="text-label">(Upload the documents)</span></label>
+                                                    <label>(iv). Name of the employer <span class="text-label">(Upload the documents)</span></label>
                                                     <br>
-                                                    <label for="tamil" class="tamil">தொழில் வழங்குநரின் பெயர்<span style="color: red;">*</span>
+                                                    <label for="tamil" class="tamil">தொழில் வழங்குநரின் பெயர்
                                                         <span class="text-label">(ஆவணங்களை பதிவேற்ற வேண்டும்)</span></label>
                                                 </div>
                                                 <div class="col-12 col-md-6">
@@ -775,9 +813,9 @@
                                                                 <span id="aadhaar-error" class="text-danger"></span>
                                                             </td>
                                                             <td>
-                                                                <label for="Name">(iii) Upload Aadhaar Document <span style="color: red;">*</span></label>
+                                                                <label for="Name">(iii) Upload Aadhaar Document</label>
                                                                 <br>
-                                                                <label for="tamil" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
+                                                                <label for="tamil" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும்</label>
                                                             </td>
                                                             <td>
                                                                 @if (!empty($application_details->aadhaar_doc))
@@ -801,17 +839,44 @@
                                                     </table>
                                                 </div>
     
-                                                <div class="col-12 col-md-6 " style="display: none;">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-12 col-md-5 ">
-                                                            <label for="Name">(ii) Upload Signature
-                                                            </label>
-                                                            <br>
-                                                            <label for="tamil" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
-                                                        </div>
-                                                        <div class="col-12 col-md-7">
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept="pdf/*">
-                                                            <span class="file-limit"> File type: JPG,PNG (Max 50 KB) </span>
+                                                {{-- Signature column --}}
+                                                <div class="col-12 col-md-4 mb-3 p-3">
+                                                    <label for="upload_sign">(iv) Upload Signature</label>
+                                                    <br>
+                                                    <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+
+                                                    <div class="mt-2 text-center">
+                                                        @php
+                                                            $signatureSrc = !empty($proof_doc?->uploaded_doc) ? asset($proof_doc->uploaded_doc) : '';
+                                                            $signatureStyle = 'max-width: 120px; max-height: 60px; border:1px solid #ccc; border-radius:4px;';
+                                                            if (empty($proof_doc?->uploaded_doc)) {
+                                                                $signatureStyle .= '; display:none;';
+                                                            }
+                                                        @endphp
+
+                                                        <img src="{{ $signatureSrc }}"
+                                                             id="preview_signature"
+                                                             class="img-fluid border mb-2"
+                                                             style="{{ $signatureStyle }}"
+                                                             alt="Uploaded Signature">
+
+                                                        @if(!empty($proof_doc?->uploaded_doc))
+                                                            <button type="button"
+                                                                    class="btn btn-primary btn-sm mb-2"
+                                                                    onclick="toggleSignInput()">Edit/Upload Signature</button>
+                                                        @endif
+
+                                                        <div id="sign-input-wrapper"
+                                                             style="{{ !empty($proof_doc?->uploaded_doc) ? 'display: none;' : 'display: block;' }}; width: 100%; max-width: 280px; margin: 0 auto;">
+                                                            <span class="file-limit d-block text-start"> File type: JPG, PNG (Max 50 KB) </span>
+                                                            <input autocomplete="off"
+                                                                   class="form-control text-box single-line mb-1"
+                                                                   id="upload_sign"
+                                                                   name="upload_sign"
+                                                                   type="file"
+                                                                   accept=".jpg,.jpeg,.png"
+                                                                   @if(isset($application_details->app_status) && $application_details->app_status === 'QU') required @endif>
+                                                            <span class="error-message text-danger d-block text-start"></span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -850,10 +915,22 @@
                                     </div>
                                     <div class="col-12 col-md-12 mt-5">
                                         <div class="form-group text-center">
-                                            <button type="button" class="btn btn-success" id="DraftBtn" data-url="{{ route('form.draft_submit') }}">Save As Draft
+                                            @if(isset($application_details->app_status) && $application_details->app_status === 'QU')
+                                                <button type="button" class="btn btn-primary" id="editBtn">Edit</button>
+                                                <span id="actionButtonsWrap" style="display: none;">
+                                                    <button type="button" class="btn btn-danger" id="cancelBtn">Cancel</button>
+                                                    <button type="button" class="btn btn-primary" id="DraftBtn">
+                                                        Submit
+                                                    </button>
+                                                </span>
+                                            @else
+                                                <button type="button" class="btn btn-success" id="DraftBtn">
+                                                    Save As Draft
                                                 </button>
-                                            <button type="button" class="btn btn-primary"
-                                                id="ProceedtoPayment">Save and Proceed for Payment</button>
+                                                <button type="button" class="btn btn-primary" id="ProceedtoPayment">
+                                                    Save and Proceed for Payment
+                                                </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -870,6 +947,9 @@
     @include('include.footer')
 </footer>
 </div>
+<script>
+    window.returnApplicationQueryReasons = @json(isset($queryReasonsForValidation) ? $queryReasonsForValidation : []);
+</script>
 <script>
     document.getElementById('upload_photo').addEventListener('change', function(event) {
         const file = event.target.files[0];
@@ -890,6 +970,32 @@
     function togglePhotoInput() {
         const inputWrapper = document.getElementById('photo-input-wrapper');
         inputWrapper.style.display = inputWrapper.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+<script>
+    document.getElementById('upload_sign').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const preview = document.getElementById('preview_signature');
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function toggleSignInput() {
+        const inputWrapper = document.getElementById('sign-input-wrapper');
+        if (inputWrapper) {
+            inputWrapper.style.display = inputWrapper.style.display === 'none' ? 'block' : 'none';
+        }
     }
 </script>
 <script>
