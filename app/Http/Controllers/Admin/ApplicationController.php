@@ -193,6 +193,93 @@ class ApplicationController extends Controller
         ], 201);
     }
 
+    /**
+     * Return application to Applicant with query (Secretary/President only).
+     * Used by applicants_detail_supervisor (tnelb_application_tbl flow).
+     */
+    public function returnToApplicant(Request $request)
+    {
+        $staff = Auth::user();
+        $staffID = Auth::user()->id;
+
+        $request->validate([
+            'application_id'           => 'required|string',
+            'return_applicant_query'   => 'required|array|min:1',
+            'return_applicant_query.*' => 'required|string|max:255',
+            'remarks'                  => 'nullable|string|max:500',
+        ]);
+
+        $applicant = DB::table('tnelb_application_tbl')
+            ->where('application_id', $request->application_id)
+            ->first();
+
+        if (!$applicant) {
+            return response()->json(['status' => 'error', 'message' => 'Application not found.'], 404);
+        }
+
+        $processed_by = match ($staff->name) {
+            'President' => 'PR',
+            'Secretary' => 'SE',
+            default     => null,
+        };
+
+        if ($processed_by === null) {
+            return response()->json(['status' => 'error', 'message' => 'Only Secretary or President can return to applicant.'], 403);
+        }
+
+        $queryList = $request->return_applicant_query;
+        $queryTypeJson = is_array($queryList) ? json_encode($queryList) : json_encode([$queryList]);
+        $remarks = $request->remarks ?? '';
+
+        // Record the return-to-applicant entry for audit
+        DB::table('tnelb_return_to_applicant_log')->insert([
+            'application_id'        => $request->application_id,
+            'returned_by_staff_id'  => $staffID,
+            'returned_by_role'       => $processed_by,
+            'returned_by_name'       => $staff->name ?? null,
+            'query_types'           => $queryTypeJson,
+            'remarks'               => $remarks,
+            'created_at'            => now(),
+            'updated_at'            => now(),
+        ]);
+
+        SupervisorModel::create([
+            'application_id' => $request->application_id,
+            'appl_status'    => 'QU',
+            'processed_by'   => $processed_by,
+            'forwarded_to'   => null, // Not forwarded to any role; returned to applicant
+            'role_id'        => $staff->roles_id, // Role id from mst_roles (FK), not user id
+            'is_verified'    => 'Yes',
+            'query_status'   => 'P',
+            'remarks'        => $remarks,
+            'created_at'     => now(),
+            'login_id'       => $staffID,
+            'queries'        => $queryTypeJson,
+            'raised_by'      => $processed_by,
+        ]);
+
+        DB::table('tnelb_query_applicable')->insert([
+            'application_id' => $request->application_id,
+            'query_type'      => $queryTypeJson,
+            'raised_by'       => $processed_by,
+            'query_status'    => 'P',
+            'created_at'      => now(),
+        ]);
+
+        DB::table('tnelb_application_tbl')
+            ->where('application_id', $request->application_id)
+            ->update([
+                'status'      => 'QU',
+                'processed_by' => $processed_by,
+                'updated_at'  => now(),
+            ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Application returned to applicant with query successfully!',
+        ], 201);
+    }
+
     public function renewal_apps()
     {
 

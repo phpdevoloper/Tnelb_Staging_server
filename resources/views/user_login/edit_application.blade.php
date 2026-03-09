@@ -122,6 +122,29 @@
                                 </div>
 
                             </div>
+                            @if(isset($queries) && $queries->isNotEmpty())
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-warning mb-3" role="alert">
+                                        <h6 class="alert-heading font-weight-bold mb-2">
+                                            <i class="fa fa-exclamation-triangle"></i> Query raised – please correct and resubmit
+                                        </h6>
+                                        <p class="mb-1">The following issue(s) were reported. Please correct and submit again:</p>
+                                        <ul class="mb-0 pl-4">
+                                            @foreach($queries as $q)
+                                                @php
+                                                    $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
+                                                    $items = is_array($items) ? $items : [$items];
+                                                @endphp
+                                                @foreach($items as $item)
+                                                    <li>{{ is_string($item) ? $item : '' }}</li>
+                                                @endforeach
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         <div class="apply-card-body">
 
                             <form id="competency_form_ws" enctype="multipart/form-data">

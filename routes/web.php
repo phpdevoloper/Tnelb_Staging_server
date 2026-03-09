@@ -156,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/editApplication/{application_id}', [FormController::class, 'editApplication'])->name('edit-application');
 
     Route::get('/edit_application/{application_id}', [FormController::class, 'edit_application'])->name('edit_application');
+    Route::get('/edit_returned_application/{application_id}', [FormController::class, 'editReturnedApplication'])->name('edit_returned_application');
     Route::get('/renew_formcc/{application_id}', [RegisterController::class, 'renew_formcc'])->name('renew_formcc');
     Route::get('/renew-form_ea/{application_id}', [EA_RenewalController::class, 'renew_form_ea'])->name('renew-form_ea');
     Route::get('/document/{type}/{filename}', [FormController::class, 'showEncryptedDocument'])->name('document.show');
@@ -185,6 +186,7 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/form/store', [FormController::class, 'store'])->name('form.store');
 Route::post('/form/draft_submit/{appl_id}', [FormController::class, 'draft_submit'])->name('form.draft_submit');
 Route::post('/form/draft_update/{appl_id}', [FormController::class, 'draft_update'])->name('form.draft-update');
+Route::post('/form/submit_returned_application/{appl_id}', [FormController::class, 'submitReturnedApplication'])->name('form.submit_returned_application');
 Route::post('/form/draft_submit', [FormController::class, 'draft_submit'])->name('form.draft_submit');
 Route::post('/form/draft_renewal_submit/{appl_id}', [FormController::class, 'draft_renewal_submit'])
     ->name('form.draft_renewal_submit');

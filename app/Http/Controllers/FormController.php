@@ -9,6 +9,7 @@ use App\Models\Mst_education;
 use App\Models\Mst_experience;
 use App\Models\Mst_Form_s_w;
 use App\Models\mst_workflow;
+use App\Models\Admin\SupervisorModel;
 use App\Models\MstLicence;
 use App\Models\Payment;
 use App\Models\Tnelb_Renewals;
@@ -116,6 +117,12 @@ class FormController extends BaseController
 
         $applicationid = $appl_id;
 
+        $queries = DB::table('tnelb_query_applicable')
+            ->where('application_id', $appl_id)
+            ->where('query_status', 'P')
+            ->orderByDesc('id')
+            ->get();
+
         return view('user_login.edit_application', compact(
             'applicationid',
             'application_details',
@@ -126,9 +133,112 @@ class FormController extends BaseController
             'proof_doc',
             'fees_details',
             'form_details',
-            'licence_name'
+            'licence_name',
+            'queries'
         ));
 
+    }
+
+    public function edit_application($application_id)
+    {
+        return $this->editApplication($application_id);
+    }
+
+    /**
+     * Edit page for returned (QU) applications only. Same form as edit_application
+     * but with only "Submit corrections" button (no Draft / Payment).
+     */
+    public function editReturnedApplication($appl_id)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('logout');
+        }
+        if (!$appl_id) {
+            return redirect()->route('dashboard')->with('error', 'Application ID is required.');
+        }
+
+        $application_details = DB::table('tnelb_application_tbl')
+            ->where('application_id', $appl_id)
+            ->select('*')
+            ->first();
+
+        if (!$application_details) {
+            return redirect()->route('dashboard')->with('error', 'Application not found.');
+        }
+
+        if ((string) $application_details->status !== 'QU') {
+            return redirect()->route('dashboard')->with('error', 'This page is only for applications returned with a query.');
+        }
+
+        $loginId = session('login_id');
+        if (!$loginId || (string) $application_details->login_id !== (string) $loginId) {
+            return redirect()->route('dashboard')->with('error', 'You can only edit your own returned application.');
+        }
+
+        $form_details = MstLicence::where('status', 1)->select('*')->get()->toArray();
+        $current_form = collect($form_details)->firstWhere('form_code', $application_details->form_name);
+        $licence_name = DB::table('mst_licences')->where('form_code', $application_details->form_name)->first();
+
+        if (!$current_form) {
+            abort(504, 'Form Not Found.');
+        }
+
+        $fees_details = $this->getApplicableFee($current_form['id']);
+        if (!$fees_details) {
+            abort(505, 'The requested form details could not be found.');
+        }
+
+        $edu_details = DB::table('tnelb_applicants_edu')
+            ->where('application_id', $appl_id)
+            ->orderBy('year_of_passing', 'desc')
+            ->get();
+
+        $exp_details = DB::table('tnelb_applicants_exp')
+            ->where('application_id', $appl_id)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $license_details = DB::table('tnelb_license')
+            ->where('application_id', $appl_id)
+            ->first();
+
+        $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
+        $proof_doc = TnelbApplicantsSign::where('application_id', $appl_id)->first();
+        $applicationid = $appl_id;
+
+        $queries = DB::table('tnelb_query_applicable')
+            ->where('application_id', $appl_id)
+            ->where('query_status', 'P')
+            ->orderByDesc('id')
+            ->get();
+
+        $queryReasonsForValidation = [];
+        foreach ($queries as $q) {
+            $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
+            if (is_array($items)) {
+                foreach ($items as $item) {
+                    if (is_string($item) && $item !== '') {
+                        $queryReasonsForValidation[] = $item;
+                    }
+                }
+            }
+        }
+        $queryReasonsForValidation = array_values(array_unique($queryReasonsForValidation));
+
+        return view('user_login.edit_returned_application', compact(
+            'applicationid',
+            'application_details',
+            'edu_details',
+            'exp_details',
+            'license_details',
+            'applicant_photo',
+            'proof_doc',
+            'fees_details',
+            'form_details',
+            'licence_name',
+            'queries',
+            'queryReasonsForValidation'
+        ));
     }
 
    public function store(Request $request)
@@ -871,6 +981,79 @@ class FormController extends BaseController
         }
     }
 
+    /**
+     * Submit corrections for a returned (QU) application. Runs same update as draft_update,
+     * then sets status back to P and marks queries as resolved.
+     */
+    public function submitReturnedApplication(Request $request, $appl_id)
+    {
+        if (!Auth::check()) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 401);
+        }
+
+        $app = DB::table('tnelb_application_tbl')->where('application_id', $appl_id)->first();
+        if (!$app) {
+            return response()->json(['status' => 'error', 'message' => 'Application not found.'], 404);
+        }
+        if ((string) $app->status !== 'QU') {
+            return response()->json(['status' => 'error', 'message' => 'This application is not under query.'], 400);
+        }
+
+        $loginId = session('login_id');
+        if (!$loginId || (string) $app->login_id !== (string) $loginId) {
+            return response()->json(['status' => 'error', 'message' => 'You can only submit corrections for your own application.'], 403);
+        }
+
+        $response = $this->draft_update($request, $appl_id);
+        $data = json_decode($response->getContent(), true);
+
+        if (isset($data['status']) && $data['status'] === 'success') {
+            // Preserve original payment_status (draft_update sets it to 'payment'; do not change for returned-applicant submit)
+            $updateData = [
+                'status'       => 'RE',
+                'processed_by' => 'AP',
+                'updated_at'   => now(),
+                'payment_status' => $app->payment_status,
+            ];
+            DB::table('tnelb_application_tbl')
+                ->where('application_id', $appl_id)
+                ->update($updateData);
+
+            DB::table('tnelb_query_applicable')
+                ->where('application_id', $appl_id)
+                ->where('query_status', 'P')
+                ->update(['query_status' => 'R', 'updated_at' => now()]);
+
+            $supervisorRoleId = DB::table('mst__staffs__tbls')
+                ->where('name', 'Supervisor')
+                ->value('roles_id');
+
+            if ($supervisorRoleId) {
+                SupervisorModel::create([
+                    'application_id' => $appl_id,
+                    'appl_status'    => 'RE',
+                    'processed_by'   => 'AP',
+                    'forwarded_to'   => $supervisorRoleId,
+                    'role_id'        => $supervisorRoleId,
+                    'is_verified'    => 'Yes',
+                    'query_status'   => null,
+                    'remarks'        => 'Resubmitted by applicant after query.',
+                    'queries'        => null,
+                    'raised_by'      => null,
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+            }
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Corrections submitted successfully. Your application has been resubmitted and will follow the same workflow.',
+                'redirect' => route('dashboard'),
+            ]);
+        }
+
+        return $response;
+    }
 
 
     public function delete_education(Request $request)

@@ -276,7 +276,7 @@ class LoginController extends Controller
             ->keyBy('id');
 
         $roleLevel = (int) (optional($staff->role)->role_level ?? 0);
-        $isSupervisorRole = $roleLevel === 1;
+        $isSupervisorRole = ($roleLevel === 1) || in_array($staff->name ?? '', ['Supervisor', 'Supervisor2'], true);
 
         // Identify contractor categories from LicenceCategory table (used later for both
         // pending counts and card classification). Fallback to name check if none found.
@@ -288,28 +288,61 @@ class LoginController extends Controller
             ->all();
 
         // Pending application counts:
-        // - Supervisor/Supervisor2: new/renewal apps not yet in any workflow table
+        // - Supervisor/Supervisor2: (1) apps with no workflow row, OR (2) latest workflow row is forwarded_to Supervisor with appl_status RE (resubmitted by applicant)
         // - Other roles: apps currently forwarded to the logged-in role (latest workflow row)
         $pendingCountsMap = [];
         if (!empty($assignedFormIDs)) {
             if ($isSupervisorRole) {
+                // Use canonical Supervisor role id for resubmitted check (same as FormController when resubmitting)
+                $supervisorRoleId = (int) (DB::table('mst__staffs__tbls')->where('name', 'Supervisor')->value('roles_id') ?? 0);
+                if ($supervisorRoleId === 0) {
+                    $supervisorRoleId = (int) ($staff->roles_id ?? 0);
+                }
+
+                // Supervisor pending = (1) apps with no workflow row, OR (2) latest workflow RE and forwarded_to Supervisor.
+                // Use a single query: left join to "latest workflow" and filter (tw.id is null) OR (tw.forwarded_to = Supervisor AND tw.appl_status = 'RE').
+                $twLastSub = DB::table('tnelb_workflow')
+                    ->select('application_id', DB::raw('MAX(id) as max_id'))
+                    ->groupBy('application_id');
+
                 $pendingCounts = DB::table('tnelb_application_tbl as ta')
+                    ->leftJoinSub($twLastSub, 'tw_last', function ($join) {
+                        $join->on('ta.application_id', '=', 'tw_last.application_id');
+                    })
+                    ->leftJoin('tnelb_workflow as tw', function ($join) {
+                        $join->on('tw.application_id', '=', 'tw_last.application_id')
+                            ->on('tw.id', '=', 'tw_last.max_id');
+                    })
                     ->whereIn('ta.form_id', $assignedFormIDs)
                     ->whereIn('ta.status', ['P', 'RE'])
-                    ->whereIn('ta.payment_status', ['payment', 'paid'])
                     ->whereNotExists(function ($q) {
-                        $q->select(DB::raw(1))
-                            ->from('tnelb_workflow as tw')
-                            ->whereRaw('tw.application_id = ta.application_id');
+                        $q->select(DB::raw(1))->from('tnelb_workflow_a as twa')->whereRaw('twa.application_id = ta.application_id');
                     })
-                    ->whereNotExists(function ($q) {
-                        $q->select(DB::raw(1))
-                            ->from('tnelb_workflow_a as twa')
-                            ->whereRaw('twa.application_id = ta.application_id');
+                    ->where(function ($q) use ($supervisorRoleId) {
+                        $q->whereNull('tw.id')
+                            ->orWhere(function ($q2) use ($supervisorRoleId) {
+                                $q2->where('tw.forwarded_to', $supervisorRoleId)->where('tw.appl_status', 'RE');
+                            });
                     })
                     ->selectRaw('ta.form_id, ta.appl_type, COUNT(*) as cnt')
                     ->groupBy('ta.form_id', 'ta.appl_type')
                     ->get();
+
+                // If still 0, fallback: count ALL P/RE for assigned forms (ignore workflow) so at least something shows
+                if ($pendingCounts->isEmpty()) {
+                    $fallbackCounts = DB::table('tnelb_application_tbl as ta')
+                        ->whereIn('ta.form_id', $assignedFormIDs)
+                        ->whereIn('ta.status', ['P', 'RE'])
+                        ->whereNotExists(function ($q) {
+                            $q->select(DB::raw(1))->from('tnelb_workflow_a as twa')->whereRaw('twa.application_id = ta.application_id');
+                        })
+                        ->selectRaw('ta.form_id, ta.appl_type, COUNT(*) as cnt')
+                        ->groupBy('ta.form_id', 'ta.appl_type')
+                        ->get();
+                    if (!$fallbackCounts->isEmpty()) {
+                        $pendingCounts = $fallbackCounts;
+                    }
+                }
             } else {
                 $roleId = (int) ($staff->roles_id ?? 0);
 

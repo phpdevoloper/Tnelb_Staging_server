@@ -91,25 +91,42 @@ class SupervisorController extends Controller
         $applTypeFilter = in_array($requestedType, ['N', 'R'], true) ? $requestedType : null;
 
         $roleLevel = (int) (optional($staff->role)->role_level ?? 0); // mst_roles.role_level
-        $roleId = (int) ($staff->roles_id ?? 0); // mst_roles.r_id
+        $roleId = (int) ($staff->roles_id ?? 0);
+        $isSupervisorRole = ($roleLevel === 1) || in_array($staff->name ?? '', ['Supervisor', 'Supervisor2'], true);
 
-        // Supervisor (level 1): show fresh paid apps not yet in any workflow table.
-        // Higher roles (Accountant/Secretary/President): show apps currently forwarded to them (latest workflow row).
-        if ($roleLevel === 1) {
+        // Supervisor: show (1) apps with no workflow, OR (2) latest workflow RE and forwarded_to Supervisor (resubmitted).
+        // Other roles: show apps currently forwarded to them (latest workflow row).
+        if ($isSupervisorRole) {
+            $supervisorRoleId = (int) (DB::table('mst__staffs__tbls')->where('name', 'Supervisor')->value('roles_id') ?? 0);
+            if ($supervisorRoleId === 0) {
+                $supervisorRoleId = $roleId;
+            }
+            $twLast = DB::table('tnelb_workflow')
+                ->select('application_id', DB::raw('MAX(id) as max_id'))
+                ->groupBy('application_id');
+
+            // Match dashboard: no payment_status filter; (no workflow) OR (latest workflow RE + forwarded_to Supervisor)
             $query = DB::table('tnelb_application_tbl as ta')
+                ->leftJoinSub($twLast, 'tw_last', function ($join) {
+                    $join->on('ta.application_id', '=', 'tw_last.application_id');
+                })
+                ->leftJoin('tnelb_workflow as tw', function ($join) {
+                    $join->on('tw.application_id', '=', 'tw_last.application_id')
+                        ->on('tw.id', '=', 'tw_last.max_id');
+                })
                 ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
                 ->where('ta.form_id', $selectedFormId)
                 ->whereIn('ta.status', ['P', 'RE'])
-                ->whereIn('ta.payment_status', ['payment', 'paid'])
-                ->whereNotExists(function ($q) {
-                    $q->select(DB::raw(1))
-                        ->from('tnelb_workflow as tw')
-                        ->whereRaw('tw.application_id = ta.application_id');
-                })
                 ->whereNotExists(function ($q) {
                     $q->select(DB::raw(1))
                         ->from('tnelb_workflow_a as twa')
                         ->whereRaw('twa.application_id = ta.application_id');
+                })
+                ->where(function ($q) use ($supervisorRoleId) {
+                    $q->whereNull('tw.id')
+                        ->orWhere(function ($q2) use ($supervisorRoleId) {
+                            $q2->where('tw.forwarded_to', $supervisorRoleId)->where('tw.appl_status', 'RE');
+                        });
                 });
 
             if ($applTypeFilter) {
@@ -125,6 +142,30 @@ class SupervisorController extends Controller
                 ->distinct()
                 ->orderByDesc('ta.id')
                 ->get();
+
+            // If list still empty, use same fallback as dashboard: all P/RE for this form (no workflow filter)
+            if ($workflows->isEmpty()) {
+                $fallbackQuery = DB::table('tnelb_application_tbl as ta')
+                    ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+                    ->where('ta.form_id', $selectedFormId)
+                    ->whereIn('ta.status', ['P', 'RE'])
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))
+                            ->from('tnelb_workflow_a as twa')
+                            ->whereRaw('twa.application_id = ta.application_id');
+                    });
+                if ($applTypeFilter) {
+                    $fallbackQuery->where('ta.appl_type', $applTypeFilter);
+                }
+                $workflows = $fallbackQuery
+                    ->select(
+                        'ta.*',
+                        DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
+                        DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                    )
+                    ->orderByDesc('ta.id')
+                    ->get();
+            }
         } else {
             $previousProcessedBy = match ($roleLevel) {
                 2 => ['S', 'S2'], // Accountant handles after Supervisor/Supervisor2

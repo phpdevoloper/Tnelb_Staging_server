@@ -164,6 +164,7 @@
 
         // Misc
             Route::post('/returntoSupervisor', [ApplicationController::class, 'returntoSupervisor'])->name('returntoSupervisor');
+            Route::post('/returnToApplicant', [ApplicationController::class, 'returnToApplicant'])->name('returnToApplicant');
 
 
 

@@ -608,6 +608,9 @@
                                     <button id="confirmReturnBtn" class="btn btn-warning">
                                         Return to Supervisor
                                     </button>
+                                    <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
+                                        Return to Applicant
+                                    </button>
                                     <button class="btn btn-danger reject_application" data-bs-toggle="modal" data-bs-target="#rejectionModal">Reject</button>
 
                                 @elseif ($role == 'President')
@@ -616,6 +619,9 @@
                                     </button>
                                     <button id="confirmReturnBtn" class="btn btn-warning">
                                         Return to Supervisor
+                                    </button>
+                                    <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
+                                        Return to Applicant
                                     </button>
                                     <!-- <button id="returntoSecretary" class="btn btn-warning">
                                         Return to Secretary
@@ -819,6 +825,52 @@
     </div>
 </div>
 
+
+<!-- Return to Applicant Modal -->
+<div class="modal fade" id="returnToApplicantModal" tabindex="-1" aria-labelledby="returnToApplicantModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnToApplicantModalLabel">Return to Applicant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold mb-3">What document(s) are missing? (Select all that apply)</p>
+                <div class="form-group">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input return-to-applicant-query" type="checkbox" name="return_applicant_query[]" id="query_edu_doc" value="Education document is missing">
+                        <label class="form-check-label" for="query_edu_doc">Education document is missing</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input return-to-applicant-query" type="checkbox" name="return_applicant_query[]" id="query_photo" value="Photo is missing">
+                        <label class="form-check-label" for="query_photo">Photo is missing</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input return-to-applicant-query" type="checkbox" name="return_applicant_query[]" id="query_signature" value="Signature is missing">
+                        <label class="form-check-label" for="query_signature">Signature is missing</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input return-to-applicant-query" type="checkbox" name="return_applicant_query[]" id="query_aadhaar" value="Aadhaar document is missing">
+                        <label class="form-check-label" for="query_aadhaar">Aadhaar document is missing</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input return-to-applicant-query" type="checkbox" name="return_applicant_query[]" id="query_other" value="Other">
+                        <label class="form-check-label" for="query_other">Other</label>
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="returnToApplicantRemarks" class="form-label">Remarks (optional)</label>
+                    <textarea class="form-control" id="returnToApplicantRemarks" name="returnToApplicantRemarks" rows="3" maxlength="250" placeholder="Add any additional remarks..."></textarea>
+                </div>
+                <p id="returnToApplicantQueryError" class="text-danger small mt-1" style="display: none;">Please select at least one option.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" id="confirmReturnToApplicantModalBtn">Confirm Return to Applicant</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="forwardmodal" tabindex="-1" aria-labelledby="declarationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -1471,6 +1523,49 @@
 
         });
 
+
+        // Return to Applicant modal: validate and call API
+        $('#confirmReturnToApplicantModalBtn').on('click', function () {
+            var selected = [];
+            $('.return-to-applicant-query:checked').each(function () { selected.push($(this).val()); });
+            var remarks = $('#returnToApplicantRemarks').val().trim();
+            $('#returnToApplicantQueryError').hide();
+            if (selected.length === 0) {
+                $('#returnToApplicantQueryError').show();
+                return;
+            }
+            var applicationId = @json($applicant->application_id);
+            $.ajax({
+                url: '{{ route('admin.returnToApplicant') }}',
+                type: 'POST',
+                headers: { "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content") },
+                data: {
+                    application_id: applicationId,
+                    'return_applicant_query[]': selected,
+                    remarks: remarks
+                },
+                success: function (response) {
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message,
+                            confirmButtonText: 'OK',
+                            allowOutsideClick: false
+                        }).then(function () {
+                            $('#returnToApplicantModal').modal('hide');
+                            $('.return-to-applicant-query').prop('checked', false);
+                            $('#returnToApplicantRemarks').val('');
+                            window.location.href = "{{ url('admin/dashboard') }}";
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : (xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'An unexpected error occurred.');
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                }
+            });
+        });
 
         $(document).on("click", ".admin_verify", function () {
             let btn = $(this); 

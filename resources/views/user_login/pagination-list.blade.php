@@ -14,6 +14,9 @@
     </thead>
     <tbody>
         @foreach ($paginatedData as $index => $workflow)
+        @php
+            $sts = data_get($workflow, 'status') ?? data_get($workflow, 'application_status') ?? data_get($workflow, 'app_status');
+        @endphp
         <tr>
             <td>{{ $paginatedData->firstItem() + $index }}</td>
             <td style="width: 18%;">
@@ -42,14 +45,14 @@
                         <button class="btn btn-primary"><i class="fa fa-pencil"></i> Draft</button>
                     </a>
                 @else
-                    @php
-                        $sts = data_get($workflow, 'status') ?? data_get($workflow, 'app_status');
-                    @endphp
-
                     @if ($sts == 'P')
                         <span class="btn btn-sm btn-primary">Submitted</span>
                     @elseif($sts == 'F')
                         <span class="btn btn-warning">In Progress</span>
+                    @elseif($sts == 'QU')
+                        <a href="{{ route(in_array(strtoupper($workflow->form_name ?? ''), ['P']) ? 'edit-application_p' : 'edit_returned_application', ['application_id' => $workflow->application_id]) }}">
+                            <span class="btn btn-sm btn-info">Query raised – please correct</span>
+                        </a>
                     @elseif($sts == 'RJ')
                         <span class="btn btn-danger">Rejected</span>
                     @else

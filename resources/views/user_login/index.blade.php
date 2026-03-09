@@ -322,6 +322,8 @@
                                     <span class="badge badge-warning">Renewal Form Submitted</span>
                                     @elseif($workflow->status == 'F')
                                     <span class="badge badge-danger">In Progress</span>
+                                    @elseif($workflow->status == 'QU')
+                                    <a href="{{ route('edit_returned_application', ['application_id' => $workflow->application_id]) }}" class="badge badge-info">Query raised – please correct</a>
                                     @else
                                     <span class="badge badge-success">Completed</span>
                                     @endif
@@ -330,6 +332,8 @@
                                     <span class="badge badge-primary">Submitted</span>
                                     @elseif($workflow->status == 'F')
                                     <span class="badge badge-danger">In Progress</span>
+                                    @elseif($workflow->status == 'QU')
+                                    <a href="{{ route('edit_returned_application', ['application_id' => $workflow->application_id]) }}" class="badge badge-info">Query raised – please correct</a>
                                     @else
                                     <span class="badge badge-success">Completed</span>
                                     @endif
@@ -433,6 +437,7 @@
                                     <li><span class="bg-warning"></span> In Progress</li>
                                     <li><span class="bg-success"></span> Completed</li>
                                     <li><span class="bg-danger"></span> Rejected</li>
+                                    <li><span class="bg-info"></span> Query raised – please correct</li>
                                     
                                 </ul>
                                 <div id="applicationsTable">
@@ -600,6 +605,7 @@
                                     <li><span class="bg-warning"></span> In Progress</li>
                                     <li><span class="bg-success"></span> Completed</li>
                                     <li><span class="bg-danger"></span> Rejected</li>
+                                    <li><span class="bg-info"></span> Query raised – please correct</li>
                                     
                                 </ul>
                                 <table class="table-login" >
@@ -998,9 +1004,6 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
 
         var url = $(this).attr('href');
-
-        console.log(url);
-        return false;
 
         $.ajax({
             url: url,
