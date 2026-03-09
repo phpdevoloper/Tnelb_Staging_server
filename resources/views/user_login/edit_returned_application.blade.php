@@ -64,7 +64,16 @@
     <div class="container">
         <ul id="breadcrumb">
             <li><a href="{{ route('dashboard') }}"><span class="fa fa-home"> </span> Dashboard</a></li>
-            <li><a href="#"><span class=" fa fa-info-circle"> </span> Correct and resubmit – Form {{ $application_details->form_name }}</a></li>
+            <li>
+                <a href="#">
+                    <span class=" fa fa-info-circle"> </span>
+                    @if(isset($application_details->form_name) && $application_details->form_name === 'W')
+                        RETURN – Form {{ $application_details->form_name }}
+                    @else
+                        Correct and resubmit – Form {{ $application_details->form_name }}
+                    @endif
+                </a>
+            </li>
 
         </ul>
     </div>
@@ -100,8 +109,15 @@
                                     <!-- <h5 class="card-title_apply text-white text-uppercase mt-2" >
                                             மேற்பார்வையாளர் தகுதி சான்றிதழ் பெறுவதற்கான விண்ணப்பம்
                                         </h5> -->
-                                    <h6 class="card-title_apply text-white mt-2 form-title"> Form '{{ $application_details->form_name }}' /
-                                        Certificate '{{ $application_details->license_name }}' – Correct and resubmit </h4>
+                                    <h6 class="card-title_apply text-white mt-2 form-title">
+                                        Form '{{ $application_details->form_name }}' /
+                                        Certificate '{{ $application_details->license_name }}' –
+                                        @if(isset($application_details->form_name) && $application_details->form_name === 'W')
+                                            RETURN
+                                        @else
+                                            Correct and resubmit
+                                        @endif
+                                    </h6>
                                 </div>
                             </div>
 
@@ -849,7 +865,7 @@
                                                 <div class="col-12 col-md-4 mb-3 p-3">
                                                     @php
                                                         $decryptedaadhar = !empty($application_details->aadhaar)
-                                                            ? Crypt::decryptString($application_details->aadhaar)
+                                                            ? safeDecrypt($application_details->aadhaar)
                                                             : null;
                                                     @endphp
 
