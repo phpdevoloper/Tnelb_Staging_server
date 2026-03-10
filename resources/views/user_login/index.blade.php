@@ -70,6 +70,35 @@
     .legend .awesome      { background-color: #00ffff; }
     .legend .kindaawesome { background-color: #0000ff; }
     .legend .notawesome   { background-color: #000000; } */
+
+    /* RETURN ribbon for returned applications in pagination list */
+    .return-cell {
+        position: relative;
+    }
+
+    .return-ribbon-wrapper {
+        position: absolute;
+        top: 33px;
+        left: -2px;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .return-ribbon {
+        display: inline-block;
+        background: #17a2b8;
+        color: #fff;
+        font-size: 8px;
+        font-weight: 600;
+        width: 60px;
+        height: 14px;
+        line-height: 14px;
+        text-align: center;
+        transform: rotate(-45deg);
+        transform-origin: left top;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        text-transform: uppercase;
+    }
 </style>
 <section class="dashboard-panel">
     <div class="layout-login">

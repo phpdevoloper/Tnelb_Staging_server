@@ -17,8 +17,15 @@
         @php
             $sts = data_get($workflow, 'status') ?? data_get($workflow, 'application_status') ?? data_get($workflow, 'app_status');
         @endphp
-        <tr>
-            <td>{{ $paginatedData->firstItem() + $index }}</td>
+        <tr @if($sts == 'QU') class="return-row" @endif>
+            <td @if($sts == 'QU') class="return-cell" @endif>
+                @if($sts == 'QU')
+                    <div class="return-ribbon-wrapper">
+                        <span class="return-ribbon">RETURN</span>
+                    </div>
+                @endif
+                {{ $paginatedData->firstItem() + $index }}
+            </td>
             <td style="width: 18%;">
               @php
              $licence_name_present = DB::table('mst_licences')
@@ -50,9 +57,7 @@
                     @elseif($sts == 'F')
                         <span class="btn btn-warning">In Progress</span>
                     @elseif($sts == 'QU')
-                        <a href="{{ route(in_array(strtoupper($workflow->form_name ?? ''), ['P']) ? 'edit-application_p' : 'edit_returned_application', ['application_id' => $workflow->application_id]) }}">
-                            <span class="btn btn-sm btn-info">Query raised – please correct</span>
-                        </a>
+                        <span class="btn btn-sm btn-info">Return</span>
                     @elseif($sts == 'RJ')
                         <span class="btn btn-danger">Rejected</span>
                     @else
@@ -156,6 +161,10 @@
                 @elseif (!empty($workflow->renewal_application_id))
                     <strong>Renewal Application</strong><br>
                     ID : <span class="text-success">{{ $workflow->renewal_application_id }}</span>
+                @elseif($sts == 'QU')
+                    <a href="{{ route(in_array(strtoupper($workflow->form_name ?? ''), ['P']) ? 'edit-application_p' : 'edit_returned_application', ['application_id' => $workflow->application_id]) }}">
+                        <button class="btn btn-primary btn-sm"><i class="fa fa-pencil"></i> Edit</button>
+                    </a>
                 @else
                     <p class="text-primary">NA</p>
                 @endif
