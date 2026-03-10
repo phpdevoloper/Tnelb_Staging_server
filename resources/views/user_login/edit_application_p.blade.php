@@ -245,7 +245,7 @@
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
-                                                            <th>Percentage / Grade</th>
+                                                            <th>Certificate No</th>
                                                             <th class="text-center">Upload Document (Consolidated
                                                                 MarkSheet)
                                                                 <br><span class="file-limit"> File type: PDF,PNG (Max
@@ -291,8 +291,7 @@
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                            <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" value="{{ isset($edu_details->percentage) ? $edu_details->percentage : '' }}">
-                                                            <span class="error text-danger percentage-error"></span>
+                                                                <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" value="{{ $edu_details->certificate_no ?? '' }}" placeholder="Certificate No">
                                                             </td>
                                                             <td>
                                                                 <div class="d-flex align-items-center file-section">
@@ -348,8 +347,7 @@
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                            <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="99" required>
-                                                            <span class="error text-danger percentage-error"></span>
+                                                                <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" placeholder="Certificate No">
                                                             </td>
                                                             <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                                                             <td>
@@ -875,7 +873,7 @@
                                                                    name="upload_sign"
                                                                    type="file"
                                                                    accept=".jpg,.jpeg,.png"
-                                                                   @if(isset($application_details->app_status) && $application_details->app_status === 'QU') required @endif>
+                                                                   required>
                                                             <span class="error-message text-danger d-block text-start"></span>
                                                         </div>
                                                     </div>
@@ -949,6 +947,7 @@
 </div>
 <script>
     window.returnApplicationQueryReasons = @json(isset($queryReasonsForValidation) ? $queryReasonsForValidation : []);
+    window.isReturnedFormP = @json(isset($application_details->app_status) && $application_details->app_status === 'QU');
 </script>
 <script>
     document.getElementById('upload_photo').addEventListener('change', function(event) {
@@ -1062,8 +1061,7 @@
                     </select>
                 </td>
                 <td>
-                    <input type="number" step="0.1" class="form-control percentage-input" name="percentage[]" min="1" max="100" placeholder="Percentage" required>
-                    <span class="error text-danger percentage-error"></span>
+                    <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" placeholder="Certificate No" required>
                 </td>
                 <td>
                     <input type="file" class="form-control education-file" accept=".pdf,.png,.jpg,.jpeg" required>

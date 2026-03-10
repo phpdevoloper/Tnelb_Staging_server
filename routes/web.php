@@ -244,6 +244,10 @@ Route::post('/payment/updatePayment', [PaymentController::class, 'updatePayment'
 
 Route::post('/form/updatePayment', [PaymentController::class, 'updatePayment'])->name('form.updatePayment');
 
+// ------------------------ Form P Returned Application Submit ------------------------
+Route::post('/form_p/submit_returned/{appl_id}', [\App\Http\Controllers\Admin\FormPController::class, 'submitReturnedApplicationFormP'])
+    ->name('form_p.submit_returned');
+
 //Testing Pages 
 
 Route::get('/index_bk', function () {

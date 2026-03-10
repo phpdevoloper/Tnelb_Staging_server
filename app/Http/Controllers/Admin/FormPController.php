@@ -574,6 +574,86 @@ class FormPController extends Controller
     }
 
     /**
+     * Submit corrections for a returned (QU) Form P application from the applicant side.
+     * Reuses the FormPController@update logic to save changes, then marks the application as resubmitted (RE),
+     * preserves payment_status, resolves queries, and adds a workflow entry.
+     */
+    public function submitReturnedApplicationFormP(Request $request, $appl_id)
+    {
+        if (!Auth::check()) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 401);
+        }
+
+        $app = DB::table('tnelb_form_p')->where('application_id', $appl_id)->first();
+        if (!$app) {
+            return response()->json(['status' => 'error', 'message' => 'Application not found.'], 404);
+        }
+        if ((string) $app->app_status !== 'QU') {
+            return response()->json(['status' => 'error', 'message' => 'This Form P application is not under query.'], 400);
+        }
+
+        $loginId = session('login_id');
+        if (!$loginId || (string) $app->login_id !== (string) $loginId) {
+            return response()->json(['status' => 'error', 'message' => 'You can only submit corrections for your own application.'], 403);
+        }
+
+        // Ensure update() receives the correct application_id
+        $request->merge(['application_id' => $appl_id]);
+
+        /** @var \App\Http\Controllers\FormPController $userFormPController */
+        $userFormPController = app(\App\Http\Controllers\FormPController::class);
+        $response = $userFormPController->update($request);
+        $data = json_decode($response->getContent(), true);
+
+        if (isset($data['status']) && $data['status'] === 'success') {
+            // Preserve original payment_status and mark as resubmitted
+            DB::table('tnelb_form_p')
+                ->where('application_id', $appl_id)
+                ->update([
+                    'app_status'     => 'RE',
+                    'processed_by'   => 'AP',
+                    'updated_at'     => now(),
+                    'payment_status' => $app->payment_status,
+                ]);
+
+            DB::table('tnelb_query_applicable')
+                ->where('application_id', $appl_id)
+                ->where('query_status', 'P')
+                ->update(['query_status' => 'R', 'updated_at' => now()]);
+
+            $supervisorRoleId = DB::table('mst__staffs__tbls')
+                ->where('name', 'Supervisor')
+                ->value('roles_id');
+
+            if ($supervisorRoleId) {
+                SupervisorModel::create([
+                    'application_id' => $appl_id,
+                    'appl_status'    => 'RE',
+                    'processed_by'   => 'AP',
+                    'forwarded_to'   => $supervisorRoleId,
+                    'role_id'        => $supervisorRoleId,
+                    'is_verified'    => 'Yes',
+                    'query_status'   => null,
+                    'remarks'        => 'Resubmitted by applicant after query (Form P).',
+                    'queries'        => null,
+                    'raised_by'      => null,
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+            }
+
+            return response()->json([
+                'status'        => 'success',
+                'message'       => 'Corrections submitted successfully. Your Form P application has been resubmitted and will follow the workflow.',
+                'application_id'=> $appl_id,
+                'redirect'      => route('dashboard'),
+            ]);
+        }
+
+        return $response;
+    }
+
+    /**
      * Reject Form P application.
      */
     public function rejectApplicationformp(Request $request)

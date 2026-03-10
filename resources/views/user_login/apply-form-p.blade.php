@@ -528,14 +528,14 @@
                                             <div class="col-12 col-md-6 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-5 ">
-                                                        <label for="upload_sign">(ii) Upload Signature</label>
+                                                        <label for="upload_sign">(ii) Upload Signature <span style="color: red;">*</span></label>
                                                         <br>
                                                         <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                     </div>
                                                     <div class="col-12 col-md-7">
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-grow-1" style="max-width:280px;">
-                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" required>
                                                                 <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
                                                             </div>
                                                             <div class="ms-3">

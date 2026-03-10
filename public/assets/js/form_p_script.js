@@ -146,7 +146,9 @@ async function showInstructPopup(licence_code,login_id) {
 
                 if (saveResponse.status === "success") {
 
-                    let form_type = appl_type === 'R' ? 'Renewal' : 'Fresh';
+                    // Backend already sends form_type as "FRESH" or "RENEWAL" – use that,
+                    // and fall back to appl_type-based inference if missing.
+                    let form_type = saveResponse.form_type || (appl_type === 'R' ? 'RENEWAL' : 'FRESH');
                     const application_id = saveResponse.application_id;
                     const transactionDate = saveResponse.date_apps;
                     const applicantName = saveResponse.applicantName || 'N/A';
@@ -190,7 +192,7 @@ async function showInstructPopup(licence_code,login_id) {
                                             </tr>
                                             <tr>
                                             <th style="text-align: left; padding: 6px 10px; color: #555;">Type of Form</th>
-                                            <td style="text-align: right; padding: 6px 10px; font-weight: 500;">${form_type}</td>
+                                            <td style="text-align: right; padding: 6px 10px; font-weight: 500;">${form_type === 'FRESH' ? 'New Application' : 'Renewal Application'}</td>
                                             </tr>
                                             <tr>
                                                 <th style="text-align: left; padding: 6px 10px; color: #555;">Date</th>
@@ -221,7 +223,7 @@ async function showInstructPopup(licence_code,login_id) {
                             actions: 'd-flex justify-content-around mt-3',
                         },
                         buttonsStyling: false,
-                        footer: '<div><span style="font-size: 13px;">Note: </span><span style="font-size: 13px;color: red;">Total Amount will be including service charges of payment gateway as applicable</span>',
+                        footer: '<div><span style="font-size: 13px;">Note: </span><span style="font-size: 13px;color: red;">The total amount is exclusive of applicable payment gateway service charges.</span>',
                         preConfirm: async () => {
                             const paymentResponse = await $.ajax({
                                 url: BASE_URL + '/payment/updatePaymentFormP',
@@ -901,7 +903,7 @@ $(document).ready(function () {
         }
     });
 
-    // Save As Draft
+    // Save As Draft or Submit Returned Form P
 
     $('#DraftBtn').on('click', function(e) {
         e.preventDefault(); 
@@ -1123,17 +1125,23 @@ $(document).ready(function () {
             let applType = $('#appl_type').val();
             let formData = new FormData($('#competency_form_p')[0]);
 
-            formData.append('form_action', 'draft');
+            // For normal applications, this button saves as draft.
+            // For returned Form P (app_status = QU), it submits corrections.
+            var isReturnedFormP = (typeof window.isReturnedFormP !== 'undefined') && window.isReturnedFormP;
 
-            
-
-            if (applType === "R") {
-                // Renewal draft submit route
-                url = BASE_URL + "/form/draft_renewal_submit";
+            if (isReturnedFormP) {
+                url = BASE_URL + "/form_p/submit_returned/" + applicationId;
             } else {
-                // New application draft submit route
-                url = BASE_URL + "/form_p/saveDraft";
-            } 
+                formData.append('form_action', 'draft');
+
+                if (applType === "R") {
+                    // Renewal draft submit route
+                    url = BASE_URL + "/form/draft_renewal_submit";
+                } else {
+                    // New application draft submit route
+                    url = BASE_URL + "/form_p/saveDraft";
+                }
+            }
 
             // let url = $(this).data("url");
 
@@ -1154,18 +1162,28 @@ $(document).ready(function () {
                 },
                 success: function(response) {
                     if (response.status == 'success') {
+                        if (isReturnedFormP) {
+                            Swal.fire({
+                                title: 'Application Submitted',
+                                html: 'Your Application ID: <strong>' + (response.application_id || applicationId) + '</strong>',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                window.location.href = (response.redirect || (BASE_URL + '/dashboard'));
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Application Saved As Draft!',
+                                html: 'Your Application ID: <strong>' + response.application_id + '</strong>',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                window.location.href = BASE_URL +'/dashboard'; // change as needed
+                            });
+                        }
 
-                        Swal.fire({
-                            title: 'Application Saved As Draft!',
-                            html: 'Your Application ID: <strong>' + response.application_id + '</strong>',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            window.location.href = BASE_URL +'/dashboard'; // change as needed
-                        });
-
-                    }else{
-                        Swal.fire("Failed", "Application not saved as draft", "error");
+                    } else {
+                        Swal.fire("Failed", isReturnedFormP ? "Corrections submit failed" : "Application not saved as draft", "error");
                     }
 
                 },
