@@ -55,7 +55,7 @@ class LoginController extends BaseController
 
 // DB::table('tnelb_applicants_exp')->truncate();
 
-// DB::table('tnelb_applicants_doc')->truncate();
+// DB::table('mst_documents')->truncate();
 
 // DB::table('tnelb_applicant_photos')->truncate();
 

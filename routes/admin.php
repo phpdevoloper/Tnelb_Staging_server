@@ -86,12 +86,14 @@
 
 
             Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
+            Route::get('/completed_applications', [LoginController::class, 'completedApplications'])->name('completed_applications');
 
         // Applicant Details
             Route::get('/get-applicant-details', [LoginController::class, 'getApplicantDetails'])->name('get.applicant.details');
             Route::post('/profile', [LoginController::class, 'profile'])->name('profile');
             Route::get('/applicants_detail/{applicant_id}', [LoginController::class, 'showApplicantDetails'])->name('applicants_detail');
             Route::get('/applicants_detail_formp/{applicant_id}', [FormPController::class, 'view_application_formp'])->name('application_details_formp');
+            Route::get('/applicants_detail_formp_completed/{applicant_id}', [FormPController::class, 'view_completed_formp'])->name('application_details_formp_completed');
             Route::post('/forwardApplicationformp/{role}', [FormPController::class, 'forwardApplicationformp'])->name('forwardApplicationformp');
             Route::post('/returntoSupervisorformp', [FormPController::class, 'returntoSupervisorformp'])->name('returntoSupervisorformp');
             Route::post('/returnToApplicantFormp', [FormPController::class, 'returnToApplicantFormp'])->name('returnToApplicantFormp');
@@ -103,6 +105,8 @@
 
         // Supervisor Routes
             Route::get('/view_applications', [SupervisorController::class, 'view_applications'])->name('view_applications');
+            Route::get('/view_completed_applications', [SupervisorController::class, 'view_completed_applications'])->name('view_completed_applications');
+            Route::get('/view_completed_application/{applicant_id}', [LoginController::class, 'viewCompletedApplicationDetail'])->name('view_completed_application');
             Route::get('/view_auditor', [SupervisorController::class, 'view_auditor'])->name('view_auditor');
             Route::get('/get_completed', [SupervisorController::class, 'get_completed'])->name('get_completed');
             Route::get('/get_completed_wh', [SupervisorController::class, 'get_completed_wh'])->name('get_completed_wh');

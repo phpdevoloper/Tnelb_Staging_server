@@ -525,6 +525,7 @@
                 </div>
 
                     <div class="col-xl-5 col-md-12 col-sm-12 col-12 layout-spacing">
+                        @if(($applicant->status ?? '') != 'A')
                         <div class="statbox widget box box-shadow mb-2">
                             <div class="row align-items-center">
 
@@ -643,6 +644,7 @@
 
                             </div>
                     </div>
+                        @endif
                     <!-- ----------------------------- -->
                         <div id="timelineMinimal" class="col-lg-12 layout-spacing mt-4">
                             <div class="statbox widget box box-shadow">

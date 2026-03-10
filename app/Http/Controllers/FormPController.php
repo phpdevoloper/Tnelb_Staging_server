@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FormPController extends BaseController
 {
@@ -834,10 +835,9 @@ class FormPController extends BaseController
             ->orderBy('id', 'asc')
             ->get();
 
-        $apps_doc = DB::table('tnelb_applicants_doc')
-            ->where('application_id', $appl_id)
-            ->select('*')
-            ->get();
+        $apps_doc = Schema::hasTable('mst_documents')
+            ? DB::table('mst_documents')->where('application_id', $appl_id)->get()
+            : collect([]);
 
 
         $license_details = DB::table('tnelb_license')
@@ -847,7 +847,9 @@ class FormPController extends BaseController
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
 
-        $proof_doc = Mst_documents::where('application_id', $appl_id)->first();
+        $proof_doc = Schema::hasTable('mst_documents')
+            ? Mst_documents::where('application_id', $appl_id)->first()
+            : null;
 
         $institutes = TnelbAppsInstitute::where('application_id', $appl_id)
             ->where('institute_status', 1)

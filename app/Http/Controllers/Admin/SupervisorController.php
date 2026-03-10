@@ -44,6 +44,7 @@ class SupervisorController extends Controller
                 'workflows' => collect(),
                 'new_applications' => collect(),
                 'renewal' => collect(),
+                'is_completed_list' => true,
             ]);
         }
 
@@ -248,6 +249,95 @@ class SupervisorController extends Controller
         });
 
         return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal'));
+    }
+
+    /**
+     * List completed (approved) applications for a given form_id and optional form_type (N/R).
+     * Reuses admin.supervisor.view with is_completed_list = true for title/back link.
+     */
+    public function view_completed_applications(Request $request)
+    {
+        $staff = Auth::user();
+        if (!$staff) {
+            return abort(403, 'Unauthorized');
+        }
+
+        $selectedFormId = (int) $request->input('form_id');
+        $applTypeFilter = in_array($request->input('form_type', ''), ['N', 'R'], true) ? strtoupper((string) $request->input('form_type')) : null;
+
+        if ($selectedFormId <= 0) {
+            return view('admin.supervisor.view', [
+                'workflows' => collect(),
+                'new_applications' => collect(),
+                'renewal' => collect(),
+                'is_completed_list' => true,
+            ]);
+        }
+
+        $licence = DB::table('mst_licences')->where('id', $selectedFormId)->first();
+        $formCode = $licence ? strtoupper((string) ($licence->cert_licence_code ?? '')) : '';
+
+        $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
+
+        if ($formPId > 0 && $selectedFormId === $formPId) {
+            $query = DB::table('tnelb_form_p as ta')
+                ->where('ta.app_status', 'A')
+                ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'));
+            if ($applTypeFilter) {
+                $query->where('ta.appl_type', $applTypeFilter);
+            }
+            $workflows = $query->orderByDesc('ta.id')->get();
+            [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
+                return strtoupper((string) ($row->appl_type ?? '')) === 'R';
+            });
+            return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal') + ['is_completed_list' => true]);
+        }
+
+        // Contractor forms: EA, SA, B, SB etc. use separate tables
+        $contractorTablesByCode = [
+            'EA' => 'tnelb_ea_applications',
+            'SA' => 'tnelb_esa_applications',
+            'B'  => 'tnelb_eb_applications',
+            'SB' => 'tnelb_esb_applications',
+        ];
+
+        if (isset($contractorTablesByCode[$formCode]) && \Illuminate\Support\Facades\Schema::hasTable($contractorTablesByCode[$formCode])) {
+            $tbl = $contractorTablesByCode[$formCode];
+            $query = DB::table($tbl . ' as ta')
+                ->where('ta.application_status', 'A')
+                ->select('ta.*', DB::raw('ta.license_name as license_name'));
+            if ($applTypeFilter) {
+                $query->where('ta.appl_type', $applTypeFilter);
+            }
+            $workflows = $query->orderByDesc('ta.updated_at')->get();
+            [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
+                return strtoupper((string) ($row->appl_type ?? '')) === 'R';
+            });
+            return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal') + ['is_completed_list' => true]);
+        }
+
+        // Competency / amendments: tnelb_application_tbl
+        $query = DB::table('tnelb_application_tbl as ta')
+            ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+            ->where('ta.form_id', $selectedFormId)
+            ->where('ta.status', 'A')
+            ->select(
+                'ta.*',
+                DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
+                DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+            )
+            ->orderByDesc('ta.id');
+
+        if ($applTypeFilter) {
+            $query->where('ta.appl_type', $applTypeFilter);
+        }
+
+        $workflows = $query->get();
+        [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
+            return strtoupper((string) ($row->appl_type ?? '')) === 'R';
+        });
+
+        return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal') + ['is_completed_list' => true]);
     }
 
     public function view_auditor()
@@ -853,7 +943,7 @@ class SupervisorController extends Controller
             ], 500);
         }
     }
-    
+
     public function approveApplicationForma_beforepopup_bk(Request $request)
     {
 

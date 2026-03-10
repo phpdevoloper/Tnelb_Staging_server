@@ -218,7 +218,8 @@
                     @endif
                 </div>
 
-                {{-- <div class="row layout-top-spacing">
+                @if(in_array($staff->name ?? '', ['Secretary', 'President'], true) && isset($recieved_apps) && isset($inprogress))
+                <div class="row layout-top-spacing">
                     <div class="col-12">
                         <div class="card shadow-sm">
                             <div class="card-header bg-primary">
@@ -226,143 +227,121 @@
                             </div>
                             <div class="card-body">
                                 <div class="simple-tab">
-                                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                    <ul class="nav nav-tabs" id="secretaryPendancyTab" role="tablist">
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Received</button>
+                                            <button class="nav-link active" id="secretary-received-tab" data-bs-toggle="tab" data-bs-target="#secretary-received-pane" type="button" role="tab" aria-controls="secretary-received-pane" aria-selected="true">Received</button>
                                         </li>
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">In Progress</button>
+                                            <button class="nav-link" id="secretary-inprogress-tab" data-bs-toggle="tab" data-bs-target="#secretary-inprogress-pane" type="button" role="tab" aria-controls="secretary-inprogress-pane" aria-selected="false">In Progress</button>
                                         </li>
                                     </ul>
-    
-                                    <div class="tab-content" id="myTabContent">
-                                        <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
-                                            <table id="zero-config" class="table dt-table-hover table-striped">
-                                            <thead class="text-center">
-                                                <th>S.No</th>
-                                                <th>Application Type</th>
-                                                <th>Application ID</th>
-                                                <th>Date of Application</th>
-                                                <th>Total No.of.day Pending</th>
-                                                <th>Pending With</th>
-                                            </thead>
-                                            <tbody>
-                                                @php
-                                                    $i=1;
-                                                @endphp
-                                                @foreach ($recieved_apps as $row)
-                                                <tr>
-                                                <td>{{ $i }}</td>
-                                                @php
-                                                    if ($row->form_name == 'S') {
-                                                        $badge_class = "badge-warning";
-                                                    }elseif ($row->form_name == 'EA') {
-                                                        $badge_class = "badge-success";
-                                                    }elseif ($row->form_name == 'W') {
-                                                        $badge_class = "badge-danger";
-                                                    }elseif ($row->form_name == 'WH') {
-                                                        $badge_class = "badge-warning";
-                                                    }elseif ($row->form_name == 'P') {
-                                                        $badge_class = "badge-info";
-                                                    }
-                                                @endphp
-                                                <td><span class="badge {{ $badge_class }}">FORM {{ $row->form_name }}</span></td>
-                                                <td><a href="{{ $row->form_name == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}">{{ $row->application_id }}</a></td>
-                                                <td>{{ format_date_other($row->created_at) }}</td>
-                                                <td>{{ calculateDaysDifference($row->created_at) }} Days</td>
-                                                <td>    @if ($row->processed_by == null)
-                                                          {{ 'Supervisor' }}
-                                                        @elseif ($row->processed_by == "S")
-                                                            {{ 'Accountant' }}
-                                                        @elseif ($row->processed_by == "A")
-                                                            {{ 'Secretary' }}
-                                                        @elseif ($row->processed_by == "SE")
-                                                            {{ 'President' }}
-                                                        @endif
-                                                </td>
-                                                </tr>
-                                                @php
-                                                    $i++;
-                                                @endphp
-                                                @endforeach
-                                            </tbody>
-                                            </table>
+
+                                    <div class="tab-content" id="secretaryPendancyTabContent">
+                                        <div class="tab-pane fade show active" id="secretary-received-pane" role="tabpanel" aria-labelledby="secretary-received-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table id="secretary-received-table" class="table dt-table-hover table-striped table-bordered zero-config">
+                                                    <thead class="text-center">
+                                                        <tr>
+                                                            <th>S.No</th>
+                                                            <th>Application Type</th>
+                                                            <th>Application ID</th>
+                                                            <th>Date of Application</th>
+                                                            <th>Total No.of.day Pending</th>
+                                                            <th>Pending With</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @php $i = 1; @endphp
+                                                        @foreach ($recieved_apps as $row)
+                                                        <tr>
+                                                            <td>{{ $i }}</td>
+                                                            @php
+                                                                $badge_class = 'badge-secondary';
+                                                                $fn = strtoupper($row->form_name ?? '');
+                                                                if ($fn == 'S') $badge_class = 'badge-warning';
+                                                                elseif (in_array($fn, ['EA', 'SA'])) $badge_class = 'badge-success';
+                                                                elseif ($fn == 'W') $badge_class = 'badge-danger';
+                                                                elseif ($fn == 'WH') $badge_class = 'badge-warning';
+                                                                elseif ($fn == 'P') $badge_class = 'badge-info';
+                                                                elseif (in_array($fn, ['B', 'EB', 'SB'])) $badge_class = 'badge-primary';
+                                                            @endphp
+                                                            <td><span class="badge {{ $badge_class }}">FORM {{ $row->form_name }}</span></td>
+                                                            <td><a href="{{ ($row->form_name ?? '') == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}">{{ $row->application_id }}</a></td>
+                                                            <td>{{ format_date_other($row->created_at) }}</td>
+                                                            <td>{{ calculateDaysDifference($row->created_at) }} Days</td>
+                                                            <td>Secretary</td>
+                                                        </tr>
+                                                        @php $i++; @endphp
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                        <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
-                                            <table class="table dt-table-hover zero-config table-striped" style="width:100%">
-                                                <thead class="text-center">
-                                                    <th>S.No</th>
-                                                    <th>Application ID</th>
-                                                    <th>Application Type</th>
-                                                    <th>Date of Apps</th>
-                                                    <th>Received from</th>
-                                                    <th>Received Date of Apps</th>
-                                                    <th>No.of.day Pending</th>
-                                                    <th>Total No.of.day</th>
-                                                    <th>Pending With</th>
-                                                </thead>
-                                                <tbody>
-                                                    @php
-                                                    $i=1;
-                                                    @endphp
-                                                    @foreach ($inprogress as $row)
-                                                    <tr>
-                                                    <td>{{ $i }}</td>
-                                                    @php
-                                                        if ($row->form_name == 'S') {
-                                                            $badge_class = "badge-warning";
-                                                        }elseif ($row->form_name == 'EA') {
-                                                            $badge_class = "badge-success";
-                                                        }elseif ($row->form_name == 'W') {
-                                                            $badge_class = "badge-danger";
-                                                        }elseif ($row->form_name == 'WH') {
-                                                            $badge_class = "badge-warning";
-                                                        }elseif ($row->form_name == 'P') {
-                                                            $badge_class = "badge-info";
-                                                        }
-                                                    @endphp
-                                                    <td><a href="{{ $row->form_name == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}"> {{ $row->application_id }} </a></td>
-                                                    <td><span class="badge {{ $badge_class }}"> FORM {{ $row->form_name }} </span></td>
-                                                    <td>{{ format_date_other($row->created_at) }}</td>
-
-                                                    <td>    @if ($row->processed_by == "S")
-                                                        {{ 'Supervisor' }}
-                                                      @elseif ($row->processed_by == "A")
-                                                          {{ 'Accountant' }}
-                                                      @elseif ($row->processed_by == "SE")
-                                                          {{ 'Secretary' }}
-                                                      @elseif ($row->processed_by == "PR")
-                                                          {{ 'President' }}
-                                                      @endif
-                                                    </td>
-
-                                                    <td>{{ format_date_other($row->updated_at) }}</td>
-                                                    <td>{{ calculateDaysDifference($row->updated_at) }} Days</td>
-                                                    <td>{{ calculateDaysDifference($row->created_at) }} Days</td>
-                                                    <td>    @if ($row->processed_by == null)
-                                                        {{ 'Supervisor' }}
-                                                      @elseif ($row->processed_by == "S")
-                                                          {{ 'Accountant' }}
-                                                      @elseif ($row->processed_by == "A")
-                                                          {{ 'Secretary' }}
-                                                      @elseif ($row->processed_by == "SE")
-                                                          {{ 'President' }}
-                                                      @endif
-                                                    </td>
-                                                    </tr>
-                                                    @php
-                                                        $i++;
-                                                    @endphp
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
+                                        <div class="tab-pane fade" id="secretary-inprogress-pane" role="tabpanel" aria-labelledby="secretary-inprogress-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table id="secretary-inprogress-table" class="table dt-table-hover table-striped table-bordered zero-config" style="width:100%">
+                                                    <thead class="text-center">
+                                                        <tr>
+                                                            <th>S.No</th>
+                                                            <th>Application ID</th>
+                                                            <th>Application Type</th>
+                                                            <th>Date of Apps</th>
+                                                            <th>Received from</th>
+                                                            <th>Received Date of Apps</th>
+                                                            <th>No.of.day Pending</th>
+                                                            <th>Total No.of.day</th>
+                                                            <th>Pending With</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @php $i = 1; @endphp
+                                                        @foreach ($inprogress as $row)
+                                                        <tr>
+                                                            <td>{{ $i }}</td>
+                                                            @php
+                                                                $badge_class = 'badge-secondary';
+                                                                $fn = strtoupper($row->form_name ?? '');
+                                                                if ($fn == 'S') $badge_class = 'badge-warning';
+                                                                elseif (in_array($fn, ['EA', 'SA'])) $badge_class = 'badge-success';
+                                                                elseif ($fn == 'W') $badge_class = 'badge-danger';
+                                                                elseif ($fn == 'WH') $badge_class = 'badge-warning';
+                                                                elseif ($fn == 'P') $badge_class = 'badge-info';
+                                                                elseif (in_array($fn, ['B', 'EB', 'SB'])) $badge_class = 'badge-primary';
+                                                                // Received from: who forwarded it (processed_by)
+                                                                $received_from = '';
+                                                                if (($row->processed_by ?? '') === 'S') $received_from = 'Supervisor';
+                                                                elseif (($row->processed_by ?? '') === 'A') $received_from = 'Accountant';
+                                                                elseif (($row->processed_by ?? '') === 'SE') $received_from = 'Secretary';
+                                                                elseif (($row->processed_by ?? '') === 'PR') $received_from = 'President';
+                                                                // Pending with: who has it now (next in chain)
+                                                                $pending_with = '';
+                                                                if (empty($row->processed_by)) $pending_with = 'Supervisor';
+                                                                elseif (($row->processed_by ?? '') === 'S') $pending_with = 'Accountant';
+                                                                elseif (($row->processed_by ?? '') === 'A') $pending_with = 'Secretary';
+                                                                elseif (($row->processed_by ?? '') === 'SE') $pending_with = 'President';
+                                                            @endphp
+                                                            <td><a href="{{ ($row->form_name ?? '') == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}">{{ $row->application_id }}</a></td>
+                                                            <td><span class="badge {{ $badge_class }}">FORM {{ $row->form_name }}</span></td>
+                                                            <td>{{ format_date_other($row->created_at) }}</td>
+                                                            <td>{{ $received_from }}</td>
+                                                            <td>{{ format_date_other($row->updated_at) }}</td>
+                                                            <td>{{ calculateDaysDifference($row->updated_at) }} Days</td>
+                                                            <td>{{ calculateDaysDifference($row->created_at) }} Days</td>
+                                                            <td>{{ $pending_with }}</td>
+                                                        </tr>
+                                                        @php $i++; @endphp
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div> --}}
+                </div>
+                @endif
                 
             </div>
         </div>

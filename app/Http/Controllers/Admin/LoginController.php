@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\ApplicationModel;
@@ -630,11 +631,309 @@ class LoginController extends Controller
         
         $amendmentCards = $amendmentCardsCollection->all();
 
+        // Pendancy Report data (used for Secretary and President dashboards)
+        $recieved_apps = collect();
+        $inprogress = collect();
+        if (in_array($staff->name ?? '', ['Secretary', 'President'], true)) {
+            // Applications currently with Secretary (processed_by = 'A')
+            $receivedFromTbl = DB::table('tnelb_application_tbl as ta')
+                ->leftJoin('mst_licences as f', 'ta.form_id', '=', 'f.id')
+                ->whereIn('ta.status', ['F', 'RF'])
+                ->where('ta.processed_by', 'A')
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
+                ->select(
+                    'ta.application_id',
+                    DB::raw('COALESCE(f.form_code, ta.form_name) as form_name'),
+                    'ta.created_at',
+                    'ta.updated_at',
+                    'ta.processed_by'
+                )
+                ->orderByDesc('ta.created_at')
+                ->get();
+            $receivedFromEa = DB::table('tnelb_ea_applications')
+                ->whereIn('application_status', ['F', 'RF'])
+                ->where('processed_by', 'A')
+                ->whereIn('payment_status', ['payment', 'paid'])
+                ->select('application_id', 'form_name', 'created_at', 'updated_at', 'processed_by')
+                ->orderByDesc('created_at')
+                ->get();
+            $receivedFromFormP = DB::table('tnelb_form_p')
+                ->whereIn('app_status', ['F', 'RF'])
+                ->where('processed_by', 'A')
+                ->whereIn('payment_status', ['payment', 'paid'])
+                ->select(
+                    'application_id',
+                    DB::raw("'P' as form_name"),
+                    'created_at',
+                    'updated_at',
+                    'processed_by'
+                )
+                ->orderByDesc('created_at')
+                ->get();
+            $recieved_apps = $receivedFromTbl->merge($receivedFromEa)->merge($receivedFromFormP)->sortByDesc('created_at')->values();
+
+            // In Progress: all applications in progress (status F/RF), with dynamic Received from / Pending With
+            $inprogressFromTbl = DB::table('tnelb_application_tbl as ta')
+                ->leftJoin('mst_licences as f', 'ta.form_id', '=', 'f.id')
+                ->whereIn('ta.status', ['F', 'RF'])
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
+                ->select(
+                    'ta.application_id',
+                    DB::raw('COALESCE(f.form_code, ta.form_name) as form_name'),
+                    'ta.created_at',
+                    'ta.updated_at',
+                    'ta.processed_by'
+                )
+                ->orderByDesc('ta.updated_at')
+                ->get();
+            $inprogressFromEa = DB::table('tnelb_ea_applications')
+                ->whereIn('application_status', ['F', 'RF'])
+                ->whereIn('payment_status', ['payment', 'paid'])
+                ->select('application_id', 'form_name', 'created_at', 'updated_at', 'processed_by')
+                ->orderByDesc('updated_at')
+                ->get();
+            $inprogressFromFormP = DB::table('tnelb_form_p')
+                ->whereIn('app_status', ['F', 'RF'])
+                ->whereIn('payment_status', ['payment', 'paid'])
+                ->select(
+                    'application_id',
+                    DB::raw("'P' as form_name"),
+                    'created_at',
+                    'updated_at',
+                    'processed_by'
+                )
+                ->orderByDesc('updated_at')
+                ->get();
+            $inprogress = $inprogressFromTbl->merge($inprogressFromEa)->merge($inprogressFromFormP)->sortByDesc('updated_at')->values();
+        }
+
         return view('admin.dashboard.staff_dashboard', compact(
             'staff',
             'assignedFormIDs',
             'assignedForms',
             'assignedFormSummary',
+            'competencyCards',
+            'contractorCards',
+            'amendmentCards',
+            'formColors',
+            'recieved_apps',
+            'inprogress'
+        ));
+    }
+
+    /**
+     * Completed applications dashboard: same card grid as staff_dashboard but for
+     * approved applications (Competency Certificates, Contractor Licences, Amendments) with counts.
+     */
+    public function completedApplications()
+    {
+        $staff = Auth::user();
+        if (!$staff) {
+            return abort(403, 'Unauthorized');
+        }
+
+        $roleCode = $staff->role_code ?? optional($staff->role)->role_code ?? null;
+        if ($roleCode === 'SUPADMIN') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $assignedFormsQuery = \App\Models\Admin\StaffAssigned::where('user_id', $staff->id)
+            ->where('is_active', 1)
+            ->whereIn('form_type', ['N', 'R']);
+
+        if (DB::getDriverName() === 'pgsql') {
+            $assignedFormsQuery->whereRaw("jsonb_array_length(COALESCE(form_id, '[]'::jsonb)) > 0");
+        } else {
+            $assignedFormsQuery->whereRaw('JSON_LENGTH(form_id) > 0');
+        }
+
+        $assignedRows = $assignedFormsQuery->get(['form_id', 'form_type']);
+        $assignedFormIDs = $assignedRows
+            ->pluck('form_id')
+            ->flatten()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($assignedFormIDs)) {
+            return view('admin.dashboard.completed_applications', [
+                'staff' => $staff,
+                'competencyCards' => [],
+                'contractorCards' => [],
+                'amendmentCards' => [],
+                'formColors' => [
+                    'C' => 'bg-yellow',
+                    'B' => 'bg-red',
+                    'H' => 'bg-H',
+                    'P' => 'bg-green',
+                    'EA' => 'bg-thickgreen',
+                    'SA' => 'bg-thickgreen',
+                ],
+            ]);
+        }
+
+        $licences = DB::table('mst_licences as f')
+            ->whereIn('f.id', $assignedFormIDs)
+            ->select('f.id', 'f.form_name', 'f.form_code', 'f.licence_name', 'f.cert_licence_code as color_code', 'f.category_id')
+            ->get()
+            ->keyBy('id');
+
+        $contractorCategoryIds = \App\Models\Admin\LicenceCategory::whereRaw("LOWER(category_name) LIKE ?", ['%contractor%'])
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $amendmentCategoryIds = \App\Models\Admin\LicenceCategory::whereRaw("LOWER(category_name) LIKE ?", ['%amend%'])
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $completedCountsMap = [];
+
+        // Completed from tnelb_application_tbl (competency + amendments that use this table)
+        $tblCounts = DB::table('tnelb_application_tbl as ta')
+            ->whereIn('ta.form_id', $assignedFormIDs)
+            ->where('ta.status', 'A')
+            ->selectRaw('ta.form_id, ta.appl_type, COUNT(*) as cnt')
+            ->groupBy('ta.form_id', 'ta.appl_type')
+            ->get();
+
+        foreach ($tblCounts as $row) {
+            $fid = (int) $row->form_id;
+            $type = strtoupper((string) $row->appl_type) === 'R' ? 'R' : 'N';
+            if (!isset($completedCountsMap[$fid])) {
+                $completedCountsMap[$fid] = ['N' => 0, 'R' => 0];
+            }
+            $completedCountsMap[$fid][$type] = (int) $row->cnt;
+        }
+
+        // Form P completed
+        $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
+        if ($formPId > 0 && in_array($formPId, $assignedFormIDs, true)) {
+            $formPCounts = DB::table('tnelb_form_p as ta')
+                ->where('ta.app_status', 'A')
+                ->selectRaw('ta.appl_type, COUNT(*) as cnt')
+                ->groupBy('ta.appl_type')
+                ->get();
+            if (!isset($completedCountsMap[$formPId])) {
+                $completedCountsMap[$formPId] = ['N' => 0, 'R' => 0];
+            }
+            foreach ($formPCounts as $row) {
+                $type = strtoupper((string) ($row->appl_type ?? '')) === 'R' ? 'R' : 'N';
+                $completedCountsMap[$formPId][$type] = (int) ($row->cnt ?? 0);
+            }
+        }
+
+        // Contractor tables: tnelb_ea_applications (EA, SA etc)
+        $contractorLicences = $licences->filter(function ($lic) use ($contractorCategoryIds) {
+            if (!empty($contractorCategoryIds)) {
+                return in_array((int) ($lic->category_id ?? 0), $contractorCategoryIds, true);
+            }
+            return stripos($lic->licence_name ?? '', 'contractor') !== false;
+        });
+
+        if ($contractorLicences->isNotEmpty()) {
+            $contractorFormToIds = $contractorLicences->groupBy('cert_licence_code')->map(fn ($g) => $g->pluck('id')->all());
+            $contractorTables = ['tnelb_ea_applications'];
+            if (Schema::hasTable('tnelb_esa_applications')) {
+                $contractorTables[] = 'tnelb_esa_applications';
+            }
+            foreach ($contractorTables as $tbl) {
+                if (!Schema::hasTable($tbl)) {
+                    continue;
+                }
+                $rows = DB::table($tbl . ' as ta')
+                    ->where('ta.application_status', 'A')
+                    ->selectRaw('ta.form_name, ta.appl_type, COUNT(*) as cnt')
+                    ->groupBy('ta.form_name', 'ta.appl_type')
+                    ->get();
+                foreach ($rows as $row) {
+                    $formCode = strtoupper((string) ($row->form_name ?? ''));
+                    if ($formCode === '' || !isset($contractorFormToIds[$formCode])) {
+                        continue;
+                    }
+                    $type = strtoupper((string) ($row->appl_type ?? '')) === 'R' ? 'R' : 'N';
+                    $cnt = (int) ($row->cnt ?? 0);
+                    foreach ($contractorFormToIds[$formCode] as $licId) {
+                        if (in_array($licId, $assignedFormIDs, true)) {
+                            if (!isset($completedCountsMap[$licId])) {
+                                $completedCountsMap[$licId] = ['N' => 0, 'R' => 0];
+                            }
+                            $completedCountsMap[$licId][$type] += $cnt;
+                        }
+                    }
+                }
+            }
+        }
+
+        $assignedForms = $assignedRows->flatMap(function ($row) use ($licences) {
+            $type = $row->form_type;
+            return collect($row->form_id)->map(function ($id) use ($type, $licences) {
+                $id = (int) $id;
+                $lic = $licences->get($id);
+                return [
+                    'id' => $id,
+                    'form_name' => $lic->form_name ?? null,
+                    'licence_name' => $lic->licence_name ?? null,
+                    'color_code' => $lic->color_code ?? null,
+                    'category_id' => $lic->category_id ?? null,
+                ];
+            });
+        })->values();
+
+        $assignedFormSummary = $assignedForms->groupBy('id')->map(function ($items) use ($completedCountsMap) {
+            $first = $items->first();
+            $fid = $first['id'];
+            $counts = $completedCountsMap[$fid] ?? ['N' => 0, 'R' => 0];
+            return [
+                'id' => $fid,
+                'form_name' => $first['form_name'],
+                'licence_name' => $first['licence_name'],
+                'color_code' => $first['color_code'],
+                'category_id' => $first['category_id'],
+                'completed_new_count' => $counts['N'],
+                'completed_renewal_count' => $counts['R'],
+            ];
+        })->values()->all();
+
+        $formColors = [
+            'C' => 'bg-yellow',
+            'B' => 'bg-red',
+            'H' => 'bg-H',
+            'P' => 'bg-green',
+            'EA' => 'bg-thickgreen',
+            'SA' => 'bg-thickgreen',
+        ];
+
+        $summaryCollection = collect($assignedFormSummary);
+        $contractorCardsCollection = $summaryCollection->filter(function ($item) use ($contractorCategoryIds) {
+            if (!empty($contractorCategoryIds)) {
+                return in_array((int) ($item['category_id'] ?? 0), $contractorCategoryIds, true);
+            }
+            return strpos(mb_strtolower($item['licence_name'] ?? ''), 'contractor') !== false;
+        })->values();
+        $contractorIds = $contractorCardsCollection->pluck('id')->all();
+
+        $amendmentCardsCollection = $summaryCollection
+            ->reject(fn ($item) => in_array($item['id'], $contractorIds, true))
+            ->filter(function ($item) use ($amendmentCategoryIds) {
+                if (empty($amendmentCategoryIds)) {
+                    return strpos(mb_strtolower($item['licence_name'] ?? ''), 'amend') !== false;
+                }
+                return in_array((int) ($item['category_id'] ?? 0), $amendmentCategoryIds, true);
+            })->values();
+        $amendmentIds = $amendmentCardsCollection->pluck('id')->all();
+        $competencyCardsCollection = $summaryCollection->reject(function ($item) use ($contractorIds, $amendmentIds) {
+            return in_array($item['id'], array_merge($contractorIds, $amendmentIds), true);
+        })->values();
+
+        $competencyCards = $competencyCardsCollection->all();
+        $contractorCards = $contractorCardsCollection->all();
+        $amendmentCards = $amendmentCardsCollection->all();
+
+        return view('admin.dashboard.completed_applications', compact(
+            'staff',
             'competencyCards',
             'contractorCards',
             'amendmentCards',
@@ -730,9 +1029,9 @@ class LoginController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
@@ -756,9 +1055,9 @@ class LoginController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
@@ -2292,9 +2591,9 @@ class LoginController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
@@ -2318,9 +2617,9 @@ class LoginController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
@@ -2464,6 +2763,125 @@ class LoginController extends Controller
             'queries',
             'user_entry',
             'staff'
+        ));
+    }
+
+    /**
+     * View a completed application with workflow timeline (read-only).
+     * Used from the Completed Applications list.
+     */
+    public function viewCompletedApplicationDetail($applicant_id)
+    {
+        $staff = Auth::user();
+        if (!$staff) {
+            return abort(403, 'Unauthorized');
+        }
+
+        $applicant = null;
+        $workflows = collect();
+        $user_entry = null;
+
+        // 1. Competency / amendments: tnelb_application_tbl (status A)
+        $applicant = DB::table('tnelb_application_tbl as ta')
+            ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+            ->where('ta.application_id', $applicant_id)
+            ->where('ta.status', 'A')
+            ->select('ta.*', DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'), DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name'))
+            ->first();
+
+        if ($applicant) {
+            $user_entry = $applicant;
+            $workflows = DB::table('tnelb_workflow')
+                ->leftJoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
+                ->where('tnelb_workflow.application_id', $applicant_id)
+                ->select('tnelb_workflow.*', 'mst__roles.name')
+                ->orderBy('tnelb_workflow.id', 'desc')
+                ->get();
+        }
+
+        // 2. Form P
+        if (!$applicant && Schema::hasTable('tnelb_form_p')) {
+            $row = DB::table('tnelb_form_p')->where('application_id', $applicant_id)->where('app_status', 'A')->first();
+            if ($row) {
+                $applicant = (object) array_merge((array) $row, [
+                    'form_name' => 'Form P',
+                    'license_name' => $row->license_name ?? 'P',
+                    'applicant_name' => $row->applicant_name ?? 'N/A',
+                ]);
+                $user_entry = $applicant;
+                $workflows = DB::table('tnelb_workflow')
+                    ->leftJoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
+                    ->where('tnelb_workflow.application_id', $applicant_id)
+                    ->select('tnelb_workflow.*', 'mst__roles.name')
+                    ->orderBy('tnelb_workflow.id', 'desc')
+                    ->get();
+            }
+        }
+
+        // 3. Contractor (EA, SA, B, SB)
+        if (!$applicant) {
+            foreach (['tnelb_ea_applications', 'tnelb_esa_applications', 'tnelb_eb_applications', 'tnelb_esb_applications'] as $tbl) {
+                if (!Schema::hasTable($tbl)) {
+                    continue;
+                }
+                $row = DB::table($tbl)->where('application_id', $applicant_id)->where('application_status', 'A')->first();
+                if ($row) {
+                    $applicant = (object) array_merge((array) $row, [
+                        'form_name' => $row->form_name ?? 'N/A',
+                        'license_name' => $row->license_name ?? 'N/A',
+                        'applicant_name' => $row->applicant_name ?? 'N/A',
+                    ]);
+                    $user_entry = $applicant;
+                    $workflows = DB::table('tnelb_workflow_a')
+                        ->leftJoin('mst__roles', 'tnelb_workflow_a.forwarded_to', '=', 'mst__roles.id')
+                        ->where('tnelb_workflow_a.application_id', $applicant_id)
+                        ->select('tnelb_workflow_a.*', 'mst__roles.name')
+                        ->orderBy('tnelb_workflow_a.id', 'desc')
+                        ->get();
+                    break;
+                }
+            }
+        }
+
+        if (!$applicant) {
+            return abort(404, 'Completed application not found.');
+        }
+
+        // Educational qualifications, work experience and documents (for quick review)
+        $ids = [$applicant_id];
+        $applType = strtoupper((string)($applicant->appl_type ?? ''));
+        $oldApplication = $applicant->old_application ?? null;
+        if ($applType === 'R' && !empty($oldApplication)) {
+            $ids[] = $oldApplication;
+        }
+
+        $educationalQualifications = DB::table('tnelb_applicants_edu')
+            ->whereIn('application_id', $ids)
+            ->orderByDesc('year_of_passing')
+            ->get();
+
+        $workExperience = DB::table('tnelb_applicants_exp')
+            ->whereIn('application_id', $ids)
+            ->get();
+
+        $documents = Schema::hasTable('mst_documents')
+            ? DB::table('mst_documents')->whereIn('application_id', $ids)->get()
+            : collect([]);
+
+        $uploadedPhoto = TnelbApplicantPhoto::whereIn('application_id', $ids)
+            ->whereNotNull('upload_path')
+            ->orderByDesc('id')
+            ->first();
+
+        return view('admin.completed_appl_view', compact(
+            'applicant',
+            'workflows',
+            'user_entry',
+            'staff',
+            'educationalQualifications',
+            'workExperience',
+            'documents',
+            'uploadedPhoto'
         ));
     }
 }

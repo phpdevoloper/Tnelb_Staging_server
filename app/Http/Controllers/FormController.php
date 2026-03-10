@@ -18,6 +18,7 @@ use App\Models\TnelbApplicantsSign;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
@@ -2218,8 +2219,8 @@ class FormController extends BaseController
         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
         $filePath = $file->storeAs('education', $filename, 'public');
 
-        // Use raw SQL to avoid any model issues
-        DB::table('tnelb_applicants_doc')->insert([
+        if (Schema::hasTable('mst_documents')) {
+            DB::table('mst_documents')->insert([
             'login_id' => $loginId,
             'education_serial' => $eduSerial,
             'experience_serial' => null,
@@ -2231,6 +2232,7 @@ class FormController extends BaseController
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        }
     }
 
     private function storeWorkDocument($file, $loginId, $expSerial, $applicationId)
@@ -2238,8 +2240,8 @@ class FormController extends BaseController
         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
         $filePath = $file->storeAs('work_experience', $filename, 'public');
 
-        // Use raw SQL to avoid any model issues
-        DB::table('tnelb_applicants_doc')->insert([
+        if (Schema::hasTable('mst_documents')) {
+            DB::table('mst_documents')->insert([
             'login_id' => $loginId,
             'education_serial' => null,
             'experience_serial' => $expSerial,
@@ -2251,6 +2253,7 @@ class FormController extends BaseController
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        }
     }
 
     private function storePhotoDocument($file, $loginId, $applicationId)
@@ -2258,8 +2261,8 @@ class FormController extends BaseController
         $filename = 'user' . $applicationId . '.' . $file->getClientOriginalExtension();
         $filePath = $file->storeAs('attached_documents', $filename, 'public');
 
-        // Use raw SQL to avoid any model issues
-        DB::table('tnelb_applicants_doc')->insert([
+        if (Schema::hasTable('mst_documents')) {
+            DB::table('mst_documents')->insert([
             'login_id' => $loginId,
             'education_serial' => null,
             'experience_serial' => null,
@@ -2271,6 +2274,7 @@ class FormController extends BaseController
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        }
     }
 
     private function storeSignatureDocument($file, $loginId, $applicationId)
@@ -2278,8 +2282,8 @@ class FormController extends BaseController
         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
         $filePath = $file->storeAs('attached_documents', $filename, 'public');
 
-        // Use raw SQL to avoid any model issues
-        DB::table('tnelb_applicants_doc')->insert([
+        if (Schema::hasTable('mst_documents')) {
+            DB::table('mst_documents')->insert([
             'login_id' => $loginId,
             'education_serial' => null,
             'experience_serial' => null,
@@ -2291,6 +2295,7 @@ class FormController extends BaseController
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        }
     }
 
     public function showEncryptedDocument($type, $filename)

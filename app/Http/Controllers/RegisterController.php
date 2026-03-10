@@ -9,6 +9,7 @@ use App\Models\Mst_Form_s_w;
 use App\Models\MstLicence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Register;
 
 use App\Models\Admin\Mst_equipment_tbl;
@@ -234,10 +235,9 @@ class RegisterController extends BaseController
         ->get();
 
         
-        $apps_doc = DB::table('tnelb_applicants_doc')
-        ->where('application_id', $appl_id)
-        ->select('*')
-        ->get();
+        $apps_doc = Schema::hasTable('mst_documents')
+        ? DB::table('mst_documents')->where('application_id', $appl_id)->get()
+        : collect([]);
 
         if ($application_details->appl_type == 'R') {
             $license_details = DB::table('tnelb_license')

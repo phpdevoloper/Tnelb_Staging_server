@@ -9,86 +9,130 @@
     $isRenewalOnly = $requestedType === 'R';
     $isNewOnly = $requestedType === 'N';
     $firstApp = $newApplications->first() ?? $renewalApplications->first();
+    $isCompletedList = $is_completed_list ?? false;
+
+    // Tabs visibility flags
+    $hasNewTab = !$isRenewalOnly && !$isCompletedList;
+    $hasRenewalTab = (!$isNewOnly) && ($isRenewalOnly || $renewalApplications->isNotEmpty());
+    $showTabs = $hasNewTab || $hasRenewalTab;
 @endphp
 
 <style>
-    /* table th{
-        color: #070707 !important;
-        background-color: #ccae00 !important;
+    /* Applications view – modern card layout */
+    .app-view-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e9ecef;
+        overflow: hidden;
     }
-    */
-
-    /* Improved heading style */
-    .seperator-header h4 {
-        background: #ffcc00;
-        color: #333;
-        padding: 10px 15px;
-        font-size: 20px;
-        font-weight: bold;
+    .app-view-card .card-tabs {
+        padding: 0.75rem 1rem;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .app-view-card .nav-pills .nav-link {
+        color: rgba(255,255,255,0.85);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .app-view-card .nav-pills .nav-link:hover {
+        color: #fff;
+        background: rgba(255,255,255,0.15);
+    }
+    .app-view-card .nav-pills .nav-link.active {
+        background: #fff;
+        color: #1e3a5f;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .app-view-card .nav-pills .nav-link svg {
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+    .app-view-title {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #1e293b;
+        padding: 1rem 1.25rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-align: center;
+        border-radius: 10px;
+        border: 1px solid #fcd34d;
+        margin-bottom: 1.25rem;
+    }
+    .app-view-table-wrap {
+        padding: 0 1rem 1rem;
+    }
+    .app-view-table-wrap .table {
+        margin-bottom: 0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .app-view-table-wrap .table thead th {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%) !important;
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.875rem 0.75rem;
+        border: none;
         text-transform: uppercase;
-        border-radius: 5px;
+        letter-spacing: 0.5px;
         text-align: center;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
     }
-
-    /* Table Header Styling */
-    table th {
-        background-color: #004185 !important;
-        color: #ffffff !important;
+    .app-view-table-wrap .table tbody td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+    .app-view-table-wrap .table tbody tr {
+        transition: background 0.2s ease;
+    }
+    .app-view-table-wrap .table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    .app-view-table-wrap .table tbody tr:hover {
+        background: #eff6ff !important;
+    }
+    .app-view-table-wrap .table tbody a:not(.btn) {
+        color: #2563eb;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    .app-view-table-wrap .table tbody a:not(.btn):hover {
+        text-decoration: underline;
+    }
+    .app-view-table-wrap .badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35em 0.65em;
+    }
+    .app-view-table-wrap .btn-view-licence {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+    .app-view-back {
+        padding: 1rem 1rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    .app-view-back .btn-back {
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .app-view-empty {
+        padding: 2.5rem 1rem;
         text-align: center;
-        font-weight: bold;
-        padding: 12px;
-    }
-
-    /* Table Row Styling */
-    table tbody tr {
-        transition: background 0.3s ease-in-out;
-    }
-
-    table tbody tr:hover {
-        background: rgba(255, 204, 0, 0.1);
-    }
-
-    /* Button Enhancements */
-    .btn-primary,
-    .btn-danger {
-        padding: 6px 12px;
-        font-size: 14px;
-        border-radius: 5px;
-    }
-
-    .btn-primary:hover {
-        background: #ffb300;
-        border-color: #ffb300;
-    }
-
-    .btn-danger:hover {
-        background: #d9534f;
-        border-color: #d9534f;
-    }
-
-    /* Adjustments for "Back" Button */
-    .col-lg-12.mt-2.mb-2.d-flex.justify-content-end a button {
-        font-size: 16px;
-        padding: 8px 15px;
-        font-weight: bold;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .nav.nav-pills li.nav-item button.nav-link {
-        color: #fff;
-    }
-
-    .nav.nav-pills li.nav-item button.nav-link.active {
-        background-color: #fff;
-        color: #004185;
-    }
-    .nav.nav-pills li.nav-item button.nav-link svg {
-        color: #fff;
-    }
-
-    .nav.nav-pills {
-        background: #3071d6;
+        color: #64748b;
+        font-size: 0.95rem;
     }
 </style>
 
@@ -129,25 +173,32 @@
 
             <!-- -------------------------------------------------------- -->
             <div class="row">
-                <div class="col-xl-12 col-lg-12 col-sm-12  layout-spacing">
-                    <div class="seperator-header layout-top-spacing">
-                        <h4 class="">
+                <div class="col-xl-12 col-lg-12 col-sm-12 layout-spacing">
+                    <div class="app-view-title">
+                        @if($isCompletedList)
+                            @if($isRenewalOnly)
+                                Completed Renewal Applications For {{ $firstApp->form_name ?? 'N/A' }}
+                            @elseif($isNewOnly)
+                                Completed New Applications For {{ $firstApp->form_name ?? 'N/A' }} ({{ $firstApp->license_name ?? 'N/A' }})
+                            @else
+                                Completed Applications For {{ $firstApp->form_name ?? 'N/A' }} ({{ $firstApp->license_name ?? 'N/A' }})
+                            @endif
+                        @else
                             @if($isRenewalOnly)
                                 Pending Renewal Applications For {{ $firstApp->form_name ?? 'N/A' }}
                             @elseif($isNewOnly)
-                                Pending New Applications For {{ $firstApp->form_name ?? 'N/A' }}
+                                Pending New Applications For {{ $firstApp->form_name ?? 'N/A' }} ({{ $firstApp->license_name ?? 'N/A' }})
                             @else
-                                Pending Applications For {{ $firstApp->form_name ?? 'N/A' }}
+                                Pending Applications For {{ $firstApp->form_name ?? 'N/A' }} ({{ $firstApp->license_name ?? 'N/A' }})
                             @endif
-                            (License {{ $firstApp->license_name ?? 'N/A' }})
-                        </h4>
-
+                        @endif
                     </div>
-                    {{-- <div class="statbox widget box box-shadow"> --}}
-                    <div class="widget-content widget-content-area br-8">
-                        <div class="simple-pill" style="padding: 5px 15px;">
-                            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                                @if(!$isRenewalOnly)
+
+                    <div class="app-view-card">
+                        @if($showTabs)
+                        <div class="card-tabs">
+                            <ul class="nav nav-pills mb-0" id="pills-tab" role="tablist">
+                                @if($hasNewTab)
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link {{ $isNewOnly || $renewalApplications->isEmpty() ? 'active' : '' }}"
                                             id="pills-home-icon-tab" data-bs-toggle="pill"
@@ -164,7 +215,7 @@
                                         </button>
                                     </li>
                                 @endif
-                                @if ((!$isNewOnly) && ($isRenewalOnly || $renewalApplications->isNotEmpty()))
+                                @if($hasRenewalTab)
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link {{ $isRenewalOnly ? 'active' : '' }}" id="pills-profile-icon-tab" data-bs-toggle="pill"
                                             data-bs-target="#pills-profile-icon" type="button" role="tab"
@@ -182,120 +233,221 @@
                                     </li>
                                 @endif
                             </ul>
-                            <div class="tab-content" id="pills-tabContent">
+                        </div>
+                        @endif
+                            <div class="tab-content p-0" id="pills-tabContent">
                                 @if(!$isRenewalOnly)
                                 <div class="tab-pane fade {{ $isNewOnly || $renewalApplications->isEmpty() ? 'show active' : '' }}" id="pills-home-icon" role="tabpanel"
                                     aria-labelledby="pills-home-icon-tab" tabindex="0">
-                                    <table id="zero-config" class="table dt-table-hover" style="width:100%">
+                                    <div class="app-view-table-wrap">
+                                    <table id="zero-config" class="table table-hover" style="width:100%">
                                         <thead>
                                             <tr>
                                                 <th>S.No</th>
                                                 <th>Application Id</th>
-            
                                                 <th>Applicant's Name</th>
-                                                {{-- <th>Form Name</th> --}}
+                                                @if($isCompletedList)
+                                                <th>Applied On</th>
+                                                <th>Status</th>
+                                                <th>License</th>
+                                                @else
                                                 <th>Certificate of</th>
                                                 <th>Payment Status</th>
                                                 <th>Applied On</th>
                                                 <th class="no-content">Action</th>
+                                                @endif
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @forelse ($newApplications as $key => $application)
+                                                @php
+                                                    $appStatus = $application->status ?? $application->application_status ?? $application->app_status ?? null;
+                                                    $isCompleted = in_array($appStatus, ['A'], true);
+                                                    $fn = strtoupper((string)($application->form_name ?? ''));
+
+                                                    if (($is_completed_list ?? false) && $isCompleted) {
+                                                        // From Completed Applications: Form P uses its own completed view, others use generic completed view
+                                                        if ($fn === 'FORM P' || $fn === 'P') {
+                                                            $detailUrl = route('admin.application_details_formp_completed', ['applicant_id' => $application->application_id]);
+                                                        } else {
+                                                            $detailUrl = route('admin.view_completed_application', ['applicant_id' => $application->application_id]);
+                                                        }
+                                                    } else {
+                                                        // Pending / in-progress → go to normal role-based detail pages
+                                                        $detailUrl = ($fn === 'FORM P' || $fn === 'P')
+                                                            ? route('admin.application_details_formp', ['applicant_id' => $application->application_id])
+                                                            : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
+                                                    }
+                                                @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
-            
                                                     <td>
-                                                        <a
-                                                            href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
+                                                        <a href="{{ $detailUrl }}">
                                                             {{ $application->application_id }}
                                                         </a>
                                                     </td>
                                                     <td>{{ $application->applicant_name ?? 'N/A' }}</td>
-                                                    {{-- <td>{{ $application->form_name }}</td> --}}
+                                                    @if($isCompletedList)
+                                                    <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                    <td class="text-center">
+                                                        @if($isCompleted)
+                                                            <span class="badge rounded-pill bg-success">Completed</span>
+                                                        @else
+                                                            <span class="badge rounded-pill bg-warning text-dark">Forwarded</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if($isCompleted)
+                                                            @php $fnLicence = strtoupper((string)($application->form_name ?? '')); @endphp
+                                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                                @if($fnLicence === 'FORM P' || $fnLicence === 'P')
+                                                                    <a href="{{ route('admin.formp.licence.en', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-primary btn-view-licence" title="Form P Licence (English)"><i class="fa fa-file-pdf-o me-1"></i> View EN</a>
+                                                                    <a href="{{ route('admin.formp.licence.ta', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-outline-primary btn-view-licence" title="Form P Licence (Tamil)"><i class="fa fa-file-pdf-o me-1"></i> View TA</a>
+                                                                @else
+                                                                    <a href="{{ route('admin.getLicenceDoc.pdf', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-primary btn-view-licence" title="View stored Licence PDF"><i class="fa fa-file-pdf-o me-1"></i> View</a>
+                                                                    <a href="{{ route('admin.generate.pdf', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-outline-primary btn-view-licence" title="Generated Licence PDF"><i class="fa fa-download me-1"></i> Generated PDF</a>
+                                                                @endif
+                                                            </div>
+                                                        @else
+                                                            <span class="text-muted">—</span>
+                                                        @endif
+                                                    </td>
+                                                    @else
                                                     <td>{{ $application->license_name ?? 'N/A' }}</td>
                                                     <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
                                                     <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
                                                     <td>
-                                                        <a
-                                                            href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
-                                                            <button type="button" class="btn btn-primary"
-                                                                data-bs-placement="bottom" title="Forward Application">
+                                                        <a href="{{ $detailUrl }}">
+                                                            <button type="button" class="btn btn-primary" data-bs-placement="bottom" title="Forward Application">
                                                                 <i class="fa fa-eye"></i>
                                                             </button>
                                                         </a>
                                                     </td>
+                                                    @endif
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="7" class="text-center">No pending applications found.</td>
+                                                    <td colspan="{{ $isCompletedList ? '6' : '7' }}" class="app-view-empty">{{ ($is_completed_list ?? false) ? 'No completed applications found.' : 'No pending applications found.' }}</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
+                                    </div>
                                 </div>
                                 @endif
                                 @if ((!$isNewOnly) && ($isRenewalOnly || $renewalApplications->isNotEmpty()))
                                     <div class="tab-pane fade {{ $isRenewalOnly ? 'show active' : '' }}" id="pills-profile-icon" role="tabpanel"
                                         aria-labelledby="pills-profile-icon-tab" tabindex="0">
-                                        <table id="" class="zero-config table dt-table-hover" style="width:100%">
+                                        <div class="app-view-table-wrap">
+                                        <table id="renewal-table" class="table table-hover" style="width:100%">
                                             <thead>
                                                 <tr>
                                                     <th>S.No</th>
                                                     <th>Application Id</th>
-            
                                                     <th>Applicant's Name</th>
-                                                    {{-- <th>Form Name</th> --}}
+                                                    @if($isCompletedList)
+                                                    <th>Applied On</th>
+                                                    <th>Status</th>
+                                                    <th>License</th>
+                                                    @else
                                                     <th>Certificate of</th>
                                                     <th>Payment Status</th>
                                                     <th>Applied On</th>
                                                     <th class="no-content">Action</th>
+                                                    @endif
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @forelse ($renewalApplications as $key => $application)
+                                                    @php
+                                                        $appStatusR = $application->status ?? $application->application_status ?? $application->app_status ?? null;
+                                                        $isCompletedR = in_array($appStatusR, ['A'], true);
+                                                        $fnR = strtoupper((string)($application->form_name ?? ''));
+
+                                                        if (($is_completed_list ?? false) && $isCompletedR) {
+                                                            // From Completed Applications: Form P uses its own completed view, others use generic completed view
+                                                            if ($fnR === 'FORM P' || $fnR === 'P') {
+                                                                $detailUrlR = route('admin.application_details_formp_completed', ['applicant_id' => $application->application_id]);
+                                                            } else {
+                                                                $detailUrlR = route('admin.view_completed_application', ['applicant_id' => $application->application_id]);
+                                                            }
+                                                        } else {
+                                                            // Pending / in-progress → go to normal role-based detail pages
+                                                            $detailUrlR = ($fnR === 'FORM P' || $fnR === 'P')
+                                                                ? route('admin.application_details_formp', ['applicant_id' => $application->application_id])
+                                                                : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
+                                                        }
+                                                    @endphp
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
                                                         <td>
-                                                            <a
-                                                                href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
-                                                                {{ $application->application_id }}
-                                                            </a>
+                                                            <a href="{{ $detailUrlR }}">{{ $application->application_id }}</a>
                                                         </td>
                                                         <td>{{ $application->applicant_name ?? 'N/A' }}</td>
-                                                        {{-- <td>{{ $application->form_name }}</td> --}}
+                                                        @if($isCompletedList)
+                                                        <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                        <td class="text-center">
+                                                            @if($isCompletedR)
+                                                                <span class="badge rounded-pill bg-success">Completed</span>
+                                                            @else
+                                                                <span class="badge rounded-pill bg-warning text-dark">Forwarded</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if($isCompletedR)
+                                                                @php $fnLicenceR = strtoupper((string)($application->form_name ?? '')); @endphp
+                                                                <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                                    @if($fnLicenceR === 'FORM P' || $fnLicenceR === 'P')
+                                                                        <a href="{{ route('admin.formp.licence.en', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-primary btn-view-licence" title="Form P Licence (English)"><i class="fa fa-file-pdf-o me-1"></i> View EN</a>
+                                                                        <a href="{{ route('admin.formp.licence.ta', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-outline-primary btn-view-licence" title="Form P Licence (Tamil)"><i class="fa fa-file-pdf-o me-1"></i> View TA</a>
+                                                                    @else
+                                                                        <a href="{{ route('admin.getLicenceDoc.pdf', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-primary btn-view-licence" title="View stored Licence PDF"><i class="fa fa-file-pdf-o me-1"></i> View</a>
+                                                                        <a href="{{ route('admin.generate.pdf', ['application_id' => $application->application_id]) }}" target="_blank" class="btn btn-sm btn-outline-primary btn-view-licence" title="Generated Licence PDF"><i class="fa fa-download me-1"></i> Generated PDF</a>
+                                                                    @endif
+                                                                </div>
+                                                            @else
+                                                                <span class="text-muted">—</span>
+                                                            @endif
+                                                        </td>
+                                                        @else
                                                         <td>{{ $application->license_name ?? 'N/A' }}</td>
                                                         <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
                                                         <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
                                                         <td>
-                                                            <a
-                                                                href="{{ ($application->form_name ?? '') === 'Form P' ? route('admin.application_details_formp', ['applicant_id' => $application->application_id]) : route('admin.applicants_detail', ['applicant_id' => $application->application_id]) }}">
-                                                                <button type="button" class="btn btn-primary"
-                                                                    data-bs-placement="bottom"
-                                                                    title="Forward Application">
+                                                            <a href="{{ $detailUrlR }}">
+                                                                <button type="button" class="btn btn-primary" data-bs-placement="bottom" title="Forward Application">
                                                                     <i class="fa fa-eye"></i>
                                                                 </button>
                                                             </a>
                                                         </td>
+                                                        @endif
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="7" class="text-center">No pending applications found.</td>
+                                                        <td colspan="{{ $isCompletedList ? '6' : '7' }}" class="app-view-empty">{{ ($is_completed_list ?? false) ? 'No completed applications found.' : 'No pending applications found.' }}</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>
                                         </table>
+                                        </div>
                                     </div>
                                 @endif
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end m-2">
-                            <a href="{{ route('admin.dashboard') }}">
-                                <button class="btn btn-primary _effect--ripple waves-effect waves-light">Back</button>
-                            </a>
+
+                        <div class="app-view-back">
+                            <span></span>
+                            @if($isCompletedList)
+                                <a href="{{ route('admin.completed_applications') }}" class="btn btn-outline-primary btn-back">
+                                    <i class="fa fa-arrow-left me-1"></i> Back to Completed Applications
+                                </a>
+                            @else
+                                <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary btn-back">
+                                    <i class="fa fa-arrow-left me-1"></i> Back to Dashboard
+                                </a>
+                            @endif
                         </div>
                     </div>
-                    {{-- </div> --}}
                 </div>
             </div>
         </div>

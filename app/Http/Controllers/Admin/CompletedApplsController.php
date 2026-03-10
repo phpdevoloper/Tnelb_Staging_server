@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -56,9 +57,9 @@ class CompletedApplsController extends Controller
                 ->get();
                 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-            ->where('application_id', $ids)
-            ->get();
+            $documents = Schema::hasTable('mst_documents')
+            ? DB::table('mst_documents')->where('application_id', $ids)->get()
+            : collect([]);
             
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $ids)
@@ -81,9 +82,9 @@ class CompletedApplsController extends Controller
                 ->get();
 
             // Fetch documents
-            $documents = DB::table('tnelb_applicants_doc')
-                ->where('application_id', $applicant_id)
-                ->get();
+            $documents = Schema::hasTable('mst_documents')
+                ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+                : collect([]);
                 
             // Get the last uploaded photo (if available)
             $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
