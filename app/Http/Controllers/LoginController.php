@@ -738,6 +738,11 @@ $workflows_cl = $workflows_cl
             return view('user_login.pagination-list', compact('paginatedData'))->render();
         }
 
+
+        $returnapplication = $workflows_cl
+        ->where('application_status', 'RET')
+        ->values();
+
      
 
         return view('user_login.index', compact(
@@ -750,7 +755,8 @@ $workflows_cl = $workflows_cl
             'table_applied_form',
             'renewal_applications',
             'all_form_p',
-            'paginatedData'
+            'paginatedData',
+            'returnapplication' 
         ));
 
 

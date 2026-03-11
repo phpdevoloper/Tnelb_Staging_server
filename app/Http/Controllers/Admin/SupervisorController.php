@@ -408,38 +408,43 @@ class SupervisorController extends Controller
     */
     public function view_forma($type)
     {
-        $userRole = Auth::user()->roles_id;
+        $staff = Auth::user();
+        $roleName = $staff->name ?? '';
 
-        $assignedForms = DB::table('tnelb_ea_applications as ta')
-            ->whereIn('ta.application_status', ['P', 'RE']) // Filter by status
-            ->select('ta.*') // Select all columns from applicant_formA
+        // Base query for Form A contractor applications
+        $query = DB::table('tnelb_ea_applications as ta')
+            ->where('ta.form_name', 'A')
+            ->where('ta.payment_status', 'paid');
+
+        // Supervisor should see applications that are still with Supervisor
+        // (i.e. processed_by = 'S' and not yet forwarded further, typically P / RE / F)
+        if (in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
+            $query->whereIn('ta.application_status', ['P', 'RE']);
+                  
+        }
+        // Accountant should see only applications that have been forwarded
+        // by Supervisor to Accountant (processed_by = 'A', usually status F/RF)
+        elseif ($roleName === 'Accountant') {
+            $query->whereIn('ta.application_status', ['F', 'RF'])
+                  ->where('ta.processed_by', 'S');
+        } elseif ($roleName === 'President') {
+            $query->whereIn('ta.application_status', ['F', 'RF'])
+                  ->where('ta.processed_by', 'SE');
+        }
+
+        $workflows = $query
+            ->orderBy('ta.updated_at', 'DESC')
+            ->select('ta.*')
             ->get();
 
+        // SA type still uses the existing SA view if needed
+        if (strtoupper($type) === 'SA') {
+            // For now, reuse the existing SA pending list logic if required later.
+            // Currently no SA contractor list is shown here.
+            return view('admin.supervisor.formsa.view_formsa', ['pendinglist_sa' => collect()]);
+        }
 
-        // var_dump($assignedForms);die;
-
-        $workflows = DB::table('tnelb_ea_applications')
-            ->whereIn('application_status', ['P', 'RE'])
-            ->where('payment_status', 'paid')
-            ->orderBy('updated_at', 'DESC')
-            ->select('*')
-            ->get();
-
-
-        $pendinglist_sa = DB::table('tnelb_esa_applications')
-            ->whereIn('application_status', ['P', 'RE'])
-            ->where('payment_status', 'paid')
-            ->orderBy('updated_at', 'DESC')
-            ->select('*')
-            ->get();
-
-            if (strtoupper($type) === 'SA') {
-                    return view('admin.supervisor.formsa.view_formsa', compact('pendinglist_sa'));
-                } else {
-                    return view('admin.supervisor.view_forma', compact('workflows'));
-                }
-
-        // return view('admin.supervisor.view_forma', compact('workflows'));
+        return view('admin.supervisor.view_forma', compact('workflows'));
     }
 
     public function completed_forma()

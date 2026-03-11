@@ -280,6 +280,110 @@ class ApplicationController extends Controller
         ], 201);
     }
 
+    //--------------------------------return to applicant forma--------------------------------
+    // Handles Form A contractor applications (tnelb_ea_applications)
+    public function returntoapplicantForma(Request $request){
+
+        //   dd($request->all());exit;
+    
+            $staff = Auth::user();
+            
+            $staffID = Auth::user()->id;
+    
+            $request->validate([
+                'application_id' => 'required|string',
+                'return_by'      => 'required|string',
+                'forwarded_to'   => 'required|string',
+                'checkboxes'     => 'nullable|string',
+                'queryswitch'    => 'nullable|string',
+                'queryType'      => 'array',
+                'remarks'        => 'nullable|string'
+            ]);
+            
+            
+                 $query_status = null;
+            $queryTypeJson = json_encode($request->queryType);
+    
+            
+        if ($request->queryswitch == 'Yes' && !empty($request->queryType) || ($request->queryswitch == 'true')) {
+                $query_status = "P";
+            }
+            
+    
+            $formType = DB::table('tnelb_ea_applications')
+                            ->where('application_id', $request->application_id)
+                            
+                            // ->select('form_id')
+                            ->first();
+    
+                          
+            $processed_by = match ($staff->name) {
+                'President'  => 'PR',
+                'Secretary'  => 'SE',
+                'Supervisor' => 'S',
+                'Accountant'    => 'A',
+                default      => abort(403, 'Unauthorized'),
+            };
+    
+            $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
+            // var_dump($queryTypeJson);die;
+    
+            // Insert data into tnelb_workflow table
+                $workflow = WorkflowA::create([ // Ensure this is the correct model
+                    'application_id' => $request->application_id,
+                    'appl_status'    => 'RET', 
+                    'processed_by'   => $request->return_by,
+                    'forwarded_to'   => $request->forwarded_to,
+                    'role_id'        => $staffID,
+                    'is_verified'    => $request->checkboxes,
+                    'query_status'   => $query_status,
+                    'return_reason'  => json_encode($request->reasons ?? []),
+                    
+                    // "Yes" or "No"
+                    'remarks'        => $request->remarks,
+                    'created_at'     => now(), // Automatically managed if model has timestamps
+                    'login_id'       => $staffID,
+                    'queries'        => $queryTypeJson,
+                    'raised_by'      => $query_status == 'P' ? $raised_by : ''
+                ]);
+    
+    
+    
+                    WorkflowA::where('application_id', $request->application_id)
+                     ->where('processed_by', $request->return_by)
+                     ->where('role_id', $staffID)
+                    ->orderByDesc('id')
+                    ->limit(1)
+                    ->update([
+                        'created_at' => DB::raw('NOW()'),
+                    ]);
+    
+            
+    
+            EA_Application_model::where('application_id', $request->application_id)
+                ->update([
+                    'application_status' =>  'RET', 
+                    'return_date' => DB::raw('NOW()'), 
+                    'return_reason'  => json_encode($request->reasons ?? []),
+                    'processed_by'  => $processed_by, 
+                    'updated_at' => DB::raw('NOW()'),
+                ]);
+                
+    
+            //Get Role 
+            $role = DB::table('mst__roles')
+            ->where('id', $request->forwarded_to)
+            ->select('name')
+            ->first();
+            // var_dump($role->name);die;
+            
+    
+            return response()->json([
+                'status' => "success",
+                'message' => "Application Returned to $role->name successfully!",
+            ], 201);
+        }
+
     public function renewal_apps()
     {
 

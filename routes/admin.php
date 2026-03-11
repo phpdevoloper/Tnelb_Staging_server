@@ -43,6 +43,8 @@
     use App\Http\Controllers\MediaController;
     use App\Http\Controllers\RolesController;
     use App\Http\Controllers\PDFController;
+    use App\Http\Controllers\Admin\FormsaprocessController;
+
 // use App\Models\Admin;
 
 
@@ -562,6 +564,10 @@
             // -------checkallvalidity--------------
           Route::post('/checkallvalidity', [adminlicensecontroller::class, 'check_ealicence_validity'])
            ->name('checkallvalidity');
+
+
+        //    -------returntoapplicant (Form A contractor)-------------
+        Route::post('/returntoapplicant', [ApplicationController::class, 'returntoapplicantForma'])->name('returntoapplicant');
 
 
         });

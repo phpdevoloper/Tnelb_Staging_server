@@ -113,11 +113,23 @@
                                                     </span>
                                                 </div>
                                                 <div class="d-flex flex-wrap gap-1 gap-sm-2 justify-content-center">
-                                                    <a href="{{ route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']) }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
+                                                    @php
+                                                        // For contractor Form A cards, clicking "New" should go to the
+                                                        // existing Form A applications list (/admin/view_form/A).
+                                                        $isFormAContractor = str_contains(mb_strtolower($summary['licence_name'] ?? ''), 'contractor')
+                                                            && strtoupper($summary['form_name'] ?? '') === 'FORM A';
+                                                        $newHref = $isFormAContractor
+                                                            ? route('admin.view_form', ['type' => 'A'])
+                                                            : route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']);
+                                                        $renewHref = $isFormAContractor
+                                                            ? route('admin.view_form', ['type' => 'A'])
+                                                            : route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);
+                                                    @endphp
+                                                    <a href="{{ $newHref }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
                                                         <span class="small fw-semibold text-uppercase">New</span>
                                                         <span class="badge rounded-pill {{ ($summary['new_count'] ?? 0) > 0 ? 'bg-success text-white' : 'bg-secondary text-white' }}">{{ $summary['new_count'] ?? 0 }}</span>
                                                     </a>
-                                                    <a href="{{ route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']) }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
+                                                    <a href="{{ $renewHref }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
                                                         <span class="small fw-semibold text-uppercase">Renewal</span>
                                                         <span class="badge rounded-pill {{ ($summary['renewal_count'] ?? 0) > 0 ? 'bg-success text-white' : 'bg-secondary text-white' }}">{{ $summary['renewal_count'] ?? 0 }}</span>
                                                     </a>
@@ -156,11 +168,36 @@
                                                     </span>
                                                 </div>
                                                 <div class="d-flex flex-wrap gap-1 gap-sm-2 justify-content-center">
-                                                    <a href="{{ route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']) }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
+                                                    @php
+                                                        // For contractor Form A cards, route based on staff role:
+                                                        // - Supervisor -> /admin/view_form/A  (SupervisorController@view_forma)
+                                                        // - Accountant -> /admin/view_forma_pending/A (AuditorController@view_forma_pending)
+                                                        // - Secretary  -> /admin/view_sec_forma_pending/A (SecretaryController@view_sec_forma_pending)
+                                                        $isFormAContractor = str_contains(mb_strtolower($summary['licence_name'] ?? ''), 'contractor')
+                                                            && strtoupper($summary['form_name'] ?? '') === 'FORM A';
+                                                        $roleName = $staff->name ?? '';
+                                                        if ($isFormAContractor && in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
+                                                            $contractorNewHref = route('admin.view_form', ['type' => 'A']);
+                                                            $contractorRenewHref = route('admin.view_form', ['type' => 'A']);
+                                                        } elseif ($isFormAContractor && $roleName === 'Accountant') {
+                                                            $contractorNewHref = route('admin.view_forma_pending', ['type' => 'A']);
+                                                            $contractorRenewHref = route('admin.view_forma_pending', ['type' => 'A']);
+                                                        } elseif ($isFormAContractor && $roleName === 'Secretary') {
+                                                            $contractorNewHref = route('admin.view_sec_forma_pending', ['type' => 'A']);
+                                                            $contractorRenewHref = route('admin.view_sec_forma_pending', ['type' => 'A']);
+                                                        } elseif ($isFormAContractor && $roleName === 'President') {
+                                                            $contractorNewHref = route('admin.view_form', ['type' => 'A']);
+                                                            $contractorRenewHref = route('admin.view_form', ['type' => 'A']);
+                                                        } else {
+                                                            $contractorNewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']);
+                                                            $contractorRenewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);
+                                                        }
+                                                    @endphp
+                                                    <a href="{{ $contractorNewHref }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
                                                         <span class="small fw-semibold text-uppercase">New</span>
                                                         <span class="badge rounded-pill {{ ($summary['new_count'] ?? 0) > 0 ? 'bg-success text-white' : 'bg-secondary text-white' }}">{{ $summary['new_count'] ?? 0 }}</span>
                                                     </a>
-                                                    <a href="{{ route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']) }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
+                                                    <a href="{{ $contractorRenewHref }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
                                                         <span class="small fw-semibold text-uppercase">Renewal</span>
                                                         <span class="badge rounded-pill {{ ($summary['renewal_count'] ?? 0) > 0 ? 'bg-success text-white' : 'bg-secondary text-white' }}">{{ $summary['renewal_count'] ?? 0 }}</span>
                                                     </a>

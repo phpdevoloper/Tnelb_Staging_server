@@ -25,6 +25,14 @@
         color:#3b3f5c!important;
         font-size:15px;
     }
+
+    .file_view{
+        color: #0082ff;
+    }
+
+     .file_view i{
+        color: red;
+    }
 </style>
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
@@ -86,7 +94,7 @@
                                         <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-tab-pane" type="button" role="tab" aria-controls="contact-tab-pane" aria-selected="false">Staff and Bank Details</button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="other-tab" data-bs-toggle="tab" data-bs-target="#other-tab-panel" type="button" role="tab" aria-controls="other-tab-panel" aria-selected="false">Other Details</button>
+                                        <button class="nav-link" id="other-tab" data-bs-toggle="tab" data-bs-target="#other-tab-panel" type="button" role="tab" aria-controls="other-tab-panel" aria-selected="false">Other Details and Address Proof</button>
                                     </li>
 
                                      <li class="nav-item" role="presentation">
@@ -142,7 +150,7 @@
 
 
                                             <p class="mt-4 mb-2 fw-bold text-info">3. Ownership Type - Proprietor / Partners / Directors Details</p>
-                                                       <div class="row">
+                                                    <div class="row">
                                                         <div class="col-lg-3">
 
 
@@ -151,7 +159,7 @@
                                                             
 
                                                         </div>
-                                                        <div class="col-lg-8">
+                                                        <div class="col-lg-3">
 
                                                            <p> 
                                                                 @if($applicant->application_ownershiptype == 'pr') 
@@ -170,7 +178,17 @@
 
                                                         </div>
 
-                                            </div>
+                                                        <!-- ------------------------ownership doc--------- -->
+                                                         @if($applicant->application_ownershiptype == 'pt' || $applicant->application_ownershiptype == 'pvt' || $applicant->application_ownershiptype == 'ltd') 
+                                                       
+                                                        <div class="col-lg-3">
+
+                                                          <a href="{{asset($applicant->ownership_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View Ownership Document</a>
+
+                                                        </div>
+                                                        @endif
+
+                                                    </div>
                                             <div class="table-responsive">
                                                 <table class="table table-bordered">
                                                     <thead>
@@ -180,9 +198,9 @@
                                                               <th>Father/s
                                                                 Husband/s
                                                                 Name</th>
-                                                            <th>Age</th>
+                                                            <th>D.O.B, Age</th>
                                                             <th>Address </th>
-                                                            <th>Qualifications</th>
+                                                            <th>Qualifications and Proof</th>
                                                              
 
                                                             <th>Present business of
@@ -229,9 +247,10 @@
                                                             </td>
                                                             <td>{{ $proprietor->proprietor_name }} </td>
                                                             <td> {{ $proprietor->fathers_name }}</td>
-                                                            <td>{{ $proprietor->age }} </td>
+                                                            <td>{{ \Carbon\Carbon::parse($proprietor->dob)->format('d-m-Y') 
+                                                                 }}, {{ $proprietor->age }} </td>
                                                             <td>{{ $proprietor->proprietor_address }} </td>
-                                                             <td> {{ $proprietor->qualification }}</td>
+                                                             <td> {{ $proprietor->qualification }}, {{ $proprietor->qualification_text }} <a href="{{asset($proprietor->educational_proof)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> </a></td>
                                                            
                                                             <td> {{ $proprietor->present_business }}</td>
 
@@ -378,86 +397,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="row mt-2">
-                                                <div class="col-lg-8 col-8">
-                                                    <p class="text-info"><strong>6. Aadhaar</strong></p>
-
-                                                    <p class="text-info"><strong>7. Pan Card</strong></p>
-
-                                                     <p class="text-info"><strong>8. GST</strong></p>
-                                                </div>
-                                               @php
-                                                    use Illuminate\Support\Str;
-                                                    use Illuminate\Support\Facades\Crypt;
-
-                                                 
-
-                                                    // Aadhaar
-                                                    $decryptedaadhar = Crypt::decryptString($applicant->aadhaar);
-
-                                                  // Aadhaar doc
-                                                    $decryptedaadhar_doc = Crypt::decryptString($documents->aadhaar_doc);
-
-                                                    // PAN doc
-                                                    $decryptedpancard_doc = Crypt::decryptString($documents->pancard_doc);
-
-                                                    // GST doc
-                                                    $decryptedgst_doc = Crypt::decryptString($documents->gst_doc);
-
-                                                    // PAN
-                                                    $decryptedpan =  Crypt::decryptString($applicant->pancard);
-
-                                                    // GST
-                                                    $decryptedgst =  Crypt::decryptString($applicant->gst_number);
-
-                                                    // Masking
-                                                    $masked = strlen($decryptedaadhar) === 12
-                                                        ? str_repeat('X', 8) . substr($decryptedaadhar, -4)
-                                                        : 'Invalid Aadhaar';
-
-                                                    $maskedPan = strlen($decryptedpan) === 10
-                                                        ? str_repeat('X', 6) . substr($decryptedpan, -4)
-                                                        : 'Invalid PAN';
-
-                                                    $maskedgst = strlen($decryptedgst) === 15
-                                                        ? str_repeat('X', 6) . substr($decryptedgst, -4)
-                                                        : 'Invalid GST';
-                                                    @endphp
- 
-                                                <div class="col-lg-4 col-4 aadhaar_doc_file">
-                                                    <div class="row">
-                                                          <div class="col-lg-6 col-6">
-                                                             <p>  {{ $masked }}</p>
-                                                          </div>
-
-                                                           <div class="col-lg-6 col-6">
-                                                             <a href="{{ asset($decryptedaadhar_doc) }}" target="_blank"><i class="fa fa-file-pdf-o text-red"></i> View </a>
-                                                          </div>
-                                                    </div>
-
-                                                    <div class="row">
-                                                          <div class="col-lg-6 col-6">
-                                                             <p> {{ $maskedPan }}</p>
-                                                          </div>
-
-                                                           <div class="col-lg-6 col-6">
-                                                             <a href="{{ asset($decryptedpancard_doc) }}" target="_blank"><i class="fa fa-file-pdf-o text-red"></i> View </a>
-                                                          </div>
-                                                    </div>
-
-                                                    <div class="row">
-                                                          <div class="col-lg-6 col-6">
-                                                             <p> {{ $maskedgst }}</p>
-                                                          </div>
-
-                                                           <div class="col-lg-6 col-6">
-                                                             <a href="{{asset($decryptedgst_doc) }}" target="_blank"><i class="fa fa-file-pdf-o text-red"></i> View </a>
-                                                          </div>
-                                                    </div>
-                                                   
-
-                                                </div>
-                                            </div>
+                                            
                                         </div>
                                     </div>
 
@@ -523,14 +463,14 @@
 
                                     </div>
                                     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
-                                        <p class="mt-4 mb-2 fw-bold text-info">9. Staff Details</p>
+                                        <p class="mt-4 mb-2 fw-bold text-info">6. Staff Details</p>
                                         <div class="table-responsive">
                                             <table class="table table-bordered">
                                                 <thead>
                                                     <tr>
                                                         <th>Staff Name</th>
                                                         
-                                                        <th>Staff <br> Qualification</th>
+                                                        
                                                          <th>Staff Category</th>
                                                         <th>Competency Certificate Number <br>
                                                             Competency Certificate Validity
@@ -545,7 +485,7 @@
                                                     @forelse ($staffdetails as $index => $staff)
                                                     <tr>
                                                          <td>{{ $staff->staff_name }}</td>
-                                                        <td>{{ $staff->staff_qualification }}</td>
+                                                        
                                                         <td>{{ $staff->staff_category }}</td>
                                                         <td>{{ $staff->cc_number }},{{ \Carbon\Carbon::parse($staff->cc_validity)->format('d-m-Y') }} 
                                                             
@@ -711,7 +651,7 @@
                                            
                                             <div class="row ">
                                                 <div class="col-lg-12">
-                                                    <p class="text-info"><strong>10. Bank Solvency Certificate Details</strong></p>
+                                                    <p class="text-info"><strong>7. Bank Solvency Certificate Details</strong></p>
                                                 </div>
                                             </div>
                                         
@@ -745,6 +685,15 @@
                                                     <P>{{ $banksolvency->bank_amount ?? '' }}</P>
                                                 </div>
                                             </div>
+
+                                              <div class="row">
+                                                <div class="col-lg-2">
+                                                    <p><strong>Proof</strong></p>
+                                                </div>
+                                                <div class="col-lg-6">
+                                                    <a href="{{asset($banksolvency->bank_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View </a>
+                                                </div>
+                                            </div>
                                          
                                     </div>
                                 </div>
@@ -755,8 +704,8 @@
                                     <div class="row mt-3">
 
 
-                                        <div class="col-lg-10">
-                                            <p><strong>13. Has the applicant or any of his/her staff referred to under item 6, been
+                                        <div class="col-lg-8">
+                                            <p><strong>8. Has the applicant or any of his/her staff referred to under item 6, been
                                                     at any time convicted in any court of law or punished by any other
                                                     authority for criminal offences</strong></p>
                                         </div>
@@ -764,34 +713,66 @@
                                             <p>{{ strtoupper($applicant->criminal_offence) }}</p>
                                         </div>
 
+                                        
+
+                                                 @php
+                                                    $criminaloffence = $attachments_cl->where('type', 'criminaloffence')->first();
+                                                @endphp
+
+                                                @if($criminaloffence)
+                                                    <div class="col-lg-2">
+                                                        <a href="{{asset($criminaloffence->file_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                                                    </div>
+                                                @endif
 
 
 
-                                        <div class="col-lg-10">
-                                            <p><strong>12.(i) Whether consent letter, of the competency certificate holder are enclosed. (including for self)</strong></p>
+
+                                        <div class="col-lg-8">
+                                            <p><strong>9.(i) Whether consent letter, of the competency certificate holder are enclosed. (including for self)</strong></p>
                                         </div>
                                         <div class="col-lg-2">
                                             <p>{{ strtoupper($applicant->consent_letter_enclose) }}</p>
                                         </div>
+                                    
+                                                 @php
+                                                    $consentletter = $attachments_cl->where('type', 'consentletter')->first();
+                                                @endphp
+
+                                                @if($consentletter)
+                                                    <div class="col-lg-2">
+                                                        <a href="{{asset($consentletter->file_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                                                    </div>
+                                                @endif
+                                        
 
 
-                                        <div class="col-lg-10">
+                                        <div class="col-lg-8">
                                             <p><strong>(ii) Whether original booklet of competency certificate holders are enclosed? (including for self)</strong></p>
                                         </div>
                                         <div class="col-lg-2">
                                             <p>{{ strtoupper($applicant->cc_holders_enclosed) }}</p>
                                         </div>
+                                                 @php
+                                                    $ccholders = $attachments_cl->where('type', 'ccholders')->first();
+                                                @endphp
+
+                                                @if($ccholders)
+                                                    <div class="col-lg-2">
+                                                        <a href="{{asset($ccholders->file_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                                                    </div>
+                                                @endif
 
 
-                                        <div class="col-lg-10">
-                                            <p><strong>13. (i). Whether purchase bill for all the instruments are enclosed in Original.</strong></p>
+                                        <div class="col-lg-8">
+                                            <p><strong>10. (i). Whether purchase bill for all the instruments are enclosed in Original.</strong></p>
                                         </div>
                                         <div class="col-lg-2">
                                             <p>{{ strtoupper($applicant->purchase_bill_enclose) }}</p>
                                         </div>
 
 
-                                        <div class="col-lg-10">
+                                        <div class="col-lg-8">
                                             <p><strong>(ii). Whether the test reports for instruments and deeds for possess of the instruments are enclosed in original?</strong></p>
                                         </div>
                                         <div class="col-lg-2">
@@ -799,13 +780,23 @@
                                         </div>
 
 
-                                        <div class="col-lg-10">
-                                            <p><strong>14. (i). Whether specimen signature of the Proprietor or of the authorised
+                                        <div class="col-lg-8">
+                                            <p><strong>11. (i). Whether specimen signature of the Proprietor or of the authorised
                                                     signatory (in case of limited company in triplicate is enclosed)</strong></p>
                                         </div>
                                         <div class="col-lg-2">
                                             <p>{{ strtoupper($applicant->specimen_signature_enclose) }}</p>
                                         </div>
+
+                                           @php
+                                                    $specimensignature = $attachments_cl->where('type', 'specimensignature')->first();
+                                                @endphp
+
+                                                @if($specimensignature)
+                                                    <div class="col-lg-2">
+                                                        <a href="{{asset($specimensignature->file_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                                                    </div>
+                                                @endif
 
 
                                         <div class="col-lg-10">
@@ -855,7 +846,7 @@
 
                                         </div>
 
-                                        <div class="col-lg-10">
+                                        <div class="col-lg-8">
                                             <p><strong>(iii). Whether the applicant enclosed the specimen signature of the above
                                                     person/ persons in triplicate in a separate sheet of paper</strong></p>
                                         </div>
@@ -863,8 +854,58 @@
                                             <p>{{ strtoupper($applicant->separate_sheet) }}</p>
                                         </div>
 
+                                             @php
+                                                    $separatesheet = $attachments_cl->where('type', 'separatesheet')->first();
+                                                @endphp
+
+                                                @if($separatesheet)
+                                                    <div class="col-lg-2">
+                                                        <a href="{{asset($separatesheet->file_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                                                    </div>
+                                                @endif
+
+                                    </div>
+
+                                    <div class="row mt-3">
+                                           
+                                            <div class="row ">
+                                                <div class="col-lg-12">
+                                                    <p class="text-info"><strong>12. Address Proof  </strong></p>
+                                                </div>
+                                            </div>
+                                        
+                                            <div class="row">
+                                                <div class="col-lg-3">
+                                                    <p><strong>Type of Address Proof</strong></p>
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>{{$addressproof->type_doc ?? ''}}</p>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-3">
+                                                    <p><strong>GST/ Rental Aggrement/Others No</strong></p>
+                                                </div>
+                                                <div class="col-lg-4">
+                                                    <p>{{$addressproof->addressproofno ?? ''}}</p>
+                                                </div>
+                                                  
+                                            </div>
+                                            
+
+                                              <div class="row">
+                                                <div class="col-lg-3">
+                                                    <p><strong>Address Proof</strong></p>
+                                                </div>
+                                                <div class="col-lg-6">
+                                                    <a href="{{asset($addressproof->file_doc)}}" class="file_view fw-bold" target="_blank"><i class="fa fa-file-pdf-o"></i> View </a>
+                                                </div>
+                                            </div>
+                                         
                                     </div>
                                 </div>
+
+                                
 
                                 <!-- ----------------equipment-tab--------------------- -->
                                    <div class="tab-pane fade" id="equipment-tab-panel" role="tabpanel" aria-labelledby="equipment-tab" tabindex="0">
@@ -881,9 +922,7 @@
 
                                             
                                             */
-                                            $equipmentMap = $equipmentlist
-                                            ->pluck('equipment_value', 'equip_id')
-                                            ->toArray();
+                                           $equipmentMap = collect($equipmentlist)->keyBy('equipment_id');
 
                                             /*
                                             Get licence_id from stored table
@@ -895,10 +934,14 @@
                                                 <table class="table table-bordered table-sm align-middle">
                                                     <thead class="">
                                                         <tr>
-                                                            <th style="width:5%">S.No</th>
+                                                            <th >S.No</th>
                                                             <th>Equipment Name</th>
-                                                            <th>Equipment Type</th>
-                                                            <th>Availability</th>
+                                                            <th>Equipment <br> Type</th>
+                                                            <th>Serial No</th>
+                                                            <th>Make Model</th>
+                                                            <th>Test Report</th>
+                                                            <th>Purchase Report </th>
+                                                            <th>Date of Test </th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -908,7 +951,15 @@
                                                         @if($equip->equip_licence_name == $licenceId)
 
                                                         @php
-                                                        $value = $equipmentMap[$equip->id] ?? 'no';
+                                                        $userEquip = $equipmentMap[$equip->id] ?? null;
+
+                                                        $serial = $userEquip->serial_no ?? '';
+                                                        $model  = $userEquip->model_no ?? '';
+                                                        $date   = $userEquip->dateoftest ?? '';
+
+                                                        $testfile   = $userEquip->testreport_file ?? '';
+
+                                                        $purchasefile   = $userEquip->purchasereport_file;
                                                         @endphp
 
                                                         <tr>
@@ -924,11 +975,15 @@
 
                                                             </td>
 
-                                                            <td>
+                                                            <td>{{ strtoupper($serial) }}</td>
 
-                                                                {{ strtoupper($value) }}
+                                                            <td>{{ strtoupper($model) }}</td>
+                                                          
 
-                                                            </td>
+                                                            <td><a href="{{asset($testfile)}}" target="_blank" class="file_view fw-bold"><i class="fa fa-file-pdf-o"></i> View </a> </td>
+                                                            <td><a href="{{asset($purchasefile)}}" target="_blank" class="file_view fw-bold"><i class="fa fa-file-pdf-o"></i> View </a> </td>
+
+                                                            <td>{{ strtoupper($date) }}</td>
                                                         </tr>
 
                                                         @endif
@@ -1125,11 +1180,16 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="row">
                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
                     <div class="statbox widget box box-shadow">
+                        
                         <div class="widget-header">
                             <h4>Remarks</h4>
+
+                            
+
                             <textarea class="form-control" name="remarks" id="remarks" rows="4" cols="50"  maxlength="300"></textarea>
                         </div>
                          <div class="modal-footer mt-2" style="justify-content: center;">
@@ -1162,6 +1222,8 @@
 
                                 @elseif ($role == 'Secretary')
 
+                                  
+
                                    
                                         <button class="btn btn-success" id="confirmForwardPres">
                                             Forward to {{ $workflow[$role] }}
@@ -1171,6 +1233,10 @@
                                     <button id="confirmReturnBtn" class="btn btn-warning">
                                         Return to Supervisor
                                     </button>
+
+                                     <button class="btn btn-info" id="returntoapplicant">
+                                            Return to Applicant
+                                        </button>
                                     <button class="btn btn-danger">Reject</button>
 
                                 @elseif ($role == 'President')
@@ -1179,6 +1245,9 @@
                                     </button>
                                     <button id="confirmReturnBtn" class="btn btn-warning">
                                         Return to Supervisor
+                                    </button>
+                                    <button class="btn btn-info" id="returntoapplicant">
+                                        Return to Applicant
                                     </button>
                                     <!-- <button id="returntoSecretary" class="btn btn-warning">
                                         Return to Secretary
@@ -1197,7 +1266,66 @@
             </div>
         </div>
          <!-- ------------------------------------ -->
-         <div id="timelineMinimal" class="col-lg-6 layout-spacing">
+           @if ($role == 'Secretary' || $role == 'President')
+            <div class="col-lg-6 layout-spacing" >
+                <div class="statbox widget box box-shadow">
+                    <div class="widget-header" style="padding:0px 30px;">
+                        <div class="row">
+                            <div class="col-xl-12 col-md-12 col-sm-12 col-12">
+                                <h4>Reason for Return Application to Applicant</h4>
+                            </div>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="basic_details" name="return_reasons[]" value="basic_details" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="basic_details"> 1 & 2) Applicant Basic Detail (Name & Address)</label>
+                        </div>
+                         <div class="form-check">
+                          <input type="checkbox" id="ownership_details" name="return_reasons[]" value="ownership_details" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="ownership_details">3) Applicant Ownership Details </label>
+                        </div>
+
+                           <div class="form-check">
+                          <input type="checkbox" id="authorized_sign" name="return_reasons[]" value="authorized_sign" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="authorized_sign">4) Name and designation of authorised signatory </label>
+                        </div>
+
+
+                             <div class="form-check">
+                          <input type="checkbox" id="previous_licence" name="return_reasons[]" value="previous_licence" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="previous_licence">5) Previous Contractor's Licence Details </label>
+                        </div>
+
+                         <div class="form-check">
+                           <input type="checkbox" id="staff_details" name="return_reasons[]" value="staff_details" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="staff_details">6) Staff Details</label>
+                        </div>
+                         <div class="form-check">
+                           <input type="checkbox" id="bank_solvency" name="return_reasons[]" value="bank_solvency" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="bank_solvency">7) Bank Solvency </label>
+                        </div>
+
+                         <div class="form-check">
+                           <input type="checkbox" id="atachment_points" name="return_reasons[]" value="atachment_points" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="bank_solvency">8 to 11)  Attachments Points </label>
+                        </div>
+
+                        <div class="form-check">
+                           <input type="checkbox" id="address_proof" name="return_reasons[]" value="address_proof" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="address_proof">12)  Address Proof </label>
+                        </div>
+
+                        <div class="form-check">
+                           <input type="checkbox" id="equipments_details" name="return_reasons[]" value="equipments_details" class="form-check-input return-checkbox">
+                            <label class="form-check-label" for="equipments_details">13)  Equipments Details </label>
+                        </div>
+
+                        <div id="checkbox_error" class="text-danger mt-2 fw-bold" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+            @endif
+                <!-- ------------------------------------- -->
+         <div id="timelineMinimal" class="col-lg-12 layout-spacing">
             <div class="statbox widget box box-shadow">
                 <div class="widget-header">
                     <div class="row">
@@ -1496,6 +1624,10 @@
             var licensename      = @json($applicant->license_name);
             var applicationId    = @json($applicant->application_id);
             var processedBy      = @json(Auth::user()->name);
+
+            var old_issuedat      = @json($old_issued_at_date);
+
+            // alert(old_issuedat);
             var remarks          = $("#remarks").val().trim();
 
             var firstCertNo = @json($staffdetails->first()->cc_number);
@@ -1607,6 +1739,7 @@
                                     qc_validity_date: qc_validity_date,
                                     bank_validity: bank_validity,
                                     appl_type: appl_type,
+                                    old_issuedat : old_issuedat
                             },
                             success: function (response) {
 
@@ -1915,6 +2048,103 @@
             });
 
         });
+
+
+
+        // -----------------return to applicant---------------------
+
+        $('#returntoapplicant').on('click', function () {
+            
+ 
+            var applicationId   = @json($applicant->application_id);
+            var returnBy        = @json(Auth::user()->name);
+            var forwardedTo     = @json($returnForwardUser->roles_id ?? 0);
+            var checkboxStatus = "Yes";
+            
+            var remarks         = $("#remarks").val().trim();
+          
+     
+         let checkedReasons = [];
+
+        $('.return-checkbox:checked').each(function() {
+            checkedReasons.push($(this).val());
+        });
+
+        if (checkedReasons.length === 0) {
+
+            // Show error message
+            $("#checkbox_error")
+                .text("Select at least one reason before return.")
+                .fadeIn();
+
+            // Smooth scroll to checkbox section
+            $('html, body').animate({
+                scrollTop: $("#checkbox_error").offset().top - 150
+            }, 600);
+
+            return;
+        } else {
+            // Hide error if valid
+            $("#checkbox_error").fadeOut();
+        }
+            
+            
+            let queryswitch = $("#Queryswitch").prop("checked");
+            queryType = $("#queryType").val();
+            let errorBox = $("#query_error");
+
+            Swal.fire({
+              title: "Return",
+              html: 'Confirm to return this application!',
+                
+              showCancelButton: true,
+              confirmButtonText: "Return to Applicant",
+              cancelButtonText: "Cancel",
+              focusConfirm: false,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '{{ route('admin.returntoapplicant') }}',
+                        type: 'POST',
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                        },
+                        data: {
+                            application_id  : applicationId,
+                            return_by       : returnBy,
+                            forwarded_to    : forwardedTo,
+                            remarks         : remarks || "No remarks provided",
+                            checkboxes      : checkboxStatus,
+                            reasons         : checkedReasons,
+                            queryswitch     : queryswitch,
+                            "queryType[]": queryType 
+                        },
+                        success: function (response) {
+                   
+                            if (response.status == "success") {
+                                Swal.fire({
+                                    
+                                    title: "Success",
+                                    text: response.message,
+                                    confirmButtonText: "OK",
+                                    allowOutsideClick: false
+                                }).then(() => {
+                                    window.location.href = "{{ url('admin/dashboard') }}";
+                                });
+                            }
+                        },
+                        error: function (xhr) {
+                            let errorMessage = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "An unexpected error occurred.";
+                            $('#errorMessage').text(errorMessage);
+                            $('#errorModal').modal('show');
+                        }
+                    });
+                }
+            });
+
+        });
+
+        // -----------------------------------------------
  forwardbtn.click(function() {
  
             Swal.fire({

@@ -109,54 +109,20 @@ class AuditorController extends Controller
         return view('admin.supervisor.completed', compact('workflows'));
     }
 
-   public function view_forma_pending($type)
+    public function view_forma_pending($type)
     {
-
-        $userRole = Auth::user()->roles_id;
-
-        // EA Applications Query
-        $eaQuery = DB::table('tnelb_ea_applications')
-            ->whereIn('application_status', ['F'])
-            ->whereIn('processed_by', ['S'])
-            ->select(
-                'application_id',
-                'form_name',
-                'application_status',
-                'processed_by',
-                'dt_submit',
-                DB::raw("'EA' as source_table")
-            );
-
-     
-
-        // Combine both queries
-        $unionQuery = $eaQuery;
-
-        // Execute the union and order globally
-        $workflows = DB::query()
-            ->fromSub($unionQuery, 'combined')
-            ->orderBy('dt_submit', 'DESC')
-            ->get();
-
-        // Handle if no results
-      
-
-        // Identify source (EA or ESA) using the alias we added
-        $sourceTable = $workflows->first()->source_table ?? null;
-    
-
-        // Prepare individual lists (for passing to respective views)
+        // Accountant should see Form A contractor applications that have been
+        // forwarded by Supervisor to Accountant: processed_by = 'A', status F/RF.
         $workflows_ea = DB::table('tnelb_ea_applications')
-            ->whereIn('application_status', ['F'])
-            ->whereIn('processed_by', ['S'])
+            ->where('form_name', 'A')
+            ->whereIn('application_status', ['F', 'RF'])
+            ->where('processed_by', 'S')
             ->orderBy('dt_submit', 'DESC')
             ->get();
 
-           
-        // Load view based on type
-     
-            return view('admin.auditor.view_forma', compact('workflows_ea'));
         
+
+        return view('admin.auditor.view_forma', compact('workflows_ea'));
     }
 
 

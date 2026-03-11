@@ -270,7 +270,12 @@ class LoginController extends Controller
                 'f.form_name',
                 'f.form_code',
                 'f.licence_name',
+                // color_code drives the card background class
                 'f.cert_licence_code as color_code',
+                // cert_licence_code (EA, EB, etc.) is used to map contractor
+                // application rows (tnelb_ea_applications.form_name) back to
+                // the correct mst_licences IDs when building contractorCounts.
+                'f.cert_licence_code as cert_licence_code',
                 'f.category_id'
             )
             ->get()
@@ -476,9 +481,14 @@ class LoginController extends Controller
             });
             
             if ($contractorLicences->isNotEmpty()) {
-                // Map licence code (EA, EB, etc) to one or more mst_licences IDs
+                // Map contractor form_code (A, B, etc) to one or more mst_licences IDs.
+                // Contractor application tables (e.g. tnelb_ea_applications) store form_name
+                // as the base form code (A, B, ...), not the cert_licence_code (EA, EB, ...),
+                // so we group by form_code here to make the mapping line up.
                 $contractorFormToIds = $contractorLicences
-                    ->groupBy('cert_licence_code')
+                    ->groupBy(function ($lic) {
+                        return strtoupper((string) ($lic->form_code ?? ''));
+                    })
                     ->map(function ($group) {
                         return $group->pluck('id')->all();
                     });
@@ -491,7 +501,10 @@ class LoginController extends Controller
 
                 foreach ($contractorTables as $tbl) {
                     $rows = DB::table($tbl . ' as ta')
-                        ->whereIn('ta.application_status', ['P', 'RE'])
+                        // For contractor licences, treat both freshly submitted and
+                        // in-workflow applications as "pending" so cards show any
+                        // application that is not finally approved/rejected.
+                        ->whereIn('ta.application_status', ['P', 'RE', 'F', 'RF'])
                         ->whereIn('ta.payment_status', ['payment', 'paid'])
                         ->selectRaw('ta.form_name, ta.appl_type, COUNT(*) as cnt')
                         ->groupBy('ta.form_name', 'ta.appl_type')
@@ -1275,20 +1288,19 @@ class LoginController extends Controller
 
 
     // -----------------form A -------------------
- public function applicants_detail_forma($applicant_id)
+    public function applicants_detail_forma($applicant_id)
     {
 
+        // dd($applicant_id);
+        // exit;
 
         $returnForwardUser = null;
 
         $staff = Auth::user();
 
-
         if (!$staff || !$staff->roles_id) {
             return abort(403, 'Unauthorized');
         }
-
-
 
         $applicantQuery1 = DB::table('tnelb_ea_applications')
             ->leftJoin('payments', 'tnelb_ea_applications.application_id', '=', 'payments.application_id')
@@ -1304,23 +1316,46 @@ class LoginController extends Controller
                 'payments.late_fee',
             );
 
-        // $applicantQuery2 = DB::table('tnelb_esa_applications')
-        //     ->leftJoin('payments', 'tnelb_esa_applications.application_id', '=', 'payments.application_id')
-        //     ->where('tnelb_esa_applications.application_id', $applicant_id)
-        //     ->where('payments.payment_status', 'success')
-        //     ->select(
-        //         'tnelb_esa_applications.*',
-        //             'payments.transaction_id',
-        //             'payments.payment_status',
-        //             'payments.amount',
-        //             'payments.payment_mode',
-        //             'payments.created_at as payment_date'
-        //     );
+    
 
         $applicant = $applicantQuery1
             // ->unionAll($applicantQuery2)
-            ->orderByDesc('created_at')
+            ->orderByDesc('dt_submit')
             ->first();
+
+        // dd($applicant->appl_type);
+        // exit;
+
+        $appl_type = trim($applicant->appl_type);
+        // dd($appl_type);
+        // exit;
+
+        if ($appl_type === 'R') {
+            // dd($applicant->old_application);
+            // exit;
+            $old_issuedat = DB::table('tnelb_license')
+                ->select('issued_at', 'created_at', 'expires_at')
+                ->where('application_id', $applicant->old_application)
+
+                ->unionAll(
+
+                    DB::table('tnelb_renewal_license')
+                        ->select('issued_at', 'created_at', 'expires_at')
+                        ->where('application_id', $applicant->old_application)
+
+                )
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $old_issued_at_date = $old_issuedat->expires_at;
+
+            // dd($old_issuedat->issued_at);
+            // exit;
+        } else {
+
+        $old_issued_at_date = '0';
+
+        }
 
 
         $formname = $applicant->form_name;
@@ -1328,11 +1363,9 @@ class LoginController extends Controller
         $license_name = DB::table('mst_licences')->where('form_code', $formname)->first();
 
 
-
         if (!$applicant) {
             return abort(404, 'Applicant not found');
         }
-
 
         if ($staff->name === "Supervisor") {
 
@@ -1393,7 +1426,6 @@ class LoginController extends Controller
                 ->first();
         }
 
-
         if ($staff->name === "Accountant") {
             $nextForwardUser = DB::table('mst__staffs__tbls')
                 ->where('name', 'Secretary')
@@ -1406,7 +1438,6 @@ class LoginController extends Controller
                 ->where('name', 'President')
                 ->select('name', 'roles_id')
                 ->first();
-
 
             $returnForwardUser = DB::table('mst__staffs__tbls')
                 ->where('name', 'Supervisor')
@@ -1435,14 +1466,12 @@ class LoginController extends Controller
             ->where('proprietor_flag', '1')
             ->get();
 
-
         $staffdetails = DB::table('tnelb_applicant_cl_staffdetails')
             ->where('application_id', $applicant_id)
             ->orderBy('id')
             ->get();
 
         $showQcWarning = false;
-
 
         $licence_name_validitystaff = MstLicence::where('form_code', $formname)->first();
 
@@ -1472,7 +1501,6 @@ class LoginController extends Controller
                 // exit;
 
 
-
                 // Licence period (months)
                 $licencePeriodEnd = Carbon::now()->addMonths((int) $licence_validitystaff->validity);
                 // dd($licencePeriodEnd);
@@ -1486,17 +1514,15 @@ class LoginController extends Controller
 
 
 
-
         $staff = Auth::user();
         if (!$staff || !$staff->roles_id) {
             return abort(403, 'Unauthorized');
         }
 
-
         $user_entry = DB::table('tnelb_ea_applications')
             ->where('application_id', $applicant_id)
             ->select('*')
-            
+
             ->first();
 
         $documents = DB::table('tnelb_applicant_doc_A')
@@ -1504,7 +1530,6 @@ class LoginController extends Controller
             ->select('*')
 
             ->first();
-
 
         $workflows = DB::table('tnelb_workflow_a')
             ->leftjoin('tnelb_ea_applications', 'tnelb_workflow_a.application_id', '=', 'tnelb_ea_applications.application_id')
@@ -1525,38 +1550,42 @@ class LoginController extends Controller
 
         $showbankWarning = false;
 
-        $banksolvency = Tnelb_banksolvency_a::where('application_id', $applicant_id)->where('status', '1')->first();
+        $banksolvency = Tnelb_banksolvency_a::where('application_id', $applicant_id)
+            ->where('status', '1')
+            ->first();
 
+        if ($banksolvency && $banksolvency->bank_validity && $licence_validitystaff && $licence_validitystaff->validity) {
+            $bankValidity = Carbon::parse($banksolvency->bank_validity);
 
+            // Licence period (months)
+            $bankvalidityend = Carbon::now()->addMonths((int) $licence_validitystaff->validity);
 
-        $bankValidity = Carbon::parse($banksolvency->bank_validity);
-
-        // dd($licence_validitystaff->validity);
-        // exit;
-
-
-
-        // Licence period (months)
-        $bankvalidityend = Carbon::now()->addMonths((int) $licence_validitystaff->validity);
-        // dd($licencePeriodEnd);
-        // exit;
-
-        if ($bankValidity->lt($bankvalidityend)) {
-            $showbankWarning = true;
+            if ($bankValidity->lt($bankvalidityend)) {
+                $showbankWarning = true;
+            }
         }
 
         // $equipmentlist = Equipment_storetmp_A::where('application_id', $applicant_id)->first();
-
 
         $equiplist = Mst_equipment_tbl::where('equip_licence_name', 8)
             ->where('status', 1)
             ->orderBy('id')
             ->get();
 
-        $equipmentlist = DB::table('equipmentforma_tbls')
+        $equipmentlist = DB::table('tnelb_equimentsuser_cl')
             // ->where('login_id', Auth::user()->login_id)
-            ->where('application_id', $applicant_id) // IMPORTANT
+            ->where('application_id', $applicant_id) 
             ->get();
+
+        $attachments_cl = DB::table('tnelb_attachments_cl')
+            
+            ->where('application_id', $applicant_id) 
+            ->get();
+
+            $addressproof = DB::table('tnelb_addressproof_cl')
+            
+            ->where('application_id', $applicant_id) 
+            ->first();
 
         // $view = match ($staff->name) {
         //     'President'  => 'admin.dashboard.applicants_president_forma',
@@ -1570,30 +1599,16 @@ class LoginController extends Controller
 
 
 
-        if ($formname == 'A') {
 
-            $view = match ($staff->name) {
-                'President'  => 'admin.dashboard.applicants_detail_forma',
-                'Secretary'  => 'admin.dashboard.applicants_detail_forma',
-                'Supervisor' => 'admin.dashboard.applicants_detail_forma',
-                // 'Supervisor2' => 'admin.dashboard.applicants_detail_supervisor',
-                'Accountant'    => 'admin.dashboard.applicants_detail_auditor_forma',
+        $view = match ($staff->name) {
+            'President'  => 'admin.dashboard.applicants_detail_forma',
+            'Secretary'  => 'admin.dashboard.applicants_detail_forma',
+            'Supervisor' => 'admin.dashboard.applicants_detail_forma',
+            // 'Supervisor2' => 'admin.dashboard.applicants_detail_supervisor',
+            'Accountant'    => 'admin.dashboard.applicants_detail_auditor_forma',
 
-                default      => abort(403, 'Unauthorized'),
-            };
-        } else {
-
-
-            $view = match ($staff->name) {
-                'President'  => 'admin.dashboard.formsa.applicants_detail_formsa',
-                'Secretary'  => 'admin.dashboard.formsa.applicants_detail_formsa',
-                'Supervisor' => 'admin.dashboard.formsa.applicants_detail_formsa',
-                // 'Supervisor2' => 'admin.dashboard.applicants_detail_supervisor',
-                'Accountant'    => 'admin.dashboard.applicants_detail_auditor_forma',
-
-                default      => abort(403, 'Unauthorized'),
-            };
-        }
+            default      => abort(403, 'Unauthorized'),
+        };
 
         return view($view, compact(
             'applicant',
@@ -1611,9 +1626,14 @@ class LoginController extends Controller
             'license_name',
             'equiplist',
             'equipmentlist',
-            'showbankWarning'
+            'showbankWarning',
+            'old_issued_at_date',
+            'attachments_cl',
+            'addressproof'
         ));
     }
+
+
 
 
     // Form A completed

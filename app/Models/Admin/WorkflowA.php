@@ -25,5 +25,6 @@ class WorkflowA extends Model
         'login_id',
         'queries',
         'raised_by',
+        'return_reason'
     ];
 }

@@ -39,6 +39,7 @@ use App\Http\Controllers\OldCertificateRenewalController;
 use App\Http\Controllers\OldContractorRenewalController;
 
 use App\Http\Controllers\DocumentUploadController;
+use App\Http\Controllers\ReturnapplicantController;
 
 // ------------------------ Public Pages ------------------------
 
@@ -106,6 +107,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/apply-form-a', [RegisterController::class, 'apply_form_a'])->name('apply-form-a');
 
+    Route::get('/apply-form-a_return/{application_id}', [ReturnapplicantController::class, 'returnforma'])->name('apply-form-a_return');
+
+    Route::get('/apply-form-a_renewal_draft/{application_id}', [EA_RenewalController::class, 'edit_renewaldraft'])->name('apply-form-a_renewal_draft');
+
+    // -----------------Return store ea------------------------
+    Route::post('/forma/storereturn', [ReturnapplicantController::class, 'storereturn'])->name('forma.storereturn');
+    Route::post('/forma/storerenewalreturn', [ReturnapplicantController::class, 'storerenewalreturn'])->name('forma.storerenewalreturn');
+
+
     // ---------formSA-----------------
     Route::get('/apply-form-sa', [FormSAController::class, 'index'])->name('apply-form-sa');
 
@@ -114,6 +124,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/formsa/storerecords', [FormSAController::class, 'storerecords'])->name('formsa.storerecords');
 
     Route::post('/formsa/storerenewal', [FormSAController::class, 'storerenewal'])->name('formsa.storerenewal');
+
+
+
 
     Route::get('/apply-form-sa_draft/{application_id}', [FormSAController::class, 'draft'])->name('apply-form-sa_draft');
 
