@@ -592,11 +592,6 @@ $(document).ready(function() {
         });
 
 
-// -----------form A --------------code ---------------
-
-
-        //-------------------------------------------------- competency form submit action---------------------------------------
-
       
         //-------------------------------------------------- competency form submit action---------------------------------------
 
@@ -1197,6 +1192,7 @@ $(document).ready(function() {
         });
 
 
+        // -----------form A --------------code ---------------
 
 
 
@@ -2012,6 +2008,246 @@ $(document).ready(function() {
 
     
         // ----------------------renew end-----------------------
+
+       // ----------------------Form A dependencies-----------------------
+
+       // contractor licence age calculation---------------------
+    $(document).on("change", ".dob", function() {
+
+        let dobVal = $(this).val();
+        if (!dobVal) return;
+
+        let dob = new Date(dobVal);
+        let today = new Date();
+
+        let age = today.getFullYear() - dob.getFullYear();
+        let m = today.getMonth() - dob.getMonth();
+
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+
+        // ✅ Target the nearest row instead of global section
+        let row = $(this).closest(".row");
+
+        if (age < 25) {
+            row.find(".age_error").text("Minimum age is 25");
+            row.find(".age").val('');
+            return;
+        }
+
+        row.find(".age_error").text('');
+        row.find(".age").val(age);
+    });
+
+    // ---CL forms qual-----------
+    $(document).on("change", ".qualification", function () {
+
+    let $section = $(this).closest(".border");
+
+    let qualification = $(this).val();
+
+    let $wrapper = $section.find(".qualTextWrapper");
+    let $input   = $wrapper.find("input[name='qual_text[]']");
+
+    if (qualification && qualification !== '8 TO 12') {
+
+        if (!$wrapper.is(":visible")) {
+            $wrapper.stop(true, true).slideDown(250);
+            setTimeout(() => $input.focus(), 260);
+        }
+
+    } else {
+
+        if ($wrapper.is(":visible")) {
+            $wrapper.stop(true, true).slideUp(200, function () {
+                $input.val("");
+                $wrapper.find(".qual_text_error").text("");
+            });
+        }
+
+    }
+    });
+
+
+
+    //    $(document).on("change", "#ownership_type_select", function () {
+
+    //     let type = $(this).val();
+
+    //     // 🔹 Reset ALL file inputs inside both sections
+    //     $("#partnershipdeed input[type='file'], #directormom input[type='file']").val("");
+
+    //     // 🔹 Clear file preview / link div
+    //     $("#partnershipdeed .file-link, #directormom .file-link .ownershipdoc_upload_error")
+    //         .html("")
+    //         .addClass("d-none");
+    //         // <span class="text-danger ownershipdoc_upload_error"></span>
+
+
+    //     // 🔹 Clear hidden fields if any (file name / path)
+    //     // $("#partnershipdeed input[type='hidden'], #directormom input[type='hidden']").val("");
+
+    //     // 🔹 Hide both sections first
+    //     $("#partnershipdeed, #directormom").slideUp();
+
+    //     // 🔹 Show based on selection
+    //     if (type === 'pt') {
+    //         $("#partnershipdeed").slideDown();
+    //     } 
+    //     else if (type === 'pvt' || type === 'ltd') {
+    //         $("#directormom").slideDown();
+    //     }
+    // });
+
+
+
+    const IS_DRAFT = {{isset($application) ? 'true' : 'false'}};
+    const SAVED_OWNERSHIP = "{{ $application->application_ownershiptype ?? '' }}";
+    $(document).ready(function() {
+
+    // 🔹 Draft load behavior
+    if (IS_DRAFT) {
+        $("#partnershipdeed, #directormom").hide();
+
+        if (SAVED_OWNERSHIP === 'pt') {
+            $("#partnershipdeed").show();
+        } else if (SAVED_OWNERSHIP === 'pvt' || SAVED_OWNERSHIP === 'ltd') {
+            $("#directormom").show();
+        }
+    }
+    });
+
+    /* 🔁 Ownership change */
+    $(document).on("change", "#ownership_type_select", function() {
+
+
+
+    let type = $(this).val();
+
+    // clear files + errors
+    $("input[type='file']").val("");
+    $(".ownershipdoc_upload_error").text("");
+    // $(".file-link").html("").addClass("d-none");
+
+    $("#partnershipdeed, #directormom").slideUp();
+
+    if (type === 'pt') {
+        $("#partnershipdeed").slideDown();
+    } else if (type === 'pvt' || type === 'ltd') {
+        $("#directormom").slideDown();
+    }
+    });
+
+    // ------------------------------------------------------------forma 8_11 Attachments open----------------------
+    $(document).on("change", "input[name='criminal_offence']", function () {
+
+    if ($(this).val() === "yes") {
+
+        $(".criminaloffence_file").stop(true, true).slideDown(300);
+
+    } else {
+
+        $(".criminaloffence_file").stop(true, true).slideUp(300, function () {
+            $("#criminal_offence_doc").val("");
+            $("#criminal_offence_doc_error").text("");
+        });
+
+    }
+
+    });
+
+    $(document).on("change", "input[name='consent_letter_enclose']", function () {
+
+    if ($(this).val() === "yes") {
+
+        $(".consent_letter_enclosefile").stop(true, true).slideDown(300);
+
+    } else {
+
+        $(".consent_letter_enclosefile").stop(true, true).slideUp(300, function () {
+            $("#cc_holders_enclosed_doc").val("");
+            $("#cc_holders_enclosed_doc_error").text("");
+        });
+
+    }
+
+    });
+
+    $(document).on("change", "input[name='cc_holders_enclosed']", function () {
+
+    if ($(this).val() === "yes") {
+
+        $(".cc_holders_enclosedfile").stop(true, true).slideDown(300);
+
+    } else {
+
+        $(".cc_holders_enclosedfile").stop(true, true).slideUp(300, function () {
+            $("#cc_holders_enclosed_doc").val("");
+            $("#cc_holders_enclosed_doc_error").text("");
+        });
+
+    }
+
+    });
+
+
+    $(document).on("change", "input[name='specimen_signature_enclose']", function () {
+
+    if ($(this).val() === "yes") {
+
+        $(".specimen_signature_enclosefile").stop(true, true).slideDown(300);
+
+    } else {
+
+        $(".specimen_signature_enclosefile").stop(true, true).slideUp(300, function () {
+            $("#specimen_signature").val("");
+            $("#specimen_signature_error").text("");
+        });
+
+    }
+
+    });
+
+
+    $(document).on("change", "input[name='separate_sheet']", function () {
+
+    if ($(this).val() === "yes") {
+
+        $(".separate_sheetfile").stop(true, true).slideDown(300);
+
+    } else {
+
+        $(".separate_sheetfile").stop(true, true).slideUp(300, function () {
+            $("#separate_sheet_doc").val("");
+            $("#specimen_signature_error").text("");
+        });
+
+    }
+
+    });
+
+
+
+
+
+
+
+    // -------------------------------------
+    document.addEventListener("DOMContentLoaded", function() {
+
+    const hiddenBtn = document.getElementById('hiddenBtn');
+    const chooseBtn = document.getElementById('chooseBtn');
+
+    chooseBtn.addEventListener('click', () => hiddenBtn.click());
+
+    hiddenBtn.addEventListener('change', function() {
+        chooseBtn.innerText = this.files.length > 0 ?
+            this.files[0].name :
+            'Choose';
+    });
+
+    });
 
 
 

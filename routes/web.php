@@ -38,6 +38,8 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\OldCertificateRenewalController;
 use App\Http\Controllers\OldContractorRenewalController;
 
+use App\Http\Controllers\DocumentUploadController;
+
 // ------------------------ Public Pages ------------------------
 
 
@@ -180,6 +182,12 @@ Route::middleware(['auth'])->group(function () {
 
     // -----------------------------staff checking formA---------------------------------------------
     Route::post('/checkStaffExists', [StaffController::class, 'checkStaffExists'])->name('checkStaffExists');
+
+
+    // contractor file upload------------------
+
+    Route::post('/uploadownershipdeed', [DocumentUploadController::class, 'uploadownershipdeed'])
+    ->name('uploadownershipdeed');
 });
 
 // ------------------------ Form Submit & PDF Routes ------------------------

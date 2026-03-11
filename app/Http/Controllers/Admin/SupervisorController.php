@@ -33,6 +33,7 @@ class SupervisorController extends Controller
 
     public function view_applications(Request $request)
     {
+        
         $staff = Auth::user();
         if (!$staff) {
             return abort(403, 'Unauthorized');
@@ -118,6 +119,7 @@ class SupervisorController extends Controller
                 ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
                 ->where('ta.form_id', $selectedFormId)
                 ->whereIn('ta.status', ['P', 'RE'])
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
                 ->whereNotExists(function ($q) {
                     $q->select(DB::raw(1))
                         ->from('tnelb_workflow_a as twa')
@@ -150,6 +152,7 @@ class SupervisorController extends Controller
                     ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
                     ->where('ta.form_id', $selectedFormId)
                     ->whereIn('ta.status', ['P', 'RE'])
+                    ->whereIn('ta.payment_status', ['payment', 'paid'])
                     ->whereNotExists(function ($q) {
                         $q->select(DB::raw(1))
                             ->from('tnelb_workflow_a as twa')
@@ -1255,7 +1258,6 @@ class SupervisorController extends Controller
 
     public function approveApplication(Request $request)
     {
-
         $request->validate([
             'application_id' => 'required|string',
             'processed_by'   => 'required|string',
@@ -1288,128 +1290,29 @@ class SupervisorController extends Controller
             // Update application status to "Approved"
             $staff = Auth::user()->name;
 
-            if ($staff == "President") {
-                $processed = 'PR';
-            } else {
-                $processed = 'SE';
-            }
-        $appl_type = strtoupper(preg_replace('/\s+/', '', (string) $application->appl_type));
+            $processed = $staff === 'President' ? 'PR' : 'SE';
+
+            // Normalize application type once (N = New, R = Renewal)
+            $appl_type = strtoupper(preg_replace('/\s+/', '', (string) $application->appl_type));
+
             DB::table('tnelb_application_tbl')
                 ->where('application_id', $request->application_id)
                 ->update([
                     'status'     => 'A',
-                    'processed_by' => isset($processed) ? $processed : 'PR',
+                    'processed_by' => $processed ?: 'PR',
                     'updated_at' => now(),
                 ]);
 
-             if ($appl_type == "R") {
+            // Issue or renew licence and get final number + dates
+            [$licenseNumber, $issuedAt, $expiresAt] = $this->issueOrRenewLicense(
+                $application,
+                $licenceId,
+                $appl_type,
+                $request->processed_by,
+                $request->application_id,
+                $login_id
+            );
 
-                // if (str_starts_with($request->application_id, 'R')) {
-                $license_details = DB::table('tnelb_renewal_license')
-                    ->where('application_id', $request->application_id)
-                    ->first();
-
-                $now = now();
-
-                // If no renewal record OR existing record already expired -> create new renewal
-                if (!$license_details || $now->greaterThan(Carbon::parse($license_details->expires_at))) {
-                    $issuedAt = $now->format('Y-m-d H:i:s');
-
-                    $today = Carbon::today()->toDateString();
-                    $licenseperiod = DB::table('mst_fees_validity')
-                        ->where('licence_id', $licenceId)
-                        ->where('form_type', $appl_type) // N (Fresh) / R (Renewal)
-                        ->where('status', 1)
-                        ->whereDate('validity_start_date', '<=', $today)
-                        ->orderBy('validity_start_date', 'desc')
-                        ->first();
-
-                    if (!$licenseperiod) {
-                        throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$appl_type}).");
-                    }
-                   
-                    $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
-
-                    $expiresAt = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
-
-                    // safe fallback if licenseperiod missing
-
-                    DB::table('tnelb_renewal_license')->insert([
-                        'login_id'       => $login_id,
-                        'license_number' => $application->license_number,
-                        'application_id' => $request->application_id,
-                        'issued_by'      => $request->processed_by,
-                        'issued_at'      => $issuedAt,
-                        'expires_at'     => $expiresAt,
-                        'created_at'     => now(),
-                    ]);
-
-                    $newSerial = $application->license_number;
-                } else {
-                    // existing renewal record still valid -> reuse its values
-                    $newSerial = $license_details->license_number;
-                    $issuedAt = $license_details->issued_at;
-                    $expiresAt = $license_details->expires_at;
-                }
-            } else {
-
-
-                // Fresh license (N)
-                $license_details = DB::table('tnelb_license')
-                    ->where('application_id', $request->application_id)
-                    ->first();
-                     
-                if ($license_details) {
-                    // use existing license
-                    $newSerial = $license_details->license_number;
-                    $issuedAt = $license_details->issued_at;
-                    $expiresAt = $license_details->expires_at;
-                } else {                        
-                    // create new license
-                    $prefix = $application->license_name;
-                    $yearMonth = date('Ym');
-
-                    $lastSerial = DB::table('tnelb_license')
-                        ->where('license_number', 'LIKE', "L{$prefix}{$yearMonth}%")
-                        ->orderBy('license_number', 'desc')
-                        ->value('license_number');
-
-                    if ($lastSerial) {
-                        $lastNumber = (int) substr($lastSerial, -5);
-                        $newNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
-                    } else {
-                        $newNumber = '00001';
-                    }
-
-                    $newSerial = "L{$prefix}{$yearMonth}{$newNumber}";
-                    $issuedAt = now()->format('Y-m-d H:i:s');
-
-                 
-                    $today = Carbon::today()->toDateString();
-                    $licenseperiod = DB::table('mst_fees_validity')
-                        ->where('licence_id', $licenceId)
-                        ->where('form_type', $appl_type) // N (Fresh) / R (Renewal)
-                        ->where('status', 1)
-                        ->whereDate('validity_start_date', '<=', $today)
-                        ->orderBy('validity_start_date', 'desc')
-                        ->first();
-
-                    if (!$licenseperiod) {
-                        throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$appl_type}).");
-                    }
-                        
-                    $monthsToAdd = (int) ($licenseperiod->validity ?? 0);
-
-                    $expiresAt = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
-                    DB::table('tnelb_license')->insert([
-                        'application_id' => $request->application_id,
-                        'license_number' => $newSerial,
-                        'issued_by'      => $request->processed_by,
-                        'issued_at'      => $issuedAt,
-                        'expires_at'     => $expiresAt,
-                    ]);
-                }
-            }
             // Generate Licence PDF, encrypt it, and store its path (non-blocking)
             try {
                 app(LicensepdfController::class)->generatePDF($request->application_id);
@@ -1433,12 +1336,11 @@ class SupervisorController extends Controller
 
             DB::commit();
 
-            if ($application->appl_type == "R") {
-
+            if ($appl_type === 'R') {
                 return response()->json([
                     'status'        => 'success',
                     'message'        => 'Application Renewed successfully!',
-                    'license_number' => $application->license_number,
+                    'license_number' => $licenseNumber,
                     'issued_at'      => $issuedAt,
                     'expires_at'     => $expiresAt,
                 ], 200);
@@ -1447,7 +1349,7 @@ class SupervisorController extends Controller
                 return response()->json([
                     'status'        => 'success',
                     'message'        => 'Application approved successfully!',
-                    'license_number' => $newSerial,
+                    'license_number' => $licenseNumber,
                     'issued_at'      => $issuedAt,
                     'expires_at'     => $expiresAt,
                 ], 200);
@@ -1456,5 +1358,118 @@ class SupervisorController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Issue a fresh licence or create/reuse a renewal record and return
+     * [licenseNumber, issuedAt, expiresAt].
+     */
+    private function issueOrRenewLicense(object $application, int $licenceId, string $applType, string $processedBy, string $applicationId, string $loginId): array
+    {
+        // Renewal flow
+        if ($applType === 'R') {
+            $licenseDetails = DB::table('tnelb_renewal_license')
+                ->where('application_id', $applicationId)
+                ->first();
+
+            $now = now();
+
+            if (!$licenseDetails || $now->greaterThan(Carbon::parse($licenseDetails->expires_at))) {
+                $issuedAt = $now->format('Y-m-d H:i:s');
+
+                $licensePeriod = $this->resolveLicenseValidity($licenceId, $applType);
+                $monthsToAdd   = (int) ($licensePeriod->validity ?? 0);
+                $expiresAt     = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+
+                DB::table('tnelb_renewal_license')->insert([
+                    'login_id'       => $loginId,
+                    'license_number' => $application->license_number,
+                    'application_id' => $applicationId,
+                    'issued_by'      => $processedBy,
+                    'issued_at'      => $issuedAt,
+                    'expires_at'     => $expiresAt,
+                    'created_at'     => now(),
+                ]);
+
+                $licenseNumber = $application->license_number;
+            } else {
+                // Existing renewal record still valid – reuse its values
+                $licenseNumber = $licenseDetails->license_number;
+                $issuedAt      = $licenseDetails->issued_at;
+                $expiresAt     = $licenseDetails->expires_at;
+            }
+
+            return [$licenseNumber, $issuedAt, $expiresAt];
+        }
+
+        // Fresh licence (N) flow
+        $licenseDetails = DB::table('tnelb_license')
+            ->where('application_id', $applicationId)
+            ->first();
+
+        if ($licenseDetails) {
+            $licenseNumber = $licenseDetails->license_number;
+            $issuedAt      = $licenseDetails->issued_at;
+            $expiresAt     = $licenseDetails->expires_at;
+
+            return [$licenseNumber, $issuedAt, $expiresAt];
+        }
+
+        // Create a brand new licence entry
+        $prefix    = $application->license_name;
+        $yearMonth = date('Ym');
+
+        $lastSerial = DB::table('tnelb_license')
+            ->where('license_number', 'LIKE', "L{$prefix}{$yearMonth}%")
+            ->orderBy('license_number', 'desc')
+            ->value('license_number');
+
+        if ($lastSerial) {
+            $lastNumber   = (int) substr($lastSerial, -5);
+            $newNumber    = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '00001';
+        }
+
+        $licenseNumber = "L{$prefix}{$yearMonth}{$newNumber}";
+        $issuedAt      = now()->format('Y-m-d H:i:s');
+
+        $licensePeriod = $this->resolveLicenseValidity($licenceId, $applType);
+        $monthsToAdd   = (int) ($licensePeriod->validity ?? 0);
+        $expiresAt     = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+
+        DB::table('tnelb_license')->insert([
+            'application_id' => $applicationId,
+            'license_number' => $licenseNumber,
+            'issued_by'      => $processedBy,
+            'issued_at'      => $issuedAt,
+            'expires_at'     => $expiresAt,
+        ]);
+
+        return [$licenseNumber, $issuedAt, $expiresAt];
+    }
+
+    /**
+     * Resolve licence validity configuration for a given licence and application type.
+     *
+     * @throws \RuntimeException when no validity period is configured.
+     */
+    private function resolveLicenseValidity(int $licenceId, string $applType): object
+    {
+        $today = Carbon::today()->toDateString();
+
+        $licensePeriod = DB::table('mst_fees_validity')
+            ->where('licence_id', $licenceId)
+            ->where('form_type', $applType)
+            ->where('status', 1)
+            ->whereDate('validity_start_date', '<=', $today)
+            ->orderBy('validity_start_date', 'desc')
+            ->first();
+
+        if (!$licensePeriod) {
+            throw new \RuntimeException("Validity period not configured for this licence (licence_id={$licenceId}, form_type={$applType}).");
+        }
+
+        return $licensePeriod;
     }
 }

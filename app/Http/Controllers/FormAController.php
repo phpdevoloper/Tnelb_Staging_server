@@ -11,6 +11,7 @@ use App\Models\ESB_Application_model;
 use App\Models\mst_workflow;
 use App\Models\Payment;
 use App\Models\ProprietorformA;
+use App\Models\Tnelb_Addressproof_cl;
 use App\Models\Tnelb_banksolvency_a;
 use App\Models\Tnelb_cl_validitycheck;
 use App\Models\TnelbApplicantStaffDetail;
@@ -22,6 +23,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Facades\File;
+
 
 use Illuminate\Support\Str;
 
@@ -79,7 +83,7 @@ class FormAController extends BaseController
 
     public function store(Request $request)
     {
-
+       
         $request->merge([
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
@@ -126,9 +130,9 @@ class FormAController extends BaseController
                 'test_reports_enclose' => 'nullable|string|in:yes,no',
                 'specimen_signature_enclose' => 'nullable|string|in:yes,no',
                 'separate_sheet' => 'nullable|string|in:yes,no',
-                'aadhaar' => 'nullable',
-                'pancard' => 'nullable',
-                'gst_number' => 'nullable',
+                
+                
+
                 'declaration1' => 'nullable|string|max:255',
                 'declaration2' => 'nullable|string|max:255',
                 // 'aadhaar_doc' => 'nullable|file|max:2048',
@@ -163,14 +167,11 @@ class FormAController extends BaseController
                 'separate_sheet' => ['required', 'string', Rule::in(['yes', 'no'])],
                 'form_name' => 'required|string|max:255',
                 'license_name' => 'required|string|max:255',
-                'aadhaar' => 'required|digits:12',
-                'pancard' => 'required|alpha_num|size:10',
-                'gst_number' => 'required|string|min:15',
+         
                 'declaration1' => 'required|string|max:255',
                 'declaration2' => 'required|string|max:255',
-                'aadhaar_doc' => $request->hasFile('aadhaar_doc') ? 'required|file|max:2048' : 'nullable|string',
-                'pancard_doc' => $request->hasFile('pancard_doc') ? 'required|file|max:2048' : 'nullable|string',
-                'gst_doc'     => $request->hasFile('gst_doc')     ? 'required|file|max:2048' : 'nullable|string',
+                'address_proof' => $request->hasFile('address_proof') ? 'required|file|max:2048' : 'nullable|string',
+            
 
 
             ];
@@ -201,8 +202,7 @@ class FormAController extends BaseController
                 'bank_address',
                 'form_name',
                 'license_name',
-                'pancard',
-                'gst_number'
+              
             ] as $field
         ) {
             if (!empty($validatedData[$field])) {
@@ -210,16 +210,8 @@ class FormAController extends BaseController
             }
         }
 
-        // Encrypt sensitive fields only if they exist
-        if (!empty($validatedData['aadhaar'])) {
-            $validatedData['aadhaar'] = Crypt::encryptString($validatedData['aadhaar']);
-        }
-        if (!empty($validatedData['pancard'])) {
-            $validatedData['pancard'] = Crypt::encryptString($validatedData['pancard']);
-        }
-        if (!empty($validatedData['gst_number'])) {
-            $validatedData['gst_number'] = Crypt::encryptString($validatedData['gst_number']);
-        }
+     
+       
 
         // Determine if record exists
         $applicationId = null;
@@ -247,11 +239,43 @@ class FormAController extends BaseController
         $dataToSave['application_status'] = 'P';
         // $dataToSave['created_at'] = now();
         $dataToSave['updated_at'] = DB::raw('NOW()');
-        
 
 
+            // Addressproof----------------
 
-        // $dataToSave['submit_date'] = now();
+            if (!empty($request->type_doc) || !empty($request->addressproofno)) {
+
+            $addressproof = [
+                'application_id' => $applicationId,
+                'login_id'       => $request->login_id_store,
+                'form_name'  => $request->form_name ,
+                'license_name'    => $request->license_name ,
+                'addressproofno'    => $request->addressproofno ,
+                'type_doc'    => $request->type_doc ,
+
+                // 'status'         => '1'
+            ];
+          
+
+            // dd([
+            //     'login_id_store' => $request->login_id_store,
+            //     'bank_address' => $request->bank_address,
+            //     'bank_validity' => $request->bank_validity,
+            //     'bank_amount' => $request->bank_amount,
+            // ]);
+
+
+            $existingaddress = Tnelb_Addressproof_cl::where('application_id', $applicationId)->first();
+
+            // dd($existingBank);
+            // exit;
+
+            if ($existingaddress) {
+                $existingaddress->update($addressproof);
+            } else {
+                Tnelb_Addressproof_cl::create($addressproof);
+            }
+        }
 
 
 
@@ -293,87 +317,6 @@ class FormAController extends BaseController
         }
 
 
-        // ----------equipment list-------------------
-        // $equipCheck = $request->has('equip_check') ? 1 : 0;
-        // $testedDocuments = $request->tested_documents ?? 'no';
-
-
-        // $originalInvoice = $request->original_invoice_instr ?? 'no';
-        // $instrument3 = $request->instrument3 ?? 'no';
-
-        // $equipmentlist = [
-        //     'form_name' => $request->form_name ?? null,
-        //     'login_id' => $request->login_id_store,
-        //     'application_id' => $applicationId,
-
-        //     'equip_id' => $request->equip_id,
-        //     'licence_id' => $request->licence_id,
-        //     'ipaddress'=> $request->ip()
-
-
-        // ];
-
-
-
-
-        //     $equiplist = Equipmentforma_tbl::where('application_id', $applicationId)->get();
-
-        //     if ($equiplist) {
-
-        //         $equiplist->update($equipmentlist);
-        //     } else {
-        //         Equipment_storetmp_A::create($equipmentlist);
-        //     }
-
-        // dd($request->equip_id);
-        // exit;
-        //       $equipmentData = [
-        //     'form_name'      => $request->form_name ?? null,
-        //     'login_id'       => $request->login_id_store,
-        //     'application_id' => $applicationId,
-        //     'equip_id'       => $request->equip_id ?? null,
-        //     'licence_id'     => $request->licence_id ?? null,
-        //     'ipaddress'      => $request->ip(),
-        // ];
-
-        // // -----------------------------------
-        // // 3. Loop dynamic radio buttons
-        // // equipment1, equipment2, equipment3...
-        // // -----------------------------------
-        // $valuesTxt = [];
-
-        // foreach ($request->all() as $key => $value) {
-
-        //     if (preg_match('/^equipment\d+$/', $key)) {
-
-        //         // normalize value
-        //         $finalValue = in_array($value, ['yes', 'no']) ? $value : 'no';
-
-        //         // store individual column
-        //         $equipmentData[$key] = $finalValue;
-
-        //         // store combined data
-        //         $valuesTxt[$key] = $finalValue;
-        //     }
-        // }
-
-        // // -----------------------------------
-        // // 4. Store combined JSON
-        // // -----------------------------------
-        // $equipmentData['values_txt'] = json_encode($valuesTxt);
-
-        // // -----------------------------------
-        // // 5. Update or Insert
-        // // -----------------------------------
-        // Equipmentforma_tbl::updateOrCreate(
-        //     [
-        //         'application_id' => $applicationId,
-        //         'login_id'       => $request->login_id_store,
-        //     ],
-        //     $equipmentData
-        // );
-
-
         // 1. Remove old rows for this application
         Equipmentforma_tbl::where('application_id', $applicationId)
             ->where('login_id', $request->login_id_store)
@@ -393,26 +336,26 @@ class FormAController extends BaseController
             ]);
         }
 
-          $Tnelb_cl_validitycheck_existing = Tnelb_cl_validitycheck::where('application_id', $applicationId)
-                ->where('login_id', $request->login_id_store)
-                ->first();
+        $Tnelb_cl_validitycheck_existing = Tnelb_cl_validitycheck::where('application_id', $applicationId)
+            ->where('login_id', $request->login_id_store)
+            ->first();
 
-            $data = [
-                'application_id' => $applicationId,
-                'login_id'       => $request->login_id_store,
-                'form_name'      => $request->form_name,
-                'license_name'   => $request->license_name,
-                'check_value'    => $request->check_value,
-                'ipaddress'      => $request->ip(),
-            ];
+        $data = [
+            'application_id' => $applicationId,
+            'login_id'       => $request->login_id_store,
+            'form_name'      => $request->form_name,
+            'license_name'   => $request->license_name,
+            'check_value'    => $request->check_value,
+            'ipaddress'      => $request->ip(),
+        ];
 
-            if ($Tnelb_cl_validitycheck_existing) {
-                
-                $Tnelb_cl_validitycheck_existing->update($data);
-            } else {
-                
-                Tnelb_cl_validitycheck::create($data);
-            }
+        if ($Tnelb_cl_validitycheck_existing) {
+
+            $Tnelb_cl_validitycheck_existing->update($data);
+        } else {
+
+            Tnelb_cl_validitycheck::create($data);
+        }
 
 
         //  dd($applicationId);
@@ -421,67 +364,8 @@ class FormAController extends BaseController
         unset($dataToSave['bank_address'], $dataToSave['bank_validity'], $dataToSave['bank_amount']);
 
 
-        $existingDoc = DB::table('tnelb_applicant_doc_A')
-            ->where('application_id', $applicationId)
-            ->first();
 
-        $aadhaarFilename = $existingDoc->aadhaar_doc ?? null;
-        $panFilename = $existingDoc->pancard_doc ?? null;
-        $gstFilename = $existingDoc->gst_doc ?? null;
-
-       // Aadhaar upload
-if ($request->hasFile('aadhaar_doc')) {
-    $aadhaarName = 'aadhaar_' . Str::uuid() . '.' . $request->file('aadhaar_doc')->getClientOriginalExtension();
-    $request->file('aadhaar_doc')->move(public_path('documents'), $aadhaarName);
-    $aadhaarFilename = Crypt::encryptString('documents/' . $aadhaarName);
-}
-
-// PAN upload
-if ($request->hasFile('pancard_doc')) {
-    $panName = 'pan_' . Str::uuid() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
-    $request->file('pancard_doc')->move(public_path('documents'), $panName);
-    $panFilename = Crypt::encryptString('documents/' . $panName);
-}
-
-// GST upload
-if ($request->hasFile('gst_doc')) {
-    $gstName = 'gst_' . Str::uuid() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
-    $request->file('gst_doc')->move(public_path('documents'), $gstName);
-    $gstFilename = Crypt::encryptString('documents/' . $gstName);
-}
-
-
-// dd([
-//     'aadhaarPath' => $aadhaarFilename,
-//     'panFilename' => $panFilename,
-//     'gstFilename' => $gstFilename,
-// ]);
-// exit;
-
-        // Insert or Update Document
-        $documentExists = DB::table('tnelb_applicant_doc_A')
-            ->where('application_id', $applicationId)
-            ->exists();
-
-        $documentData = [
-            'login_id'       => $request->login_id_store,
-            'application_id' => $applicationId,
-            'aadhaar_doc'    => $aadhaarFilename,
-            'pancard_doc'    => $panFilename,
-            'gst_doc'        => $gstFilename,
-            'updated_at'     => now(),
-        ];
-
-        if (!$existingDoc) {
-            $documentData['created_at'] = now();
-            DB::table('tnelb_applicant_doc_A')->insert($documentData);
-        } else {
-            DB::table('tnelb_applicant_doc_A')
-                ->where('application_id', $applicationId)
-                ->update($documentData);
-        }
-        // dd($request->all());
-        // exit;
+        
 
 
 
@@ -586,7 +470,10 @@ if ($request->hasFile('gst_doc')) {
 
             // dd($request->all());
             // exit;
+            $count = 1;
             foreach ($request->proprietor_name as $index => $name) {
+
+            // dd($count);exit;
                 if (empty(trim($name))) continue;
 
                 $competencyHolding = data_get($request->competency, $index);
@@ -608,8 +495,10 @@ if ($request->hasFile('gst_doc')) {
                     'proprietor_name' => strtoupper($name ?? ''),
                     'ownership_type' => $request->ownership_type[$index],
                     'proprietor_address' => strtoupper(data_get($request->proprietor_address, $index, '')),
+                    'dob' => $request->dob[$index],
                     'age' => data_get($request->age, $index),
                     'qualification' => strtoupper(data_get($request->qualification, $index, '')),
+                    'qualification_text' => strtoupper(data_get($request->qual_text, $index, '')),
                     'fathers_name' => strtoupper(data_get($request->fathers_name, $index, '')),
                     'present_business' => strtoupper(data_get($request->present_business, $index, '')),
                     'competency_certificate_holding' => $competencyHolding,
@@ -648,6 +537,8 @@ if ($request->hasFile('gst_doc')) {
 
                     'proprietor_contractor_verify' => $previous_experience === 'yes' ? data_get($request->expverify, $index) : null,
                     'proprietor_flag' => 1,
+
+                    'ownership_count'=>$count,
                 ];
 
 
@@ -659,16 +550,118 @@ if ($request->hasFile('gst_doc')) {
                     $newProprietorIds[] = $new->id;
                 }
             }
+            $count++;
 
             // Deactivate removed rows
             ProprietorformA::where('application_id', $applicationId)
                 ->whereNotIn('id', $newProprietorIds)
                 ->update(['proprietor_flag' => 0]);
+
+                // table move edu_file----------
+
+                 // $recordexists = DB::table('proprietordetailsform_A')
+                //             ->where('application_id', $applicationId)
+                //             ->get();
+                // if ($recordexists) {
+                    
+                //              DB::table('$proprietordetailsform_A')
+                //             ->where('application_id', $applicationId)
+                //             ->update([
+                //                 'educ_qual_proof' => $finalDbPath,
+                //                 'updated_at'  => now()
+                //             ]);
+                //         }
+
+
+                $tempDocs = DB::table('tnelb_temp_uploaded_documents')
+                ->where('login_id', $request->login_id_store)
+                ->where('form_name', $request->form_name)
+                ->where('license_name', $request->license_name)
+                ->where('document_category', 'educ_qual_proof')
+                ->where('ownership_type', 'pr')
+             
+                ->get();
+
+            // dd($tempDocs);
+            // exit;
+
+
+            // dd($tempDocs->pluck('document_category'));
+            // exit;
+
+
+
+            foreach ($tempDocs as $tempDoc) {
+
+                
+                $matchedPartner = ProprietorformA::where('application_id', $applicationId)
+                    ->where('ownership_type', 'pr')
+                    ->where('ownership_count', $tempDoc->row_index + 1)
+                    ->first();
+
+                if (!$matchedPartner) {
+                    continue; // No match → skip
+                }
+
+                // -----------------------------------------
+                // 4️⃣ GET FINAL PRO PATH
+                // -----------------------------------------
+                $dynamicRequest = clone $request;
+                $dynamicRequest->merge([
+                    'module' => $tempDoc->module
+                ]);
+
+                $dbFilePath_all = DocPathController::getPath($dynamicRequest);
+                $dbFilePath     = $dbFilePath_all->filepath_pro;
+
+                $tempFullPath = public_path(
+                    $tempDoc->file_path . '/' . $tempDoc->file_name
+                );
+
+                $proFolderPath = public_path($dbFilePath);
+
+                if (!File::exists($proFolderPath)) {
+                    File::makeDirectory($proFolderPath, 0755, true);
+                }
+
+                $proFullPath = $proFolderPath . '/' . $tempDoc->file_name;
+
+                // -----------------------------------------
+                // 5️⃣ COPY FILE
+                // -----------------------------------------
+                if (File::exists($tempFullPath)) {
+                    File::copy($tempFullPath, $proFullPath);
+                } else {
+                    continue;
+                }
+
+                // dd($tempDoc->file_path . '/' . $tempDoc->file_name);
+                // exit;
+
+                // -----------------------------------------
+                // 6️⃣ SAVE FILE NAME INTO MATCHED PARTNER
+                // -----------------------------------------
+                $matchedPartner->educational_proof = $tempDoc->file_path . '/' . $tempDoc->file_name;
+                $matchedPartner->row_index = $tempDoc->row_index;
+                $matchedPartner->save();
+
+                // -----------------------------------------
+                // 7️⃣ MARK TEMP DOC AS FINAL
+                // -----------------------------------------
+                DB::table('tnelb_temp_uploaded_documents')
+                    ->where('id', $tempDoc->id)
+                    ->update([
+                        'is_final'   => '1',
+                        'moved_as'   => $request->input('form_action'),
+                        'updated_at' => now()
+                    ]);
+            }
         }
 
         // Partners
         $newPartnerIds = [];
         if ($request->has('partner_name')) {
+             $count = 1;
             foreach ($request->partner_name as $index => $name) {
                 if (empty(trim($name))) continue;
 
@@ -692,10 +685,14 @@ if ($request->hasFile('gst_doc')) {
                     'login_id' => $request->login_id_store,
                     'application_id' => $applicationId,
                     'proprietor_name' => strtoupper($name ?? ''),
-                    'ownership_type' => $request->partner_ownership_type[$index],
+                    'ownership_type' => 'pt',
                     'proprietor_address' => strtoupper(data_get($request->partner_proprietor_address, $index, '')),
+
+                     'dob' => $request->partner_dob[$index],
                     'age' => data_get($request->partner_age, $index),
                     'qualification' => strtoupper(data_get($request->partner_qualification, $index, '')),
+                    'qualification_text' => strtoupper(data_get($request->partner_qual_text, $index, '')),
+
                     'fathers_name' => strtoupper(data_get($request->partner_fathers_name, $index, '')),
                     'present_business' => strtoupper(data_get($request->partner_present_business, $index, '')),
                     'competency_certificate_holding' => $competencyHolding,
@@ -734,6 +731,7 @@ if ($request->hasFile('gst_doc')) {
 
                     'proprietor_contractor_verify' => $previous_experience === 'yes' ? data_get($request->partner_expverify, $index) : null,
                     'proprietor_flag' => 1,
+                    'ownership_count'=>$count,
                 ];
 
                 if ($partnerId) {
@@ -743,24 +741,111 @@ if ($request->hasFile('gst_doc')) {
                     $new = ProprietorformA::create($data);
                     $newPartnerIds[] = $new->id;
                 }
+                  $count++;
             }
+
+            
 
             // Deactivate removed partner rows
             ProprietorformA::where('application_id', $applicationId)
                 ->whereNotIn('id', $newPartnerIds)
                 ->where('ownership_type', 'partner') // optional if you differentiate ownership
                 ->update(['proprietor_flag' => 0]);
+
+            $tempDocs = DB::table('tnelb_temp_uploaded_documents')
+                ->where('login_id', $request->login_id_store)
+                ->where('form_name', $request->form_name)
+                ->where('license_name', $request->license_name)
+                ->where('document_category', 'educ_qual_proof')
+                 ->where('ownership_type', 'pt')
+             
+                ->get();
+
+            // dd($tempDocs);
+            // exit;
+
+
+            // dd($tempDocs->pluck('document_category'));
+            // exit;
+
+
+
+            foreach ($tempDocs as $tempDoc) {
+
+                
+                $matchedPartner = ProprietorformA::where('application_id', $applicationId)
+                    ->where('ownership_type', 'pt')
+                    ->where('ownership_count', $tempDoc->row_index + 1)
+                    ->first();
+
+                if (!$matchedPartner) {
+                    continue; // No match → skip
+                }
+
+                // -----------------------------------------
+                // 4️⃣ GET FINAL PRO PATH
+                // -----------------------------------------
+                $dynamicRequest = clone $request;
+                $dynamicRequest->merge([
+                    'module' => $tempDoc->module
+                ]);
+
+                $dbFilePath_all = DocPathController::getPath($dynamicRequest);
+                $dbFilePath     = $dbFilePath_all->filepath_pro;
+
+                $tempFullPath = public_path(
+                    $tempDoc->file_path . '/' . $tempDoc->file_name
+                );
+
+                $proFolderPath = public_path($dbFilePath);
+
+                if (!File::exists($proFolderPath)) {
+                    File::makeDirectory($proFolderPath, 0755, true);
+                }
+
+                $proFullPath = $proFolderPath . '/' . $tempDoc->file_name;
+
+                // -----------------------------------------
+                // 5️⃣ COPY FILE
+                // -----------------------------------------
+                if (File::exists($tempFullPath)) {
+                    File::copy($tempFullPath, $proFullPath);
+                } else {
+                    continue;
+                }
+
+                // -----------------------------------------
+                // 6️⃣ SAVE FILE NAME INTO MATCHED PARTNER
+                // -----------------------------------------
+                $matchedPartner->educational_proof = $tempDoc->file_path . '/' . $tempDoc->file_name;
+                $matchedPartner->row_index = $tempDoc->row_index;
+                $matchedPartner->save();
+
+                // -----------------------------------------
+                // 7️⃣ MARK TEMP DOC AS FINAL
+                // -----------------------------------------
+                DB::table('tnelb_temp_uploaded_documents')
+                    ->where('id', $tempDoc->id)
+                    ->update([
+                        'is_final'   => '1',
+                        'moved_as'   => $request->input('form_action'),
+                        'updated_at' => now()
+                    ]);
+            }
         }
 
         // ----------------director------------------------
 
         $newdirectorIds = [];
+        $count = 1;
         if ($request->has('director_name')) {
 
             // dd($request->ownership_type);
-            // dd($request->director_name);
+            // dd($request->all());
             // exit;
             foreach ($request->director_name as $index => $name) {
+
+            
                 if (empty(trim($name))) continue;
 
                 $directorId = $request->director_id[$index] ?? null;
@@ -783,10 +868,17 @@ if ($request->hasFile('gst_doc')) {
                     'login_id' => $request->login_id_store,
                     'application_id' => $applicationId,
                     'proprietor_name' => strtoupper($name ?? ''),
-                    'ownership_type' => $request->director_ownership_type[$index],
+                    // 'ownership_type' => $request->director_ownership_type[$index],
+
+                    'ownership_type' => 'dr',
+
                     'proprietor_address' => strtoupper(data_get($request->director_proprietor_address, $index, '')),
+
+                    'dob' => $request->director_dob[$index],
                     'age' => data_get($request->director_age, $index),
                     'qualification' => strtoupper(data_get($request->director_qualification, $index, '')),
+                    'qualification_text' => strtoupper(data_get($request->director_qual_text, $index, '')),
+
                     'fathers_name' => strtoupper(data_get($request->director_fathers_name, $index, '')),
                     'present_business' => strtoupper(data_get($request->director_present_business, $index, '')),
                     'competency_certificate_holding' => $competencyHolding,
@@ -825,6 +917,7 @@ if ($request->hasFile('gst_doc')) {
 
                     'proprietor_contractor_verify' => $previous_experience === 'yes' ? data_get($request->director_expverify, $index) : null,
                     'proprietor_flag' => 1,
+                    'ownership_count'=>$count,
                 ];
 
                 if ($directorId) {
@@ -834,6 +927,7 @@ if ($request->hasFile('gst_doc')) {
                     $new = ProprietorformA::create($data);
                     $newdirectorIds[] = $new->id;
                 }
+                 $count++;
             }
 
             // Deactivate removed partner rows
@@ -841,120 +935,84 @@ if ($request->hasFile('gst_doc')) {
                 ->whereNotIn('id', $newdirectorIds)
                 ->where('ownership_type', 'partner') // optional if you differentiate ownership
                 ->update(['proprietor_flag' => 0]);
+
+    
+            $tempDocs = DB::table('tnelb_temp_uploaded_documents')
+                ->where('login_id', $request->login_id_store)
+                ->where('form_name', $request->form_name)
+                ->where('license_name', $request->license_name)
+                ->where('document_category', 'educ_qual_proof')
+                ->where('ownership_type', 'dr')
+             
+                ->get();
+
+
+
+               foreach ($tempDocs as $tempDoc) {
+
+                
+                $matchedPartner = ProprietorformA::where('application_id', $applicationId)
+                    ->where('ownership_type', 'dr')
+                    ->where('ownership_count', $tempDoc->row_index + 1)
+                    ->first();
+
+                if (!$matchedPartner) {
+                    continue; // No match → skip
+                }
+
+                // -----------------------------------------
+                // 4️⃣ GET FINAL PRO PATH
+                // -----------------------------------------
+                $dynamicRequest = clone $request;
+                $dynamicRequest->merge([
+                    'module' => $tempDoc->module
+                ]);
+
+                $dbFilePath_all = DocPathController::getPath($dynamicRequest);
+                $dbFilePath     = $dbFilePath_all->filepath_pro;
+
+                $tempFullPath = public_path(
+                    $tempDoc->file_path . '/' . $tempDoc->file_name
+                );
+
+                $proFolderPath = public_path($dbFilePath);
+
+                if (!File::exists($proFolderPath)) {
+                    File::makeDirectory($proFolderPath, 0755, true);
+                }
+
+                $proFullPath = $proFolderPath . '/' . $tempDoc->file_name;
+
+                // -----------------------------------------
+                // 5️⃣ COPY FILE
+                // -----------------------------------------
+                if (File::exists($tempFullPath)) {
+                    File::copy($tempFullPath, $proFullPath);
+                } else {
+                    continue;
+                }
+
+                // -----------------------------------------
+                // 6️⃣ SAVE FILE NAME INTO MATCHED PARTNER
+                // -----------------------------------------
+                $matchedPartner->educational_proof = $tempDoc->file_path . '/' . $tempDoc->file_name;
+                $matchedPartner->row_index = $tempDoc->row_index;
+
+                // dd( $matchedPartner->row_index );exit;
+                $matchedPartner->save();
+
+                // -----------------------------------------
+                // 7️⃣ MARK TEMP DOC AS FINAL
+                // -----------------------------------------
+                DB::table('tnelb_temp_uploaded_documents')
+                    ->where('id', $tempDoc->id)
+                    ->update([
+                        'is_final'   => '1',
+                        'moved_as'   => $request->input('form_action'),
+                        'updated_at' => now()
+                    ]);
+            }
         }
-
-
-
-        //         $newProprietorIds = [];
-        //         if ($request->has('ownership_type')) {
-        //             //   dd('entry');
-        //                dd($request->proprietor_id);
-        //                         exit; 
-
-        //                         //                 exit;
-
-        //             //    dd($request->expverify);
-        //             //                 exit;
-        //             if ($request->appl_type === 'N') {
-
-        //                 // dd($request->all());
-        //                 // dd($request->ownership_type);
-        //                 // exit;
-
-        //                 foreach ($request->proprietor_name as $index => $proprietor_name) {
-        //                     $competencyHolding = data_get($request->competency, $index);
-
-        //                     // dd($competencyHolding);
-        //                     // exit;
-        //                     $presently_employed = data_get($request->employed, $index);
-        //                     $previous_experience = data_get($request->experience, $index);
-        //                     // Skip if no name (avoid empty row)
-        //                     if (empty(trim($proprietor_name))) {
-        //                         continue;
-        //                     }
-
-        //                     $proprietorId = $request->proprietor_id[$index] ?? null;
-
-
-        //                     // $proprietorId = $request->proprietor_id[$index] ?? null;
-
-
-        //                     $data = [
-        //                         'login_id' => $request->login_id_store,
-        //                         'application_id' => $applicationId,
-        //                         'proprietor_name' => strtoupper($proprietor_name ?? ''),
-        //                         'ownership_type' => $request->ownership_type[$index],
-        //                         'proprietor_address' => strtoupper(data_get($request->proprietor_address, $index, '')),
-        //                         'age' => data_get($request->age, $index),
-        //                         'qualification' => strtoupper(data_get($request->qualification, $index, '')),
-        //                         'fathers_name' => strtoupper(data_get($request->fathers_name, $index, '')),
-        //                         'present_business' => strtoupper(data_get($request->present_business, $index, '')),
-        //                         'competency_certificate_holding' => $competencyHolding,
-        //                         'competency_certificate_number' => $competencyHolding === 'yes' ? strtoupper(data_get($request->competency_certno, $index)) : null,
-        //                         'competency_certificate_validity' => $competencyHolding === 'yes' ? data_get($request->competency_validity, $index) : null,
-        //                         'proprietor_cc_verify' => $competencyHolding === 'yes' ? data_get($request->ccverify, $index) : null,
-
-
-        //                         'presently_employed' => $presently_employed,
-
-        //                         'presently_employed_name' => $presently_employed === 'yes' ? strtoupper(data_get($request->employer_name, $index)) : null,
-
-        //                         'presently_employed_address' => $presently_employed === 'yes' ? strtoupper(data_get($request->employer_address, $index)) : null,
-
-        //                         // 'presently_employed_name' => data_get($presently_employed, $index) === 'yes' ? strtoupper(data_get($request->employer_name, $index)) : null,
-        //                         // 'presently_employed_address' => data_get($presently_employed, $index) === 'yes' ? strtoupper(data_get($request->employer_address, $index)) : null,
-
-        //                         'previous_experience' => $previous_experience,
-
-        //                         'previous_experience_name' => $previous_experience === 'yes' ? strtoupper(data_get($request->exp_name, $index)) : null,
-
-        //                         'previous_experience_address' => $previous_experience === 'yes' ? strtoupper(data_get($request->exp_address, $index)) : null,
-
-
-        //                         'previous_experience_lnumber' => $previous_experience === 'yes' ? strtoupper(data_get($request->exp_license, $index)) : null,
-
-        //                         'previous_experience_lnumber_validity' => $previous_experience === 'yes' ? strtoupper(data_get($request->exp_validity, $index)) : null,
-
-
-
-        //                         // 'previous_experience_name' => data_get($request->previous_experience, $index) === 'yes' ? strtoupper(data_get($request->previous_experience_name, $index)) : null,
-        //                         // 'previous_experience_address' => data_get($request->previous_experience, $index) === 'yes' ? strtoupper(data_get($request->previous_experience_address, $index)) : null,
-        //                         // 'previous_experience_lnumber' => data_get($request->previous_experience, $index) === 'yes' ? strtoupper(data_get($request->previous_experience_lnumber, $index)) : null,
-
-        //                         // 'previous_experience_lnumber_validity' => data_get($request->previous_experience, $index) === 'yes' ? data_get($request->previous_experience_lnumber_validity, $index) : null,
-
-        //                         'proprietor_contractor_verify' => $previous_experience === 'yes' ? data_get($request->expverify, $index) : null,
-        //                         'proprietor_flag' => 1,
-        //                     ];
-
-
-
-        //                     if (!empty($proprietorId)) {
-
-        //                          dd($proprietorId);
-        //                         exit;
-
-        //                         ProprietorformA::where('id', $proprietorId)->update($data);
-        //                         $newProprietorIds[] = $proprietorId;
-        //                     } else {
-
-        //    dd($data);
-        //                         exit;
-        //                         //                                                dd($data);
-        //                         // exit;
-        //                         // Insert new record
-        //                         $new = ProprietorformA::create($data);
-        //                         $newProprietorIds[] = $new->id;
-        //                     }
-        //                 }
-        //             } 
-
-        //             // 🧹 Deactivate removed rows (not in current request)
-        //             ProprietorformA::where('application_id', $applicationId)
-        //                 ->whereNotIn('id', $newProprietorIds)
-        //                 ->update(['proprietor_flag' => 0]);
-        //         }
-
 
 
 
@@ -971,7 +1029,7 @@ if ($request->hasFile('gst_doc')) {
                 ->update($updateData);
         } else {
             $dataToSave['created_at'] = DB::raw('NOW()');
-            
+
             $createData = collect($dataToSave)
                 ->except(['aadhaar_doc', 'pancard_doc', 'gst_doc'])
                 ->toArray();
@@ -983,12 +1041,397 @@ if ($request->hasFile('gst_doc')) {
 
         $payment = $isDraft ? 'draft' : 'success';
 
+        // ------------Temp Table move------------------------------------------
+        DB::transaction(function () use ($applicationId, $isDraft, $recordId, $request) {
+            // dd($request->all());
+            // dd($request->login_id_store);
+            // exit;
+            // dd($request->input('form_action'));
+            // exit;
+
+            $documentMap = [
+
+                // Ownership Document
+                'ownership_doc' => [
+                    'table'  => 'tnelb_ea_applications',
+                    'column' => 'ownership_doc',
+                    'where'  => ['application_id' => $applicationId]
+                ],
+
+                // Bank Solvency Document
+                'bank_doc' => [
+                    'table'  => 'tnelb_banksolvency_a',
+                    'column' => 'bank_doc',
+                    'where'  => ['application_id' => $applicationId]
+                ],
+
+                // Other Documents
+                'other_doc' => [
+                    'table'  => 'tnelb_attachments_cl',
+                    'column' => 'file_doc',
+                    'where'  => ['application_id' => $applicationId]
+                ],
+
+                //Address proof
+
+                'Address_proof' => [
+                    'table'  => 'tnelb_addressproof_cl',
+                    'column' => 'file_doc',
+                    'where'  => ['application_id' => $applicationId]
+                ],
+
+                //  'educ_qual_proof' => [
+                //     'table'  => 'proprietordetailsform_A',
+                //     'column' => 'educational_proof',
+                //     'where'  => ['application_id' => $applicationId]
+                // ],
+            ];
+
+            // Fetch temp uploaded docs for this application
+            $tempDocs = DB::table('tnelb_temp_uploaded_documents')
+                ->where('login_id', $request->login_id_store)
+                ->where('form_name', $request->form_name)
+                ->where('license_name', $request->license_name)
+                // ->where('license_name', $request->license_name)
+
+                // ->where('is_final', '0')
+                // ->orderBy('uploaded_at', 'DESC')
+                ->get();
+
+            // dd($tempDocs);
+            // exit;
+
+
+            // dd($tempDocs->pluck('document_category'));
+            // exit;
+
+
+
+            foreach ($tempDocs as $tempDoc) {
+
+                // Skip unknown document category
+                if (!isset($documentMap[$tempDoc->document_category])) {
+                    continue;
+                }
+
+                $targetTable  = $documentMap[$tempDoc->document_category]['table'];
+                $updateColumn = $documentMap[$tempDoc->document_category]['column'];
+                $whereClause  = $documentMap[$tempDoc->document_category]['where'];
+
+                // -----------------------------------------
+                // 4️⃣ GET FINAL PRO PATH
+                // -----------------------------------------
+                $dynamicRequest = clone $request;
+                $dynamicRequest->merge([
+                    'module' => $tempDoc->module
+                ]);
+                $dbFilePath_all = DocPathController::getPath($dynamicRequest);
+                $dbFilePath     = $dbFilePath_all->filepath_pro;
+
+                $tempFullPath = public_path(
+                    $tempDoc->file_path . '/' . $tempDoc->file_name
+                );
+
+                $proFolderPath = public_path($dbFilePath);
+
+                if (!File::exists($proFolderPath)) {
+                    File::makeDirectory($proFolderPath, 0755, true);
+                }
+
+                $proFullPath = $proFolderPath . '/' . $tempDoc->file_name;
+
+                // -----------------------------------------
+                // 5️⃣ COPY FILE
+                // -----------------------------------------
+
+                if (File::exists($tempFullPath)) {
+                    File::copy($tempFullPath, $proFullPath);
+                } else {
+                    continue; // skip if file missing
+                }
+
+                $finalDbPath = $dbFilePath . '/' . $tempDoc->file_name;
+
+
+                // -----------------------------------------
+                // 6️⃣ INSERT OR UPDATE TARGET TABLE
+                // -----------------------------------------
+
+                $recordExists = DB::table($targetTable)
+                    ->where($whereClause)
+                    ->exists();
+
+                // dd($recordExists);exit;
+
+                // -----------------------------------------
+                // 6️⃣ INSERT OR UPDATE TARGET TABLE
+                // -----------------------------------------
+
+                if ($tempDoc->document_category === 'other_doc') {
+
+
+                    // ALWAYS INSERT (multiple attachments allowed)
+
+                    DB::table($targetTable)
+                        ->insert([
+                            'application_id'   => $applicationId,
+                            'login_id'         => $request->login_id_store ?? null,
+                            'form_name'        => $request->form_name,
+                            'license_name'     => $request->license_name,
+                            'document_category' => $tempDoc->document_category,
+                            'type'              => $tempDoc->ownership_type,
+                            $updateColumn      => $finalDbPath,
+                            'created_at'       => now(),
+                            'updated_at'       => now(),
+                        ]);
+                } elseif ($tempDoc->document_category === 'Address_proof') {
+
+                    $recordExists = DB::table($targetTable)
+                        ->where($whereClause)
+                        ->exists();
+
+                    if ($recordExists) {
+
+                        DB::table($targetTable)
+                            ->where($whereClause)
+                            ->update([
+                                $updateColumn => $finalDbPath,
+                                'updated_at'  => now()
+                            ]);
+                    } else {
+                        DB::table($targetTable)
+                            ->insert([
+                                'application_id' => $applicationId,
+                                'login_id'       => $request->login_id_store ?? null,
+                                'form_name'      => $request->form_name,
+                                'license_name'   => $request->license_name,
+                                $updateColumn    => $finalDbPath,
+                                'created_at'     => now(),
+                                'updated_at'     => now(),
+                            ]);
+                    }
+                } else {
+
+                    // Normal logic (single file fields like ownership_doc, bank_doc)
+
+                    $recordExists = DB::table($targetTable)
+                        ->where($whereClause)
+                        ->exists();
+
+                    if ($recordExists) {
+
+                        DB::table($targetTable)
+                            ->where($whereClause)
+                            ->update([
+                                $updateColumn => $finalDbPath,
+                                'updated_at'  => now()
+                            ]);
+                    } else {
+
+                        DB::table($targetTable)
+                            ->insert(array_merge(
+                                $whereClause,
+                                [
+                                    $updateColumn => $finalDbPath,
+                                    'login_id'    => $request->login_id_store ?? null,
+                                    'created_at'  => now(),
+                                    'updated_at'  => now(),
+                                    'status'      => '1'
+                                ]
+                            ));
+                    }
+                }
+
+
+
+                // -----------------------------------------
+                // 7️⃣ MARK TEMP DOC AS FINAL
+                // -----------------------------------------
+
+                DB::table('tnelb_temp_uploaded_documents')
+                    ->where('id', $tempDoc->id)
+                    ->update([
+                        'is_final'   => '1',
+                        'moved_as'   => $request->input('form_action'),
+                        'updated_at' => now()
+                    ]);
+            }
+
+
+            // =======================================================
+            // 8️⃣ MOVE EQUIPMENT FILES + INSERT INTO PERMANENT TABLE
+            // =======================================================
+
+            if ($request->has('equipments')) {
+
+                // -----------------------------------------
+                // 1️⃣ GET PERMANENT PATH
+                // -----------------------------------------
+
+                $dbFilePath_all = DocPathController::getPath($request);
+                $proFolderPath  = public_path($dbFilePath_all->filepath_pro);
+
+                if (!File::exists($proFolderPath)) {
+                    File::makeDirectory($proFolderPath, 0755, true);
+                }
+
+                // -----------------------------------------
+                // 2️⃣ FETCH ALL TEMP EQUIPMENT FILES (OPTIMIZED)
+                // -----------------------------------------
+
+                $allEquipmentDocs = DB::table('tnelb_temp_uploaded_documents')
+                    ->where('login_id', $request->login_id_store)
+                    ->where('module', 'EQUIPMENTS DOCUMENT')
+                    ->where('document_sub_category', 'ED')
+                    // ->where('is_final', '1')
+                    ->get()
+                    ->groupBy('equip_code');
+
+                // dd($allEquipmentDocs);
+                // exit;
+
+                // -----------------------------------------
+                // 3️⃣ OPTIONAL: DELETE OLD EQUIPMENT RECORDS
+                // -----------------------------------------
+
+                DB::table('tnelb_equimentsuser_cl')
+                    ->where('application_id', $applicationId)
+                    ->delete();
+
+                // -----------------------------------------
+                // 4️⃣ LOOP EQUIPMENTS
+                // -----------------------------------------
+
+                foreach ($request->equipments as $index => $equipment) {
+                    // dd('1111111');exit;
+                    // Skip empty row
+                    if (
+                        empty($equipment['equip_id']) &&
+                        empty($request->serial_no[$index]) &&
+                        empty($request->model[$index])
+                    ) {
+                        continue;
+                    }
+
+                    $equipmentId = $equipment['equip_id'];
+                    $licenceId   = $equipment['licence_id'];
+
+                    // dd($equipmentId);exit;
+
+                    $serialNo    = $request->serial_no[$index] ?? null;
+                    $modelNo     = $request->model[$index] ?? null;
+                    $dateOfTest  = $request->date_of_test[$index] ?? null;
+                    // dd($serialNo);exit;
+
+                    $testReportPath     = null;
+                    $purchaseReportPath = null;
+
+                    // -----------------------------------------
+                    // GET FILES FOR THIS EQUIPMENT
+                    // -----------------------------------------
+
+                    $equipmentDocs = $allEquipmentDocs[$equipmentId] ?? collect();
+
+                    // dd($equipmentDocs);exit;
+
+                    foreach ($equipmentDocs as $doc) {
+
+                        // dd('111'); exit;
+
+                        $tempFullPath = public_path($doc->file_path . '/' . $doc->file_name);
+                        $proFullPath  = $proFolderPath . '/' . $doc->file_name;
+
+                        if (File::exists($tempFullPath)) {
+                            File::copy($tempFullPath, $proFullPath);
+                        }
+
+
+                        $finalDbPath = $dbFilePath_all->filepath_pro . '/' . $doc->file_name;
+
+                        if ($doc->document_category === 'instrument_test_report') {
+                            $testReportPath = $finalDbPath;
+                        }
+
+                        if ($doc->document_category === 'instrument_purchase_report') {
+                            $purchaseReportPath = $finalDbPath;
+                        }
+
+                        DB::table('tnelb_temp_uploaded_documents')
+                            ->where('id', $doc->id)
+                            ->update([
+                                'is_final'   => '1',
+                                'moved_as'   => $request->input('form_action'),
+                                'updated_at' => now()
+                            ]);
+                    }
+
+                    // -----------------------------------------
+                    // INSERT INTO PERMANENT TABLE
+                    // -----------------------------------------
+                    // dd($serialNo);exit;
+                    DB::table('tnelb_equimentsuser_cl')->insert([
+
+                        'login_id'            => $request->login_id_store ?? null,
+                        'application_id'      => $applicationId,
+                        'form_name'           => $request->form_name,
+                        'license_name'        => $request->license_name,
+                        'licence_id'          => $licenceId,
+                        'equipment_id'        => $equipmentId,
+                        'serial_no'           => $serialNo,
+                        'model_no'            => $modelNo,
+                        'testreport_file'     => $testReportPath,
+                        'purchasereport_file' => $purchaseReportPath,
+                        'dateoftest'          => $dateOfTest,
+                        'ipaddress'      => $request->ip(),
+                        'created_at'          => now(),
+                        'updated_at'          => now(),
+
+                    ]);
+                }
+            }
+
+            // var_dump($tempDocs);
+            // exit;
+            // foreach ($tempDocs as $doc) {
+
+            //     // Decide which column to update in main table
+            //     $updateColumn = null;
+
+            //     if ($doc->document_category) {
+            //         $updateColumn = 'ownership_doc';
+            //     }
+
+            //     // if ($doc->document_category === 'DIRECTOR_MOM') {
+            //     //     $updateColumn = 'director_mom_doc';
+            //     // }
+
+            //     if ($updateColumn) {
+
+            //         // 🔹 Update main application table
+            //         DB::table('tnelb_ea_applications')
+            //             ->where('application_id', $applicationId)
+            //             ->update([
+            //                 $updateColumn => $doc->file_name,
+            //                 'updated_at'  => DB::raw('NOW()')
+            //             ]);
+
+            //         // 🔹 Mark temp document as final
+            //         DB::table('tnelb_temp_uploaded_documents')
+            //             ->where('id', $doc->id)
+            //             ->update([
+            //                 'is_final'   => '1',
+            //                 'updated_at'=> DB::raw('NOW()')
+            //             ]);
+            //     }
+            // }
+        });
+
 
         if (!$isDraft) {
 
-          
 
-                
+
+
 
             $form = \DB::table('tnelb_forms')
                 ->where('form_code', $request->form_name)
@@ -1012,7 +1455,7 @@ if ($request->hasFile('gst_doc')) {
             // dd($form->id);
             // exit;
 
-         $today = Carbon::today()->toDateString();
+            $today = Carbon::today()->toDateString();
 
             $fees_form = DB::table('tnelb_fees')
                 ->where('cert_licence_id', $form->id)
@@ -1054,7 +1497,8 @@ if ($request->hasFile('gst_doc')) {
                 // exit;
 
             } else {
-
+         // dd($form->id);
+         //        exit;
 
                 $paymentDetails = DB::select("
                     SELECT * FROM calc_fees(:appl_type, :licence_id, :issued_licence)
@@ -1092,7 +1536,7 @@ if ($request->hasFile('gst_doc')) {
             // dd($form->license_name);
             // exit;
 
-            
+
             Payment::create([
                 'login_id'       => $request->login_id_store,
                 'application_id' => $applicationId,
@@ -1117,7 +1561,7 @@ if ($request->hasFile('gst_doc')) {
                 'license_name' => $request->license_name,
             ]);
 
-          
+
 
             return response()->json([
                 'draft_status' => $isDraft,
@@ -1408,9 +1852,9 @@ if ($request->hasFile('gst_doc')) {
         $dataToSave['payment_status'] = $isDraft ? 'draft' : 'pending';
         $dataToSave['application_status'] = 'P';
         $dataToSave['created_at'] = DB::raw('NOW()');
-        
+
         $dataToSave['updated_at'] = DB::raw('NOW()');
-        
+
         $dataToSave['appl_type'] = $request->appl_type;
 
 
@@ -1695,9 +2139,9 @@ if ($request->hasFile('gst_doc')) {
 
         // ---------- PAN ----------
         if ($request->hasFile('pancard_doc')) {
-             $panName = 'pan_' . Str::uuid() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
-                $request->file('pancard_doc')->move(public_path('documents'), $panName);
-                $panFilename = Crypt::encryptString('documents/' . $panName);
+            $panName = 'pan_' . Str::uuid() . '.' . $request->file('pancard_doc')->getClientOriginalExtension();
+            $request->file('pancard_doc')->move(public_path('documents'), $panName);
+            $panFilename = Crypt::encryptString('documents/' . $panName);
         } elseif ($request->filled('pancard_doc')) {
             $postedPan = $request->input('pancard_doc');
 
@@ -1712,7 +2156,7 @@ if ($request->hasFile('gst_doc')) {
 
         // ---------- GST ----------
         if ($request->hasFile('gst_doc')) {
-              $gstName = 'gst_' . Str::uuid() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
+            $gstName = 'gst_' . Str::uuid() . '.' . $request->file('gst_doc')->getClientOriginalExtension();
             $request->file('gst_doc')->move(public_path('documents'), $gstName);
             $gstFilename = Crypt::encryptString('documents/' . $gstName);
         } elseif ($request->filled('gst_doc')) {
@@ -2128,7 +2572,7 @@ if ($request->hasFile('gst_doc')) {
             // Deactivate removed partner rows
             ProprietorformA::where('application_id', $applicationId)
                 ->whereNotIn('id', $newdirectorIds)
-                ->where('ownership_type', 'partner') 
+                ->where('ownership_type', 'partner')
                 ->update(['proprietor_flag' => 0]);
         }
 
@@ -2139,7 +2583,7 @@ if ($request->hasFile('gst_doc')) {
 
         if (!$isDraft) {
 
-        
+
 
 
 
@@ -2165,7 +2609,7 @@ if ($request->hasFile('gst_doc')) {
             // dd($form->id);
             // exit;
 
-           $today = Carbon::today()->toDateString();
+            $today = Carbon::today()->toDateString();
 
             $fees_form = DB::table('tnelb_fees')
                 ->where('cert_licence_id', $form->id)
@@ -2309,14 +2753,14 @@ if ($request->hasFile('gst_doc')) {
             // dd($form->id);
             // exit;
 
-        $today = Carbon::today()->toDateString();
+            $today = Carbon::today()->toDateString();
 
-        $fees_form = DB::table('tnelb_fees')
-            ->where('cert_licence_id', $form->id)
-            ->where('fees_type', $appl_type)
-            ->whereDate('start_date', '<=', $today)
-            ->orderBy('start_date', 'desc')
-            ->first();
+            $fees_form = DB::table('tnelb_fees')
+                ->where('cert_licence_id', $form->id)
+                ->where('fees_type', $appl_type)
+                ->whereDate('start_date', '<=', $today)
+                ->orderBy('start_date', 'desc')
+                ->first();
 
 
             // dd($fees_form->fees_status);
@@ -3161,8 +3605,8 @@ if ($request->hasFile('gst_doc')) {
 
     public function updatePaymentStatus(Request $request)
     {
-// dd('111');
-// exit;
+        // dd('111');
+        // exit;
 
         $request->validate([
             'application_id' => 'required|string',
@@ -3183,7 +3627,7 @@ if ($request->hasFile('gst_doc')) {
 
 
 
-// ALTER TABLE tnelb_eb_applications ADD COLUMN dt_submit date NULL ;
+        // ALTER TABLE tnelb_eb_applications ADD COLUMN dt_submit date NULL ;
         if ($formname == 'SA') {
             ESA_Application_model::where('application_id', $request->application_id)
                 ->update(['payment_status' => $request->payment_status]);
@@ -3202,44 +3646,44 @@ if ($request->hasFile('gst_doc')) {
                 ->update(['payment_status' => $request->payment_status]);
         }
 
-        if($payment === 'paid'){
+        if ($payment === 'paid') {
 
             if ($formname == 'SA') {
-               ESA_Application_model::where('application_id', $request->application_id)
-                ->update([
-                    'dt_submit'  => DB::raw('NOW()'),
-                    'updated_at' => DB::raw('NOW()'),
-                ]);
+                ESA_Application_model::where('application_id', $request->application_id)
+                    ->update([
+                        'dt_submit'  => DB::raw('NOW()'),
+                        'updated_at' => DB::raw('NOW()'),
+                    ]);
             } elseif ($formname == 'SB') {
                 //                 dd($payment);
                 // exit;
                 ESB_Application_model::where('application_id', $request->application_id)
-                ->update([
-                    'dt_submit'  => DB::raw('NOW()'),
-                    'updated_at' => DB::raw('NOW()'),
-                ]);
+                    ->update([
+                        'dt_submit'  => DB::raw('NOW()'),
+                        'updated_at' => DB::raw('NOW()'),
+                    ]);
             } elseif ($formname == 'B') {
                 //                 dd($payment);
                 // exit;
                 B_Application::where('application_id', $request->application_id)
-                ->update([
-                    'dt_submit'  => DB::raw('NOW()'),
-                    'updated_at' => DB::raw('NOW()'),
-                ]);
+                    ->update([
+                        'dt_submit'  => DB::raw('NOW()'),
+                        'updated_at' => DB::raw('NOW()'),
+                    ]);
             } else {
                 EA_Application_model::where('application_id', $request->application_id)
-                ->update([
-                    'dt_submit'  => DB::raw('NOW()'),
-                    'updated_at' => DB::raw('NOW()'),
-                ]);
+                    ->update([
+                        'dt_submit'  => DB::raw('NOW()'),
+                        'updated_at' => DB::raw('NOW()'),
+                    ]);
             }
-            
+
             // $paid = EA_Application_model::where('application_id', $request->application_id)
             //         ->update(['dt_submit' => DB::raw('NOW()') ]);
             // dd($paid);
             // exit;
         }
-  
+
 
 
         return response()->json(['status' => 'updated']);
@@ -3263,22 +3707,21 @@ if ($request->hasFile('gst_doc')) {
 
     // -------------------------------storevaliditycheck_cl----------------------------
     public function storevaliditycheck_cl(Request $request)
-{
+    {
 
-    // dd('1111');
-    // exit;
-    DB::table('tnelb_cl_validitychecks')->insert([
-        'login_id'      => auth()->id(),
-        'application_id'=> $request->application_id,
-        'form_name'     => $request->form_name,
-        'license_name'  => $request->license_name,
-        'check_value'   => $request->check_value, 
-        'ipaddress'     => $request->ip(),
-        'created_at'    => now(),
-        'updated_at'    => now(),
-    ]);
+        // dd('1111');
+        // exit;
+        DB::table('tnelb_cl_validitychecks')->insert([
+            'login_id'      => auth()->id(),
+            'application_id' => $request->application_id,
+            'form_name'     => $request->form_name,
+            'license_name'  => $request->license_name,
+            'check_value'   => $request->check_value,
+            'ipaddress'     => $request->ip(),
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
 
-    return response()->json(['status' => 'success']);
-}
-
+        return response()->json(['status' => 'success']);
+    }
 }

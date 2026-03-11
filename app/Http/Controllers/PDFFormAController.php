@@ -8,6 +8,7 @@ use App\Models\Equipment_storetmp_A;
 use App\Models\ESA_Application_model;
 use App\Models\Mst_Form_s_w;
 use App\Models\ProprietorformA;
+use App\Models\Tnelb_Addressproof_cl;
 use App\Models\Tnelb_banksolvency_a;
 use App\Models\TnelbApplicantStaffDetail;
 use Illuminate\Http\Request;
@@ -36,6 +37,8 @@ class PDFFormAController extends Controller
 
         $license_name = DB::table('mst_licences')->where('form_code', $form->form_name)->first();
         $banksolvency = Tnelb_banksolvency_a::where('application_id', $newApplicationId)->where('status', '1')->first();
+
+        $Addressproof = Tnelb_Addressproof_cl::where('application_id', $newApplicationId)->first();
 
         // $equipmentlist = Equipment_storetmp_A::where('application_id', $newApplicationId)->first();
         // $documents = Mst_documents::where('application_id', $newApplicationId)->first();
@@ -150,9 +153,10 @@ class PDFFormAController extends Controller
         <table border="1" width="100%" cellspacing="0" cellpadding="5" class="text-center tbl_center" >
         <tr>
             <th>Ownership Type </th>
-            <th >Name and Address</th>
-            <th>Age and Qualifications</th>
+            <th >Name and Address </th>
             <th>Father/s Husband/s Name</th>
+            <th>D.O.B and Age  </th>
+            <th>Qualification </th>
             <th>Present business of the applicant</th>
             
             <th>Competency Certificate and Validity</th>
@@ -192,8 +196,9 @@ class PDFFormAController extends Controller
                 $html .= '<tr>
                     <td>' . $ownership_type . '</td>
                     <td>' . $pro->proprietor_name . ', ' . $pro->proprietor_address . '</td>
-                    <td>' . $pro->age . ' ' . $pro->qualification . '</td>
                     <td>' . $pro->fathers_name . '</td>
+                    <td>' . $pro->dob . ' '. $pro->age . '</td>
+                    <td>' . $pro->qualification . ' '. $pro->qualification_text . '</td>
                     <td>' . $pro->present_business . '</td>
                     <td>' . $pro->competency_certificate_number . '<br>'  . $c_validity . '</td>
                     <td>' . $pro->presently_employed_name . '- ' . $pro->presently_employed_address . '</td>
@@ -273,7 +278,7 @@ class PDFFormAController extends Controller
             <tr>
                 <th>S.No</th>
                 <th>Staff Name</th>
-                <th>Staff Qualification</th>
+                
                 <th>Staff Category</th>
                 <th>Competency Certificate Number</th>
                 <th>Competency Certificate Validity</th>
@@ -288,7 +293,7 @@ class PDFFormAController extends Controller
             $html .= '<tr >
                 <td class="text-center">' . $i . '</td>
                 <td class="text-center">' . $edu->staff_name . '</td>
-                <td class="text-center">' . $edu->staff_qualification . '</td>
+                
                 
                 <td class="text-center">' . $edu->staff_category . '</td>
                 <td class="text-center">' . $edu->cc_number . '</td>
@@ -502,44 +507,37 @@ class PDFFormAController extends Controller
 
 
         try {
-            $decryptedaadhaar = Crypt::decryptString($form->aadhaar);
-            $maskaadhaar = str_repeat('X', strlen($decryptedaadhaar) - 4) . substr($decryptedaadhaar, -4);
+            
+            $decryptednumber = Crypt::decryptString($Addressproof->addressproofno);
+            $masknumber = str_repeat('X', strlen($decryptednumber) - 4) . substr($decryptednumber, -4);
+            
 
-            $decryptedpancard = Crypt::decryptString($form->pancard);
-            $maskpancard = str_repeat('X', strlen($decryptedpancard) - 4) . substr($decryptedpancard, -4);
-
-            $decryptedgst_number = Crypt::decryptString($form->gst_number);
-            $maskgst_number = str_repeat('X', strlen($decryptedgst_number) - 4) . substr($decryptedgst_number, -4);
         } catch (\Exception $e) {
-            $maskaadhaar = 'Invalid or corrupted AAdhaar';
-            $maskpancard = 'Invalid or corrupted Pancard';
-            $maskgst_number = 'Invalid or corrupted GST Number';
+            $masknumber = 'Invalid or corrupted AAdhaar';
+ 
         }
 
         $html .= '
+        <h4>12. Address Proof : GST/ Rental Aggrement/Others</h4>
     <table width="80%" cellspacing="0" cellpadding="3" style="text-align:left;">
         <tr>
-            <td>12.</td>
-            <td><strong>i) Aadhaar Number</strong></td>
-            <td style="text-align:right;">' . strtoupper($maskaadhaar) . '</td>
+            
+            <td><strong>i) Type of Address Proof </strong></td>
+            <td style="text-align:right;">' . strtoupper($Addressproof->type_doc) . '</td>
         </tr>
         <tr>
-            <td></td>
-            <td><strong>ii) PAN Card Number</strong></td>
-            <td style="text-align:right;">' . strtoupper($maskpancard) . '</td>
+            
+            <td><strong>ii) GST/ Rental</strong></td>
+            <td style="text-align:right;">' . strtoupper($Addressproof->addressproofno) . '</td>
         </tr>
-        <tr>
-            <td></td>
-            <td><strong>iii) GST Number</strong></td>
-            <td style="text-align:right;">' . strtoupper($maskgst_number) . '</td>
-        </tr>
+       
     </table>';
         $equiplist = Mst_equipment_tbl::where('equip_licence_name', 8)
             ->where('status', 1)
             ->orderBy('id')
             ->get();
 
-        $equipmentlist = DB::table('equipmentforma_tbls')
+        $equipmentlist = DB::table('tnelb_equimentsuser_cl')
             ->where('login_id', Auth::user()->login_id)
             ->where('application_id', $newApplicationId)
             ->get();
@@ -548,39 +546,43 @@ class PDFFormAController extends Controller
             Create map:
             equip_id => equipment_value
             */
-        $equipmentMap = collect($equipmentlist)
-            ->pluck('equipment_value', 'equip_id')
-            ->toArray();
+      $equipmentMap = collect($equipmentlist)->keyBy('equipment_id');
 
         $html .= '<h4>13) Equipment / Instruments List</h4>';
 
         $html .= '
-<table border="1" cellpadding="4" cellspacing="0" width="100%">
-    <thead>
-        <tr style="font-weight:bold; background-color:#f2f2f2;">
-            <th width="6%">S.No</th>
-            <th width="44%">Equipment Name</th>
-            <th width="25%">Equipment Type</th>
-            <th width="25%" align="center">Availability</th>
-        </tr>
-    </thead>
-    <tbody>';
+        <table border="1" cellpadding="4" cellspacing="0" width="100%">
+            <thead>
+                <tr style="font-weight:bold; background-color:#f2f2f2;">
+                    <th >S.No</th>
+                    <th >Equipment Name</th>
+                    <th >Equipment Type</th>
+                    <th  align="center">Serial No</th>
+                    <th align="center">	Make Model</th>
+                    <th  align="center">Date of Test</th>
+                </tr>
+            </thead>
+            <tbody>';
 
         $slno = 1;
 
         foreach ($equiplist as $equip) {
 
-            // YES / NO (default NO)
-            $value = strtoupper($equipmentMap[$equip->id] ?? 'no');
+            $userEquip = $equipmentMap[$equip->id] ?? null;
+
+            $serial = $userEquip->serial_no ?? '';
+            $model  = $userEquip->model_no ?? '';
+            $date   = $userEquip->dateoftest ?? '';
 
             $html .= '
-        <tr>
-            <td width="6%" align="center">' . $slno . '</td>
-            <td width="44%" align="center">' . $equip->equip_name . '</td>
-            <td width="25%" align="center">' . $equip->equipment_type . '</td>
-            <td width="25%" align="center"><strong>' . $value . '</strong></td>
-        </tr>';
-
+            <tr>
+                <td align="center">' . $slno . '</td>
+                <td align="center">' . $equip->equip_name . '</td>
+                <td align="center">' . $equip->equipment_type . '</td>
+                <td align="center">' . $serial . '</td>
+                <td align="center">' . $model . '</td>
+                <td align="center">' . $date . '</td>
+            </tr>';
             $slno++;
         }
 

@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Admin\Mst_equipment_tbl;
 use App\Models\EA_Application_model;
 use App\Models\Equipment_storetmp_A;
 use App\Models\mst_workflow;
+use App\Models\MstLicence;
 use App\Models\Payment;
 use App\Models\ProprietorformA;
+use App\Models\Tnelb_Addressproof_cl;
+use App\Models\Tnelb_Attachments_cl;
 use App\Models\Tnelb_banksolvency_a;
+use App\Models\Tnelb_Equimentsuser_cl;
 use App\Models\TnelbApplicantStaffDetail;
 // use Illuminate\Contracts\Validation\Rule;
 use App\Models\TnelbApplicantPhoto;
@@ -16,6 +21,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
 
 class EA_RenewalController extends BaseController
 {
@@ -163,7 +169,7 @@ class EA_RenewalController extends BaseController
 
 
      // ----------------------------draft
-    public function edit($application_id)
+   public function edit($application_id)
     {
         $application = null;
         $proprietors = collect();
@@ -184,6 +190,17 @@ class EA_RenewalController extends BaseController
 
             $equipmentlist = Equipment_storetmp_A::where('application_id', $application_id)->first();
 
+
+            $attachment_doc = Tnelb_Attachments_cl::where('application_id', $application_id)->get();
+
+            $Address_proof = Tnelb_Addressproof_cl::where('application_id', $application_id)->first();
+
+            $equipmentDetails = Tnelb_Equimentsuser_cl::where('application_id', $application_id)
+            ->get()
+            ->keyBy('equipment_id');
+
+
+
              $equiplist = Mst_equipment_tbl::where('equip_licence_name', 8)
             ->where('status', 1)
             ->orderBy('id')
@@ -194,12 +211,17 @@ class EA_RenewalController extends BaseController
             ->where('application_id', $application_id) // IMPORTANT
             ->get();
 
+            $cert_licence_code = 'EA';
+            $form_code = MstLicence::where('cert_licence_code', $cert_licence_code)
+            ->where('status', 1)
+            ->orderBy('id')
+            ->first();
+
             // var_dump()
         }
 
-        return view('user_login.apply-form-a', compact('application', 'proprietors', 'draftCount', 'staffs', 'document', 'banksolvency' , 'equipmentlist', 'equiplist'));
+        return view('user_login.apply-form-a', compact('application', 'proprietors', 'draftCount', 'staffs', 'document', 'banksolvency' , 'equipmentlist', 'equiplist', 'form_code', 'attachment_doc', 'Address_proof', 'equipmentDetails'));
     }
-
 
 
       public function edit_renewaldraft($application_id)

@@ -57,6 +57,19 @@
         font-family: 'FontAwesome';
         display: inline-block;
     }
+
+    /* Form title: vertically center hyphen with text */
+    .form-title-hyphen {
+        display: inline-block;
+        vertical-align: middle;
+        position: relative;
+        top: -0.08em;
+    }
+
+    /* Space between form name line and RETURN/Return */
+    .form-title-br + .form-title-return {
+        margin-top: 1rem;
+    }
 </style>
 
 
@@ -70,7 +83,7 @@
                     @if(isset($application_details->form_name) && $application_details->form_name === 'W')
                         RETURN – Form {{ $application_details->form_name }}
                     @else
-                        Correct and resubmit – Form {{ $application_details->form_name }}
+                        Return – Form {{ $application_details->form_name }}
                     @endif
                 </a>
             </li>
@@ -110,13 +123,16 @@
                                             மேற்பார்வையாளர் தகுதி சான்றிதழ் பெறுவதற்கான விண்ணப்பம்
                                         </h5> -->
                                     <h6 class="card-title_apply text-white mt-2 form-title">
-                                        Form '{{ $application_details->form_name }}' /
-                                        Certificate '{{ $application_details->license_name }}' –
+                                        Form <span class="form-title-hyphen">-</span> {{ $application_details->form_name }} /
+                                        Certificate <span class="form-title-hyphen">-</span> {{ $application_details->license_name }}
+                                        <br class="form-title-br">
+                                        <span class="d-block form-title-return">
                                         @if(isset($application_details->form_name) && $application_details->form_name === 'W')
                                             RETURN
                                         @else
-                                            Correct and resubmit
+                                            Return
                                         @endif
+                                        </span>
                                     </h6>
                                 </div>
                             </div>
@@ -1009,10 +1025,10 @@
                                     </div>
                                     <div class="col-12 col-md-12 mt-5">
                                         <div class="form-group text-center">
-                                            <button type="button" class="btn btn-primary btn-lg" id="editBtn">Edit</button>
+                                            <button type="button" class="btn btn-primary" id="editBtn">Edit</button>
                                             <span id="actionButtonsWrap" style="display: none;">
-                                                <button type="button" class="btn btn-secondary btn-lg" id="cancelBtn">Cancel</button>
-                                                <button type="button" class="btn btn-primary btn-lg" id="submitCorrectionsBtn"
+                                                <button type="button" class="btn btn-danger" id="cancelBtn">Cancel</button>
+                                                <button type="button" class="btn btn-primary" id="submitCorrectionsBtn"
                                                     data-url="{{ route('form.submit_returned_application', ['appl_id' => $applicationid]) }}">
                                                     Submit
                                                 </button>

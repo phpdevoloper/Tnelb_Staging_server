@@ -615,7 +615,17 @@
                                     <div class="mt-container mx-auto">
                                         <div class="timeline-line">
                                             @foreach ($workflows as $row)
-                                            
+                                            @php
+                                                $roleLabels = [
+                                                    'PR' => 'President',
+                                                    'SE' => 'Secretary',
+                                                    'S'  => 'Supervisor',
+                                                    'S2' => 'Supervisor 2',
+                                                    'A'  => 'Accountant',
+                                                    'AP' => 'Applicant',
+                                                ];
+                                                $processedLabel = $roleLabels[$row->processed_by] ?? $row->processed_by;
+                                            @endphp
                                             <div class="item-timeline">
                                                 <p class="t-time">{{ format_date_other($row->created_at) }}</p>
                                                 
@@ -624,13 +634,13 @@
                                                 </div>
                                                 <div class="t-text">
                                                     @if ($row->appl_status == 'RE')
-                                                        <p>Returned by {{ $row->processed_by }}</p>
+                                                        <p>Returned by {{ $processedLabel }}</p>
                                                     @elseif ($row->appl_status == 'A')
-                                                        <p>Approved by {{ $row->processed_by }}</p>
+                                                        <p>Approved by {{ $processedLabel }}</p>
                                                     @elseif ($row->appl_status == 'RJ')
-                                                        <p class="text-danger">Rejected by {{ $row->processed_by }}</p>
+                                                        <p class="text-danger">Rejected by {{ $processedLabel }}</p>
                                                     @else
-                                                        <p>Processed by {{ $row->processed_by }}</p>
+                                                        <p>Processed by {{ $processedLabel }}</p>
                                                     @endif
                                             
                                                     <p class="t-meta-time">
@@ -638,7 +648,7 @@
                                                             Reason: {{ $row->reject_reason }}
                                                         @else
                                                             @if (!$row->name)
-                                                                Approved by {{ $row->processed_by }}
+                                                                Approved by {{ $processedLabel }}
                                                             @else
                                                                 Forwarded to {{ $row->name }} <br>
                                                                 Remarks: {{ $row->remarks }}
@@ -648,7 +658,7 @@
                                                     </p>
                                                     @if ($row->processed_by !== 'Accountant')
                                                         @if ($row->query_status == "P")
-                                                            <p class="text-danger">Note: Query raised by {{ $row->processed_by }} (
+                                                            <p class="text-danger">Note: Query raised by {{ $processedLabel }} (
                                                                 @php
                                                                 $queries = $row->queries;
                                                             

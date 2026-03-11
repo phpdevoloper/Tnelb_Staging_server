@@ -158,6 +158,7 @@ class LicensepdfController extends Controller
     
     public function generatePDF($application_id)
     {
+        
         $application = DB::table('tnelb_application_tbl')
         ->where('application_id', $application_id)
         ->first();
@@ -310,7 +311,7 @@ class LicensepdfController extends Controller
                         <td width="70%" valign="top">
                             <table class="info-table">
                                 <tr>
-                                    <td class="lbl">C.No</td>
+                                    <td class="lbl">WH.No</td>
                                     <td class="colon">:</td>
                                     <td>' . ($applicant->license_number ?? '') . '</td>
                                 </tr>
@@ -349,10 +350,12 @@ class LicensepdfController extends Controller
                             </table>
                         </td>
                         <td width="30%" valign="top" align="center">
-                            <div class="photo-box">
+                            <div class="photo-box" style="margin-bottom:4mm;">
                                 ' . ($photoPath ? '<img src="' . $photoPath . '" style="width:30mm; height:35mm; object-fit:cover;">' : '') . '
                             </div>
-                            <barcode code="' . $qrValue . '" type="QR" size="0.8" error="M" />
+                            <div>
+                                <barcode code="' . $qrValue . '" type="QR" size="0.8" error="M" />
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -461,7 +464,7 @@ class LicensepdfController extends Controller
             
                                 <table class="info-table">
                                     <tr>
-                                        <td class="lbl">C.No</td>
+                                        <td class="lbl">WH.No</td>
                                         <td class="colon">:</td>
                                         <td class="val">'.$applicant->license_number.'</td>
                                     </tr>
@@ -596,12 +599,8 @@ class LicensepdfController extends Controller
             Storage::disk('local')->put($encryptedPathTa, Crypt::encryptString($pdfBinaryTa));
         }
 
-        // Save paths to `tnelb_license.license_pdf`
-        $valueToStore = $encryptedPathTa
-            ? json_encode(['en' => $encryptedPathEn, 'ta' => $encryptedPathTa], JSON_UNESCAPED_SLASHES)
-            : $encryptedPathEn;
-
-        $this->storeEncryptedLicensePdfPath($application_id, $valueToStore);
+        // Save paths to `tnelb_license.license_pdf_en` / `license_pdf_ta`
+        $this->storeEncryptedLicensePdfPath($application_id, $encryptedPathEn, $encryptedPathTa);
 
         // Stream English PDF to browser (existing behavior)
         return response($pdfBinaryEn)
@@ -927,27 +926,34 @@ class LicensepdfController extends Controller
         return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
     }
 
-    private function storeEncryptedLicensePdfPath($applicationId, string $value): void
+    private function storeEncryptedLicensePdfPath($applicationId, string $encryptedPathEn, ?string $encryptedPathTa = null): void
     {
         try {
-            if (!Schema::hasTable('tnelb_license') || !Schema::hasColumn('tnelb_license', 'license_pdf')) {
+            if (!Schema::hasTable('tnelb_license')) {
                 return;
+            }
+
+            // Build update payload for separate EN / TA columns
+            $payload = ['license_pdf_en' => $encryptedPathEn];
+            if ($encryptedPathTa) {
+                $payload['license_pdf_ta'] = $encryptedPathTa;
             }
 
             $updated = DB::table('tnelb_license')
                 ->where('application_id', $applicationId)
-                ->update(['license_pdf' => $value]);
+                ->update($payload);
 
             if ((int) $updated === 0) {
-                Log::warning('No tnelb_license row updated for license_pdf', [
+                Log::warning('No tnelb_license row updated for license_pdf_en / license_pdf_ta', [
                     'application_id' => $applicationId,
-                    'value' => $value,
+                    'payload' => $payload,
                 ]);
             }
         } catch (\Throwable $e) {
             Log::warning('Failed to store encrypted license PDF path', [
                 'application_id' => $applicationId,
-                'value' => $value,
+                'encryptedPathEn' => $encryptedPathEn,
+                'encryptedPathTa' => $encryptedPathTa,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -1136,7 +1142,7 @@ class LicensepdfController extends Controller
                         <td width="70%" valign="top">
                             <table class="info-table">
                                 <tr>
-                                    <td class="lbl">C.No</td>
+                                    <td class="lbl">WH.No</td>
                                     <td class="colon">:</td>
                                     <td class="val">'.$applicant->license_number.'</td>
                                 </tr>
@@ -1562,7 +1568,7 @@ class LicensepdfController extends Controller
 
                             <table class="info-table">
                                 <tr>
-                                    <td class="lbl">C.No</td>
+                                    <td class="lbl">WH.No</td>
                                     <td class="colon">:</td>
                                     <td class="val">'.$applicant->license_number.'</td>
                                 </tr>

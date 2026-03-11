@@ -61,7 +61,15 @@
                                 </ul>
 
                                 <div class="tab-content" id="myTabContent">
-                                    <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                                <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                                        <div class="row text-center fw-bold border-bottom pb-2 mb-3 mt-3">
+                                            <div class="col-lg-6 text-primary">
+                                                Payment Details
+                                            </div>
+                                            <div class="col-lg-6 text-primary">
+                                                Transaction Details
+                                            </div>
+                                        </div>
                                         <div class="row mt-3 pad-left-10">
                                             <div class="col-lg-6">
                                                 <div class="row mt-3">
@@ -191,7 +199,17 @@
                             <div class="mt-container mx-auto">
                                 <div class="timeline-line">
                                     @foreach ($workflows as $row)
-                                    <?php //var_dump($row);die; ?>
+                                    @php
+                                        $roleLabels = [
+                                            'PR' => 'President',
+                                            'SE' => 'Secretary',
+                                            'S'  => 'Supervisor',
+                                            'S2' => 'Supervisor 2',
+                                            'A'  => 'Accountant',
+                                            'AP' => 'Applicant',
+                                        ];
+                                        $processedLabel = $roleLabels[$row->processed_by] ?? $row->processed_by;
+                                    @endphp
                                     <div class="item-timeline">
                                         <p class="t-time">{{ format_date_other($row->created_at) }}</p>
                                         
@@ -200,22 +218,21 @@
                                         </div>
                                         <div class="t-text">
                                             @if ($row->appl_status == 'RE')
-                                                <p>Returned by {{ $row->processed_by }}</p>
+                                                <p>Returned by {{ $processedLabel }}</p>
                                             @elseif ($row->appl_status == 'A')
-                                                <p>Approved by {{ $row->processed_by }}</p>
+                                                <p>Approved by {{ $processedLabel }}</p>
                                             @else
-                                                <p>Processed by {{ $row->processed_by }}</p>
+                                                <p>Processed by {{ $processedLabel }}</p>
                                             @endif
                                     
                                             <p class="t-meta-time">
                                                 @if (!$row->name)
-                                                    Approved by {{ $row->processed_by }}
+                                                    Approved by {{ $processedLabel }}
                                                 @else
                                                     Forwarded to {{ $row->name }} <br>
                                                     Remarks: {{ $row->remarks }}
                                                 @endif
                                             </p>
-                                            <?php// var_dump($row);die; ?>
 
                                             @if ($row->query_status == "P")
                                                 <p class="text-danger">Note: Query raised by {{ $row->processed_by }} (
