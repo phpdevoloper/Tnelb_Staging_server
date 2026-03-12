@@ -1307,7 +1307,7 @@
                         ${isWOrWHForm ? '<option value="Up to 8th Standard">Up to 8th Standard</option><option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option><option value="ITI Certificate">ITI Certificate</option>' : '<option value="PG">PG</option><option value="UG">UG</option><option value="B.E">B.E</option><option value="M.E">M.E</option><option value="Diploma">Diploma</option><option value="+2">+2</option><option value="10">10</option>' + (isWHForm ? '<option value="8">8</option>' : '')}
                     </select>
                 </td>
-                <td><input type="text" class="form-control" name="institute_name[]" required></td>
+                <td><input type="text" class="form-control" name="institute_name[]" required value="${isWHForm ? 'Dept of Employment & Training' : ''}"></td>
                 <td>
                     <select name="year_of_passing[]" class="form-control" required>
                         ${yearOptions}
