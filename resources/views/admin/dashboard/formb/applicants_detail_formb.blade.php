@@ -1643,6 +1643,13 @@
                                         window.location.href = "{{ url('admin/dashboard') }}";
                                     });
                                 }
+                            },
+                            error: function (xhr) {
+                                let errorMessage = xhr.responseJSON && xhr.responseJSON.error
+                                    ? xhr.responseJSON.error
+                                    : "An unexpected error occurred.";
+                                $('#errorMessage').text(errorMessage);
+                                $('#errorModal').modal('show');
                             }
                         });
                     }

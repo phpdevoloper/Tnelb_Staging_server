@@ -307,7 +307,7 @@ class SupervisorController extends Controller
         if (isset($contractorTablesByCode[$formCode]) && \Illuminate\Support\Facades\Schema::hasTable($contractorTablesByCode[$formCode])) {
             $tbl = $contractorTablesByCode[$formCode];
             $query = DB::table($tbl . ' as ta')
-                ->where('ta.application_status', 'A')
+                ->whereIn('ta.application_status', ['F', 'RF', 'A'])
                 ->select('ta.*', DB::raw('ta.license_name as license_name'));
             if ($applTypeFilter) {
                 $query->where('ta.appl_type', $applTypeFilter);
@@ -1307,6 +1307,7 @@ class SupervisorController extends Controller
                     'processed_by' => $processed ?: 'PR',
                     'updated_at' => now(),
                 ]);
+                
 
             // Issue or renew licence and get final number + dates
             [$licenseNumber, $issuedAt, $expiresAt] = $this->issueOrRenewLicense(
