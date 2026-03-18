@@ -86,7 +86,7 @@
 
     .return-ribbon {
         display: inline-block;
-        background: #17a2b8;
+        background: #6f42c1;
         color: #fff;
         font-size: 8px;
         font-weight: 600;
@@ -99,6 +99,8 @@
         box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
         text-transform: uppercase;
     }
+
+    
 </style>
 <section class="dashboard-panel">
     <div class="layout-login">
@@ -466,7 +468,7 @@
                                     <li><span class="bg-warning"></span> In Progress</li>
                                     <li><span class="bg-success"></span> Completed</li>
                                     <li><span class="bg-danger"></span> Rejected</li>
-                                    <li><span class="bg-info"></span> Query raised – please correct</li>
+                                    <li><span class="bg-return"></span> Return </li>
                                     
                                 </ul>
                                 <div id="applicationsTable">
@@ -713,7 +715,7 @@
                                     <li><span class="bg-warning"></span> In Progress</li>
                                     <li><span class="bg-success"></span> Completed</li>
                                     <li><span class="bg-danger"></span> Rejected</li>
-                                    <li><span class="bg-info"></span> Query raised – please correct</li>
+                                    <li><span class="bg-return"></span> Return </li>
                                     
                                 </ul>
                                 <table class="table-login" >

@@ -644,7 +644,7 @@ class FormPController extends Controller
 
             return response()->json([
                 'status'        => 'success',
-                'message'       => 'Corrections submitted successfully. Your Form P application has been resubmitted and will follow the workflow.',
+                'message'       => 'Application Submitted',
                 'application_id'=> $appl_id,
                 'redirect'      => route('dashboard'),
             ]);

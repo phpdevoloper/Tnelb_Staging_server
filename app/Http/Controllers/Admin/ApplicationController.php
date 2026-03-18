@@ -28,7 +28,7 @@ class ApplicationController extends Controller
         ->where('appl_type', 'N') // Filter by Form S
         ->where('payment_status', 'payment') // Filter by Form S
         ->whereIn('status', ['P','RE']) // Only show new applications
-        ->select('*')
+        ->select('*', DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = tnelb_application_tbl.application_id AND tw.appl_status = 'QU') AS has_return_history"))
         ->orderByDesc('id')
         ->get();
 
@@ -37,10 +37,18 @@ class ApplicationController extends Controller
         ->where('form_id', $assignedFormID) // Filter by Form S
         ->where('appl_type', 'R') // Filter by Form S
         ->whereIn('status', ['P','RE']) // Only show new applications
-        ->select('*')
+        ->select('*', DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = tnelb_application_tbl.application_id AND tw.appl_status = 'QU') AS has_return_history"))
         ->get();
+
+            $returned_applications = DB::table('tnelb_application_tbl')
+                ->where('form_id', $assignedFormID)
+                ->where('status', 'QU')
+                ->whereIn('payment_status', ['payment', 'paid'])
+                ->select('*')
+                ->orderByDesc('id')
+                ->get();
     
-        return view('admin.supervisor.view', compact('new_applications','renewal','forms'));
+        return view('admin.supervisor.view', compact('new_applications','renewal','returned_applications','forms'));
     }
 
     public function get_applications()
@@ -54,7 +62,7 @@ class ApplicationController extends Controller
         ->where('appl_type', 'N') // Filter by Form S
         ->where('payment_status', 'payment') // Filter by Form S
         ->whereIn('status', ['P','RE']) // Only show new applications
-        ->select('*')
+        ->select('*', DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = tnelb_application_tbl.application_id AND tw.appl_status = 'QU') AS has_return_history"))
         ->orderByDesc('id')
         ->get();
 
@@ -63,13 +71,25 @@ class ApplicationController extends Controller
         ->where('form_id', $assignedFormID) // Filter by Form S
         ->where('appl_type', 'R') // Filter by Form S
         ->whereIn('status', ['P','RE']) // Only show new applications
-        ->select('*')
+        ->select('*', DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = tnelb_application_tbl.application_id AND tw.appl_status = 'QU') AS has_return_history"))
         ->orderByDesc('id')
         ->get();
 
+        $returned_applications = DB::table('tnelb_application_tbl')
+            ->where('form_id', $assignedFormID)
+            // ->where('status', 'QU')
+            ->whereIn('payment_status', ['payment', 'paid'])
+            ->where(function ($q) {
+                $q->where('status', 'QU')
+                    ->orWhereRaw("(status IN ('P','RE') AND EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = tnelb_application_tbl.application_id AND tw.appl_status = 'QU'))");
+            })
+            ->select('*')
+            ->orderByDesc('id')
+            ->get();
+
         // var_dump($renewal);die;
     
-        return view('admin.supervisor.view', compact('new_applications','renewal','forms'));
+        return view('admin.supervisor.view', compact('new_applications','renewal','returned_applications','forms'));
     }
 
     public function view_application(){

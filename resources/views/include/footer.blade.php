@@ -3017,7 +3017,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                                 actions: 'd-flex justify-content-around mt-3',
                             },
                             buttonsStyling: false,
-                            footer: '<div><span style="font-size: 13px;">Note: </span><span style="font-size: 13px;color: red;">The total amount is exclusive of applicable payment gateway service charges.</span>',
+                            footer: '<div><span style="font-size: 13px;">Note: </span><span style="font-size: 13px;color: red;">The total amount is exclusive of payment gateway service charges.</span>',
                             preConfirm: async () => {
                                 const paymentResponse = await $.ajax({
                                     url: "{{ route('payment.updatePayment') }}",

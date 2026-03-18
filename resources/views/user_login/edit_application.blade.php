@@ -348,7 +348,14 @@
                                                                     @endif
                                                                 </select>
                                                             </td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]" value="{{ isset($edu_details->institute_name) ? $edu_details->institute_name : '' }}"></td>
+                                                            @php
+                                                                $isWH = (isset($application_details->form_name) && $application_details->form_name === 'WH');
+                                                                $isDraft = isset($application_details->payment_status) && strtolower(trim((string) $application_details->payment_status)) === 'draft';
+                                                                $instituteDisplayValue = !empty(trim((string) ($edu_details->institute_name ?? '')))
+                                                                    ? $edu_details->institute_name
+                                                                    : ($isDraft && $isWH ? 'Dept of Employment & Training' : '');
+                                                            @endphp
+                                                            <td><input type="text" class="form-control" name="institute_name[]" value="{!! e($instituteDisplayValue) !!}"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0" disabled {{ empty($edu_details->year_of_passing) ? 'selected' : '' }}>Select Year</option>
@@ -437,7 +444,12 @@
                                                                     @endif
                                                                 </select>
                                                             </td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]"></td>
+                                                            @php
+                                                                $isWHEmptyRow = isset($application_details->form_name) && $application_details->form_name === 'WH';
+                                                                $isDraftEmptyRow = isset($application_details->payment_status) && strtolower(trim((string) $application_details->payment_status)) === 'draft';
+                                                                $defaultInstituteForEmptyRow = ($isDraftEmptyRow && $isWHEmptyRow) ? 'Dept of Employment & Training' : '';
+                                                            @endphp
+                                                            <td><input type="text" class="form-control" name="institute_name[]" value="{!! e($defaultInstituteForEmptyRow) !!}"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -829,6 +841,11 @@
                                                             <button type="button"
                                                                     class="btn btn-primary btn-sm mb-2"
                                                                     onclick="togglePhotoInput()">Edit/Upload Photo</button>
+                                                        @else
+                                                            <img id="preview_applicant"
+                                                                 class="img-fluid border mb-2"
+                                                                 style="max-width: 100px; border-radius:4px; display: none;"
+                                                                 alt="Applicant Photo">
                                                         @endif
 
                                                         <div id="photo-input-wrapper"
@@ -910,6 +927,11 @@
                                                             <button type="button"
                                                                     class="btn btn-primary btn-sm mb-2"
                                                                     onclick="toggleSignInput()">Edit/Upload Signature</button>
+                                                        @else
+                                                            <img id="preview_signature"
+                                                                 class="img-fluid border mb-2"
+                                                                 style="max-width: 120px; max-height: 60px; border:1px solid #ccc; border-radius:4px; display: none;"
+                                                                 alt="Uploaded Signature">
                                                         @endif
 
                                                         <div id="sign-input-wrapper"
@@ -1014,52 +1036,54 @@
 </footer>
 </div>
 <script>
-    document.getElementById('upload_photo').addEventListener('change', function(event) {
-        const file = event.target.files[0];
-
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const preview = document.getElementById('preview_applicant');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            };
-
-            reader.readAsDataURL(file);
+    (function() {
+        var uploadPhoto = document.getElementById('upload_photo');
+        var previewApplicant = document.getElementById('preview_applicant');
+        var photoInputWrapper = document.getElementById('photo-input-wrapper');
+        if (uploadPhoto && previewApplicant) {
+            uploadPhoto.addEventListener('change', function(event) {
+                var file = event.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewApplicant.src = e.target.result;
+                        previewApplicant.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
         }
-    });
-
-    function togglePhotoInput() {
-        const inputWrapper = document.getElementById('photo-input-wrapper');
-        inputWrapper.style.display = inputWrapper.style.display === 'none' ? 'block' : 'none';
-    }
+        window.togglePhotoInput = function() {
+            if (photoInputWrapper) {
+                photoInputWrapper.style.display = photoInputWrapper.style.display === 'none' ? 'block' : 'none';
+            }
+        };
+    })();
 </script>
 <script>
-    document.getElementById('upload_sign').addEventListener('change', function(event) {
-        const file = event.target.files[0];
-
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const preview = document.getElementById('preview_signature');
-                if (preview) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
+    (function() {
+        var uploadSign = document.getElementById('upload_sign');
+        var previewSignature = document.getElementById('preview_signature');
+        var signInputWrapper = document.getElementById('sign-input-wrapper');
+        if (uploadSign && previewSignature) {
+            uploadSign.addEventListener('change', function(event) {
+                var file = event.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewSignature.src = e.target.result;
+                        previewSignature.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
                 }
-            };
-
-            reader.readAsDataURL(file);
+            });
         }
-    });
-
-    function toggleSignInput() {
-        const inputWrapper = document.getElementById('sign-input-wrapper');
-        if (inputWrapper) {
-            inputWrapper.style.display = inputWrapper.style.display === 'none' ? 'block' : 'none';
-        }
-    }
+        window.toggleSignInput = function() {
+            if (signInputWrapper) {
+                signInputWrapper.style.display = signInputWrapper.style.display === 'none' ? 'block' : 'none';
+            }
+        };
+    })();
 </script>
 <script>
     // Age calculation on DOB change
@@ -1099,12 +1123,14 @@
 
     // Add more education row
     $(document).on('click', function(e) {
-        let container = document.getElementById("education-container");
-        let educationRows = container.querySelectorAll(".education-fields");
-        const isWHForm = "{{ $application_details->form_name ?? '' }}" === 'WH';
-            const isWOrWHForm = "{{ $application_details->form_name ?? '' }}" === 'W' || isWHForm;
+        if (!e.target.closest(".add-more-education") && !e.target.closest(".remove-education")) return;
 
         if (e.target.closest(".add-more-education")) {
+            let container = document.getElementById("education-container");
+            if (!container) return;
+            let educationRows = container.querySelectorAll(".education-fields");
+            const isWHForm = "{{ $application_details->form_name ?? '' }}" === 'WH';
+            const isWOrWHForm = "{{ $application_details->form_name ?? '' }}" === 'W' || isWHForm;
 
             if (educationRows.length >= 5) {
                 $('#education-table').next('.education-error').remove();
@@ -1189,11 +1215,12 @@
 
     // Add more work row
     $(document).on('click', function(e) {
-
-        let container = document.getElementById("work-container");
-        let workRows = container.querySelectorAll(".work-fields");
+        if (!e.target.closest(".add-more-work") && !e.target.closest(".remove-work") && !$(e.target).closest('.remove-work-doc').length) return;
 
         if (e.target.closest(".add-more-work")) {
+            let container = document.getElementById("work-container");
+            if (!container) return;
+            let workRows = container.querySelectorAll(".work-fields");
             if (workRows.length >= 3) {
 
                 $('#work-table').next('.work-error').remove();

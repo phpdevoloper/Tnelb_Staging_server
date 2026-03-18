@@ -2900,7 +2900,7 @@ function showPaymentInitiationPopupformA(
                 <div class="text-start" style="font-size: 13px;">
                     
                     <strong>Note:</strong>
-                    <span style="color:red;">The total amount is exclusive of applicable payment gateway service charges.</span>
+                    <span style="color:red;">The total amount is exclusive of payment gateway service charges.</span>
                 </div>
             `,
         // icon: "info",

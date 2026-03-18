@@ -45,6 +45,7 @@ class SupervisorController extends Controller
                 'workflows' => collect(),
                 'new_applications' => collect(),
                 'renewal' => collect(),
+                'returned_applications' => collect(),
                 'is_completed_list' => true,
             ]);
         }
@@ -61,7 +62,12 @@ class SupervisorController extends Controller
                     ->whereNotExists(function ($q) {
                         $q->select(DB::raw(1))->from('tnelb_workflow as tw')->whereRaw('tw.application_id = ta.application_id');
                     })
-                    ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'));
+                    ->select(
+                        'ta.*',
+                        DB::raw("'Form P' as form_name"),
+                        DB::raw('ta.license_name as license_name'),
+                        DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
+                    );
                 if ($applTypeFilter) {
                     $query->where('ta.appl_type', $applTypeFilter);
                 }
@@ -76,17 +82,37 @@ class SupervisorController extends Controller
                 $workflows = DB::query()->fromSub($currentAppIds, 'cur')
                     ->join('tnelb_form_p as ta', 'ta.application_id', '=', 'cur.application_id')
                     ->whereIn('ta.payment_status', ['payment', 'paid'])
-                    ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'))->orderByDesc('ta.id')->get();
+                    ->select(
+                        'ta.*',
+                        DB::raw("'Form P' as form_name"),
+                        DB::raw('ta.license_name as license_name'),
+                        DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
+                    )->orderByDesc('ta.id')->get();
                 if ($applTypeFilter) {
                     $workflows = collect($workflows)->filter(function ($row) use ($applTypeFilter) {
                         return strtoupper((string) ($row->appl_type ?? '')) === $applTypeFilter;
                     })->values();
                 }
             }
+
+            // Returned tab: QU (waiting for applicant) + resubmitted (P/RE with return history)
+            $returnedQuery = DB::table('tnelb_form_p as ta')
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
+                ->where(function ($q) {
+                    $q->where('ta.app_status', 'QU')
+                        ->orWhereRaw("(ta.app_status IN ('P','RE') AND EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = ta.application_id AND tw.appl_status = 'QU'))");
+                })
+                ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'))
+                ->orderByDesc('ta.id');
+            if ($applTypeFilter) {
+                $returnedQuery->where('ta.appl_type', $applTypeFilter);
+            }
+            $returned_applications = $returnedQuery->get();
+
             [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
                 return strtoupper((string) ($row->appl_type ?? '')) === 'R';
             });
-            return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal'));
+            return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal', 'returned_applications'));
         }
 
         $requestedType = strtoupper((string) $request->input('form_type', ''));
@@ -140,7 +166,8 @@ class SupervisorController extends Controller
                 ->select(
                     'ta.*',
                     DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
-                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name'),
+                    DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
                 )
                 ->distinct()
                 ->orderByDesc('ta.id')
@@ -165,11 +192,32 @@ class SupervisorController extends Controller
                     ->select(
                         'ta.*',
                         DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
-                        DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                        DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name'),
+                        DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
                     )
                     ->orderByDesc('ta.id')
                     ->get();
             }
+
+            // Returned tab: QU (waiting for applicant) + resubmitted (P/RE with return history)
+            $returned_applications = DB::table('tnelb_application_tbl as ta')
+                ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+                ->where('ta.form_id', $selectedFormId)
+                ->whereIn('ta.payment_status', ['payment', 'paid'])
+                ->where(function ($q) {
+                    $q->where('ta.status', 'QU')
+                        ->orWhereRaw("(ta.status IN ('P','RE') AND EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = ta.application_id AND tw.appl_status = 'QU'))");
+                })
+                ->when($applTypeFilter, function ($q) use ($applTypeFilter) {
+                    return $q->where('ta.appl_type', $applTypeFilter);
+                })
+                ->select(
+                    'ta.*',
+                    DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
+                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                )
+                ->orderByDesc('ta.id')
+                ->get();
         } else {
             $previousProcessedBy = match ($roleLevel) {
                 2 => ['S', 'S2'], // Accountant handles after Supervisor/Supervisor2
@@ -245,13 +293,15 @@ class SupervisorController extends Controller
                 ->distinct()
                 ->orderByDesc('ta.id')
                 ->get();
+
+            $returned_applications = collect();
         }
 
         [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
             return strtoupper((string) ($row->appl_type ?? '')) === 'R';
         });
 
-        return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal'));
+        return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal', 'returned_applications'));
     }
 
     /**
@@ -285,7 +335,14 @@ class SupervisorController extends Controller
         if ($formPId > 0 && $selectedFormId === $formPId) {
             $query = DB::table('tnelb_form_p as ta')
                 ->where('ta.app_status', 'A')
-                ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'));
+                ->select(
+                    'ta.*',
+                    DB::raw("'Form P' as form_name"),
+                    DB::raw('ta.license_name as license_name'),
+                    'ta.license_number',
+                    'ta.issued_at',
+                    'ta.expires_at'
+                );
             if ($applTypeFilter) {
                 $query->where('ta.appl_type', $applTypeFilter);
             }
@@ -307,8 +364,16 @@ class SupervisorController extends Controller
         if (isset($contractorTablesByCode[$formCode]) && \Illuminate\Support\Facades\Schema::hasTable($contractorTablesByCode[$formCode])) {
             $tbl = $contractorTablesByCode[$formCode];
             $query = DB::table($tbl . ' as ta')
+                ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
+                ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
                 ->whereIn('ta.application_status', ['F', 'RF', 'A'])
-                ->select('ta.*', DB::raw('ta.license_name as license_name'));
+                ->select(
+                    'ta.*',
+                    DB::raw('ta.license_name as license_name'),
+                    DB::raw('COALESCE(tl.license_number, tr.license_number) as license_number'),
+                    DB::raw('COALESCE(tl.issued_at, tr.issued_at) as issued_at'),
+                    DB::raw('COALESCE(tl.expires_at, tr.expires_at) as expires_at')
+                );
             if ($applTypeFilter) {
                 $query->where('ta.appl_type', $applTypeFilter);
             }
@@ -322,12 +387,17 @@ class SupervisorController extends Controller
         // Competency / amendments: tnelb_application_tbl
         $query = DB::table('tnelb_application_tbl as ta')
             ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+            ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
+            ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
             ->where('ta.form_id', $selectedFormId)
             ->where('ta.status', 'A')
             ->select(
                 'ta.*',
                 DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
-                DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name'),
+                DB::raw('COALESCE(tl.license_number, tr.license_number) as license_number'),
+                DB::raw('COALESCE(tl.issued_at, tr.issued_at) as issued_at'),
+                DB::raw('COALESCE(tl.expires_at, tr.expires_at) as expires_at')
             )
             ->orderByDesc('ta.id');
 
@@ -411,17 +481,28 @@ class SupervisorController extends Controller
         $staff = Auth::user();
         $roleName = $staff->name ?? '';
 
+        
+
         // Base query for Form A contractor applications
         $query = DB::table('tnelb_ea_applications as ta')
             ->where('ta.form_name', 'A')
             ->where('ta.payment_status', 'paid');
 
+        // Optional filter: appl_type = N (New) or R (Renewal), driven by ?form_type=
+        $requestedType = strtoupper((string) request()->query('form_type', ''));
+
+        if (in_array($requestedType, ['N', 'R'], true)) {
+            $query->where('ta.appl_type', $requestedType);
+        }
+
+
         // Supervisor should see applications that are still with Supervisor
         // (i.e. processed_by = 'S' and not yet forwarded further, typically P / RE / F)
-        if (in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
+        if (in_array($roleName, ['Supervisor'], true)) {
             $query->whereIn('ta.application_status', ['P', 'RE']);
                   
         }
+
         // Accountant should see only applications that have been forwarded
         // by Supervisor to Accountant (processed_by = 'A', usually status F/RF)
         elseif ($roleName === 'Accountant') {
@@ -432,10 +513,14 @@ class SupervisorController extends Controller
                   ->where('ta.processed_by', 'SE');
         }
 
+        
+
         $workflows = $query
             ->orderBy('ta.updated_at', 'DESC')
             ->select('ta.*')
             ->get();
+
+        
 
         // SA type still uses the existing SA view if needed
         if (strtoupper($type) === 'SA') {
@@ -1328,6 +1413,7 @@ class SupervisorController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+           
 
             DB::table('tnelb_workflow')->insert([
                 'application_id' => $request->application_id,

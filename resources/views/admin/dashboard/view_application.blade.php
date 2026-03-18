@@ -461,46 +461,57 @@
                                                 {{ in_array($row->appl_status, ['RE', 'RJ']) ? 't-dot-danger' : ($row->appl_status == 'A' ? 't-dot-success' : 't-dot-info') }}">
                                             </div>
                                             <div class="t-text">
-                                                @if ($row->appl_status == 'RE')
-                                                    <p>Returned by {{ $row->processed_by }}</p>
+                                                @php
+                                                    $processedBy = $row->processed_by;
+                                                    $roleLabel = $processedBy === 'SE' ? 'Secretary' : $processedBy;
+                                                    $isApplicantResubmission = $row->appl_status == 'RE' && $processedBy === 'AP';
+                                                @endphp
+
+                                                @if ($isApplicantResubmission)
+                                                    <p>Resubmitted by Applicant</p>
+                                                @elseif ($row->appl_status == 'RE')
+                                                    <p>Returned by {{ $roleLabel }}</p>
                                                 @elseif ($row->appl_status == 'A')
-                                                    <p>Approved by {{ $row->processed_by }}</p>
+                                                    <p>Approved by {{ $roleLabel }}</p>
                                                 @elseif ($row->appl_status == 'RJ')
-                                                    <p class="text-danger">Rejected by {{ $row->processed_by }}</p>
+                                                    <p class="text-danger">Rejected by {{ $roleLabel }}</p>
                                                 @else
-                                                    <p>Processed by {{ $row->processed_by }}</p>
+                                                    <p>Processed by {{ $roleLabel }}</p>
                                                 @endif
                                         
-                                                <p class="t-meta-time">
-                                                    @if ($row->appl_status == 'RJ')
-                                                        Reason: {{ $row->reject_reason }}
-                                                    @else
-                                                        @if (!$row->name)
-                                                            Approved by {{ $row->processed_by }} <br>
-                                                            Remarks: {{ $row->remarks }}
+                                                @if (!$isApplicantResubmission)
+                                                    <p class="t-meta-time">
+                                                        @if ($row->appl_status == 'RJ')
+                                                            Reason: {{ $row->reject_reason }}
                                                         @else
-                                                            Forwarded to {{ $row->name }} <br>
-                                                            Remarks: {{ $row->remarks }}
+                                                            @if (!$row->name)
+                                                                Approved by {{ $roleLabel }} <br>
+                                                                Remarks: {{ $row->remarks }}
+                                                            @else
+                                                                Forwarded to {{ $row->name }} <br>
+                                                                Remarks: {{ $row->remarks }}
+                                                            @endif
                                                         @endif
-                                                    @endif
-                                                    
-                                                </p>
-                                                @if ($row->processed_by !== 'Accountant')
+                                                        
+                                                    </p>
+                                                @endif
+
+                                                @if ($processedBy !== 'Accountant' && !$isApplicantResubmission)
                                                     @if ($row->query_status == "P")
-                                                        <p class="text-danger">Note: Query raised by {{ $row->processed_by }} (
+                                                        <p class="text-danger">
+                                                            Note: Query raised by {{ $roleLabel }} (
                                                             @php
-                                                            $queries = $row->queries;
-                                                        
-                                                            // If it's a string, decode it
-                                                            if (is_string($queries)) {
-                                                                $queries = json_decode($queries, true);
-                                                            }
-                                                        @endphp
-                                                        
-                                                        @if(!empty($queries) && is_array($queries))
-                                                            {{ implode(', ', $queries) }}
-                                                        @endif
-                                                        )</p>
+                                                                $queries = $row->queries;
+                                                                if (is_string($queries)) {
+                                                                    $queries = json_decode($queries, true);
+                                                                }
+                                                            @endphp
+                                                            
+                                                            @if(!empty($queries) && is_array($queries))
+                                                                {{ implode(', ', $queries) }}
+                                                            @endif
+                                                            )
+                                                        </p>
                                                     @endif
                                                 @endif
                                             </div>

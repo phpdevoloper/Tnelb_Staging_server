@@ -224,30 +224,42 @@
                                             <p class="t-time">{{ format_date_other($row->created_at) }}</p>
                                             <div class="t-dot {{ $row->appl_status == 'RE' ? 't-dot-danger' : ($row->appl_status == 'A' ? 't-dot-success' : 't-dot-info') }}"></div>
                                             <div class="t-text">
-                                                @if ($row->appl_status == 'RE')
-                                                    <p>Returned by {{ $row->processed_by }}</p>
+                                                @php
+                                                    $processedBy = $row->processed_by;
+                                                    $roleLabel = $processedBy === 'SE' ? 'Secretary' : $processedBy;
+                                                    $isApplicantResubmission = $row->appl_status == 'RE' && $processedBy === 'AP';
+                                                @endphp
+
+                                                @if ($isApplicantResubmission)
+                                                    <p>Resubmitted by Applicant</p>
+                                                @elseif ($row->appl_status == 'RE')
+                                                    <p>Returned by {{ $roleLabel }}</p>
                                                 @elseif ($row->appl_status == 'A')
-                                                    <p>Approved by {{ $row->processed_by }}</p>
+                                                    <p>Approved by {{ $roleLabel }}</p>
                                                 @elseif (isset($row->appl_status) && $row->appl_status == 'RJ')
-                                                    <p class="text-danger">Rejected by {{ $row->processed_by }}</p>
+                                                    <p class="text-danger">Rejected by {{ $roleLabel }}</p>
                                                 @else
-                                                    <p>Processed by {{ $row->processed_by }}</p>
+                                                    <p>Processed by {{ $roleLabel }}</p>
                                                 @endif
-                                                <p class="t-meta-time">
-                                                    @if (isset($row->appl_status) && $row->appl_status == 'RJ' && !empty($row->reject_reason))
-                                                        Reason: {{ $row->reject_reason }}
-                                                    @else
-                                                        @if (empty($row->name))
-                                                            Approved by {{ $row->processed_by }}
+
+                                                @if (!$isApplicantResubmission)
+                                                    <p class="t-meta-time">
+                                                        @if (isset($row->appl_status) && $row->appl_status == 'RJ' && !empty($row->reject_reason))
+                                                            Reason: {{ $row->reject_reason }}
                                                         @else
-                                                            Forwarded to {{ $row->name }}<br>
-                                                            @if(!empty($row->remarks)) Remarks: {{ $row->remarks }} @endif
+                                                            @if (empty($row->name))
+                                                                Approved by {{ $roleLabel }}
+                                                            @else
+                                                                Forwarded to {{ $row->name }}<br>
+                                                                @if(!empty($row->remarks)) Remarks: {{ $row->remarks }} @endif
+                                                            @endif
                                                         @endif
-                                                    @endif
-                                                </p>
-                                                @if(!empty($row->query_status) && $row->query_status == 'P' && !empty($row->queries))
+                                                    </p>
+                                                @endif
+
+                                                @if(!empty($row->query_status) && $row->query_status == 'P' && !empty($row->queries) && !$isApplicantResubmission)
                                                     <p class="text-danger small">
-                                                        Query raised:
+                                                        Query raised by {{ $roleLabel }}:
                                                         {{ is_string($row->queries) ? $row->queries : implode(', ', (array) json_decode($row->queries, true)) }}
                                                     </p>
                                                 @endif

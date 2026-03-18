@@ -5,6 +5,7 @@
 @php
     $newApplications = $new_applications ?? $workflows ?? collect();
     $renewalApplications = $renewal ?? collect();
+    $returnedApplications = $returned_applications ?? collect();
     $requestedType = strtoupper((string) request()->query('form_type', ''));
     $isRenewalOnly = $requestedType === 'R';
     $isNewOnly = $requestedType === 'N';
@@ -14,7 +15,9 @@
     // Tabs visibility flags
     $hasNewTab = !$isRenewalOnly && !$isCompletedList;
     $hasRenewalTab = (!$isNewOnly) && ($isRenewalOnly || $renewalApplications->isNotEmpty());
-    $showTabs = $hasNewTab || $hasRenewalTab;
+    // Always show Returned tab (for non-completed views), even when empty
+    $hasReturnedTab = !$isCompletedList;
+    $showTabs = $hasNewTab || $hasRenewalTab || $hasReturnedTab;
 @endphp
 
 <style>
@@ -107,6 +110,11 @@
         font-size: 0.75rem;
         font-weight: 600;
         padding: 0.35em 0.65em;
+    }
+    .app-view-table-wrap .badge-returned {
+        background-color: #fff3e0;
+        color: #c05621;
+        border: 1px solid #ff9800;
     }
     .app-view-table-wrap .btn-view-licence {
         padding: 0.35rem 0.75rem;
@@ -249,6 +257,9 @@
                                                 @if($isCompletedList)
                                                 <th>Applied On</th>
                                                 <th>Status</th>
+                                                <th>Licence No</th>
+                                                <th>Issued At</th>
+                                                <th>Expires At</th>
                                                 <th>License</th>
                                                 @else
                                                 <th>Certificate of</th>
@@ -263,6 +274,7 @@
                                                 @php
                                                     $appStatus = $application->status ?? $application->application_status ?? $application->app_status ?? null;
                                                     $isCompleted = in_array($appStatus, ['A'], true);
+                                                    $wasReturned = !empty($application->has_return_history) && $application->has_return_history;
                                                     $fn = strtoupper((string)($application->form_name ?? ''));
 
                                                     if (($is_completed_list ?? false) && $isCompleted) {
@@ -285,6 +297,11 @@
                                                         <a href="{{ $detailUrl }}">
                                                             {{ $application->application_id }}
                                                         </a>
+                                                        @if($appStatus === 'QU' || $wasReturned)
+                                                            <span class="badge badge-returned ms-1">
+                                                                <i class="fa fa-exclamation-triangle"></i> Returned
+                                                            </span>
+                                                        @endif
                                                     </td>
                                                     <td>{{ $application->applicant_name ?? 'N/A' }}</td>
                                                     @if($isCompletedList)
@@ -296,6 +313,9 @@
                                                             <span class="badge rounded-pill bg-warning text-dark">Forwarded</span>
                                                         @endif
                                                     </td>
+                                                    <td>{{ $application->license_number ?? '-' }}</td>
+                                                    <td>{{ !empty($application->issued_at) ? date('d-m-Y', strtotime($application->issued_at)) : '-' }}</td>
+                                                    <td>{{ !empty($application->expires_at) ? date('d-m-Y', strtotime($application->expires_at)) : '-' }}</td>
                                                     <td class="text-center">
                                                         @if($isCompleted)
                                                             @php $fnLicence = strtoupper((string)($application->form_name ?? '')); @endphp
@@ -327,7 +347,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="{{ $isCompletedList ? '6' : '7' }}" class="app-view-empty">{{ ($is_completed_list ?? false) ? 'No completed applications found.' : 'No pending applications found.' }}</td>
+                                                    <td colspan="{{ $isCompletedList ? '9' : '7' }}" class="app-view-empty">{{ ($is_completed_list ?? false) ? 'No completed applications found.' : 'No pending applications found.' }}</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -348,6 +368,9 @@
                                                     @if($isCompletedList)
                                                     <th>Applied On</th>
                                                     <th>Status</th>
+                                                    <th>Licence No</th>
+                                                    <th>Issued At</th>
+                                                    <th>Expires At</th>
                                                     <th>License</th>
                                                     @else
                                                     <th>Certificate of</th>
@@ -393,6 +416,9 @@
                                                                 <span class="badge rounded-pill bg-warning text-dark">Forwarded</span>
                                                             @endif
                                                         </td>
+                                                        <td>{{ $application->license_number ?? '-' }}</td>
+                                                        <td>{{ !empty($application->issued_at) ? date('d-m-Y', strtotime($application->issued_at)) : '-' }}</td>
+                                                        <td>{{ !empty($application->expires_at) ? date('d-m-Y', strtotime($application->expires_at)) : '-' }}</td>
                                                         <td class="text-center">
                                                             @if($isCompletedR)
                                                                 @php $fnLicenceR = strtoupper((string)($application->form_name ?? '')); @endphp
@@ -424,11 +450,74 @@
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="{{ $isCompletedList ? '6' : '7' }}" class="app-view-empty">{{ ($is_completed_list ?? false) ? 'No completed applications found.' : 'No pending applications found.' }}</td>
+                                                        <td colspan="{{ $isCompletedList ? '9' : '7' }}" class="app-view-empty">{{ ($is_completed_list ?? false) ? 'No completed applications found.' : 'No pending applications found.' }}</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>
                                         </table>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if($hasReturnedTab)
+                                    <div class="tab-pane fade {{ (!$hasNewTab && !$hasRenewalTab) ? 'show active' : '' }}" id="pills-returned" role="tabpanel"
+                                        aria-labelledby="pills-returned-tab" tabindex="0">
+                                        <div class="app-view-table-wrap">
+                                            <table id="returned-table" class="table table-hover" style="width:100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th>S.No</th>
+                                                        <th>Application Id</th>
+                                                        <th>Applicant's Name</th>
+                                                        <th>Certificate of</th>
+                                                        <th>Payment Status</th>
+                                                        <th>Application Status</th>
+                                                        <th>Applied On</th>
+                                                        <th class="no-content">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse ($returnedApplications as $key => $application)
+                                                        @php
+                                                            $fn = strtoupper((string)($application->form_name ?? ''));
+                                                            $detailUrl = ($fn === 'FORM P' || $fn === 'P')
+                                                                ? route('admin.application_details_formp', ['applicant_id' => $application->application_id])
+                                                                : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
+                                                        @endphp
+                                                        <tr class="return-row">
+                                                            <td>{{ $key + 1 }}</td>
+                                                            <td>
+                                                                <a href="{{ $detailUrl }}">{{ $application->application_id }}</a>
+                                                                @php
+                                                                    $currStatus = $application->status ?? $application->app_status ?? '';
+                                                                    $isReturned = strtoupper((string)$currStatus) === 'QU';
+                                                                @endphp
+                                                                <span class="badge badge-returned ms-1">
+                                                                    <i class="fa fa-exclamation-triangle"></i>
+                                                                    {{ $isReturned ? 'Returned' : 'Resubmitted' }}
+                                                                </span>
+                                                            </td>
+                                                            <td>{{ $application->applicant_name ?? 'N/A' }}</td>
+                                                            <td>{{ $application->license_name ?? 'N/A' }}</td>
+                                                            <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
+                                                            <td>
+                                                                {{ $isReturned ? 'Returned' : 'Resubmitted' }}
+                                                            </td>
+                                                            <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                            <td>
+                                                                <a href="{{ $detailUrl }}">
+                                                                    <button type="button" class="btn btn-primary" data-bs-placement="bottom" title="View Application">
+                                                                        <i class="fa fa-eye"></i>
+                                                                    </button>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="8" class="app-view-empty">No returned applications found.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 @endif

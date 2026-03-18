@@ -155,27 +155,56 @@
 
                             </div>
                             @if(isset($queries) && $queries->isNotEmpty())
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="alert alert-warning mb-3" role="alert">
-                                        <h6 class="alert-heading font-weight-bold mb-2">
-                                            <i class="fa fa-exclamation-triangle"></i> Query raised – please correct and resubmit
-                                        </h6>
-                                        <p class="mb-1">The following issue(s) were reported. Please correct and submit again:</p>
-                                        <ul class="mb-0 pl-4">
-                                            @foreach($queries as $q)
-                                                @php
-                                                    $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
-                                                    $items = is_array($items) ? $items : [$items];
-                                                @endphp
-                                                @foreach($items as $item)
-                                                    <li>{{ is_string($item) ? $item : '' }}</li>
+                                @php
+                                    // Determine who raised the query (Secretary / President etc.)
+                                    $raisedByCodes = collect($queries)->pluck('raised_by')->filter()->unique()->values();
+                                    $raisedByLabels = $raisedByCodes->map(function ($code) {
+                                        $code = (string) $code;
+                                        return match ($code) {
+                                            'SE' => 'Secretary',
+                                            'PR' => 'President',
+                                            default => $code, // Fallback: show raw code if unknown
+                                        };
+                                    })->implode(', ');
+                                @endphp
+                                <style>
+                                    @keyframes query-blink {
+                                        0%, 100% { opacity: 1; }
+                                        50%      { opacity: 0.2; }
+                                    }
+
+                                    /* Blink only the Font Awesome warning icon */
+                                    .query-item-blink {
+                                        animation: query-blink 1.2s infinite;
+                                    }
+                                </style>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="mb-3" role="alert"
+                                             style="background-color:#fff3e0;border-left:5px solid #ff9800;color:#4e342e;padding:12px 16px;border-radius:4px;">
+                                            <h6 class="alert-heading font-weight-bold mb-2" style="margin:0 0 4px 0;">
+                                                Query raised
+                                                @if($raisedByLabels !== '')
+                                                    by {{ $raisedByLabels }}
+                                                @endif
+                                            </h6>
+                                            <p class="mb-1" style="margin-bottom:6px;">
+                                                The following issue(s) were reported. Please correct and submit again:
+                                            </p>
+                                            <ul class="mb-0 pl-4 query-list" style="margin:0;padding-left:20px;">
+                                                @foreach($queries as $q)
+                                                    @php
+                                                        $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
+                                                        $items = is_array($items) ? $items : [$items];
+                                                    @endphp
+                                                    @foreach($items as $item)
+                                                        <li class="text-danger"><i class="fa fa-exclamation-triangle text-danger query-item-blink" style="padding-right: 5px;"></i>  {{ is_string($item) ? $item : '' }}</li>
+                                                    @endforeach
                                                 @endforeach
-                                            @endforeach
-                                        </ul>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                             @endif
                         <div class="apply-card-body">
 
@@ -1025,9 +1054,9 @@
                                     </div>
                                     <div class="col-12 col-md-12 mt-5">
                                         <div class="form-group text-center">
-                                            <button type="button" class="btn btn-primary" id="editBtn">Edit</button>
-                                            <span id="actionButtonsWrap" style="display: none;">
-                                                <button type="button" class="btn btn-danger" id="cancelBtn">Cancel</button>
+                                            {{-- <button type="button" class="btn btn-primary" id="editBtn">Edit</button> --}}
+                                            <span id="actionButtonsWrap">
+                                                <a href={{ route('dashboard') }} class="btn btn-secondary" id="cancelBtn">Back to Dashboard</a>
                                                 <button type="button" class="btn btn-primary" id="submitCorrectionsBtn"
                                                     data-url="{{ route('form.submit_returned_application', ['appl_id' => $applicationid]) }}">
                                                     Submit
@@ -1082,37 +1111,37 @@
         var $cancelBtn = $('#cancelBtn');
         var $submitBtn = $('#submitCorrectionsBtn');
 
-        function lockForm() {
-            $form.find('input').not('[type="hidden"]').prop('readonly', true).prop('disabled', false);
-            $form.find('input[type="file"]').prop('readonly', false).prop('disabled', true);
-            $form.find('textarea').prop('readonly', true);
-            $form.find('select').prop('disabled', true);
-            $form.find('button').not('#editBtn, #cancelBtn, #submitCorrectionsBtn').prop('disabled', true);
-            $('#declarationCheckbox').prop('checked', true).prop('disabled', true);
-        }
+        // function lockForm() {
+        //     $form.find('input').not('[type="hidden"]').prop('readonly', true).prop('disabled', false);
+        //     $form.find('input[type="file"]').prop('readonly', false).prop('disabled', true);
+        //     $form.find('textarea').prop('readonly', true);
+        //     $form.find('select').prop('disabled', true);
+        //     $form.find('button').not('#editBtn, #cancelBtn, #submitCorrectionsBtn').prop('disabled', true);
+        //     $('#declarationCheckbox').prop('checked', true).prop('disabled', true);
+        // }
 
-        function unlockForm() {
-            $form.find('input').not('[type="hidden"]').prop('readonly', false);
-            $form.find('input[type="file"]').prop('disabled', false);
-            $form.find('textarea').prop('readonly', false);
-            $form.find('select').prop('disabled', false);
-            $form.find('button').not('#editBtn, #cancelBtn, #submitCorrectionsBtn').prop('disabled', false);
-            $('#declarationCheckbox').prop('checked', true).prop('disabled', false);
-        }
+        // function unlockForm() {
+        //     $form.find('input').not('[type="hidden"]').prop('readonly', false);
+        //     $form.find('input[type="file"]').prop('disabled', false);
+        //     $form.find('textarea').prop('readonly', false);
+        //     $form.find('select').prop('disabled', false);
+        //     $form.find('button').not('#editBtn, #cancelBtn, #submitCorrectionsBtn').prop('disabled', false);
+        //     $('#declarationCheckbox').prop('checked', true).prop('disabled', false);
+        // }
 
-        lockForm();
+        // lockForm();
 
-        $editBtn.on('click', function() {
-            unlockForm();
-            $editBtn.hide();
-            $wrap.show();
-        });
+        // $editBtn.on('click', function() {
+        //     unlockForm();
+        //     $editBtn.hide();
+        //     $wrap.show();
+        // });
 
-        $cancelBtn.on('click', function() {
-            lockForm();
-            $wrap.hide();
-            $editBtn.show();
-        });
+        // $cancelBtn.on('click', function() {
+        //     lockForm();
+        //     $wrap.hide();
+        //     $editBtn.show();
+        // });
     })();
 </script>
 <script>
@@ -1184,7 +1213,7 @@
             success: function(res) {
                 if (res.redirect) {
                     if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: 'Success', text: res.message || 'Corrections submitted successfully.' })
+                        Swal.fire({ icon: 'success', title: 'Success', text: 'Application Submitted' })
                             .then(function() { window.location.href = res.redirect; });
                     } else {
                         window.location.href = res.redirect;

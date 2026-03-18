@@ -114,16 +114,27 @@
                                                 </div>
                                                 <div class="d-flex flex-wrap gap-1 gap-sm-2 justify-content-center">
                                                     @php
-                                                        // For contractor Form A cards, clicking "New" should go to the
-                                                        // existing Form A applications list (/admin/view_form/A).
+                                                        // For contractor Form A cards, clicking "New/Renewal" should
+                                                        // filter contractor list by appl_type (N/R) for the staff role.
                                                         $isFormAContractor = str_contains(mb_strtolower($summary['licence_name'] ?? ''), 'contractor')
                                                             && strtoupper($summary['form_name'] ?? '') === 'FORM A';
-                                                        $newHref = $isFormAContractor
-                                                            ? route('admin.view_form', ['type' => 'A'])
-                                                            : route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']);
-                                                        $renewHref = $isFormAContractor
-                                                            ? route('admin.view_form', ['type' => 'A'])
-                                                            : route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);
+                                                        $roleName = $staff->name ?? '';
+                                                        if ($isFormAContractor && in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
+                                                            $newHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'N']);
+                                                            $renewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'R']);
+                                                        } elseif ($isFormAContractor && $roleName === 'Accountant') {
+                                                            $newHref = route('admin.view_forma_pending', ['type' => 'A', 'form_type' => 'N']);
+                                                            $renewHref = route('admin.view_forma_pending', ['type' => 'A', 'form_type' => 'R']);
+                                                        } elseif ($isFormAContractor && $roleName === 'Secretary') {
+                                                            $newHref = route('admin.view_sec_forma_pending', ['type' => 'A', 'form_type' => 'N']);
+                                                            $renewHref = route('admin.view_sec_forma_pending', ['type' => 'A', 'form_type' => 'R']);
+                                                        } elseif ($isFormAContractor && $roleName === 'President') {
+                                                            $newHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'N']);
+                                                            $renewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'R']);
+                                                        } else {
+                                                            $newHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']);
+                                                            $renewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);
+                                                        }
                                                     @endphp
                                                     <a href="{{ $newHref }}" class="badge rounded-pill bg-white text-dark px-2 px-sm-3 py-1 py-sm-2 d-inline-flex align-items-center gap-1 shadow-sm text-decoration-none">
                                                         <span class="small fw-semibold text-uppercase">New</span>
@@ -176,9 +187,9 @@
                                                         $isFormAContractor = str_contains(mb_strtolower($summary['licence_name'] ?? ''), 'contractor')
                                                             && strtoupper($summary['form_name'] ?? '') === 'FORM A';
                                                         $roleName = $staff->name ?? '';
-                                                        if ($isFormAContractor && in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
-                                                            $contractorNewHref = route('admin.view_form', ['type' => 'A']);
-                                                            $contractorRenewHref = route('admin.view_form', ['type' => 'A']);
+                                                        if ($isFormAContractor && in_array($roleName, ['Supervisor'], true)) {
+                                                            $contractorNewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'N']);
+                                                            $contractorRenewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'R']);
                                                         } elseif ($isFormAContractor && $roleName === 'Accountant') {
                                                             $contractorNewHref = route('admin.view_forma_pending', ['type' => 'A']);
                                                             $contractorRenewHref = route('admin.view_forma_pending', ['type' => 'A']);
@@ -186,8 +197,8 @@
                                                             $contractorNewHref = route('admin.view_sec_forma_pending', ['type' => 'A']);
                                                             $contractorRenewHref = route('admin.view_sec_forma_pending', ['type' => 'A']);
                                                         } elseif ($isFormAContractor && $roleName === 'President') {
-                                                            $contractorNewHref = route('admin.view_form', ['type' => 'A']);
-                                                            $contractorRenewHref = route('admin.view_form', ['type' => 'A']);
+                                                            $contractorNewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'N']);
+                                                            $contractorRenewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'R']);
                                                         } else {
                                                             $contractorNewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']);
                                                             $contractorRenewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);

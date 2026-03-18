@@ -18,7 +18,7 @@
                 </div>
             </div>
                 <ul class="list-unstyled menu-categories ps ps--active-y" id="accordionExample">
-                <li class="menu active">
+                <li class="menu {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin.dashboard') }}" class="dropdown-toggle">
                         <div class="">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
@@ -40,7 +40,7 @@
                         </div>
                     </a>
                 </li> --}}
-                <li class="menu">
+                <li class="menu {{ request()->routeIs('admin.completed_applications') ? 'active' : '' }}">
                     <a href="{{ route('admin.completed_applications') }}" class="dropdown-toggle">
                         <div class="">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-circle">

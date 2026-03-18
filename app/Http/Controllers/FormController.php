@@ -1071,7 +1071,7 @@ class FormController extends BaseController
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Corrections submitted successfully. Your application has been resubmitted and will follow the same workflow.',
+                'message' => 'Application Submitted',
                 'redirect' => route('dashboard'),
             ]);
         }

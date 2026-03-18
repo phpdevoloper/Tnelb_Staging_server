@@ -224,9 +224,10 @@ class LoginController extends Controller
 
         $isSuperadmin = $roleCode === 'SUPADMIN';
 
-        if ($isSuperadmin) {
+        $isPresident = $roleCode === 'PR';
 
-            
+
+        if ($isSuperadmin) {
 
             $menus = TnelbMenu::whereNotIn('id', [1, 2, 3])
                 ->orderBy('order_id')
@@ -427,8 +428,6 @@ class LoginController extends Controller
                 $pendingCountsMap[$fid][$type] = (int) $row->cnt;
             }
 
-            
-
             // Form P uses tnelb_form_p; add its pending counts if Form P is assigned
             $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
             if ($formPId > 0 && in_array($formPId, $assignedFormIDs, true)) {
@@ -500,21 +499,39 @@ class LoginController extends Controller
                 $contractorTables = ['tnelb_ea_applications'];
 
                 foreach ($contractorTables as $tbl) {
-                    $rows = DB::table($tbl . ' as ta')
-                        // For contractor licences, treat both freshly submitted and
-                        // in-workflow applications as "pending" so cards show any
-                        // application that is not finally approved/rejected.
-                        ->whereIn('ta.application_status', ['P', 'RE', 'F', 'RF'])
-                        ->whereIn('ta.payment_status', ['payment', 'paid'])
+                    $rowsQuery = DB::table($tbl . ' as ta')
+                        ->whereIn('ta.payment_status', ['payment', 'paid']);
+
+                    // Scope contractor "pending" counts by staff role, so Accountant/Secretary/President
+                    // only see applications that are actually with their stage.
+                    $roleName = $staff->name ?? '';
+                    if (in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
+                        // Freshly submitted / resubmitted with Supervisor
+                        $rowsQuery->whereIn('ta.application_status', ['P', 'RE']);
+                    } elseif ($roleName === 'Accountant') {
+                        // With Accountant (forwarded by Supervisor)
+                        $rowsQuery->whereIn('ta.application_status', ['F', 'RF'])
+                            ->where('ta.processed_by', 'S');
+                    } elseif ($roleName === 'Secretary') {
+                        // With Secretary (forwarded by Accountant)
+                        $rowsQuery->whereIn('ta.application_status', ['F', 'RF'])
+                            ->where('ta.processed_by', 'A');
+                    } elseif ($roleName === 'President') {
+                        // With President (forwarded by Secretary)
+                        $rowsQuery->whereIn('ta.application_status', ['F', 'RF'])
+                            ->where('ta.processed_by', 'SE');
+                    } else {
+                        // Fallback: treat freshly submitted as pending
+                        $rowsQuery->whereIn('ta.application_status', ['P']);
+                    }
+
+                    $rows = $rowsQuery
                         ->selectRaw('ta.form_name, ta.appl_type, COUNT(*) as cnt')
                         ->groupBy('ta.form_name', 'ta.appl_type')
                         ->get();
 
                     $contractorCounts = $contractorCounts->merge($rows);
                 }
-                
-
-                
 
                 foreach ($contractorCounts as $row) {
                     $formCode = strtoupper((string) ($row->form_name ?? ''));
@@ -535,7 +552,7 @@ class LoginController extends Controller
                         $pendingCountsMap[$licId][$type] += $cnt;
                     }
                 }
-                
+
             }
         }
 
@@ -633,9 +650,15 @@ class LoginController extends Controller
         $amendmentIds = $amendmentCardsCollection->pluck('id')->all();
         $contractorOrAmendmentIds = array_merge($contractorIds, $amendmentIds);
 
-        $competencyCardsCollection = $summaryCollection->reject(function ($item) use ($contractorOrAmendmentIds) {
-            return in_array($item['id'], $contractorOrAmendmentIds, true);
-        })->values();
+        $competencyCardsCollection = $summaryCollection
+            ->reject(function ($item) use ($contractorOrAmendmentIds) {
+                return in_array($item['id'], $contractorOrAmendmentIds, true);
+            })
+            // Drop any placeholder rows with missing form/licence data
+            ->filter(function ($item) {
+                return !empty($item['form_name']) && !empty($item['licence_name']);
+            })
+            ->values();
 
         $competencyCards = $competencyCardsCollection->all();
         
@@ -720,18 +743,31 @@ class LoginController extends Controller
             $inprogress = $inprogressFromTbl->merge($inprogressFromEa)->merge($inprogressFromFormP)->sortByDesc('updated_at')->values();
         }
 
-        return view('admin.dashboard.staff_dashboard', compact(
-            'staff',
-            'assignedFormIDs',
-            'assignedForms',
-            'assignedFormSummary',
-            'competencyCards',
-            'contractorCards',
-            'amendmentCards',
-            'formColors',
-            'recieved_apps',
-            'inprogress'
-        ));
+
+        
+
+        $isPresident = $roleCode === 'PR';
+        // dd($isPresident);exit;
+        
+        
+            $view = $isPresident
+                ? 'admin.dashboard.president_dashboard'
+                : 'admin.dashboard.staff_dashboard';
+    
+            $data =  compact(
+                    'staff',
+                    'assignedFormIDs',
+                    'assignedForms',
+                    'assignedFormSummary',
+                    'competencyCards',
+                    'contractorCards',
+                    'amendmentCards',
+                    'formColors',
+                    'recieved_apps',
+                    'inprogress'
+                );
+    
+                    return view($view, $data);
     }
 
     /**
@@ -937,9 +973,14 @@ class LoginController extends Controller
                 return in_array((int) ($item['category_id'] ?? 0), $amendmentCategoryIds, true);
             })->values();
         $amendmentIds = $amendmentCardsCollection->pluck('id')->all();
-        $competencyCardsCollection = $summaryCollection->reject(function ($item) use ($contractorIds, $amendmentIds) {
-            return in_array($item['id'], array_merge($contractorIds, $amendmentIds), true);
-        })->values();
+        $competencyCardsCollection = $summaryCollection
+            ->reject(function ($item) use ($contractorIds, $amendmentIds) {
+                return in_array($item['id'], array_merge($contractorIds, $amendmentIds), true);
+            })
+            ->filter(function ($item) {
+                return !empty($item['form_name']) && !empty($item['licence_name']);
+            })
+            ->values();
 
         $competencyCards = $competencyCardsCollection->all();
         $contractorCards = $contractorCardsCollection->all();
