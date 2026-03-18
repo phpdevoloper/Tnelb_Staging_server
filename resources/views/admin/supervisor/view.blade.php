@@ -116,6 +116,43 @@
         color: #c05621;
         border: 1px solid #ff9800;
     }
+    /* Ribbon-style status indicator (Returned / Resubmitted) */
+    .app-view-table-wrap .status-ribbon {
+        position: relative;
+        display: inline-block;
+        margin-left: 0.4rem;
+        padding: 0.25em 0.7em 0.25em 0.6em;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        line-height: 1.1;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .app-view-table-wrap .status-ribbon::before {
+        content: "";
+        position: absolute;
+        left: -7px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        border-right: 7px solid currentColor;
+        opacity: 0.35;
+    }
+    .app-view-table-wrap .status-ribbon-returned {
+        background: #fff3e0;
+        color: #c05621;
+        border-color: #ff9800;
+    }
+    .app-view-table-wrap .status-ribbon-resubmitted {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border-color: #66bb6a;
+    }
     .app-view-table-wrap .btn-view-licence {
         padding: 0.35rem 0.75rem;
         font-size: 0.8rem;
@@ -297,9 +334,17 @@
                                                         <a href="{{ $detailUrl }}">
                                                             {{ $application->application_id }}
                                                         </a>
-                                                        @if($appStatus === 'QU' || $wasReturned)
-                                                            <span class="badge badge-returned ms-1">
+                                                        @php
+                                                            $isReturnedToApplicant = strtoupper((string) $appStatus) === 'QU';
+                                                            $showResubmitted = $wasReturned && !$isReturnedToApplicant && !$isCompleted;
+                                                        @endphp
+                                                        @if($isReturnedToApplicant)
+                                                            <span class="status-ribbon status-ribbon-returned">
                                                                 <i class="fa fa-exclamation-triangle"></i> Returned
+                                                            </span>
+                                                        @elseif($showResubmitted)
+                                                            <span class="status-ribbon status-ribbon-resubmitted">
+                                                                <i class="fa fa-refresh"></i> Resubmitted
                                                             </span>
                                                         @endif
                                                     </td>

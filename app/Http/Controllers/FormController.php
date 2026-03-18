@@ -214,6 +214,14 @@ class FormController extends BaseController
             ->orderByDesc('id')
             ->get();
 
+        // Remarks entered by staff while returning application (stored in return log / workflow, not in query_applicable)
+        $returnRemarks = Schema::hasTable('tnelb_return_to_applicant_log')
+            ? (string) (DB::table('tnelb_return_to_applicant_log')
+                ->where('application_id', $appl_id)
+                ->orderByDesc('id')
+                ->value('remarks') ?? '')
+            : '';
+
         $queryReasonsForValidation = [];
         foreach ($queries as $q) {
             $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
@@ -239,7 +247,8 @@ class FormController extends BaseController
             'form_details',
             'licence_name',
             'queries',
-            'queryReasonsForValidation'
+            'queryReasonsForValidation',
+            'returnRemarks'
         ));
     }
 
@@ -253,7 +262,7 @@ class FormController extends BaseController
         
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
         $educationLevelRule = ($request->form_name === 'S')
-            ? 'required|string|in:UG,PG|max:50'
+            ? 'required|string|in:UG,PG,B.E,M.E|max:50'
             : 'required|string|max:50';
 
         $rules = [
@@ -356,7 +365,7 @@ class FormController extends BaseController
             'fathers_name.max' => 'Father\'s name may not be greater than 80 characters.',
             'applicants_address.max' => 'Address may not be greater than 255 characters.',
             'competency_certificate_no.max' => 'Certificate number may not be greater than 80 characters.',
-            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
             
              'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
             'work_document.required'           => 'Please upload at least one experience document.',
@@ -661,7 +670,7 @@ class FormController extends BaseController
 
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
         $educationLevelRule = ($request->form_name === 'S')
-            ? 'required|string|in:UG,PG|max:50'
+            ? 'required|string|in:UG,PG,B.E,M.E|max:50'
             : 'required|string|max:50';
 
         $rules = [
@@ -712,7 +721,7 @@ class FormController extends BaseController
             'work_document.*.max'    => 'Experience document size permitted only 5 KB to 200 KB.',
             'd_o_b.after_or_equal' => 'Date of Birth must not be more than 100 years ago.',
             'd_o_b.before_or_equal' => 'Age must be at least 18 years.',
-            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
 
         ];
 
@@ -804,6 +813,8 @@ class FormController extends BaseController
                 // ✅ Fetch the last edu_serial from DB
                 $lastEdu = Mst_education::whereNotNull('edu_serial')->latest('id')->value('edu_serial');
                 $lastNum = $lastEdu ? (int) str_replace('edu_', '', $lastEdu) : 0;
+                // education_document is indexed in the form (education_document[0], [1]...)
+                // so files line up with educational_level[] indexes.
             
                 foreach ($request->educational_level as $key => $level) {
             
@@ -1185,7 +1196,7 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
             $educationLevelRuleDraft = ($request->form_name === 'S')
-                ? 'nullable|string|in:UG,PG|max:50'
+                ? 'nullable|string|in:UG,PG,B.E,M.E|max:50'
                 : 'nullable|string|max:50';
 
             $request->validate([
@@ -1250,7 +1261,7 @@ class FormController extends BaseController
             'designation.*.max'             => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
 
         ]);
 
@@ -1372,26 +1383,33 @@ class FormController extends BaseController
                     $eduId = $request->edu_id[$key] ?? null;
                     $education = $eduId ? Mst_education::find($eduId) : null;
             
-                    // ✅ Check if file is removed via JS
+                    // ✅ Check if file is removed via JS (row-aligned flag)
                     $isFileRemoved = isset($request->removed_document[$key]) && $request->removed_document[$key] == '1';
-            
+
                     // ✅ File Handling
+                    // Priority order:
+                    // 1) If a new file is uploaded -> replace (even if user clicked "Remove" first)
+                    // 2) Else if removed -> null
+                    // 3) Else keep existing_document
                     $filePath = null;
-            
-                    // Case 1: File removed explicitly by user
-                    if ($isFileRemoved) {
-                        $filePath = null;
-                    }
-            
-                    // Case 2: New file uploaded
-                    elseif (isset($request->file('education_document')[$key]) && $request->file('education_document')[$key]->isValid()) {
-                        $file = $request->file('education_document')[$key];
+
+                    // Case 1: New file uploaded (highest priority)
+                    // Try keyed access first; if missing due to re-indexing, fall back to next queued upload.
+                    $directFile = $request->file("education_document.$key");
+                    $file = ($directFile && $directFile->isValid()) ? $directFile : null;
+
+                    if ($file) {
                         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                         $destinationPath = public_path('education_document');
                         $file->move($destinationPath, $filename);
                         $filePath = 'education_document/' . $filename;
                     }
-            
+
+                    // Case 2: File removed explicitly by user (only if no replacement uploaded)
+                    elseif ($isFileRemoved) {
+                        $filePath = null;
+                    }
+
                     // Case 3: No new file, not removed, keep existing
                     elseif (!empty($request->existing_document[$key] ?? null)) {
                         $filePath = $request->existing_document[$key];
@@ -1562,7 +1580,7 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
         $educationLevelRuleDraft = ($request->form_name === 'S')
-            ? 'nullable|string|in:UG,PG|max:50'
+            ? 'nullable|string|in:UG,PG,B.E,M.E|max:50'
             : 'nullable|string|max:50';
       
 
@@ -1619,7 +1637,7 @@ class FormController extends BaseController
             'designation.*.max'          => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'educational_level.*.in' => 'For FORM S, only UG/PG degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
         ]);
 
         $action    = $request->form_action; // "draft" or "submit"

@@ -220,8 +220,7 @@
                                                             </label>
                                                             <br>
                                                             <label for="tamil" class="tamil">விண்ணப்பதாரர் முகவரி
-                                                                <span class="text-label">(தெளிவாக இருக்க
-                                                                    வேண்டும்)</span></label>
+                                                                <span class="text-label">(தெளிவாக இருத்தல் வேண்டும்)</span></label>
                                                         </div>
                                                         <div class="col-12 col-md-7">
                                                             <textarea rows="3" class="form-control " name="applicants_address" maxlength="250">{{ isset($application_details) ? $application_details->applicants_address : Auth::user()->address }}</textarea>
@@ -311,7 +310,7 @@
                                                         @endphp --}}
                                                         @if ($edu_details->isNotEmpty())
                                                         @foreach ($edu_details as $edu_details)
-                                                        <tr class="education-fields text-center">
+                                                        <tr class="education-fields text-center" data-edu-index="{{ $loop->index }}">
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>
                                                                 @php $formName = $application_details->form_name ?? ''; @endphp
@@ -342,9 +341,7 @@
                                                                         <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
                                                                         <option value="B.E" {{ $edu_details->educational_level == 'B.E' ? 'selected' : '' }}>B.E</option>
                                                                         <option value="M.E" {{ $edu_details->educational_level == 'M.E' ? 'selected' : '' }}>M.E</option>
-                                                                        <option value="Diploma" {{ $edu_details->educational_level == 'Diploma' ? 'selected' : '' }}>Diploma</option>
-                                                                        <option value="+2" {{ $edu_details->educational_level == '+2' ? 'selected' : '' }}>+2</option>
-                                                                        <option value="10" {{ $edu_details->educational_level == '10' ? 'selected' : '' }}>10</option>
+                                                
                                                                     @endif
                                                                 </select>
                                                             </td>
@@ -386,10 +383,10 @@
                                                                                 <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                             </a>
                                                                         </div>
-                                                                        <button class="btn btn-sm btn-danger ml-3 remove-doc_edu">Remove</button>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-doc_edu">Remove</button>
                                                                     @else
                                                                     <div>
-                                                                        <input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf">
+                                                                        <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept=".pdf,application/pdf">
                                                                     </div>
                                                                     @endif
                                                                 </div>
@@ -399,15 +396,15 @@
                                                                 <button type="button" class="btn btn-danger remove-education remove_edu" data-edu_id = "{{ $edu_details->id }}" data-url= "{{ route('delete_education') }}">
                                                                     <i class="fa fa-trash-o"></i>
                                                                 </button>
-                                                            </td>
-
-                                                                <!-- 🔹 Add hidden fields here -->
+                                                                <!-- Keep IDs inside a cell to avoid invalid table markup causing dropped/misaligned inputs -->
                                                                 <input type="hidden" name="edu_id[]" value="{{ $edu_details->id }}">
                                                                 <input type="hidden" name="existing_document[]" value="{{ $edu_details->upload_document }}">
+                                                                <input type="hidden" class="removed-document-edu" name="removed_document[]" value="0">
+                                                            </td>
                                                         </tr>
                                                         @endforeach
                                                         @else
-                                                        <tr class="education-fields text-center">
+                                                        <tr class="education-fields text-center" data-edu-index="0">
                                                             <td>1</td>
                                                             <td>
                                                                 @php $formName = $application_details->form_name ?? ''; @endphp
@@ -469,15 +466,15 @@
                                                                     required>
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
-                                                            <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
+                                                            <td><input type="file" class="form-control" name="education_document[0]" accept=".pdf,application/pdf"></td>
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-education">
                                                                     <i class="fa fa-trash-o"></i>
                                                                 </button>
+                                                                <input type="hidden" name="edu_id[]" value="">
+                                                                <input type="hidden" name="existing_document[]" value="">
+                                                                <input type="hidden" class="removed-document-edu" name="removed_document[]" value="0">
                                                             </td>
-
-                                                            <input type="hidden" name="edu_id[]" value="">
-                                                            <input type="hidden" name="existing_document[]" value="">
                                                         </tr>
                                                         @endif
                                                     </tbody>
@@ -1151,16 +1148,17 @@
                 yearOptions += `<option value="${year}">${year}</option>`;
             }
 
-            // calculate next serial number
+            // calculate next serial number + stable 0-based index for file upload mapping
             let serialNo = $('#education-container .education-fields').length + 1;
+            let eduIdx = $('#education-container .education-fields').length;
 
             let newRow = `
-            <tr class="education-fields text-center">
+            <tr class="education-fields text-center" data-edu-index="${eduIdx}">
                 <td>${serialNo}</td>
                 <td> 
                     <select class="form-control" name="educational_level[]" required>
                         <option value="">Select Education</option>
-                        ${isWOrWHForm ? '<option value="Up to 8th Standard">Up to 8th Standard</option><option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option><option value="ITI Certificate">ITI Certificate</option>' : '<option value="PG">PG</option><option value="UG">UG</option><option value="B.E">B.E</option><option value="M.E">M.E</option><option value="Diploma">Diploma</option><option value="+2">+2</option><option value="10">10</option>' + (isWHForm ? '<option value="8">8</option>' : '')}
+                        ${isWOrWHForm ? '<option value="Up to 8th Standard">Up to 8th Standard</option><option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option><option value="ITI Certificate">ITI Certificate</option>' : '<option value="PG">PG</option><option value="UG">UG</option><option value="B.E">B.E</option><option value="M.E">M.E</option>' + (isWHForm ? '<option value="8">8</option>' : '')}
                     </select>
                 </td>
                 <td><input type="text" class="form-control" name="institute_name[]" required value="${isWHForm ? 'Dept of Employment & Training' : ''}"></td>
@@ -1174,15 +1172,16 @@
                     <span class="error text-danger certificate-error"></span>
                 </td>
                 <td>
-                    <input type="file" class="form-control education-file" name="education_document[]" accept=".pdf,application/pdf" required>
+                    <input type="file" class="form-control education-file" name="education_document[${eduIdx}]" accept=".pdf,application/pdf" required>
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger remove-education">
                         <i class="fa fa-trash-o"></i>
                     </button>
+                    <input type="hidden" name="edu_id[]" value="">
+                    <input type="hidden" name="existing_document[]" value="">
+                    <input type="hidden" class="removed-document-edu" name="removed_document[]" value="0">
                 </td>
-                <input type="hidden" name="edu_id[]" value="">
-                <input type="hidden" name="existing_document[]" value="">
             </tr> `;
             $('#education-container').append(newRow);
 

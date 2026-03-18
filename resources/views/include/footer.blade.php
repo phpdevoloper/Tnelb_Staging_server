@@ -709,10 +709,11 @@ $(document).ready(function() {
                 } else if (eduLevel.length) {
                     let formName = ($('#form_name').val() || '').toString().toUpperCase();
                     if (formName === 'S') {
-                        const allowed = ['UG', 'PG'];
+                        // Keep in sync with server-side validation: UG, PG, B.E, M.E
+                        const allowed = ['UG', 'PG', 'B.E', 'M.E'];
                         const val = (eduLevel.val() || '').toString().toUpperCase();
                         if (val !== '' && !allowed.includes(val)) {
-                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only UG/PG degrees are allowed.</span>');
+                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only UG, PG, B.E, or M.E degrees are allowed.</span>');
                             if (!firstErrorField) firstErrorField = eduLevel;
                             isValid = false;
                         }
@@ -2915,6 +2916,36 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                 } else {
                     formUrl = "{{ route('form.store') }}";
                 }
+
+                // ---- Date helpers (avoid RangeError: Invalid time value) ----
+                const safeIsoDateOnly = (value) => {
+                    if (value === null || value === undefined) return null;
+                    const raw = String(value).trim();
+                    if (!raw) return null;
+
+                    // Already ISO date-only
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+                    // Common DB datetime "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss"
+                    const dbMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[ T]/);
+                    if (dbMatch) return dbMatch[1];
+
+                    // "DD-MM-YYYY"
+                    const dmy = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+                    if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+
+                    // Last resort: Date.parse; never call toISOString on invalid date
+                    const d = new Date(raw);
+                    if (Number.isNaN(d.getTime())) return null;
+                    return d.toISOString().slice(0, 10);
+                };
+
+                const formatDateDDMMYYYY = (isoDateOnly) => {
+                    if (!isoDateOnly) return '';
+                    const m = String(isoDateOnly).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (!m) return String(isoDateOnly);
+                    return `${m[3]}-${m[2]}-${m[1]}`;
+                };
                 try {
                     // 🔹 Submit form
                     let saveResponse = await $.ajax({
@@ -2939,7 +2970,10 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                         const login_id = window.login_id || "{{ auth()->user()->login_id ?? '' }}";
                         const application_id = saveResponse.application_id;
 
-                        const transactionDate = saveResponse.date_apps;
+                        const transactionDateIso = safeIsoDateOnly(saveResponse.date_apps) || safeIsoDateOnly(new Date());
+                        const transactionDate = formatDateDDMMYYYY(transactionDateIso) || new Date().toLocaleDateString('en-GB');
+                        // Backward-compatible alias (some pages/scripts expect this name)
+                        const formatted_transaction_date = transactionDate;
                         const applicantName = saveResponse.applicantName || 'N/A';
                         const type_apps = saveResponse.type_of_apps || 'N/A';
                         const form_name = saveResponse.form_name || 'N/A';
@@ -2990,7 +3024,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                                             </tr>
                                             <tr>
                                                 <th style="text-align: left; padding: 6px 10px; color: #555;">Date</th>
-                                                <td style="text-align: right; padding: 6px 10px; font-weight: 500;">${transactionDate}</td>
+                                                <td style="text-align: right; padding: 6px 10px; font-weight: 500;">${formatted_transaction_date}</td>
                                                 </tr>
                                                 <tr>
                                                     <th style="text-align: left; padding: 10px; color: #333;">Application Fees</th>
@@ -3028,7 +3062,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                                         application_id,
                                         applicantName,
                                         transaction_id: transactionId,
-                                        transactionDate,
+                                        transactionDate: transactionDateIso || transactionDate,
                                         amount,
                                         payment_mode,
                                         form_name,
@@ -3079,6 +3113,16 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                     }   
                 } catch (xhr) {
                     console.error("❌ Form Submit Error:", xhr);
+
+                    // Handle date parsing/formatting issues gracefully
+                    if (xhr instanceof RangeError && String(xhr.message || '').toLowerCase().includes('invalid time value')) {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Invalid Date",
+                            text: "Please check all date fields and try again."
+                        });
+                        return;
+                    }
 
                     if (xhr.status === 422 && xhr.responseJSON?.errors) {
                         const errors = xhr.responseJSON.errors;

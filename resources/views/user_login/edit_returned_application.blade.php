@@ -202,6 +202,17 @@
                                                     @endforeach
                                                 @endforeach
                                             </ul>
+                                            @php
+                                                $remarksText = isset($returnRemarks) ? trim((string) $returnRemarks) : '';
+                                            @endphp
+                                            @if($remarksText !== '')
+                                                <div class="mt-2" style="background:#fff8e1;border:1px dashed #ffb74d;padding:10px 12px;border-radius:4px;">
+                                                    <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                        <span class="fw-semibold" style="font-weight:600;">REMARKS :</span>
+                                                        <span>{{ $remarksText }}</span>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

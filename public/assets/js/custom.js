@@ -425,10 +425,28 @@ $(document).ready(function () {
         }
     });
 
-    $(document).on('click', '.remove-doc_edu', function () {
-        let fileInput = '<input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"><input type="hidden" name="removed_document[]" value="1">';
+    $(document).on('click', '.remove-doc_edu', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $row = $(this).closest('tr');
+        // Keep array indexes aligned: flip existing hidden flag to 1
+        const $flag = $row.find('input.removed-document-edu[name="removed_document[]"]');
+        if ($flag.length) $flag.val('1');
 
+        // Preserve stable row index so backend can map the upload correctly
+        const idx = $row.data('edu-index');
+        const nameAttr = (idx !== undefined && idx !== null && idx !== '') ? `education_document[${idx}]` : 'education_document[0]';
+        let fileInput = `<div class="file-section"><input type="file" class="form-control" name="${nameAttr}" accept=".pdf,application/pdf"></div>`;
         $(this).closest('.file-section').replaceWith(fileInput);
+    });
+
+    // If user selects a new file after clicking Remove, treat it as a replacement (not removed).
+    $(document).on('change', 'input[type="file"][name^="education_document["]', function () {
+        const $row = $(this).closest('tr');
+        const $flag = $row.find('input.removed-document-edu[name="removed_document[]"]');
+        if ($flag.length && this.files && this.files.length > 0) {
+            $flag.val('0');
+        }
     });
 
     $(document).on('click', '.remove-doc_work', function () {

@@ -118,22 +118,22 @@
 
                     @if ($workflow->form_name == 'P')
                         {{-- Form P: encrypted English and Tamil licence PDFs from private storage --}}
-                        <a href="{{ route('admin.formp.licence.en', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info" data-bs-toggle="tooltip" data-bs-placement="top" title="Download Form P Licence (English)">
+                        <a href="{{ route('admin.formp.licence.en', ['application_id' => $workflow->application_id]) }}" target="_blank" data-bs-toggle="tooltip" data-bs-placement="top" title="Download Form P Licence (English)">
                             <i class="fa fa-file-pdf-o" style="font-size:14px;color:red"></i>
-                            <span style="font-size:10px;">ENG</span>
+                            <span class="badge outline-badge-info" style="font-size:10px;">ENG</span>
                         </a>
-                        <a href="{{ route('admin.formp.licence.ta', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info" data-bs-toggle="tooltip" data-bs-placement="top" title="Download Form P Licence (Tamil)">
+                        <a href="{{ route('admin.formp.licence.ta', ['application_id' => $workflow->application_id]) }}" target="_blank" data-bs-toggle="tooltip" data-bs-placement="top" title="Download Form P Licence (Tamil)">
                             <i class="fa fa-file-pdf-o" style="font-size:14px;color:red"></i>
-                            <span style="font-size:10px;">TAM</span>
+                            <span class="badge outline-badge-info" style="font-size:10px;">TAM</span>
                         </a>
                     @else
-                        <a href="{{ route('admin.generate.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence (English)">
+                        <a href="{{ route('admin.generate.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence (English)">
                             <i class="fa fa-file-pdf-o" style="font-size:14px;color:red"></i>
-                            <span style="font-size:10px;">ENG</span>
+                            <span class="badge outline-badge-info" style="font-size:10px;">ENG</span>
                         </a>
-                        <a href="{{ route('admin.competency-certificate-tamil.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank" class="badge badge-info"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence (Tamil)">
+                        <a href="{{ route('admin.competency-certificate-tamil.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence (Tamil)">
                             <i class="fa fa-file-pdf-o" style="font-size:14px;color:red"></i>
-                            <span style="font-size:10px;">TAM</span>
+                            <span class="badge outline-badge-info" style="font-size:10px;">TAM</span>
                         </a>
                     @endif
                     <br>

@@ -86,6 +86,22 @@
     color: #072ca6!important;
 }
 
+/* Contractor licence sample colors */
+.bg-ESA {
+    background-color: #0000cc !important;
+    color: #ffffff !important;
+}
+
+.bg-EB {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+.bg-ESB {
+    background-color: #666666 !important;
+    color: #ffffff !important;
+}
+
 .bg-dark i{
     color: #0f0f0f!important;
 }

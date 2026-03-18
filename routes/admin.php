@@ -70,6 +70,8 @@
         // Form P specific licence streaming (encrypted PDFs)
         Route::get('/formp/licence/en/{application_id}', [LicensepdfController::class, 'streamFormPLicenceEn'])->name('formp.licence.en');
         Route::get('/formp/licence/ta/{application_id}', [LicensepdfController::class, 'streamFormPLicenceTa'])->name('formp.licence.ta');
+        // Generic Tamil licence PDF stream (non-FormP). English uses getLicenceDoc.
+        Route::get('/licence/ta/{application_id}', [LicensepdfController::class, 'streamLicenceTa'])->name('licence.ta');
         Route::get('/generateLicensePDF/{application_id}', [LicensepdfController::class, 'generateLicensePDF'])->name('generateLicensePDF');
 
         //New Licence card
@@ -89,6 +91,7 @@
 
             Route::get('/dashboard', [LoginController::class, 'dashboard'])->name('dashboard');
             Route::get('/completed_applications', [LoginController::class, 'completedApplications'])->name('completed_applications');
+            Route::get('/completed_applications/data', [LoginController::class, 'completedApplicationsData'])->name('completed_applications.data');
 
         // Applicant Details
             Route::get('/get-applicant-details', [LoginController::class, 'getApplicantDetails'])->name('get.applicant.details');

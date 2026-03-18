@@ -13,6 +13,13 @@
     .bg-custom-card {
         background-color: rgb(239 241 243) !important;
     }
+
+    /* Ensure DataTables header text is visible */
+    #secretary-inprogress-table thead th {
+        background-color: #004185 !important;
+        color: #ffffff !important;
+        font-weight: 600;
+    }
 </style>
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
@@ -90,8 +97,9 @@
                                                         @php
                                                             $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
                                                         @endphp
-                                                        <a href="{{ $newHref }}"
-                                                            class="badge outline-badge-info fw-semibold text-decoration-none">
+                                                        <a href="#"
+                                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                            data-form-id="{{ $summary['id'] ?? '' }}">
                                                             Completed
                                                             <span class="ms-1 fw-bold text-danger">
                                                                 {{ $completedTotal }}
@@ -116,6 +124,10 @@
                         </div>
                         <div class="card-body" style="padding: 7px 10px;">
                             @foreach(collect($contractorCards) as $summary)
+                            @php
+                                $badgeClass = $formColors[$summary['color_code'] ?? ''] ?? 'bg-secondary';
+                                // var_dump($summary);die;
+                            @endphp
                             <div class="d-flex align-items-center px-3 py-2 mb-1 rounded-3 bg-custom-card">
                                 @php
                                     // For contractor Form A cards, clicking "New" should go to the
@@ -138,7 +150,7 @@
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center">
                                         <div class="me-3">
-                                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-primary" style="width: 44px; height: 44px;">
+                                            <div class="rounded-3 d-flex align-items-center justify-content-center {{ $badgeClass }}" style="width: 44px; height: 44px;">
                                                 <span class="fw-bold text-white">{{ $formCode }}</span>
                                             </div>
                                         </div>
@@ -149,8 +161,9 @@
                                                 @php
                                                     $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
                                                 @endphp
-                                                <a href="{{ $newHref }}"
-                                                    class="badge outline-badge-info fw-semibold text-decoration-none">
+                                                <a href="#"
+                                                    class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                    data-form-id="{{ $summary['id'] ?? '' }}">
                                                     Completed
                                                     <span class="ms-1 fw-bold text-danger">
                                                         {{ $completedTotal }}
@@ -189,8 +202,9 @@
                                                     $renewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);
                                                     $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
                                                 @endphp
-                                                <a href="{{ $newHref }}"
-                                                    class="badge outline-badge-info fw-semibold text-decoration-none">
+                                                <a href="#"
+                                                    class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                    data-form-id="{{ $summary['id'] ?? '' }}">
                                                     Completed
                                                     <span class="ms-1 fw-bold text-danger">
                                                         {{ $completedTotal }}
@@ -210,7 +224,7 @@
             @php
                 //var_dump($staff->name);die;
             @endphp
-            @if(in_array($staff->name ?? '', ['Secretary', 'President'], true))
+            
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow-sm">
@@ -230,7 +244,7 @@
                                             <th>Licence No</th>
                                             <th>Issued At</th>
                                             <th>Expires At</th>
-                                            <th>License</th>
+                                            <th>Licence</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -241,9 +255,158 @@
                     </div>
                 </div>
             </div>
-            @endif
+            
         </div>
     </div>
     @include('admin.include.footer')
+    <script>
+        (function() {
+            if (typeof window.jQuery === 'undefined') {
+                // Footer didn't load jQuery for some reason; avoid hard crash
+                console.error('jQuery is not loaded; completed table click handler skipped.');
+                return;
+            }
+
+            // English licence PDF (card) for competency/amendment applications
+            const licenceEnUrlTemplate = "{{ route('admin.generateLicensePDF', ['application_id' => '__APP__']) }}";
+            const licenceTaUrlTemplate = "{{ route('admin.licence.ta', ['application_id' => '__APP__']) }}";
+            const formPLicenceEnUrlTemplate = "{{ route('admin.formp.licence.en', ['application_id' => '__APP__']) }}";
+            const formPLicenceTaUrlTemplate = "{{ route('admin.formp.licence.ta', ['application_id' => '__APP__']) }}";
+
+            function escapeHtml(str) {
+                return String(str ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function formatDateDDMMYYYY(val) {
+                if (!val) return '';
+                const raw = String(val).trim();
+                // Handle "YYYY-MM-DD ..." / ISO
+                const d = new Date(raw.replace(' ', 'T'));
+                if (!isNaN(d.getTime())) {
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const yyyy = d.getFullYear();
+                    return `${dd}-${mm}-${yyyy}`;
+                }
+                // Fallback for "YYYY-MM-DD"
+                const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+                return raw;
+            }
+
+            function renderRows($table, rows) {
+                const $tbody = $table.find('tbody');
+                const dt = ($.fn.DataTable && $.fn.DataTable.isDataTable($table)) ? $table.DataTable() : null;
+
+                const htmlRows = (rows || []).map(function(r) {
+                    const appId = escapeHtml(r.application_id);
+                    const appName = escapeHtml(r.applicant_name);
+                    const appliedOn = escapeHtml(formatDateDDMMYYYY(r.applied_on));
+                    const statusText = (r.status ?? '').toString();
+                    const status = escapeHtml(statusText);
+                    const licNo = escapeHtml(r.license_number);
+                    const issuedAt = escapeHtml(formatDateDDMMYYYY(r.issued_at));
+                    const expiresAt = escapeHtml(formatDateDDMMYYYY(r.expires_at));
+
+                    const applicationIdRaw = r.application_id ? String(r.application_id) : '';
+                    const formNameRaw = (r.form_name || '').toString().toUpperCase();
+                    const formCodeRaw = (r.form_code || '').toString().toUpperCase();
+                    const effectiveCode = formCodeRaw || formNameRaw;
+                    const viewUrl = r.license_url ? String(r.license_url) : '#';
+
+                    // Licence PDF links: Form P uses encrypted EN/TA stream routes, others use EN getLicenceDoc + TA streamLicenceTa
+                    const enUrl = applicationIdRaw
+                        ? (effectiveCode === 'P'
+                            ? formPLicenceEnUrlTemplate.replace('__APP__', applicationIdRaw)
+                            : licenceEnUrlTemplate.replace('__APP__', applicationIdRaw))
+                        : '#';
+                    const taUrl = applicationIdRaw
+                        ? (effectiveCode === 'P'
+                            ? formPLicenceTaUrlTemplate.replace('__APP__', applicationIdRaw)
+                            : licenceTaUrlTemplate.replace('__APP__', applicationIdRaw))
+                        : '#';
+
+                    const licenseCell = applicationIdRaw
+                        ? `
+                            <a href="${enUrl}" class="text-decoration-none me-2" target="_blank" title="English PDF">
+                                <i class="fa fa-file-pdf-o text-danger"></i> ENG
+                            </a>
+                            <a href="${taUrl}" class="text-decoration-none" target="_blank" title="Tamil PDF">
+                                <i class="fa fa-file-pdf-o text-danger"></i> TAM
+                            </a>
+                          `
+                        : '';
+
+                    // Status badge (bootstrap-style)
+                    const statusLower = statusText.trim().toLowerCase();
+                    let statusClass = 'badge-secondary';
+                    if (statusLower === 'completed' || statusLower === 'approved' || statusLower === 'a') statusClass = 'badge-success';
+                    else if (statusLower === 'pending' || statusLower === 'p') statusClass = 'badge-warning';
+                    else if (statusLower === 'rejected' || statusLower === 'r') statusClass = 'badge-danger';
+                    const statusCell = status ? `<span class="badge rounded-pill ${statusClass}">${status}</span>` : '';
+
+                    return `
+                        <tr>
+                            <td>${escapeHtml(r.sno)}</td>
+                            <td>${appId ? (viewUrl !== '#' ? `<a href="${viewUrl}" class="fw-semibold text-primary" target="_blank">${appId}</a>` : `<span class="fw-semibold">${appId}</span>`) : ''}</td>
+                            <td>${appName}</td>
+                            <td>${appliedOn}</td>
+                            <td>${statusCell}</td>
+                            <td>${licNo}</td>
+                            <td>${issuedAt}</td>
+                            <td>${expiresAt}</td>
+                            <td>${licenseCell}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                if (dt) {
+                    dt.clear();
+                    // Feed DataTable with DOM rows
+                    const temp = document.createElement('tbody');
+                    temp.innerHTML = htmlRows;
+                    const data = Array.from(temp.querySelectorAll('tr')).map(tr => Array.from(tr.children).map(td => td.innerHTML));
+                    dt.rows.add(data).draw();
+                } else {
+                    $tbody.html(htmlRows);
+                }
+            }
+
+            $(document).on('click', '.js-completed-badge', function(e) {
+                e.preventDefault();
+
+                const formId = $(this).data('form-id');
+                if (!formId) return;
+
+                const $table = $('#secretary-inprogress-table');
+                if (!$table.length) return;
+
+                // Simple loading state
+                const $tbody = $table.find('tbody');
+                $tbody.html('<tr><td colspan="9" class="text-center">Loading...</td></tr>');
+
+                $.ajax({
+                    url: "{{ route('admin.completed_applications.data') }}",
+                    method: "GET",
+                    data: { form_id: formId },
+                    success: function(resp) {
+                        renderRows($table, (resp && resp.data) ? resp.data : []);
+                        // scroll to table
+                        const el = document.getElementById('secretary-inprogress-table');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    },
+                    error: function(xhr) {
+                        const msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to load data';
+                        $tbody.html(`<tr><td colspan="9" class="text-center text-danger">${escapeHtml(msg)}</td></tr>`);
+                    }
+                });
+            });
+        })();
+    </script>
 </div>
 

@@ -155,6 +155,9 @@
                             </div>
                             <div class="card-body" style="padding: 7px 10px;">
                                 @foreach(collect($contractorCards) as $summary)
+                                @php
+                                    $badgeClass = $formColors[$summary['color_code'] ?? ''] ?? 'bg-secondary';
+                                @endphp
                                 <div class="d-flex align-items-center px-3 py-2 mb-1 rounded-3 bg-custom-card">
                                     @php
                                         // For contractor Form A cards, clicking "New" should go to the
@@ -177,7 +180,7 @@
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
-                                                <div class="rounded-3 d-flex align-items-center justify-content-center bg-primary" style="width: 44px; height: 44px;">
+                                                <div class="rounded-3 d-flex align-items-center justify-content-center {{ $badgeClass }}" style="width: 44px; height: 44px;">
                                                     <span class="fw-bold text-white">{{ $formCode }}</span>
                                                 </div>
                                             </div>

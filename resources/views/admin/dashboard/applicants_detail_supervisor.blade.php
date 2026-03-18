@@ -195,33 +195,21 @@
                                                                 @endif
                                                             </td>
                                                             <td style="text-align:center;">
-                                                                @php
-                                                                    $document = DB::table('tnelb_applicants_edu')
-                                                                        ->where('application_id', $applicant->application_id)
-                                                                        ->first();
-                                                                @endphp
-
-                                                                @if($document && !empty($document->upload_document))
-                                                                @php
-                                                                // Get file extension
-                                                                $fileExtension = pathinfo($document->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
-                                                                @endphp
-
-                                                                @if(in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif']))
-                                                                <!-- Show Image -->
-                                                                <img src="data:image/{{ $fileExtension }};base64,{{ base64_encode($document->upload_document) }}"
-                                                                    alt="Education Document" width="100">
-                                                                @elseif($fileExtension === 'pdf')
-                                                                <!-- Provide a PDF Download Link -->
-                                                                <a href="{{ url($document->upload_document) }}" target="_blank">
-                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
-
-                                                                </a>
+                                                                @if(!empty($education->upload_document))
+                                                                    @php
+                                                                        $fileExtension = strtolower(pathinfo($education->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION));
+                                                                    @endphp
+                                                                    @if(in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif']))
+                                                                        <img src="{{ url($education->upload_document) }}" alt="Education Document" width="100">
+                                                                    @elseif($fileExtension === 'pdf')
+                                                                        <a href="{{ url($education->upload_document) }}" target="_blank">
+                                                                            <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                        </a>
+                                                                    @else
+                                                                        No Documents Uploaded
+                                                                    @endif
                                                                 @else
-                                                                No Documents Uploaded
-                                                                @endif
-                                                                @else
-                                                                No Documents Uploaded
+                                                                    No Documents Uploaded
                                                                 @endif
                                                             </td>
                                                         </tr>
@@ -242,6 +230,9 @@
                                                             <th>Company Name</th>
                                                             <th>Designation</th>
                                                             <th>Years of Experience</th>
+                                                            @if (($applicant->form_name ?? '') == 'S')
+                                                                <th>Document</th>
+                                                            @endif
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -250,11 +241,31 @@
                                                             <td>{{ $experience->company_name }}</td>
                                                             <td>{{ $experience->designation }}</td>
                                                             <td>{{ $experience->experience }} years</td>
+                                                            @if (($applicant->form_name ?? '') == 'S')
+                                                                <td style="text-align:center;">
+                                                                    @if (!empty($experience->upload_document))
+                                                                        @php
+                                                                            $fileExtension = pathinfo($experience->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
+                                                                        @endphp
+                                                                        @if(in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif']))
+                                                                            <img src="{{ url($experience->upload_document) }}" alt="Experience Document" width="100">
+                                                                        @elseif(strtolower($fileExtension) === 'pdf')
+                                                                            <a href="{{ url($experience->upload_document) }}" target="_blank">
+                                                                                <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                            </a>
+                                                                        @else
+                                                                            No Documents Uploaded
+                                                                        @endif
+                                                                    @else
+                                                                        No Documents Uploaded
+                                                                    @endif
+                                                                </td>
+                                                            @endif
 
                                                         </tr>
                                                         @empty
                                                         <tr>
-                                                            <td colspan="3" class="text-center">No work experience available.</td>
+                                                            <td colspan="{{ (($applicant->form_name ?? '') == 'S') ? 4 : 3 }}" class="text-center">No work experience available.</td>
                                                         </tr>
                                                         @endforelse
                                                     </tbody>
@@ -691,6 +702,12 @@
                                                                 Reason: {{ $row->reject_reason }}
                                                             @else
                                                                 @if (!$row->name)
+                                                                    @if($processedBy === 'SE' && strtoupper((string)($row->appl_status ?? '')) === 'QU')
+                                                                        <span class="fw-semibold">Application returned to Applicant</span><br>
+                                                                    @endif
+                                                                    @if(!empty($row->remarks))
+                                                                        Remarks: {{ $row->remarks }}
+                                                                    @endif
                                                                     {{-- @if ($row->appl_status == 'RE' && $processedBy === 'SE')
                                                                         Return to Applicant
                                                                     @else

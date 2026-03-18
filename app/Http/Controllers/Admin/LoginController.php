@@ -602,12 +602,16 @@ class LoginController extends Controller
 
 
         $formColors = [
-            'C'  => 'bg-yellow',
-            'B'  => 'bg-red',
-            'H'  => 'bg-H',
-            'P'  => 'bg-green',
-            'EA' => 'bg-thickgreen',
-            'SA' => 'bg-thickgreen',
+            'C'   => 'bg-yellow',
+            'B'   => 'bg-red',
+            'H'   => 'bg-H',
+            'P'   => 'bg-green',
+            // Contractor licence sample colors
+            'EA'  => 'bg-thickgreen', // existing
+            'SA'  => 'bg-thickgreen', // existing
+            'ESA' => 'bg-ESA',
+            'EB'  => 'bg-EB',
+            'ESB' => 'bg-ESB',
         ];
 
         // Classify: Contractor (by category/name) → Amendments (by LicenceCategory) → Competency (rest)
@@ -776,6 +780,7 @@ class LoginController extends Controller
      */
     public function completedApplications()
     {
+        
         $staff = Auth::user();
         if (!$staff) {
             return abort(403, 'Unauthorized');
@@ -947,12 +952,16 @@ class LoginController extends Controller
         })->values()->all();
 
         $formColors = [
-            'C' => 'bg-yellow',
-            'B' => 'bg-red',
-            'H' => 'bg-H',
-            'P' => 'bg-green',
-            'EA' => 'bg-thickgreen',
-            'SA' => 'bg-thickgreen',
+            'C'   => 'bg-yellow',
+            'B'   => 'bg-red',
+            'H'   => 'bg-H',
+            'P'   => 'bg-green',
+            // Contractor licence sample colors
+            'EA'  => 'bg-thickgreen', // existing
+            'SA'  => 'bg-thickgreen', // existing
+            'ESA' => 'bg-ESA',
+            'EB'  => 'bg-EB',
+            'ESB' => 'bg-ESB',
         ];
 
         $summaryCollection = collect($assignedFormSummary);
@@ -993,6 +1002,140 @@ class LoginController extends Controller
             'amendmentCards',
             'formColors'
         ));
+    }
+
+    /**
+     * AJAX: return completed applications list for Completed Applications dashboard table.
+     * Filters by form_id (mst_licences.id) and returns unified rows across tables.
+     */
+    public function completedApplicationsData(Request $request)
+    {
+        $staff = Auth::user();
+        if (!$staff) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $formId = (int) $request->query('form_id', 0);
+        if ($formId <= 0) {
+            return response()->json(['data' => []]);
+        }
+
+        // Security: only allow forms assigned to this staff
+        $assignedFormsQuery = \App\Models\Admin\StaffAssigned::where('user_id', $staff->id)
+            ->where('is_active', 1)
+            ->whereIn('form_type', ['N', 'R']);
+
+        if (DB::getDriverName() === 'pgsql') {
+            $assignedFormsQuery->whereRaw("jsonb_array_length(COALESCE(form_id, '[]'::jsonb)) > 0");
+        } else {
+            $assignedFormsQuery->whereRaw('JSON_LENGTH(form_id) > 0');
+        }
+
+        $assignedFormIDs = $assignedFormsQuery->get(['form_id'])
+            ->pluck('form_id')
+            ->flatten()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (!in_array($formId, $assignedFormIDs, true)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $licence = DB::table('mst_licences')->where('id', $formId)->first();
+        $formCode = $licence ? strtoupper((string) ($licence->cert_licence_code ?? '')) : '';
+
+        $rows = collect();
+
+        // Form P
+        $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
+        if ($formPId > 0 && $formId === $formPId && Schema::hasTable('tnelb_form_p')) {
+            $rows = DB::table('tnelb_form_p as ta')
+                ->where('ta.app_status', 'A')
+                ->select(
+                    'ta.application_id',
+                    'ta.applicant_name',
+                    'ta.created_at',
+                    DB::raw("'A' as status"),
+                    DB::raw('ta.license_number as license_number'),
+                    DB::raw('ta.issued_at as issued_at'),
+                    DB::raw('ta.expires_at as expires_at'),
+                    DB::raw("'P' as form_name")
+                )
+                ->orderByDesc('ta.id')
+                ->get();
+        } else {
+            // Contractor tables
+            $contractorTablesByCode = [
+                'EA' => 'tnelb_ea_applications',
+                'SA' => 'tnelb_esa_applications',
+                'B'  => 'tnelb_eb_applications',
+                'SB' => 'tnelb_esb_applications',
+            ];
+
+            if (isset($contractorTablesByCode[$formCode]) && Schema::hasTable($contractorTablesByCode[$formCode])) {
+                $tbl = $contractorTablesByCode[$formCode];
+                $rows = DB::table($tbl . ' as ta')
+                    ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
+                    ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
+                    ->where('ta.application_status', 'A')
+                    ->select(
+                        'ta.application_id',
+                        'ta.applicant_name',
+                        'ta.created_at',
+                        DB::raw("'A' as status"),
+                        DB::raw('COALESCE(tl.license_number, tr.license_number) as license_number'),
+                        DB::raw('COALESCE(tl.issued_at, tr.issued_at) as issued_at'),
+                        DB::raw('COALESCE(tl.expires_at, tr.expires_at) as expires_at'),
+                        DB::raw('ta.form_name as form_name')
+                    )
+                    ->orderByDesc('ta.updated_at')
+                    ->get();
+            } else {
+                // Competency / amendments: tnelb_application_tbl
+                $rows = DB::table('tnelb_application_tbl as ta')
+                    ->leftJoin('mst_licences as ml', 'ta.form_id', '=', 'ml.id')
+                    ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
+                    ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
+                    ->where('ta.form_id', $formId)
+                    ->where('ta.status', 'A')
+                    ->select(
+                        'ta.application_id',
+                        'ta.applicant_name',
+                        'ta.created_at',
+                        'ta.status',
+                        DB::raw('COALESCE(tl.license_number, tr.license_number) as license_number'),
+                        DB::raw('COALESCE(tl.issued_at, tr.issued_at) as issued_at'),
+                        DB::raw('COALESCE(tl.expires_at, tr.expires_at) as expires_at'),
+                        DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name')
+                    )
+                    ->orderByDesc('ta.id')
+                    ->get();
+            }
+        }
+
+        $data = collect($rows)->values()->map(function ($r, $idx) use ($formCode) {
+            $applicationId = $r->application_id ?? '';
+            $viewUrl = $applicationId !== '' ? route('admin.view_completed_application', ['applicant_id' => $applicationId]) : '#';
+            $statusText = strtoupper((string) ($r->status ?? '')) === 'A' ? 'Completed' : (string) ($r->status ?? '');
+
+            return [
+                'sno' => $idx + 1,
+                'application_id' => (string) $applicationId,
+                'applicant_name' => (string) ($r->applicant_name ?? ''),
+                'applied_on' => (string) ($r->created_at ?? ''),
+                'status' => $statusText,
+                'license_number' => (string) ($r->license_number ?? ''),
+                'issued_at' => (string) ($r->issued_at ?? ''),
+                'expires_at' => (string) ($r->expires_at ?? ''),
+                'license_url' => $viewUrl,
+                'form_name' => (string) ($r->form_name ?? ''),
+                'form_code' => (string) $formCode,
+            ];
+        })->all();
+
+        return response()->json(['data' => $data]);
     }
 
 

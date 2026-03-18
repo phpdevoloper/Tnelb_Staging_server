@@ -8,6 +8,7 @@ use App\Models\Mst_experience;
 use App\Models\Mst_documents;
 use App\Models\MstLicence;
 use App\Models\TnelbApplicantPhoto;
+use App\Models\TnelbApplicantsSign;
 use App\Models\TnelbAppsInstitute;
 use App\Models\TnelbFormP;
 
@@ -163,6 +164,7 @@ class LicensepdfController extends Controller
         ->where('application_id', $application_id)
         ->first();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $application_id)->first();
+        $applicant_sign  = TnelbApplicantsSign::where('application_id', $application_id)->first();
         if ($application && $application->appl_type === 'R') {
             $applicant = DB::table('tnelb_application_tbl')
             ->join('tnelb_renewal_license', 'tnelb_renewal_license.application_id', '=', 'tnelb_application_tbl.application_id')
@@ -289,10 +291,17 @@ class LicensepdfController extends Controller
                         border: 0.3mm solid #000;
                         margin-bottom: 6mm;
                     }
+                    .sign-box {
+                        width: 30mm;
+                        height: 12mm;
+                        border: 0.3mm solid #000;
+                        margin-top: 3mm;
+                    }
                 </style>
             ', \Mpdf\HTMLParserMode::HEADER_CSS);
 
             $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
+            $signPath  = !empty($applicant_sign?->uploaded_doc) ? public_path($applicant_sign->uploaded_doc) : null;
             $qrValue = 'TNELB QR TESTING';
 
             $html = '
@@ -353,7 +362,13 @@ class LicensepdfController extends Controller
                             <div class="photo-box" style="margin-bottom:4mm;">
                                 ' . ($photoPath ? '<img src="' . $photoPath . '" style="width:30mm; height:35mm; object-fit:cover;">' : '') . '
                             </div>
-                            <div>
+                            <div class="sign-box">
+                                ' . ($signPath ? '<img src="' . $signPath . '" style="width:30mm; height:12mm; object-fit:contain;">' : '') . '
+                            </div>
+                            <div style="font-size:8pt; margin-top:2mm;">
+                                Signature of Applicant
+                            </div>
+                            <div style="margin-top:4mm;">
                                 <barcode code="' . $qrValue . '" type="QR" size="0.8" error="M" />
                             </div>
                         </td>
@@ -363,108 +378,102 @@ class LicensepdfController extends Controller
 
             $mpdf->WriteHTML($html);
         } else {
-            // Existing card-sized licence (front + back)
+            // A4 layout for all other forms
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
-                'format' => [80.80, 120.55],
-                'orientation' => 'L',
-                'margin_top' => 0,
-                'margin_bottom' => 0,
-                'margin_left' => 0,
-                'margin_right' => 0,
+                'format' => 'A4',
+                'orientation' => 'P',
+                'margin_top' => 18,
+                'margin_bottom' => 18,
+                'margin_left' => 15,
+                'margin_right' => 15,
             ]);
-            
+
             $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
-            $mpdf->WriteHTML('<style>
-                @page {
-                    size: 110.55mm 70.80mm;   /* CR100 landscape */
-                    margin: 0;
-                }
-                body {
-                    margin: 0;
-                    padding: 0;
-                    width: 120.55mm;
-                    height: 80.80mm;
-                    font-family: helvetica;
-                    overflow: hidden;
-                }
-                .card {
-                    width: 120.55mm;
-                    height: 80.80mm;
-                    border: 0.4mm solid #000;
-                    box-sizing: border-box;
-                }
-                .header {
-                    height: 11mm;
-                    color: #003366;
-                    text-align: center;
-                    font-size: 10.5pt;
-                    font-weight: bold;
-                    padding: 2mm;
-                    box-sizing: border-box;
-                }
-                .content {
-                    padding: 3mm;
-                    font-size: 7pt;
-                    box-sizing: border-box;
-                }
-                .photo {
-                    width: 22mm;
-                    height: 22mm;
-                    border: 0.3mm solid #000;
-                    box-sizing: border-box;
-                    overflow: hidden;
-                }
-               .info-table {
-                    font-size: 9pt;
-                    border-collapse: collapse;
-                }
+            $mpdf->WriteHTML('
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 15mm;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        font-family: helvetica, sans-serif;
+                        font-size: 10pt;
+                    }
+                    .card {
+                        width: 100%;
+                        border: 0.4mm solid #000;
+                        box-sizing: border-box;
+                        padding: 6mm;
+                    }
+                    .header {
+                        text-align: center;
+                        font-size: 12pt;
+                        font-weight: bold;
+                        margin-bottom: 4mm;
+                    }
+                    .sub-header {
+                        text-align: center;
+                        font-size: 10pt;
+                        margin-bottom: 6mm;
+                    }
+                    .content {
+                        font-size: 9pt;
+                    }
+                    .photo {
+                        width: 22mm;
+                        height: 22mm;
+                        border: 0.3mm solid #000;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                    }
+                    .info-table {
+                        font-size: 9pt;
+                        border-collapse: collapse;
+                    }
+                    .info-table td {
+                        padding: 1.5mm 1mm;
+                        vertical-align: top;
+                    }
+                    .info-table .lbl {
+                        width: 30mm;
+                        font-weight: bold;
+                    }
+                    .info-table .colon {
+                        width: 3mm;
+                        text-align: center;
+                    }
+                    .footer {
+                        margin-top: 8mm;
+                        text-align: center;
+                        font-size: 8pt;
+                    }
+                </style>
+            ', \Mpdf\HTMLParserMode::HEADER_CSS);
 
-                .info-table td {
-                    padding: 1mm;
-                    vertical-align: top;
-                }
-
-                .info-table .lbl {
-                    width: 25mm;
-                    font-weight: bold;
-                }
-
-                .info-table .colon {
-                    width: 2mm;
-                    text-align: center;
-                }
-                .footer {
-                    margin-top: 5mm;   
-                    text-align: center;
-                    font-size: 6pt;
-                }
-                </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
-                    
             $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
-            
-            $qrValue = 'TNELB QR TESTING'; 
-            
+
+            $qrValue = 'TNELB QR TESTING';
+
             $html = '
             <div class="card">
-            
-                <!-- HEADER -->
+
                 <div class="header">
-                    TAMIL NADU ELECTRICAL LICENCING BOARD<br>
+                    TAMIL NADU ELECTRICAL LICENCING BOARD
+                </div>
+                <div class="sub-header">
                     Thiru Vi. Ka. Indl. Estate, Guindy, Chennai - 600 032.
                 </div>
-            
-                <!-- BODY -->
+
                 <div class="content">
-            
-                   <table width="100%" cellspacing="0" cellpadding="0">
+                    <table width="100%" cellspacing="0" cellpadding="0">
                         <tr>
-                            <!-- LEFT : DETAILS -->
                             <td width="70%" valign="top">
-            
                                 <table class="info-table">
                                     <tr>
-                                        <td class="lbl">WH.No</td>
+                                        <td class="lbl">Licence No</td>
                                         <td class="colon">:</td>
                                         <td class="val">'.$applicant->license_number.'</td>
                                     </tr>
@@ -697,12 +706,13 @@ class LicensepdfController extends Controller
                 ]
             ]),
             'default_font' => 'notosanstamil',
-            'format' => [80.80, 120.55],
-            'orientation' => 'L',
-            'margin_top' => 0,
-            'margin_bottom' => 0,
-            'margin_left' => 0,
-            'margin_right' => 0,
+            // A4 output (required): previously CR100 card size
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+            'margin_left' => 10,
+            'margin_right' => 10,
         ]);
 
 
@@ -712,69 +722,31 @@ class LicensepdfController extends Controller
 
         $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
         $mpdf->WriteHTML('<style>
-            @page {
-                size: 120.55mm 80.80mm;   /* CR100 landscape */
-                margin: 0;
-            }
-            body {
-                margin: 0;
-                padding: 0;
-                width: 120.55mm;
-                height: 80.80mm;
-                font-family: notosanstamil;
-                overflow: hidden;
-            }
-            .card {
-                width: 120.55mm;
-                height: 80.80mm;
-                border: 0.4mm solid #000;
-                box-sizing: border-box;
-            }
-            .header {
-                height: 11mm;
-                color: #003366;
-                text-align: center;
-                font-size: 12.5pt;
-                font-weight: bold;
-                padding: 1mm;
-                box-sizing: border-box;
-            }
-            .content {
-                padding: 3mm;
-                font-size: 7pt;
-                box-sizing: border-box;
-            }
+            body { font-family: notosanstamil; font-size: 14pt; }
+            .card { border: 1px solid #000; padding: 18px; box-sizing: border-box; width: 100%; }
+            .header { color: #003366; text-align: center; font-size: 20pt; font-weight: bold; margin-bottom: 16px; }
+            .content { font-size: 14pt; }
             .photo {
-                width: 22mm;
-                height: 22mm;
+                width: 38mm;
+                height: 38mm;
                 border: 0.3mm solid #000;
                 box-sizing: border-box;
                 overflow: hidden;
             }
            .info-table {
-                font-size: 9pt;
+                font-size: 14pt;
                 border-collapse: collapse;
             }
 
-            .info-table td {
-                padding: 1mm;
-                vertical-align: top;
-            }
+            .info-table td { padding: 2.2mm 2mm; vertical-align: top; }
 
-            .info-table .lbl {
-                width: 25mm;
-                font-weight: bold;
-            }
+            .info-table .lbl { width: 38mm; font-weight: bold; }
 
             .info-table .colon {
                 width: 2mm;
                 text-align: center;
             }
-            .footer {
-                margin-top: 2mm;   /* ✅ SAFE */
-                text-align: center;
-                font-size: 6pt;
-            }
+            .footer { margin-top: 16px; text-align: center; font-size: 12pt; }
             </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
                 
         $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
@@ -847,7 +819,7 @@ class LicensepdfController extends Controller
                                     <td align="center">
                                         <div class="photo">
                                             '.($photoPath
-                                                ? '<img src="'.$photoPath.'" style="width:22mm; height:22mm; object-fit:cover;">'
+                                                ? '<img src="'.$photoPath.'" style="width:38mm; height:38mm; object-fit:cover;">'
                                                 : '').'
                                         </div>
                                     </td>
@@ -861,7 +833,7 @@ class LicensepdfController extends Controller
                                 <!-- QR ROW -->
                                 <tr>
                                     <td align="center">
-                                        <barcode code="'.$qrValue.'" type="QR" size="0.6" error="M" />
+                                        <barcode code="'.$qrValue.'" type="QR" size="0.9" error="M" />
                                     </td>
                                 </tr>
 
@@ -924,6 +896,15 @@ class LicensepdfController extends Controller
         }
 
         return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
+    }
+
+    /**
+     * Stream Tamil licence PDF for non-FormP applications.
+     * This uses the existing Tamil generator directly.
+     */
+    public function streamLicenceTa(string $application_id)
+    {
+        return $this->generateLicenceTamil($application_id, false);
     }
 
     private function storeEncryptedLicensePdfPath($applicationId, string $encryptedPathEn, ?string $encryptedPathTa = null): void
@@ -1184,7 +1165,7 @@ class LicensepdfController extends Controller
                                     <td align="center">
                                         <div class="photo">
                                             '.($photoPath
-                                                ? '<img src="'.$photoPath.'" style="width:22mm; height:22mm; object-fit:cover;">'
+                                                ? '<img src="'.$photoPath.'" style="width:38mm; height:38mm; object-fit:cover;">'
                                                 : '').'
                                         </div>
                                     </td>
@@ -1192,7 +1173,7 @@ class LicensepdfController extends Controller
                                 <tr><td height="3mm"></td></tr>
                                 <tr>
                                     <td align="center">
-                                        <barcode code="'.$qrValue.'" type="QR" size="0.6" error="M" />
+                                        <barcode code="'.$qrValue.'" type="QR" size="0.9" error="M" />
                                     </td>
                                 </tr>
                                 <tr><td height="4mm"></td></tr>
@@ -1468,81 +1449,44 @@ class LicensepdfController extends Controller
             return back()->with('error', 'Application not found.');
         }
         $payment = DB::table('payments')->where('application_id', $application_id)->first();
+        // A4 output (required): previously CR100 card size
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
-            'format' => [70.80, 110.55],
-            'orientation' => 'L',
-            'margin_top' => 0,
-            'margin_bottom' => 0,
-            'margin_left' => 0,
-            'margin_right' => 0,
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+            'margin_left' => 10,
+            'margin_right' => 10,
         ]);
 
         $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
         $mpdf->WriteHTML('<style>
-            @page {
-                size: 110.55mm 70.80mm;   /* CR100 landscape */
-                margin: 0;
-            }
-            body {
-                margin: 0;
-                padding: 0;
-                width: 110.55mm;
-                height: 70.80mm;
-                font-family: helvetica;
-                overflow: hidden;
-            }
-            .card {
-                width: 110.55mm;
-                height: 70.80mm;
-                border: 0.4mm solid #000;
-                box-sizing: border-box;
-            }
-            .header {
-                height: 11mm;
-                color: #003366;
-                text-align: center;
-                font-size: 10.5pt;
-                font-weight: bold;
-                padding: 2mm;
-                box-sizing: border-box;
-            }
-            .content {
-                padding: 3mm;
-                font-size: 7pt;
-                box-sizing: border-box;
-            }
+            body { font-family: helvetica; font-size: 14pt; }
+            .card { border: 1px solid #000; padding: 18px; box-sizing: border-box; width: 100%; }
+            .header { color: #003366; text-align: center; font-size: 20pt; font-weight: bold; margin-bottom: 16px; }
+            .content { font-size: 14pt; }
             .photo {
-                width: 22mm;
-                height: 22mm;
+                width: 38mm;
+                height: 38mm;
                 border: 0.3mm solid #000;
                 box-sizing: border-box;
                 overflow: hidden;
             }
            .info-table {
-                font-size: 9pt;
+                font-size: 14pt;
                 border-collapse: collapse;
             }
 
-            .info-table td {
-                padding: 1mm;
-                vertical-align: top;
-            }
+            .info-table td { padding: 2.2mm 2mm; vertical-align: top; }
 
-            .info-table .lbl {
-                width: 25mm;
-                font-weight: bold;
-            }
+            .info-table .lbl { width: 38mm; font-weight: bold; }
 
             .info-table .colon {
                 width: 2mm;
                 text-align: center;
             }
-            .footer {
-                margin-top: 2mm;   /* ✅ SAFE */
-                text-align: center;
-                font-size: 6pt;
-            }
+            .footer { margin-top: 16px; text-align: center; font-size: 12pt; }
             </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
                 
         $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
