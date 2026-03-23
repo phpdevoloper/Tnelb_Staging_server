@@ -156,8 +156,576 @@ class LicensepdfController extends Controller
             ->header('Content-Disposition', 'inline; filename="' . $fileName . '"');
     }
 
-    
+
+    // ---------------generate pdf -------------------------
+
     public function generatePDF($application_id)
+    {
+        
+        $application = DB::table('tnelb_application_tbl')
+        ->where('application_id', $application_id)
+        ->first();
+        $applicant_photo = TnelbApplicantPhoto::where('application_id', $application_id)->first();
+        $applicant_sign  = TnelbApplicantsSign::where('application_id', $application_id)->first();
+        if ($application && $application->appl_type === 'R') {
+            $applicant = DB::table('tnelb_application_tbl')
+            ->join('tnelb_renewal_license', 'tnelb_renewal_license.application_id', '=', 'tnelb_application_tbl.application_id')
+            ->where('tnelb_application_tbl.application_id', $application_id)
+            ->select(
+                'tnelb_application_tbl.application_id',
+                'tnelb_application_tbl.applicant_name AS name',
+                'tnelb_application_tbl.fathers_name',
+                'tnelb_application_tbl.applicants_address',
+                'tnelb_application_tbl.d_o_b',
+                'tnelb_application_tbl.age',
+                'tnelb_application_tbl.license_name',
+                'tnelb_application_tbl.form_name',
+                'tnelb_renewal_license.license_number',
+                'tnelb_renewal_license.issued_by',
+                'tnelb_renewal_license.issued_at',
+                'tnelb_renewal_license.expires_at'
+            )
+            ->first();
+        } else {
+            $applicant = DB::table('tnelb_application_tbl')
+            ->join('tnelb_license', 'tnelb_license.application_id', '=', 'tnelb_application_tbl.application_id')
+            ->where('tnelb_application_tbl.application_id', $application_id)
+            ->select(
+                'tnelb_application_tbl.application_id',
+                'tnelb_application_tbl.applicant_name AS name',
+                'tnelb_application_tbl.fathers_name',
+                'tnelb_application_tbl.applicants_address',
+                'tnelb_application_tbl.d_o_b',
+                'tnelb_application_tbl.age',
+                'tnelb_application_tbl.license_name',
+                'tnelb_application_tbl.form_name',
+                'tnelb_license.license_number',
+                'tnelb_license.issued_by',
+                'tnelb_license.issued_at',
+                'tnelb_license.expires_at'
+            )
+            ->first();
+        }
+        if (!$applicant) {
+            return back()->with('error', 'Application not found.');
+        }
+        // dd($applicant->license_name);exit;
+
+        $licence_details = MstLicence::where('cert_licence_code', $applicant->license_name)->first();
+
+        $licence_name = $licence_details->licence_name;
+
+        // dd($licence_details->licence_name);exit;
+
+        if($applicant->license_name == 'B'){
+            $certificate_name = 'Electrician';
+            $content_text = 'The holder of this certificate is authorized to carry out Medium and Low Voltage electrical installation works under a licensed contractor, or to perform operation and maintenance works of Medium and Low Voltage installations in the concerned establishment with due authorization.'; 
+        }else if($applicant->license_name == 'H'){
+             $certificate_name = 'WIREMAN HELPER';
+            $content_text = 'The holder of this certificate may work as an assistant to an electrician under a licensed electrical contractor for carrying out Medium and Low Voltage electrical installation works, or may, with the authorization of the establishment, work as an assistant to an electrician in the operation and maintenance of Medium and Low Voltage installations of the establishment.'; 
+        }else{
+            $certificate_name = '';
+            $content_text = 'This Certificate holder is permitted to supervise <strong>H.V and M.V. Electrical installation works</strong> under licensed contractor or to work as authorised person under rule 3 of Indian Electricity Rule 1956.';
+        }
+
+
+         $certificateRow = '';
+
+        if (!empty($certificate_name)) {
+            $certificateRow = '
+                <tr>
+                    <td class="lbl">Certificate</td>
+                    <td class="colon">:</td>
+                    <td class="val">'.$certificate_name.'</td>
+                </tr>
+            ';
+        }
+        
+        // Different layout for WH form: full A4, no backside text/signatures
+        if ($applicant->form_name === 'WH') {
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'orientation' => 'P',
+                'margin_top' => 18,
+                'margin_bottom' => 18,
+                'margin_left' => 15,
+                'margin_right' => 15,
+            ]);
+
+            $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
+            $mpdf->WriteHTML('
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 15mm;
+                    }
+                    .lbl{
+                        font-size: 12pt;
+                    }
+              
+                    .val{
+                        font-size: 12pt;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        font-family: helvetica, sans-serif;
+                        font-size: 10pt;
+                    }
+                    .card {
+                        width: 100%;
+                        border: 0.4mm solid #000;
+                        box-sizing: border-box;
+                        padding: 6mm;
+                    }
+                    .header {
+                        text-align: center;
+                        font-size: 12pt;
+                        font-weight: bold;
+                        margin-bottom: 4mm;
+                    }
+                    .sub-header {
+                        text-align: center;
+                        font-size: 10pt;
+                        margin-bottom: 6mm;
+                    }
+                    .content {
+                        font-size: 9pt;
+                    }
+                    .photo {
+                        width: 22mm;
+                        height: 22mm;
+                        border: 0.3mm solid #000;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                    }
+                    .info-table {
+                        font-size: 9pt;
+                        border-collapse: collapse;
+                    }
+                    .info-table td {
+                        padding: 1.5mm 1mm;
+                        vertical-align: top;
+                    }
+                    .info-table .lbl {
+                        width: 30mm;
+                        font-weight: bold;
+                    }
+                    .info-table .colon {
+                        width: 3mm;
+                        text-align: center;
+                    }
+                    .footer {
+                        margin-top: 8mm;
+                        text-align: center;
+                        font-size: 8pt;
+                    }
+                        .text-center{
+                            text-align: center;
+                        }
+                            .pt-6{
+                            padding-top: 6mm;
+                            }
+                    .info-table tr{
+                        padding-top:50px;
+                        }
+                </style>
+            ', \Mpdf\HTMLParserMode::HEADER_CSS);
+
+            $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
+
+            $signPath  = !empty($applicant_sign?->uploaded_doc) ? public_path($applicant_sign->uploaded_doc) : null;
+
+            $qrValue = 'TNELB QR TESTING';
+
+            $html = '
+
+           
+            <div class="card">
+
+              <table class="header-table text-center" style="width: 100%;" >
+                <tr>
+                    <td style="font-size:12pt; font-weight:bold;">GOVERNMENT OF TAMILNADU</td>
+                </tr>
+                <tr>
+                    <td style="font-size:11pt; font-weight:bold;">THE ELECTRICAL LICENSING BOARD</td>
+                </tr>
+                <tr>
+                     <td style="font-size:11pt; font-weight:bold;">THIRU.VI.KA.INDUSTRIAL.ESTATE, GUINDY, CHENNAI – 600032.</td>
+                </tr>
+
+                <tr>
+                     <td style="font-size:11pt; font-weight:bold;">'.$licence_name.'</td>
+                </tr>
+               
+            </table>
+
+              
+
+                <div class="content pt-6" >
+                    <table width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td width="70%" valign="top">
+                                <table class="info-table">
+                                    <tr class="tr_padding">
+                                        <td class="lbl">Licence No</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.$applicant->license_number.'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">D.O.I</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.date('d M Y', strtotime($applicant->issued_at)).'</td>
+                                    </tr>
+                                     <tr>
+                                        <td class="lbl">Validity</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.format_date($applicant->issued_at). '<small style="font-weight: bold;"> To </small>'. format_date($applicant->expires_at).'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">Name</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.$applicant->name.'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">F/H Name</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.$applicant->fathers_name.'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">Date of Birth</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.date('d M Y', strtotime($applicant->d_o_b)).'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">Address</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.$applicant->applicants_address.'</td>
+                                    </tr>
+                                    
+                                </table>
+
+
+                          
+
+                            </td>
+
+                            <!-- RIGHT : PHOTO -->
+                            <td width="30%" valign="top">
+                                <table width="100%" cellspacing="0" cellpadding="0">
+                                    <!-- PHOTO ROW -->
+                                    <tr>
+                                        <td align="center">
+                                            <div class="photo">
+                                                '.($photoPath
+                                                    ? '<img src="'.$photoPath.'" style="width:52mm; height:52mm; object-fit:cover;">'
+                                                    : '').'
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="center">
+                                            <div class="photo">
+                                                '.($signPath
+                                                    ? '<img src="'.$signPath.'" style="width:52mm; height:20mm; object-fit:cover;">'
+                                                    : '').'
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- SPACE BETWEEN PHOTO & QR -->
+                                    <tr>
+                                        <td height="3mm"></td>
+                                    </tr>
+
+                                    <!-- QR ROW -->
+                                    <tr>
+                                        <td align="center">
+                                            <barcode code="'.$qrValue.'" type="QR" size="1.6" error="M" />
+                                        </td>
+                                    </tr>
+
+                                    <!-- BOTTOM SAFE SPACE -->
+                                    <tr>
+                                        <td height="4mm"></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+
+                <!-- FOOTER -->
+                <div class="footer">
+                    Issued by TNELB | Tamil Nadu
+                </div>
+
+            </div>
+            ';
+            
+            $mpdf->WriteHTML($html);
+        } else {
+            // A4 layout for all other forms
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'orientation' => 'P',
+                'margin_top' => 18,
+                'margin_bottom' => 18,
+                'margin_left' => 15,
+                'margin_right' => 15,
+            ]);
+
+            $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
+            $mpdf->WriteHTML('
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 15mm;
+                    }
+                    .lbl{
+                        font-size: 12pt;
+                    }
+              
+                    .val{
+                        font-size: 12pt;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        font-family: helvetica, sans-serif;
+                        font-size: 10pt;
+                    }
+                    .card {
+                        width: 100%;
+                        border: 0.4mm solid #000;
+                        box-sizing: border-box;
+                        padding: 6mm;
+                    }
+                    .header {
+                        text-align: center;
+                        font-size: 12pt;
+                        font-weight: bold;
+                        margin-bottom: 4mm;
+                    }
+                    .sub-header {
+                        text-align: center;
+                        font-size: 10pt;
+                        margin-bottom: 6mm;
+                    }
+                    .content {
+                        font-size: 9pt;
+                    }
+                    .photo {
+                        width: 22mm;
+                        height: 22mm;
+                        border: 0.3mm solid #000;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                    }
+                    .info-table {
+                        font-size: 9pt;
+                        border-collapse: collapse;
+                    }
+                    .info-table td {
+                        padding: 1.5mm 1mm;
+                        vertical-align: top;
+                    }
+                    .info-table .lbl {
+                        width: 30mm;
+                        font-weight: bold;
+                    }
+                    .info-table .colon {
+                        width: 3mm;
+                        text-align: center;
+                    }
+                    .footer {
+                        margin-top: 8mm;
+                        text-align: center;
+                        font-size: 8pt;
+                    }
+                        .text-center{
+                            text-align: center;
+                        }
+                            .pt-6{
+                            padding-top: 6mm;
+                            }
+                    .info-table tr{
+                        padding-top:50px;
+                        }
+                        .text-uppercase{
+                            text-transform: uppercase;
+                        }
+                </style>
+            ', \Mpdf\HTMLParserMode::HEADER_CSS);
+
+            $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
+
+            $signPath  = !empty($applicant_sign?->uploaded_doc) ? public_path($applicant_sign->uploaded_doc) : null;
+
+            $qrValue = 'TNELB QR TESTING';
+
+            $html = '
+
+           
+            <div class="card">
+
+              <table class="header-table text-center" style="width: 100%;" >
+                <tr>
+                    <td style="font-size:12pt; font-weight:bold;">GOVERNMENT OF TAMILNADU</td>
+                </tr>
+                <tr>
+                    <td style="font-size:11pt; font-weight:bold;">THE ELECTRICAL LICENSING BOARD</td>
+                </tr>
+                <tr>
+                     <td style="font-size:11pt; font-weight:bold;">THIRU.VI.KA.INDUSTRIAL.ESTATE, GUINDY, CHENNAI – 600032.</td>
+                </tr>
+
+                <tr>
+                     <td style="font-size:11pt; font-weight:bold; text-transform: uppercase;">'.$licence_name.'</td>
+                </tr>
+               
+            </table>
+
+              
+
+                <div class="content pt-6" >
+                    <table width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td width="70%" valign="top">
+                                <table class="info-table">
+                                    <tr class="tr_padding">
+                                        <td class="lbl">Licence No</td>
+                                        <td class="colon">:</td>
+                                        <td class="val text-uppercase">'.$applicant->license_number.'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">D.O.I</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.date('d M Y', strtotime($applicant->issued_at)).'</td>
+                                    </tr>
+                                     <tr>
+                                        <td class="lbl">Validity</td>
+                                        <td class="colon">:</td>
+                                        <td class="val ">'.format_date($applicant->issued_at). '<small style="font-weight: bold;"> To </small>'. format_date($applicant->expires_at).'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">Name</td>
+                                        <td class="colon">:</td>
+                                        <td class="val text-uppercase">'.$applicant->name.'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">F/H Name</td>
+                                        <td class="colon">:</td>
+                                        <td class="val text-uppercase">'.$applicant->fathers_name.'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">Date of Birth</td>
+                                        <td class="colon">:</td>
+                                        <td class="val">'.date('d M Y', strtotime($applicant->d_o_b)).'</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="lbl">Address</td>
+                                        <td class="colon">:</td>
+                                        <td class="val text-uppercase">'.$applicant->applicants_address.'</td>
+                                    </tr>'
+                                    .$certificateRow.'
+                                </table>
+
+
+                          
+
+                            </td>
+
+                            <!-- RIGHT : PHOTO -->
+                            <td width="30%" valign="top">
+                                <table width="100%" cellspacing="0" cellpadding="0">
+                                    <!-- PHOTO ROW -->
+                                    <tr>
+                                        <td align="center">
+                                            <div class="photo">
+                                                '.($photoPath
+                                                    ? '<img src="'.$photoPath.'" style="width:52mm; height:52mm; object-fit:cover;">'
+                                                    : '').'
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="center">
+                                            <div class="photo">
+                                                '.($signPath
+                                                    ? '<img src="'.$signPath.'" style="width:52mm; height:20mm; object-fit:cover;">'
+                                                    : '').'
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- SPACE BETWEEN PHOTO & QR -->
+                                    <tr>
+                                        <td height="3mm"></td>
+                                    </tr>
+
+                                    <!-- QR ROW -->
+                                    <tr>
+                                        <td align="center">
+                                            <barcode code="'.$qrValue.'" type="QR" size="1.6" error="M" />
+                                        </td>
+                                    </tr>
+
+                                    <!-- BOTTOM SAFE SPACE -->
+                                    <tr>
+                                        <td height="4mm"></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+
+                <!-- FOOTER -->
+                <div class="footer">
+                    Issued by TNELB | Tamil Nadu
+                </div>
+
+            </div>
+            ';
+            
+            $mpdf->WriteHTML($html);
+            
+            
+            
+        }
+        $fileNameEn = ($applicant->license_number ?? $application_id) . '_EN.pdf';
+        $pdfBinaryEn = $mpdf->Output($fileNameEn, 'S');
+
+        // Build Tamil PDF in the same request
+        $pdfBinaryTa = $this->generateLicenceTamil($application_id, true);
+
+        // Encrypt and store both securely
+        $encryptedPathEn = 'private_documents/license_pdfs/' . $application_id . '_en.pdf.enc';
+        Storage::disk('local')->put($encryptedPathEn, Crypt::encryptString($pdfBinaryEn));
+
+        $encryptedPathTa = null;
+        if (is_string($pdfBinaryTa) && $pdfBinaryTa !== '') {
+            $encryptedPathTa = 'private_documents/license_pdfs/' . $application_id . '_ta.pdf.enc';
+            Storage::disk('local')->put($encryptedPathTa, Crypt::encryptString($pdfBinaryTa));
+        }
+
+        // Save paths to `tnelb_license.license_pdf_en` / `license_pdf_ta`
+        $this->storeEncryptedLicensePdfPath($application_id, $encryptedPathEn, $encryptedPathTa);
+
+        // Stream English PDF to browser (existing behavior)
+        return response($pdfBinaryEn)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $fileNameEn . '"');
+    }
+    // -----------------------------------------------------
+
+    
+    public function generatePDF11($application_id)
     {
         
         $application = DB::table('tnelb_application_tbl')
@@ -623,6 +1191,7 @@ class LicensepdfController extends Controller
         ->where('application_id', $application_id)
         ->first();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $application_id)->first();
+        $applicant_sign  = TnelbApplicantsSign::where('application_id', $application_id)->first();
         if ($application && $application->appl_type === 'R') {
             $applicant = DB::table('tnelb_application_tbl')
             ->join('tnelb_renewal_license', 'tnelb_renewal_license.application_id', '=', 'tnelb_application_tbl.application_id')
@@ -665,6 +1234,9 @@ class LicensepdfController extends Controller
         if (!$applicant) {
             return $returnBinary ? null : back()->with('error', 'Application not found.');
         }
+
+        $licence_details = MstLicence::where('cert_licence_code', $applicant->license_name)->first();
+        $licence_name = $licence_details->licence_name;
 
         if($applicant->license_name == 'B'){
             $certificate_name = 'Electrician';
@@ -722,9 +1294,17 @@ class LicensepdfController extends Controller
 
         $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
         $mpdf->WriteHTML('<style>
+
+           .lbl{
+                        font-size: 12pt;
+                    }
+              
+                    .val{
+                        font-size: 12pt;
+                    }
             body { font-family: notosanstamil; font-size: 14pt; }
             .card { border: 1px solid #000; padding: 18px; box-sizing: border-box; width: 100%; }
-            .header { color: #003366; text-align: center; font-size: 20pt; font-weight: bold; margin-bottom: 16px; }
+            .header { color: #003366; text-align: center; font-size: 15pt; font-weight: bold; margin-bottom: 16px; }
             .content { font-size: 14pt; }
             .photo {
                 width: 38mm;
@@ -747,10 +1327,13 @@ class LicensepdfController extends Controller
                 text-align: center;
             }
             .footer { margin-top: 16px; text-align: center; font-size: 12pt; }
+            .text-center{
+                text-align: center;
+            }
             </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
                 
         $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
-
+        $signPath  = !empty($applicant_sign?->uploaded_doc) ? public_path($applicant_sign->uploaded_doc) : null;
         $qrValue = 'sdfdgsdg'; 
 
         $html = '
@@ -758,9 +1341,26 @@ class LicensepdfController extends Controller
 
             <!-- HEADER -->
             <div class="header">
-                தமிழ்நாடு மின் உரிமம் வழங்கும் வாரியம்<br>
-                திரு.வி.க. தொழிற்பேட்டை, கிண்டி, சென்னை – 32.
+                <table class="header text-center" style="width: 100%;" >
+                <tr>
+                    <td >தமிழ்நா அர</td>
+                </tr>
+                <tr>
+                    <td >மின்சார உரிைமயாளர்கள் வாரியம்</td>
+                </tr>
+                <tr>
+                     <td >திரு.வி.க. தொழிற்பேட்டை, கிண்டி, சென்னை – 32.</td>
+                </tr>
+
+                <tr>
+                     <td >'.$licence_name.'</td>
+                </tr>
+               
+            </table>
+                
             </div>
+
+           
 
             <!-- BODY -->
             <div class="content">
@@ -814,34 +1414,43 @@ class LicensepdfController extends Controller
                         <!-- RIGHT : PHOTO -->
                         <td width="30%" valign="top">
                             <table width="100%" cellspacing="0" cellpadding="0">
-                                <!-- PHOTO ROW -->
-                                <tr>
-                                    <td align="center">
-                                        <div class="photo">
-                                            '.($photoPath
-                                                ? '<img src="'.$photoPath.'" style="width:38mm; height:38mm; object-fit:cover;">'
-                                                : '').'
-                                        </div>
-                                    </td>
-                                </tr>
+                                    <!-- PHOTO ROW -->
+                                    <tr>
+                                        <td align="center">
+                                            <div class="photo">
+                                                '.($photoPath
+                                                    ? '<img src="'.$photoPath.'" style="width:52mm; height:52mm; object-fit:cover;">'
+                                                    : '').'
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="center">
+                                            <div class="photo">
+                                                '.($signPath
+                                                    ? '<img src="'.$signPath.'" style="width:52mm; height:20mm; object-fit:cover;">'
+                                                    : '').'
+                                            </div>
+                                        </td>
+                                    </tr>
 
-                                <!-- SPACE BETWEEN PHOTO & QR -->
-                                <tr>
-                                    <td height="3mm"></td>
-                                </tr>
+                                    <!-- SPACE BETWEEN PHOTO & QR -->
+                                    <tr>
+                                        <td height="3mm"></td>
+                                    </tr>
 
-                                <!-- QR ROW -->
-                                <tr>
-                                    <td align="center">
-                                        <barcode code="'.$qrValue.'" type="QR" size="0.9" error="M" />
-                                    </td>
-                                </tr>
+                                    <!-- QR ROW -->
+                                    <tr>
+                                        <td align="center">
+                                            <barcode code="'.$qrValue.'" type="QR" size="1.6" error="M" />
+                                        </td>
+                                    </tr>
 
-                                <!-- BOTTOM SAFE SPACE -->
-                                <tr>
-                                    <td height="3mm"></td>
-                                </tr>
-                            </table>
+                                    <!-- BOTTOM SAFE SPACE -->
+                                    <tr>
+                                        <td height="4mm"></td>
+                                    </tr>
+                                </table>
                         </td>
                     </tr>
                 </table>
@@ -857,39 +1466,7 @@ class LicensepdfController extends Controller
         ';
     
         $mpdf->WriteHTML($html);
-        $mpdf->AddPage('L');
-        $backHtml = '
-            <div class="card">
-
-                <div class="content" style="font-size:9.5pt; line-height:1.4;">
-
-                    <div style="text-align:right; font-size:7pt; margin-bottom:2mm;">
-                        Visit us at : www.tnelb.gov.in
-                    </div>
-
-                    <div style="margin-top:4mm; text-align: justify;">
-                        ' . $content_text . '   
-                    </div>
-
-                    <br><br><br><br>
-
-                    <!-- SIGNATURE AREA -->
-                    <table width="100%" style="margin-top:6mm;">
-                        <tr>
-                            <td width="45%" style="text-align:left;">
-                                <div style="height:12mm;"></div>
-                                <strong>செயலாளர்</strong>
-                            </td>
-
-                            <td width="55%" style="text-align:right;">
-                                <div style="height:12mm;"></div>
-                                <strong>தலைவர்</strong>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>';
-        $mpdf->WriteHTML($backHtml);
+       
 
         if ($returnBinary) {
             return $mpdf->Output('Application_Details.pdf', 'S');

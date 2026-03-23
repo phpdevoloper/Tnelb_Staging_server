@@ -440,7 +440,8 @@
                         </div>
                     </div>
 
-                    <div id="timelineMinimal" class="col-lg-12 col-md-12 layout-spacing mt-4">
+                    @include('admin.include.workflow_timeline')
+                    {{-- <div id="timelineMinimal" class="col-lg-12 col-md-12 layout-spacing mt-4">
                         <div class="statbox widget box box-shadow">
                             <div class="widget-header">
                                 <div class="row">
@@ -529,7 +530,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>--}} 
                 </div>
             </div>
 

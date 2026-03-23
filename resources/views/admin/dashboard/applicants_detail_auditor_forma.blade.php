@@ -201,7 +201,8 @@
             <!-- -------------------------------------------- -->
             <div class="row ">
                 <!-- ----------------------------- -->
-                <div id="timelineMinimal " class="col-lg-12 layout-spacing mt-2">
+                @include('admin.include.workflow_timeline')
+                {{-- <div id="timelineMinimal " class="col-lg-12 layout-spacing mt-2">
                     <div class="statbox widget box box-shadow">
                         <div class="widget-header">
                             <div class="row">
@@ -272,7 +273,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>--}} 
                 </div>
             </div>
         </div>

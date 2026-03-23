@@ -44,7 +44,7 @@
                             </div>
                         </div>
 
-                    </div>
+                    </div>--}}
                 </div>
                 <div id="tabsSimple" class="col-xl-6 col-6 layout-spacing">
                     <div class="statbox widget box box-shadow">
@@ -485,7 +485,8 @@
                     </div>
 
                     <!-- ------------------------------------ -->
-                    <div id="timelineMinimal " class="col-lg-12 layout-spacing mt-4">
+                    @include('admin.include.workflow_timeline')
+                    {{-- <div id="timelineMinimal " class="col-lg-12 layout-spacing mt-4">
                         <div class="statbox widget box box-shadow">
                             <div class="widget-header">
                                 <div class="row">
