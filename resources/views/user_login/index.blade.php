@@ -741,13 +741,12 @@
                                        <tr>
                                            <td>{{ $index + 1 }}</td>
                                             <td style="width: 18%;">
-                                             @php
-                                            $licence_name_present = DB::table('mst_licences')
-              
-                                           ->where('form_code', $workflow->form_name)
-                                            ->first();
-                                               @endphp    
-                                               {{ $licence_name_present->licence_name }} <br>
+                                           @php
+                                               $licence_name_present = DB::table('mst_licences')
+                                                   ->where('form_code', $workflow->form_name)
+                                                   ->first();
+                                           @endphp
+                                           {{ optional($licence_name_present)->licence_name ?? 'N/A' }} <br>
                                            [Form {{ strtoupper($workflow->form_name ?? 'NA') }}]
                                            </td>
                                            <td>{{ $workflow->application_id ?? 'N/A' }}</td>

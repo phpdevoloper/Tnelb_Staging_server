@@ -762,6 +762,75 @@ $workflows_cl = $workflows_cl
 
     }
 
+    /**
+     * Demo-only: NIC MeghRaj-style Cloud Unit Code layout (see resources/views/user_login/index_demo.blade.php).
+     */
+    public function indexDemo()
+    {
+        $cloudUnits = collect([
+            [
+                'code' => 'MTS9',
+                'location' => 'PUNE(01)',
+                'created_at' => '8 Oct, 2020 16:05:24',
+                'status' => 'active',
+                'status_label' => 'Active',
+                'closed_note' => null,
+            ],
+            [
+                'code' => 'MIT5C0',
+                'location' => 'BHUBANESHWAR(01)',
+                'created_at' => '23 Jul, 2020 11:58:56',
+                'status' => 'active',
+                'status_label' => 'Active',
+                'closed_note' => null,
+            ],
+            [
+                'code' => 'CIT2C1',
+                'location' => 'DELHI(01)',
+                'created_at' => '27 May, 2020 12:58:54',
+                'status' => 'closed',
+                'status_label' => 'Closed',
+                'closed_note' => '5 Nov, 2021 17:15:12',
+            ],
+            [
+                'code' => 'TN03',
+                'location' => 'DELHI(01)',
+                'created_at' => '25 Aug, 2017 20:23:16',
+                'status' => 'active',
+                'status_label' => 'Active',
+                'closed_note' => null,
+            ],
+            [
+                'code' => 'NQV1',
+                'location' => 'DELHI(01)',
+                'created_at' => '15 Mar, 2017 15:44:57',
+                'status' => 'active',
+                'status_label' => 'Active',
+                'closed_note' => null,
+            ],
+            [
+                'code' => 'NQ71',
+                'location' => 'DELHI(01)',
+                'created_at' => '12 Apr, 2015 14:33:32',
+                'status' => 'active',
+                'status_label' => 'Active',
+                'closed_note' => null,
+            ],
+        ]);
+
+        return view('user_login.index_demo', [
+            'cloudUnits' => $cloudUnits,
+            'cloudRegAccountNo' => 'NCS01-20141224-00000973',
+            'projectName' => 'District Portal of India',
+            'projectDescription' => 'GOI Search Project - NIC',
+            'projectOrganisation' => 'Central, National Informatics Centre (NIC), (Address: NIC, E-Wing, Rajaji Bhavan, Chennai-90, Tamil Nadu)',
+            'showingFrom' => 1,
+            'showingTo' => $cloudUnits->count(),
+            'totalRecords' => $cloudUnits->count(),
+            'defaultPerPage' => 20,
+        ]);
+    }
+
     public function noticeboardcontent($news_id)
     {
         // Fetch the record by ID

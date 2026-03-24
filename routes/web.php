@@ -87,6 +87,10 @@ Route::get('/dashboard', [LoginController::class, 'dashboard'])
     ->name('dashboard')
     ->middleware('auth.dashboard');
 
+Route::get('/dashboard/cloud-unit-demo', [LoginController::class, 'indexDemo'])
+    ->name('dashboard.cloud_unit_demo')
+    ->middleware('auth.dashboard');
+
 // ------------------------ Captcha ------------------------
 
 Route::get('captcha/image', function () {
