@@ -48,21 +48,22 @@
                                 </svg>
                             </a>
                             <div class="d-flex breadcrumb-content">
-                                <div class="page-header">
-    
-                                    <div class="page-title">
-                                    </div>
-    
+                                <div class="page-header d-flex flex-column">
                                     <nav class="breadcrumb-style-one" aria-label="breadcrumb">
-                                        <ol class="breadcrumb">
-                                            <li class="breadcrumb-item"><a href="#"></a></li>
-    
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                                            </li>
+                                            <li class="breadcrumb-item">
+                                                <span class="mx-1">/</span>
+                                            </li>
+                                            <li class="breadcrumb-item active" aria-current="page">
+                                                Dashboard 
+                                            </li>
                                         </ol>
                                     </nav>
-    
                                 </div>
                             </div>
-    
                         </header>
                     </div>
                 </div>

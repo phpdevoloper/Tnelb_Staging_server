@@ -1054,16 +1054,19 @@ class LoginController extends Controller
         // Form P
         $formPId = (int) DB::table('mst_licences')->where('cert_licence_code', 'P')->value('id');
         if ($formPId > 0 && $formId === $formPId && Schema::hasTable('tnelb_form_p')) {
+            // Form P dates and licence metadata live on tnelb_license / tnelb_renewal_license (see generateFormPLicencePdfs), not on tnelb_form_p.
             $rows = DB::table('tnelb_form_p as ta')
+                ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
+                ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
                 ->where('ta.app_status', 'A')
                 ->select(
                     'ta.application_id',
                     'ta.applicant_name',
                     'ta.created_at',
                     DB::raw("'A' as status"),
-                    DB::raw('ta.license_number as license_number'),
-                    DB::raw('ta.issued_at as issued_at'),
-                    DB::raw('ta.expires_at as expires_at'),
+                    DB::raw('COALESCE(ta.license_number, tl.license_number, tr.license_number) as license_number'),
+                    DB::raw('COALESCE(tl.issued_at, tr.issued_at) as issued_at'),
+                    DB::raw('COALESCE(tl.expires_at, tr.expires_at) as expires_at'),
                     DB::raw("'P' as form_name")
                 )
                 ->orderByDesc('ta.id')

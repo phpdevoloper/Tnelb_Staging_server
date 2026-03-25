@@ -46,6 +46,7 @@
 <script src="{{ asset('assets/admin/src/plugins/src/mousetrap/mousetrap.min.js') }}"></script>
 <script src="{{ asset('assets/admin/src/plugins/src/waves/waves.min.js') }}"></script>
 <script src="{{ asset('assets/admin/layouts/vertical-light-menu/app.js') }}"></script>
+<script src="{{ asset('assets/admin/js/page-nav-bar.js') }}"></script>
 <script src="{{ asset('assets/admin/src/assets/js/custom.js') }}"></script>
 <script src="{{ asset('assets/admin/src/plugins/src/bootstrap-maxlength/bootstrap-maxlength.js') }}"></script>
 <script src="{{ asset('assets/admin/src/plugins/src/bootstrap-maxlength/custom-bs-maxlength.js') }}"></script>

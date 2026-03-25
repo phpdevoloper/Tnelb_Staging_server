@@ -136,50 +136,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            {{-- <div class="row">
-                                                <div class="col-lg-9">
-                                                    <div class="row">
-                                                        <div class="col-lg-6">
-                                                            <p><strong>Applicant Id:</strong></p>
-
-                                                            <p><strong>Applicant Name:</strong></p>
-
-                                                            <p><strong>Father's Name:</strong></p>
-
-                                                            <p><strong>Address:</strong></p>
-
-                                                            <p><strong>D.O.B & Age:</strong></p>
-                                                        </div>
-                                                        <div class="col-lg-6">
-                                                            <p>{{ $applicant->application_id }}</p>
-
-                                                            <p>{{ $applicant->applicant_name }}</p>
-
-                                                            <p>{{ $applicant->fathers_name }}</p>
-
-                                                            <p>{{ $applicant->applicants_address }}</p>
-
-                                                            <p>{{ $applicant->d_o_b }} ({{ $applicant->age }} years old)</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-lg-3">
-                                                    @php
-                                                        $photoAlt = $uploadedPhoto ?? $applicant_photo ?? null;
-                                                        $photoPathAlt = $photoAlt && !empty($photoAlt->upload_path) ? $photoAlt->upload_path : null;
-                                                    @endphp
-                                                    @if($photoPathAlt)
-                                                    <img src="{{ asset($photoPathAlt) }}"
-                                                        alt="Applicant Photo"
-                                                        class="img-fluid rounded" width="150" style="border:1px solid;"
-                                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                    <p style="display: none;">No photo available</p>
-                                                    @else
-                                                    <p>No photo available</p>
-                                                    @endif
-                                                </div>
-
-                                            </div> --}}
 
                                             <h6 class="mt-2 mb-2 fw-bold">Educational Qualifications</h6>
                                             <div class="table-responsive">
@@ -470,9 +426,8 @@
 
                                             </div>
                                         </div>
-
                                     </div>
-                                    <?php //var_dump($workflows);die; ?>
+                                    
                                     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
                                         <div class="row text-center fw-bold border-bottom pb-2 mb-3 mt-3">
                                             <div class="col-lg-6 text-primary">
@@ -538,7 +493,7 @@
                                                         <p><strong>Payment mode:</strong></p>
                                                     </div>
                                                     <div class="col-lg-6">
-                                                        <P>{{ $applicant->payment_mode??'UPI' }}</P>
+                                                        <p>{{ $applicant->payment_mode??'UPI' }}</P>
                                                     </div>
                                                     <div class="col-lg-6">
                                                         <p><strong> Payment Time</strong></p>
@@ -554,7 +509,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                
 
                     <div class="col-xl-5 col-md-12 col-sm-12 col-12 layout-spacing">
                         @if(($applicant->status ?? '') != 'A')
@@ -562,10 +517,6 @@
                             <div class="row align-items-center">
 
                                 <div class="col-lg-12">
-                                    {{-- <div class="form-check form-switch">
-                                        <label class="form-check-label fw-bold text-end" for="flexSwitchCheckDefault">If you have any queries</label>
-                                        <input class="form-check-input" type="checkbox" role="switch" id="Queryswitch">
-                                    </div> --}}
                                     <div class="switch-wrapper d-flex justify-content-between align-items-center">
                                         <label class="switch-label mb-0 fw-bold text-end" for="Queryswitch">If you have any queries</label>
                                         <div class="switch form-switch-custom switch-inline form-switch-primary form-switch-custom inner-text-toggle">
@@ -597,14 +548,13 @@
                             </div>
                         </div>
                         <div class="statbox widget box box-shadow">
-                                <div class="row">
-                                    <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                                        <div class="widget-header">
-                                        <h4>Remarks</h4>
-                                        </div>
+                            <div class="row">
+                                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
+                                    <div class="widget-header">
+                                    <h4>Remarks</h4>
                                     </div>
                                 </div>
-                        
+                            </div>
                             <div class="row">
                                 <div class="col-lg-12 col-md-offset-2">
                                     <textarea class="form-control placement-top" id="remarks" name="remarks" rows="4" cols="50" maxlength="250"></textarea>
@@ -675,17 +625,11 @@
                                 @endif
 
                             </div>
-                    </div>
+                        </div>
+                        @include('admin.include.workflow_timeline')
                         @endif
                     <!-- ----------------------------- -->
-                        @include('admin.include.workflow_timeline')
                 </div>
-
-            <!-- -------------------------------------------- -->
-            <!-- <div class="row">
-                
-            </div> -->
-
         </div>
     </div>
 </div>

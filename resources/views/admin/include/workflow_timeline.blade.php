@@ -1,3 +1,10 @@
+<style>
+    /* Match theme specificity: .timeline-line .item-timeline .t-text p sets color */
+    #timelineMinimal .timeline-line .item-timeline .t-text p.t-meta-return {
+        font-size: 12px;
+        color: #9611b1;
+    }
+</style>
 <div id="timelineMinimal" class="layout-spacing mt-4">
     <div class="statbox widget box box-shadow">
         <div class="widget-header">
@@ -21,7 +28,11 @@
                             <div class="t-text">
                                 @php
                                     $processedBy = $row->processed_by;
-                                    $roleLabel = $processedBy === 'SE' ? 'Secretary' : $processedBy;
+                                    $roleLabel = match ($processedBy) {
+                                        'SE' => 'Secretary',
+                                        'PR' => 'President',
+                                        default => $processedBy,
+                                    };
                                     $isApplicantResubmission = $row->appl_status == 'RE' && $processedBy === 'AP';
                                 @endphp
 
@@ -43,11 +54,8 @@
                                             Reason: {{ $row->reject_reason }}
                                         @else
                                             @if (!$row->name)
-                                                @if ($processedBy === 'SE' && strtoupper((string) ($row->appl_status ?? '')) === 'QU')
+                                                @if (in_array($processedBy, ['SE', 'PR'], true) && strtoupper((string) ($row->appl_status ?? '')) === 'QU')
                                                     <span class="fw-semibold">Application returned to Applicant</span><br>
-                                                @endif
-                                                @if (!empty($row->remarks))
-                                                    Remarks: {{ $row->remarks }}
                                                 @endif
                                             @else
                                                 Forwarded to {{ $row->name }} <br>
@@ -59,7 +67,7 @@
 
                                 @if ($processedBy !== 'Accountant' && !$isApplicantResubmission)
                                     @if ($row->query_status == 'P')
-                                        <p class="text-danger">
+                                        <p class="t-meta-return">
                                             Note: Query raised by {{ $roleLabel }}
                                             @php
                                                 $queries = $row->queries;
@@ -69,6 +77,11 @@
                                             @endphp
                                             @if (!empty($queries) && is_array($queries))
                                                 ({{ implode(', ', $queries) }})
+                                            @endif
+                                        </p>
+                                        <p class="t-meta-return">
+                                            @if (!empty($row->remarks))
+                                                Remarks: {{ $row->remarks }}
                                             @endif
                                         </p>
                                     @endif

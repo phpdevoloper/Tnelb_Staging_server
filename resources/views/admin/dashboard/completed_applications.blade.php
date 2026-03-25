@@ -20,6 +20,7 @@
         color: #ffffff !important;
         font-weight: 600;
     }
+
 </style>
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
@@ -52,7 +53,6 @@
                                 </nav>
                             </div>
                         </div>
-
                     </header>
                 </div>
             </div>
@@ -98,7 +98,7 @@
                                                             $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
                                                         @endphp
                                                         <a href="#"
-                                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge @if ($loop->first) js-completed-badge-default @endif"
                                                             data-form-id="{{ $summary['id'] ?? '' }}">
                                                             Completed
                                                             <span class="ms-1 fw-bold text-danger">
@@ -405,6 +405,13 @@
                         $tbody.html(`<tr><td colspan="9" class="text-center text-danger">${escapeHtml(msg)}</td></tr>`);
                     }
                 });
+            });
+
+            $(function() {
+                const $default = $('.js-completed-badge-default').first();
+                if ($default.length) {
+                    $default.trigger('click');
+                }
             });
         })();
     </script>

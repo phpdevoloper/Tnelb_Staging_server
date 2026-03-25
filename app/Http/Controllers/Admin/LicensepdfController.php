@@ -2085,7 +2085,15 @@ class LicensepdfController extends Controller
         $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
         $signPath  = !empty($applicant_sign?->uploaded_doc) ? public_path($applicant_sign->uploaded_doc) : null;
 
-        $qrValue = 'sdfdgsdg'; 
+        $qrValue = 'sdfdgsdg';
+
+        $formNameForLabel = strtoupper(trim((string) ($applicant->form_name ?? '')));
+        $licenseNumberColLabel = match ($formNameForLabel) {
+            'WH' => 'WH.No',
+            'S' => 'C.No',
+            'W' => 'H.No',
+            default => 'C.No',
+        };
 
         $html = '
         <div class="card">
@@ -2106,7 +2114,7 @@ class LicensepdfController extends Controller
 
                             <table class="info-table">
                                 <tr>
-                                    <td class="lbl">WH.No</td>
+                                    <td class="lbl">'.$licenseNumberColLabel.'</td>
                                     <td class="colon">:</td>
                                     <td class="val">'.$applicant->license_number.'</td>
                                 </tr>
