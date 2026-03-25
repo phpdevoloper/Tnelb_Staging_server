@@ -1903,7 +1903,7 @@ class LicensepdfController extends Controller
                                 <tr><td height="3mm"></td></tr>
                                 <tr>
                                     <td align="center">
-                                        <barcode code="'.$qrValue.'" type="QR" size="0.6" error="M" />
+                                        <barcode code="'.$qrValue.'" type="QR" size="0.9" error="M" />
                                     </td>
                                 </tr>
                                 <tr><td height="4mm"></td></tr>
@@ -1983,6 +1983,7 @@ class LicensepdfController extends Controller
         ->where('application_id', $application_id)
         ->first();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $application_id)->first();
+        $applicant_sign  = TnelbApplicantsSign::where('application_id', $application_id)->first();
         if ($application && $application->appl_type === 'R') {
             $applicant = DB::table('tnelb_application_tbl')
             ->join('tnelb_renewal_license', 'tnelb_renewal_license.application_id', '=', 'tnelb_application_tbl.application_id')
@@ -2040,8 +2041,13 @@ class LicensepdfController extends Controller
         $mpdf->SetTitle('TNELB Application License ' . $applicant->license_name);
         $mpdf->WriteHTML('<style>
             body { font-family: helvetica; font-size: 14pt; }
-            .card { border: 1px solid #000; padding: 18px; box-sizing: border-box; width: 100%; }
-            .header { color: #003366; text-align: center; font-size: 20pt; font-weight: bold; margin-bottom: 16px; }
+            .card {
+                border: 1px solid #000; padding: 18px; box-sizing: border-box; width: 100%;
+                min-height: 178mm;
+            }
+            .header { color: #003366; text-align: center; margin-bottom: 16px; }
+            .header-title { font-size: 20pt; font-weight: bold; line-height: 1.2; }
+            .header-sub { font-size: 12.5pt; font-weight: bold; line-height: 1.3; margin-top: 2mm; }
             .content { font-size: 14pt; }
             .photo {
                 width: 38mm;
@@ -2049,6 +2055,16 @@ class LicensepdfController extends Controller
                 border: 0.3mm solid #000;
                 box-sizing: border-box;
                 overflow: hidden;
+            }
+            .sign-box {
+                width: 38mm;
+                height: 14mm;
+                border: 0.3mm solid #000;
+                box-sizing: border-box;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
            .info-table {
                 font-size: 14pt;
@@ -2067,6 +2083,7 @@ class LicensepdfController extends Controller
             </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
                 
         $photoPath = !empty($applicant_photo->upload_path) ? public_path($applicant_photo->upload_path): null;
+        $signPath  = !empty($applicant_sign?->uploaded_doc) ? public_path($applicant_sign->uploaded_doc) : null;
 
         $qrValue = 'sdfdgsdg'; 
 
@@ -2075,8 +2092,8 @@ class LicensepdfController extends Controller
 
             <!-- HEADER -->
             <div class="header">
-                TAMIL NADU ELECTRICAL LICENCING BOARD<br>
-                Thiru Vi. Ka. Indl. Estate, Guindy, Chennai - 600 032.
+                <div class="header-title">TAMIL NADU ELECTRICAL LICENCING BOARD</div>
+                <div class="header-sub">Thiru Vi. Ka. Industrial Estate, Guindy, Chennai - 600 032.</div>
             </div>
 
             <!-- BODY -->
@@ -2113,6 +2130,16 @@ class LicensepdfController extends Controller
                                     <td class="colon">:</td>
                                     <td class="val">'.$applicant->fathers_name.'</td>
                                 </tr>
+                                <tr>
+                                    <td class="lbl">D.O.B</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.format_date($applicant->d_o_b).'</td>
+                                </tr>
+                                <tr>
+                                    <td class="lbl">Address</td>
+                                    <td class="colon">:</td>
+                                    <td class="val">'.$applicant->applicants_address.'</td>
+                                </tr>
                             </table>
 
                         </td>
@@ -2136,10 +2163,26 @@ class LicensepdfController extends Controller
                                     <td height="3mm"></td>
                                 </tr>
 
+                                <!-- SIGNATURE ROW -->
+                                <tr>
+                                    <td align="center">
+                                        <div class="sign-box">
+                                            '.($signPath
+                                                ? '<img src="'.$signPath.'" style="width:34mm; height:10mm; object-fit:contain;">'
+                                                : '<span style="font-size:8pt; color:#666;">Signature not available</span>').'
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- SPACE BETWEEN SIGNATURE & QR -->
+                                <tr>
+                                    <td height="3mm"></td>
+                                </tr>
+
                                 <!-- QR ROW -->
                                 <tr>
                                     <td align="center">
-                                        <barcode code="'.$qrValue.'" type="QR" size="0.6" error="M" />
+                                        <barcode code="'.$qrValue.'" type="QR" size="1.15" error="M" />
                                     </td>
                                 </tr>
 
@@ -2154,6 +2197,8 @@ class LicensepdfController extends Controller
 
             </div>
 
+            <div class="footer-spacer"></div>
+
             <!-- FOOTER -->
             <div class="footer">
                 Issued by TNELB | Tamil Nadu
@@ -2163,42 +2208,6 @@ class LicensepdfController extends Controller
         ';
     
         $mpdf->WriteHTML($html);
-        $mpdf->AddPage('L');
-        $backHtml = '
-            <div class="card">
-
-                <div class="content" style="font-size:8.5pt; line-height:1.4;">
-
-                    <div style="text-align:right; font-size:7pt; margin-bottom:2mm;">
-                        Visit us at : www.tnelb.gov.in
-                    </div>
-
-                    <div style="margin-top:4mm;">
-                        This Certificate holder is permitted to supervise
-                        <strong>H.V and M.V. Electrical installation works</strong>
-                        under licensed contractor or to work as authorised person
-                        under rule 3 of Indian Electricity Rule 1956.
-                    </div>
-
-                    <br><br><br><br>
-
-                    <!-- SIGNATURE AREA -->
-                    <table width="100%" style="margin-top:6mm;">
-                        <tr>
-                            <td width="45%" style="text-align:left;">
-                                <div style="height:12mm;"></div>
-                                <strong>Secretary</strong>
-                            </td>
-
-                            <td width="55%" style="text-align:right;">
-                                <div style="height:12mm;"></div>
-                                <strong>President</strong>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>';
-        $mpdf->WriteHTML($backHtml);
         return response($mpdf->Output('Application_Details.pdf', 'I'))->header('Content-Type', 'application/pdf');
 
     }

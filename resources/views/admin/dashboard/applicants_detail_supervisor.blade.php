@@ -105,6 +105,10 @@
                                                     @php
                                                         $photo = $uploadedPhoto ?? $applicant_photo ?? null;
                                                         $photoPath = $photo && !empty($photo->upload_path) ? $photo->upload_path : null;
+                                                        $signPath = !empty($uploadedSign?->uploaded_doc) ? $uploadedSign->uploaded_doc : null;
+                                                    @endphp
+                                                    @php
+                                                        //var_dump($photo->upload_path);die;
                                                     @endphp
                                                     @if($photoPath)
                                                         <img src="{{ asset($photoPath) }}"
@@ -116,6 +120,20 @@
                                                     @else
                                                         <p class="text-muted">No photo available</p>
                                                     @endif
+
+                                                    <div class="mt-3">
+                                                        <p class="fw-bold mb-1">Applicant Signature</p>
+                                                        @if($signPath)
+                                                            <img src="{{ asset($signPath) }}"
+                                                                 alt="Applicant Signature"
+                                                                 class="img-fluid rounded border"
+                                                                 style="width: 150px; height: 70px; object-fit: contain; background: #fff;"
+                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                            <p class="text-muted mb-0" style="display: none;">No signature available</p>
+                                                        @else
+                                                            <p class="text-muted mb-0">No signature available</p>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                             {{-- <div class="row">
@@ -221,55 +239,58 @@
                                                     </tbody>
                                                 </table>
                                             </div>
-
-                                            <h6 class="mt-2 mb-2 fw-bold">Work Experience</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Company Name</th>
-                                                            <th>Designation</th>
-                                                            <th>Years of Experience</th>
-                                                            @if (($applicant->form_name ?? '') == 'S')
-                                                                <th>Document</th>
-                                                            @endif
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @forelse ($workExperience as $experience)
-                                                        <tr>
-                                                            <td>{{ $experience->company_name }}</td>
-                                                            <td>{{ $experience->designation }}</td>
-                                                            <td>{{ $experience->experience }} years</td>
-                                                            @if (($applicant->form_name ?? '') == 'S')
-                                                                <td style="text-align:center;">
-                                                                    @if (!empty($experience->upload_document))
-                                                                        @php
-                                                                            $fileExtension = pathinfo($experience->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
-                                                                        @endphp
-                                                                        @if(in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif']))
-                                                                            <img src="{{ url($experience->upload_document) }}" alt="Experience Document" width="100">
-                                                                        @elseif(strtolower($fileExtension) === 'pdf')
-                                                                            <a href="{{ url($experience->upload_document) }}" target="_blank">
-                                                                                <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
-                                                                            </a>
+                                           
+                                            @if (in_array(($applicant->form_name ?? ''), ['S', 'W'], true))
+                                                <h6 class="mt-2 mb-2 fw-bold">Work Experience</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Company Name</th>
+                                                                <th>Designation</th>
+                                                                <th>Years of Experience</th>
+                                                                @if (($applicant->form_name ?? '') == 'S')
+                                                                    <th>Document</th>
+                                                                @endif
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @forelse ($workExperience as $experience)
+                                                            <tr>
+                                                                <td>{{ $experience->company_name }}</td>
+                                                                <td>{{ $experience->designation }}</td>
+                                                                <td>{{ $experience->experience }} years</td>
+                                                                @if (($applicant->form_name ?? '') == 'S')
+                                                                    <td style="text-align:center;">
+                                                                        @if (!empty($experience->upload_document))
+                                                                            @php
+                                                                                $fileExtension = pathinfo($experience->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
+                                                                            @endphp
+                                                                            @if(in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif']))
+                                                                                <img src="{{ url($experience->upload_document) }}" alt="Experience Document" width="100">
+                                                                            @elseif(strtolower($fileExtension) === 'pdf')
+                                                                                <a href="{{ url($experience->upload_document) }}" target="_blank">
+                                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                                </a>
+                                                                            @else
+                                                                                No Documents Uploaded
+                                                                            @endif
                                                                         @else
                                                                             No Documents Uploaded
                                                                         @endif
-                                                                    @else
-                                                                        No Documents Uploaded
-                                                                    @endif
-                                                                </td>
-                                                            @endif
+                                                                    </td>
+                                                                @endif
 
-                                                        </tr>
-                                                        @empty
-                                                        <tr>
-                                                            <td colspan="{{ (($applicant->form_name ?? '') == 'S') ? 4 : 3 }}" class="text-center">No work experience available.</td>
-                                                        </tr>
-                                                        @endforelse
-                                                    </tbody>
-                                                </table>
+                                                            </tr>
+                                                            @empty
+                                                            <tr>
+                                                                <td colspan="{{ (($applicant->form_name ?? '') == 'S') ? 4 : 3 }}" class="text-center">No work experience available.</td>
+                                                            </tr>
+                                                            @endforelse
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                @endif
                                                 @if ($applicant->form_name == 'S')
                                                 <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
                                                     Electrical Assistant Qualification Certificate

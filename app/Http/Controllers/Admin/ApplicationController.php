@@ -150,15 +150,6 @@ class ApplicationController extends Controller
                         ->select('form_id')
                         ->first();
 
-
-
-        // $status = match ($staff->name) {
-        //     'President' => 'A',
-        //     'Secretary'  => ($formType->form_id == 1 ? 'F' : 'A'),
-        //     'Supervisor' => 'F',
-        //     'Auditor'    => 'F',
-        //     default      => abort(403, 'Unauthorized'),
-        // };
                         
         $processed_by = match ($staff->name) {
             'President'  => 'PR',
@@ -169,48 +160,56 @@ class ApplicationController extends Controller
         };
 
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
-        // var_dump($queryTypeJson);die;
 
-        // Insert data into tnelb_workflow table
-        $workflow = SupervisorModel::create([ // Ensure this is the correct model
-            'application_id' => $request->application_id,
-            'appl_status'    => 'RE', // Forwarded
-            'processed_by'   => $request->return_by,
-            'forwarded_to'   => $request->forwarded_to,
-            'role_id'        => $staffID,
-            'is_verified'    => $request->checkboxes,
-            'query_status'   => $query_status,
-            // "Yes" or "No"
-            'remarks'        => $request->remarks,
-            'created_at'     => now(), // Automatically managed if model has timestamps
-            'login_id'       => $staffID,
-            'queries'        => $queryTypeJson,
-            'raised_by'      => $query_status == 'P' ? $raised_by : ''
-        ]);
+        try {
+            DB::beginTransaction();
 
-
-        // Update application status
-        DB::table('tnelb_application_tbl')
-            ->where('application_id', $request->application_id)
-            ->update([
-                'status'        => 'RE', // Role-based forwarding
-                'processed_by'  => $processed_by, // Role-based forwarding
-                'updated_at' => now(),
+            // Insert data into tnelb_workflow table
+            SupervisorModel::create([ // Ensure this is the correct model
+                'application_id' => $request->application_id,
+                'appl_status'    => 'RE', // Forwarded
+                'processed_by'   => $request->return_by,
+                'forwarded_to'   => $request->forwarded_to,
+                'role_id'        => $staff->roles_id,
+                'is_verified'    => $request->checkboxes,
+                'query_status'   => $query_status,
+                // "Yes" or "No"
+                'remarks'        => $request->remarks,
+                'created_at'     => now(), // Automatically managed if model has timestamps
+                'login_id'       => $staffID,
+                'queries'        => $queryTypeJson,
+                'raised_by'      => $query_status == 'P' ? $raised_by : ''
             ]);
 
+            // Update application status
+            DB::table('tnelb_application_tbl')
+                ->where('application_id', $request->application_id)
+                ->update([
+                    'status'       => 'RE', // Role-based forwarding
+                    'processed_by' => $processed_by, // Role-based forwarding
+                    'updated_at'   => now(),
+                ]);
 
-        //Get Role 
-        $role = DB::table('mst__roles')
-        ->where('id', $request->forwarded_to)
-        ->select('name')
-        ->first();
-        // var_dump($role->name);die;
-        
+            // Get role
+            $role = DB::table('mst_roles')
+                ->where('r_id', $request->forwarded_to)
+                ->first();
+            $roleName = $role->role_name ?? $role->name ?? 'selected role';
 
-        return response()->json([
-            'status' => "success",
-            'message' => "Application Returned to $role->name successfully!",
-        ], 201);
+            DB::commit();
+
+            return response()->json([
+                'status'  => "success",
+                'message' => "Application Returned to $roleName successfully!",
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -391,16 +390,16 @@ class ApplicationController extends Controller
                 
     
             //Get Role 
-            $role = DB::table('mst__roles')
-            ->where('id', $request->forwarded_to)
-            ->select('name')
+            $role = DB::table('mst_roles')
+            ->where('r_id', $request->forwarded_to)
             ->first();
+            $roleName = $role->role_name ?? $role->name ?? 'selected role';
             // var_dump($role->name);die;
             
     
             return response()->json([
                 'status' => "success",
-                'message' => "Application Returned to $role->name successfully!",
+                'message' => "Application Returned to $roleName successfully!",
             ], 201);
         }
 
@@ -581,16 +580,16 @@ class ApplicationController extends Controller
 
 
         //Get Role 
-        $role = DB::table('mst__roles')
-        ->where('id', $request->forwarded_to)
-        ->select('name')
+        $role = DB::table('mst_roles')
+        ->where('r_id', $request->forwarded_to)
         ->first();
+        $roleName = $role->role_name ?? $role->name ?? 'selected role';
         // var_dump($role->name);die;
         
 
         return response()->json([
             'status' => "success",
-            'message' => "Application Returned to $role->name successfully!",
+            'message' => "Application Returned to $roleName successfully!",
         ], 201);
     }
 

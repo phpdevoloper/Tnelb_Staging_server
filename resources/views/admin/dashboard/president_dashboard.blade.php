@@ -293,7 +293,9 @@
                                                     elseif (($row->processed_by ?? '') === 'PR') $received_from = 'President';
                                                     // Pending with: who has it now (next in chain)
                                                     $pending_with = '';
-                                                    if (empty($row->processed_by)) $pending_with = 'Supervisor';
+                                                    $row_status = strtoupper($row->status ?? '');
+                                                    if ($row_status === 'QU') $pending_with = 'Applicant';
+                                                    elseif (empty($row->processed_by)) $pending_with = 'Supervisor';
                                                     elseif (($row->processed_by ?? '') === 'S') $pending_with = 'Accountant';
                                                     elseif (($row->processed_by ?? '') === 'A') $pending_with = 'Secretary';
                                                     elseif (($row->processed_by ?? '') === 'SE') $pending_with = 'President';
@@ -305,7 +307,13 @@
                                                 <td>{{ format_date_other($row->updated_at) }}</td>
                                                 {{-- <td>{{ calculateDaysDifference($row->updated_at) }} Days</td> --}}
                                                 <td>{{ calculateDaysDifference($row->created_at) }} Days</td>
-                                                <td>{{ $pending_with }}</td>
+                                                <td>
+                                                    @if($pending_with === 'Applicant')
+                                                        <span class="badge badge-warning">Applicant</span>
+                                                    @else
+                                                        {{ $pending_with }}
+                                                    @endif
+                                                </td>
                                             </tr>
                                             @php $i++; @endphp
                                             @endforeach

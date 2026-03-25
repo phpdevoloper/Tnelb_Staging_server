@@ -16,6 +16,7 @@ use App\Models\Admin\FormsaModel;
 use App\Models\Admin\FormsbModel;
 use App\Models\Admin\UserModel;
 use App\Models\TnelbApplicantPhoto;
+use App\Models\TnelbApplicantsSign;
 
 use App\Models\Admin\Mst_equipment_tbl;
 
@@ -331,7 +332,7 @@ class LoginController extends Controller
                                 $q2->where('tw.forwarded_to', $supervisorRoleId)->where('tw.appl_status', 'RE');
                             });
                     })
-                    ->selectRaw('ta.form_id, ta.appl_type, COUNT(*) as cnt')
+                    ->selectRaw('ta.form_id, ta.appl_type, COUNT(DISTINCT ta.application_id) as cnt')
                     ->groupBy('ta.form_id', 'ta.appl_type')
                     ->get();
 
@@ -712,35 +713,37 @@ class LoginController extends Controller
                 ->get();
             $recieved_apps = $receivedFromTbl->merge($receivedFromEa)->merge($receivedFromFormP)->sortByDesc('created_at')->values();
 
-            // In Progress: all applications in progress (status F/RF), with dynamic Received from / Pending With
+            // In Progress: all applications in progress (status F/RF/QU), with dynamic Received from / Pending With
             $inprogressFromTbl = DB::table('tnelb_application_tbl as ta')
                 ->leftJoin('mst_licences as f', 'ta.form_id', '=', 'f.id')
-                ->whereIn('ta.status', ['F', 'RF'])
+                ->whereIn('ta.status', ['F', 'RF', 'QU'])
                 ->whereIn('ta.payment_status', ['payment', 'paid'])
                 ->select(
                     'ta.application_id',
                     DB::raw('COALESCE(f.form_code, ta.form_name) as form_name'),
                     'ta.created_at',
                     'ta.updated_at',
-                    'ta.processed_by'
+                    'ta.processed_by',
+                    DB::raw('ta.status as status')
                 )
                 ->orderByDesc('ta.updated_at')
                 ->get();
             $inprogressFromEa = DB::table('tnelb_ea_applications')
-                ->whereIn('application_status', ['F', 'RF'])
+                ->whereIn('application_status', ['F', 'RF', 'QU'])
                 ->whereIn('payment_status', ['payment', 'paid'])
-                ->select('application_id', 'form_name', 'created_at', 'updated_at', 'processed_by')
+                ->select('application_id', 'form_name', 'created_at', 'updated_at', 'processed_by', DB::raw('application_status as status'))
                 ->orderByDesc('updated_at')
                 ->get();
             $inprogressFromFormP = DB::table('tnelb_form_p')
-                ->whereIn('app_status', ['F', 'RF'])
+                ->whereIn('app_status', ['F', 'RF', 'QU'])
                 ->whereIn('payment_status', ['payment', 'paid'])
                 ->select(
                     'application_id',
                     DB::raw("'P' as form_name"),
                     'created_at',
                     'updated_at',
-                    'processed_by'
+                    'processed_by',
+                    DB::raw('app_status as status')
                 )
                 ->orderByDesc('updated_at')
                 ->get();
@@ -1188,11 +1191,6 @@ class LoginController extends Controller
     public function showApplicantDetails($applicant_id)
     {
 
-        // $roles = DB::table('tnelb_registers')
-        //     ->select('*')
-        //         ->get();
-
-
         $returnForwardUser = null;
         // Fetch applicant details
         $applicant = DB::table('tnelb_application_tbl')
@@ -1263,13 +1261,14 @@ class LoginController extends Controller
                 ->first();
         }
 
-
-
+        // Get the last uploaded signature (common for all forms)
+        $uploadedSign = TnelbApplicantsSign::where('application_id', $applicant_id)
+            ->whereNotNull('uploaded_doc')
+            ->orderByDesc('id')
+            ->first();
 
         // Get the current user's role ID
         $staff = Auth::user();
-
-
 
         if (!$staff || !$staff->roles_id) {
             return abort(403, 'Unauthorized');
@@ -1280,17 +1279,6 @@ class LoginController extends Controller
 
             if ($applicant->status == 'RE') {
 
-                // $processed_by = match ($applicant->processed_by) {
-                //     'PR'  => 'President',
-                //     'SE'  => 'Secretary',
-                //     'S'  => 'Supervisor',
-                //     'A'  => 'Accountant'
-                // };
-
-                // $nextForwardUser = DB::table('mst__staffs__tbls')
-                //     ->where('name', $processed_by)
-                //     ->select('name', 'roles_id')
-                //     ->first(); 
 
                 $nextForwardUser = DB::table('mst__staffs__tbls')
                     ->where('name', 'Secretary')
@@ -1303,15 +1291,6 @@ class LoginController extends Controller
                     ->first();
             }
         }
-
-
-
-        // if ($staff->name === "Supervisor2") {
-        //     $nextForwardUser = DB::table('mst__staffs__tbls')
-        //         ->where('name', 'Accountant')
-        //         ->select('name', 'roles_id')
-        //         ->first();
-        // }
 
 
         if ($staff->name === "Accountant") {
@@ -1361,22 +1340,10 @@ class LoginController extends Controller
         }
 
 
-
-
         $user_entry = DB::table('tnelb_application_tbl')
             ->where('application_id', $applicant_id) // Filter by specific application
             ->select('*')
             ->first();
-
-
-
-        // $workflows = DB::table('tnelb_workflow')
-        //     ->leftjoin('tnelb_application_tbl', 'tnelb_workflow.application_id', '=', 'tnelb_application_tbl.application_id')
-        //     ->leftjoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
-        //     ->where('tnelb_workflow.application_id', $applicant_id) // Filter by specific application
-        //     ->select('tnelb_workflow.*', 'mst__roles.name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name')
-        //     ->orderBy('tnelb_workflow.id', 'desc')
-        //     ->get();
 
         $workflows = DB::table('tnelb_workflow')
             ->leftjoin('tnelb_application_tbl', 'tnelb_workflow.application_id', '=', 'tnelb_application_tbl.application_id')
@@ -1391,7 +1358,6 @@ class LoginController extends Controller
             ->get();
 
 
-
         $queries = DB::table('tnelb_query_applicable as qa')
             ->leftJoin('tnelb_application_tbl as ta', 'qa.application_id', '=', 'ta.application_id')
             ->where('qa.application_id', $applicant_id)
@@ -1399,10 +1365,6 @@ class LoginController extends Controller
             ->select('qa.*')
             ->orderByDesc('qa.id')
             ->get();
-
-
-
-
 
         // Determine view based on user role
         $view = match ($staff->name) {
@@ -1418,7 +1380,7 @@ class LoginController extends Controller
         };
 
 
-        return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff'));
+        return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'uploadedSign', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff'));
     }
 
     public function presidentDashboard()

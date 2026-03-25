@@ -1,4 +1,4 @@
-<div id="timelineMinimal" class="col-lg-12 layout-spacing mt-4">
+<div id="timelineMinimal" class="layout-spacing mt-4">
     <div class="statbox widget box box-shadow">
         <div class="widget-header">
             <div class="row">
