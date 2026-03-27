@@ -111,47 +111,52 @@
         font-weight: 600;
         padding: 0.35em 0.65em;
     }
-    .app-view-table-wrap .badge-returned {
-        background-color: #fff3e0;
-        color: #c05621;
-        border: 1px solid #ff9800;
-    }
-    /* Ribbon-style status indicator (Returned / Resubmitted) */
-    .app-view-table-wrap .status-ribbon {
+    /* Corner ribbon: compact strip; extra width so full "Resubmitted" / "Returned" is not clipped */
+    .app-view-table-wrap td.corner-ribbon-cell {
         position: relative;
-        display: inline-block;
-        margin-left: 0.4rem;
-        padding: 0.25em 0.7em 0.25em 0.6em;
-        font-size: 0.72rem;
-        font-weight: 700;
-        border-radius: 999px;
-        border: 1px solid transparent;
-        line-height: 1.1;
-        vertical-align: middle;
-        white-space: nowrap;
+        overflow: hidden;
+        vertical-align: middle !important;
+        min-width: 3.35rem;
+        text-align: center;
+        padding-top: 1rem !important;
+        padding-bottom: 0.75rem !important;
     }
-    .app-view-table-wrap .status-ribbon::before {
-        content: "";
+    .app-view-table-wrap .corner-ribbon {
         position: absolute;
-        left: -7px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 0;
-        height: 0;
-        border-top: 7px solid transparent;
-        border-bottom: 7px solid transparent;
-        border-right: 7px solid currentColor;
-        opacity: 0.35;
+        top: 17px;
+        left: -24px;
+        width: 99px;
+        padding: 5px 0 4px;
+        box-sizing: content-box;
+        background: #6f42c1;
+        color: #fff;
+        font-size: 0.52rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.1;
+        text-transform: uppercase;
+        text-align: center;
+        white-space: nowrap;
+        transform: rotate(-45deg);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+        pointer-events: none;
+        z-index: 2;
+        -webkit-font-smoothing: antialiased;
     }
-    .app-view-table-wrap .status-ribbon-returned {
-        background: #fff3e0;
-        color: #c05621;
-        border-color: #ff9800;
+    .app-view-table-wrap .corner-ribbon.corner-ribbon-resubmitted {
+        background: #2e7d32;
     }
-    .app-view-table-wrap .status-ribbon-resubmitted {
-        background: #e8f5e9;
-        color: #2e7d32;
-        border-color: #66bb6a;
+    .app-view-table-wrap .sno-num {
+        position: relative;
+        z-index: 1;
+        display: inline-block;
+    }
+    .app-view-table-wrap .badge-returned-pill {
+        background-color: #6f42c1;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.75rem;
     }
     .app-view-table-wrap .btn-view-licence {
         padding: 0.35rem 0.75rem;
@@ -327,26 +332,22 @@
                                                             ? route('admin.application_details_formp', ['applicant_id' => $application->application_id])
                                                             : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
                                                     }
+                                                    $isReturnedToApplicant = strtoupper((string) $appStatus) === 'QU';
+                                                    $showResubmitted = $wasReturned && !$isReturnedToApplicant && !$isCompleted;
                                                 @endphp
                                                 <tr>
-                                                    <td>{{ $key + 1 }}</td>
+                                                    <td class="@if($isReturnedToApplicant || $showResubmitted) corner-ribbon-cell @endif">
+                                                        @if($isReturnedToApplicant)
+                                                            <span class="corner-ribbon">Returned</span>
+                                                        @elseif($showResubmitted)
+                                                            <span class="corner-ribbon corner-ribbon-resubmitted">Resubmitted</span>
+                                                        @endif
+                                                        <span class="sno-num">{{ $key + 1 }}</span>
+                                                    </td>
                                                     <td>
                                                         <a href="{{ $detailUrl }}">
                                                             {{ $application->application_id }}
                                                         </a>
-                                                        @php
-                                                            $isReturnedToApplicant = strtoupper((string) $appStatus) === 'QU';
-                                                            $showResubmitted = $wasReturned && !$isReturnedToApplicant && !$isCompleted;
-                                                        @endphp
-                                                        @if($isReturnedToApplicant)
-                                                            <span class="status-ribbon status-ribbon-returned">
-                                                                <i class="fa fa-exclamation-triangle"></i> Returned
-                                                            </span>
-                                                        @elseif($showResubmitted)
-                                                            <span class="status-ribbon status-ribbon-resubmitted">
-                                                                <i class="fa fa-refresh"></i> Resubmitted
-                                                            </span>
-                                                        @endif
                                                     </td>
                                                     <td>{{ $application->applicant_name ?? 'N/A' }}</td>
                                                     @if($isCompletedList)
@@ -445,9 +446,19 @@
                                                                 ? route('admin.application_details_formp', ['applicant_id' => $application->application_id])
                                                                 : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
                                                         }
+                                                        $wasReturnedR = !empty($application->has_return_history) && $application->has_return_history;
+                                                        $isReturnedToApplicantR = strtoupper((string) ($appStatusR ?? '')) === 'QU';
+                                                        $showResubmittedR = $wasReturnedR && !$isReturnedToApplicantR && !$isCompletedR;
                                                     @endphp
                                                     <tr>
-                                                        <td>{{ $key + 1 }}</td>
+                                                        <td class="@if($isReturnedToApplicantR || $showResubmittedR) corner-ribbon-cell @endif">
+                                                            @if($isReturnedToApplicantR)
+                                                                <span class="corner-ribbon">Returned</span>
+                                                            @elseif($showResubmittedR)
+                                                                <span class="corner-ribbon corner-ribbon-resubmitted">Resubmitted</span>
+                                                            @endif
+                                                            <span class="sno-num">{{ $key + 1 }}</span>
+                                                        </td>
                                                         <td>
                                                             <a href="{{ $detailUrlR }}">{{ $application->application_id }}</a>
                                                         </td>
@@ -529,23 +540,30 @@
                                                                 : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
                                                         @endphp
                                                         <tr class="return-row">
-                                                            <td>{{ $key + 1 }}</td>
+                                                            @php
+                                                                $currStatus = $application->status ?? $application->application_status ?? $application->app_status ?? '';
+                                                                $isReturned = strtoupper((string) $currStatus) === 'QU';
+                                                            @endphp
+                                                            <td class="corner-ribbon-cell">
+                                                                @if($isReturned)
+                                                                    <span class="corner-ribbon">Returned</span>
+                                                                @else
+                                                                    <span class="corner-ribbon corner-ribbon-resubmitted">Resubmitted</span>
+                                                                @endif
+                                                                <span class="sno-num">{{ $key + 1 }}</span>
+                                                            </td>
                                                             <td>
                                                                 <a href="{{ $detailUrl }}">{{ $application->application_id }}</a>
-                                                                @php
-                                                                    $currStatus = $application->status ?? $application->app_status ?? '';
-                                                                    $isReturned = strtoupper((string)$currStatus) === 'QU';
-                                                                @endphp
-                                                                <span class="badge badge-returned ms-1">
-                                                                    <i class="fa fa-exclamation-triangle"></i>
-                                                                    {{ $isReturned ? 'Returned' : 'Resubmitted' }}
-                                                                </span>
                                                             </td>
                                                             <td>{{ $application->applicant_name ?? 'N/A' }}</td>
                                                             <td>{{ $application->license_name ?? 'N/A' }}</td>
                                                             <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
-                                                            <td>
-                                                                {{ $isReturned ? 'Returned' : 'Resubmitted' }}
+                                                            <td class="text-center">
+                                                                @if($isReturned)
+                                                                    <span class="badge rounded-pill badge-returned-pill">Returned</span>
+                                                                @else
+                                                                    <span class="badge rounded-pill bg-success">Resubmitted</span>
+                                                                @endif
                                                             </td>
                                                             <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
                                                             <td>

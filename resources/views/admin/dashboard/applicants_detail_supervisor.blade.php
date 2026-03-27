@@ -24,7 +24,7 @@
                 </div>
             </div>
 
-            <div class="row layout-top-spacing">
+            <div class="row layout-top-spacing align-items-start">
                 <div class="col-lg-12 layout-spacing">
                     <div class="statbox widget ">
                         <div class="widget-header applicant_details">
@@ -44,7 +44,7 @@
                             <div class="row">
                                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
                                     {{-- <h3 class="application_id_css">Application Id :<span style="color:#098501;"> {{ $applicant->application_id }}</span> </h3> --}}
-                                    <h4>Edit / View Applicant's Details</h4>
+                                    {{-- <h4>Edit / View Applicant's Details</h4> --}}
                                 </div>
                             </div>
                         </div>
@@ -74,25 +74,25 @@
                                                         <table class="table table-sm">
                                                             <tbody>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end" style="width: 30%;">Applicant Id:</td>
+                                                                    <td class="fw-bold " style="width: 30%;">Applicant Id :</td>
                                                                     <td>{{ $applicant->application_id }}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end">Applicant Name:</td>
+                                                                    <td class="fw-bold">Applicant Name :</td>
                                                                     <td>{{ $applicant->applicant_name }}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end">Father's Name:</td>
+                                                                    <td class="fw-bold">Father's Name :</td>
                                                                     <td>{{ $applicant->fathers_name }}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end align-top">Address:</td>
+                                                                    <td class="fw-bold align-top">Address :</td>
                                                                     <td style="white-space: normal; word-break: break-word;">
                                                                         {{ $applicant->applicants_address }}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end">D.O.B & Age:</td>
+                                                                    <td class="fw-bold">D.O.B & Age :</td>
                                                                     <td>{{ $applicant->d_o_b }} ({{ $applicant->age }} years old)</td>
                                                                 </tr>
                                                             </tbody>
@@ -248,91 +248,137 @@
                                                 </div>
                                                 @endif
                                                 @if ($applicant->form_name == 'S')
-                                                <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
-                                                    Electrical Assistant Qualification Certificate
-                                                </h6>
-
+                                                
                                                 <div class="row">
-                                                    <div class="col-lg-6 col-6">
-                                                        <p class="mb-1"><strong>License Number / Date :</strong></p>
+                                                    <div class="col-lg-8 col-6">
+                                                        <h6 class="mt-2 mb-2 fw-bold">
+                                                            Have previously applied for Electrical Assistant Qualification Certificate and if yes then mention its number and date  :
+                                                        </h6>
                                                     </div>
-
-                                                    <div class="col-lg-6 col-6">
+                                                    <div class="col-lg-4 col-6">
                                                         @php
-                                                            if (empty($applicant->previously_number) || empty($applicant->previously_date)) {
+                                                            $hasPreviousEaQual = !empty($applicant->previously_number) || !empty($applicant->previously_date);
+                                                            if (!$hasPreviousEaQual) {
                                                                 $value = 'No';
                                                             } else {
-                                                                $value = 'Yes, ' .($applicant->previously_number ?: '') . ' , ' .
-                                                                         (!empty($applicant->previously_date) ? format_date($applicant->previously_date) : '');
+                                                                $value = 'Yes' ;
                                                             }
-
                                                         @endphp
-
-                                                        <p class="mb-1">
-                                                            @if($value === 'No')
-                                                                {{ $value }}
-                                                            @else
-                                                                {!! $value !!}
-                                                                
-                                                                     @if ($applicant->adminlverify == null)
-                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_number }}" data-license_date="{{ $applicant->previously_date }}" data-type="License" style="cursor: pointer;">Verify</span>                       
-                                                                        @elseif($applicant->adminlverify == 1)
-                                                                            <span class="text-success ms-2">(Valid License.)</span>
-                                                                        @elseif($applicant->adminlverify == 2)
-                                                                            <span class="text-danger ms-2">(Invalid License.)</span>
-                                                                        @endif                
-                                                               
-                                                            @endif
+                                                        <p class="mt-2 mb-1">
+                                                            {{ $value }}
                                                         </p>
                                                     </div>
+                                                    @if ($hasPreviousEaQual)
+                                                        <div class="col-12">
+                                                            <div class="row justify-content-center">
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>License Number :</strong> {{ $applicant->previously_number ?: '—' }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>Date :</strong> {{ !empty($applicant->previously_date) ? format_date($applicant->previously_date) : '—' }}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             @endif
 
 
-                                            <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
-                                                @if (in_array($applicant->form_name,['S','W']))
-                                                    Wireman C.C /
-                                                @endif 
-                                                Wireman Helper C.C issued by this Board?
-                                            </h6>
-
-                                            <div class="row">
-                                                <div class="col-lg-6 col-6">
-                                                    <p class="mb-1"><strong>Wireman License Number / Date:</strong></p>
-                                                </div>
-
-                                                <div class="col-lg-6 col-6">
-                                                    @php
-                                                        if (empty($applicant->certificate_no) || empty($applicant->certificate_date)) {
-                                                            $cert_no = 'No';
-                                                        } else {
-                                                            $cert_no = 'Yes, ' . $applicant->certificate_no . ' , ' . format_date($applicant->certificate_date);
-                                                        }
-                                                    @endphp
-                                                
-                                                    <p class="mb-1">
-                                                        @if($cert_no === 'No')
-                                                            {{ $cert_no }}
-                                                        @else
-                                                            {!! $cert_no !!}
-
-                                                            @php
-                                                                //var_dump($applicant);die;
-                                                            @endphp
-                                                            @if ($applicant->admincverify == null)
-                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>                       
-                                                            @elseif($applicant->admincverify == 1)
-                                                                <span class="text-success ms-2">(Valid License.)</span>
-                                                            @elseif($applicant->admincverify == 2)
-                                                                <span class="text-danger ms-2">(Invalid License.)</span>
+                                            @if (in_array($applicant->form_name, ['WH']))
+                                                @php
+                                                    $hasWiremanBoardCert = !empty($applicant->certificate_no) && !empty($applicant->certificate_date);
+                                                @endphp
+                                                <div class="row">
+                                                    <div class="col-lg-8 col-6">
+                                                        <h6 class="mt-2 mb-2 fw-bold">
+                                                            Have you applied for and obtained a Certificate of Qualification for Wireman Helper ? If yes, please state its number and validity
+                                                        </h6>
+                                                    </div>
+                                                    <div class="col-lg-4 col-6">
+                                                        <p class="mt-2 mb-1 mt-lg-2">
+                                                            @if (!$hasWiremanBoardCert)
+                                                                No
+                                                            @else
+                                                                Yes
+                                                                @if ($applicant->admincverify == null)
+                                                                    <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                                @elseif($applicant->admincverify == 1)
+                                                                    <span class="text-success ms-2">(Valid License.)</span>
+                                                                @elseif($applicant->admincverify == 2)
+                                                                    <span class="text-danger ms-2">(Invalid License.)</span>
+                                                                @endif
                                                             @endif
-                                                        @endif
-                                                    </p>
+                                                        </p>
+                                                    </div>
+                                                    @if ($hasWiremanBoardCert)
+                                                        <div class="col-12">
+                                                            <div class="row justify-content-center">
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>License Number :</strong> {{ $applicant->certificate_no ?: '—' }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>Date :</strong> {{ format_date($applicant->certificate_date) }}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 </div>
-                                            </div>
+                                            @endif
+                                            @if (in_array($applicant->form_name, ['W']))
+                                                @php
+                                                    $hasWiremanBoardCert = !empty($applicant->certificate_no) && !empty($applicant->certificate_date);
+                                                @endphp
+                                                <div class="row">
+                                                    <div class="col-lg-8 col-6">
+                                                        <h6 class="mt-2 mb-2 fw-bold">
+                                                            Have you applied for and obtained a Certificate of Qualification for Wireman / Wireman Helper ? If yes, please state its number and validity.
+                                                        </h6>
+                                                    </div>
+                                                    <div class="col-lg-4 col-6">
+                                                        <p class="mt-2 mb-1 mt-lg-2">
+                                                            @if (!$hasWiremanBoardCert)
+                                                                No
+                                                            @else
+                                                                Yes
+                                                            @endif
+                                                        </p>
+                                                    </div>
+                                                    @if ($hasWiremanBoardCert)
+                                                        <div class="col-12">
+                                                            <div class="row justify-content-center">
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>License Number :</strong> {{ $applicant->certificate_no ?: '—' }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>Date :</strong> {{ format_date($applicant->certificate_date) }}&nbsp;&nbsp;
+                                                                        @if ($applicant->admincverify == null)
+                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                                        @elseif($applicant->admincverify == 1)
+                                                                            <span class="text-success ms-2">(Valid License.)</span>
+                                                                        @elseif($applicant->admincverify == 2)
+                                                                            <span class="text-danger ms-2">(Invalid License.)</span>
+                                                                        @endif
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
 
                                             <!-- ----------------------------------------------- -->
-                                            <hr>
+                                            
                                             @php
                                                 $decryptedaadhar = null;
                                                 try {
@@ -349,22 +395,29 @@
 
                                             <div class="row mb-2">
                                                 <div class="col-md-6">
-                                                    <h6 class="fw-bold mb-0">Aadhaar:</h6>
-                                                    <p class="mb-0">
-                                                        {{ $masked }}
-                                                        @if (!empty($applicant->aadhaar_doc))
-                                                            (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
-                                                                target="_blank" class="text-primary">
-                                                                <i class="fa fa-file-pdf-o text-danger"></i>
-                                                            </a>)
-                                                        @else
-                                                            (No document)
-                                                        @endif
-                                                    </p>
+                                                    <h6 class="fw-bold mb-0">Documents Uploaded:</h6>
+                                                    <div class="row align-items-center mt-1 g-1">
+                                                        <div class="col-6">
+                                                            <p class="fw-bold mb-0 small">Aadhaar:</p>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            @if (!empty($applicant->aadhaar_doc))
+                                                                <div class="fw-bold mb-0 small">
+                                                                    {{ $masked }}
+                                                                    <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
+                                                                        target="_blank" class="text-primary"
+                                                                        title="Open Aadhaar document">
+                                                                        <i class="fa fa-file-pdf-o text-danger"></i>
+                                                                    </a>
+                                                                </div>
+                                                            @else
+                                                                <div class="mb-0 text-muted small">No document</div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
@@ -429,7 +482,7 @@
                                     </div>
                                     
                                     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
-                                        <div class="row text-center fw-bold border-bottom pb-2 mb-3 mt-3">
+                                        <div class="row text-center fw-bold border-bottom pb-2 mb-2 mt-2 gx-0">
                                             <div class="col-lg-6 text-primary">
                                                 Payment Details
                                             </div>
@@ -437,9 +490,9 @@
                                                 Transaction Details
                                             </div>
                                         </div>
-                                        <div class="row mt-3">
+                                        <div class="row mt-2 gx-0">
                                             <div class="col-lg-6">
-                                                <div class="row mt-3">
+                                                <div class="row g-0">
                                                     <div class="col-lg-6">
                                                         <p><strong>Application Type</strong></p>
                                                     </div>
@@ -469,7 +522,7 @@
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
-                                                <div class="row mt-3">
+                                                <div class="row g-0">
                                                     <div class="col-lg-6">
                                                         <p><strong> Payment Status</strong></p>
                                                     </div>
@@ -493,7 +546,7 @@
                                                         <p><strong>Payment mode:</strong></p>
                                                     </div>
                                                     <div class="col-lg-6">
-                                                        <p>{{ $applicant->payment_mode??'UPI' }}</P>
+                                                        <p>{{ $applicant->payment_mode??'UPI' }}</p>
                                                     </div>
                                                     <div class="col-lg-6">
                                                         <p><strong> Payment Time</strong></p>
@@ -509,127 +562,152 @@
                             </div>
                         </div>
                     </div>
-                
-
-                    <div class="col-xl-5 col-md-12 col-sm-12 col-12 layout-spacing">
-                        @if(($applicant->status ?? '') != 'A')
-                        <div class="statbox widget box box-shadow mb-2">
-                            <div class="row align-items-center">
-
-                                <div class="col-lg-12">
-                                    <div class="switch-wrapper d-flex justify-content-between align-items-center">
-                                        <label class="switch-label mb-0 fw-bold text-end" for="Queryswitch">If you have any queries</label>
-                                        <div class="switch form-switch-custom switch-inline form-switch-primary form-switch-custom inner-text-toggle">
-                                            <div class="input-checkbox">
-                                                <span class="switch-chk-label label-left">Yes</span>
-                                                <input class="switch-input" type="checkbox" id="Queryswitch" role="switch">
-                                                <span class="switch-chk-label label-right">No</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="box box-shadow" id="queryOptions" style="display: none;">
-                                <div class="row mt-2">
-                                    <div class="col-lg-12">
-                                       <div class="form-group">
-                                         
-                                            {{-- <label class="fw-bold">Select Query Type:</label> --}}
-                                            <select class="form-control" id="queryType" name="queryType[]" multiple>
-                                                <option value="general">General Query</option>
-                                                <option value="technical">Technical Query</option>
-                                                <option value="other">Other</option>
-                                            </select>
-
-                                            <span id="query_error" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="statbox widget box box-shadow">
-                            <div class="row">
-                                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                                    <div class="widget-header">
-                                    <h4>Remarks</h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-lg-12 col-md-offset-2">
-                                    <textarea class="form-control placement-top" id="remarks" name="remarks" rows="4" cols="50" maxlength="250"></textarea>
-                                </div>
-                            </div>
-                            <div class="modal-footer mt-2" style="justify-content: center;">
-
-                                @php
-                                $role = Auth::user()->name; // Current role name
-                                $workflow = [
-                                    'Supervisor' => $applicant->status == 'RE'? 'Secretary' : 'Accountant',
-                                    'Supervisor2' => $applicant->status == 'RE'? 'Secretary' : 'Accountant',
-                                    'Accountant' => 'Secretary',
-                                    'Secretary'  => 'President',
-                                    'President'  => null, // last step
-                                ];
-
-                                @endphp
-
-                                @if ($role == 'Supervisor' || $role == 'Supervisor2')
-                                    {{-- Forward to Accountant --}}
-                                    <button class="btn btn-success" id="forwardbtn" {{ $isVerified == 'Yes'? '' : 'disabled' }} >
-                                        Forward to {{ $workflow[$role] }}
-                                    </button>
-                                    <button class="btn btn-warning">On Hold</button>
-
-                                @elseif ($role == 'Accountant')
-                                    {{-- Forward to Secretary --}}
-                                    <button class="btn btn-success" id="forwardbtn" data-bs-toggle="modal" data-bs-target="#declarationModal">
-                                        Forward to {{ $workflow[$role] }}
-                                    </button>
-                                    <button class="btn btn-warning">On Hold</button>
-
-                                @elseif ($role == 'Secretary')
-
-                                    @if ($applicant->form_name !== 'S')
-                                        <button class="btn btn-success" id="confirmApprovalBtn">
-                                            Submit / Approve
-                                        </button>
-                                    @else
-                                        <button class="btn btn-success" id="confirmForwardPres">
-                                            Forward to {{ $workflow[$role] }}
-                                        </button>
-                                    @endif
-
-                                    <button id="confirmReturnBtn" class="btn btn-warning">
-                                        Return to Supervisor
-                                    </button>
-                                    <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
-                                        Return to Applicant
-                                    </button>
-                                    <button class="btn btn-danger reject_application" data-bs-toggle="modal" data-bs-target="#rejectionModal">Reject</button>
-
-                                @elseif ($role == 'President')
-                                    <button class="btn btn-success" id="confirmApprovalBtn">
-                                        Submit / Approve
-                                    </button>
-                                    <button id="confirmReturnBtn" class="btn btn-warning">
-                                        Return to Supervisor
-                                    </button>
-                                    <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
-                                        Return to Applicant
-                                    </button>
-                                    <!-- <button id="returntoSecretary" class="btn btn-warning">
-                                        Return to Secretary
-                                    </button> -->
-                                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectionModal">Reject</button>
-                                @endif
-
-                            </div>
-                        </div>
-                        @include('admin.include.workflow_timeline')
-                        @endif
-                    <!-- ----------------------------- -->
                 </div>
+                <div class="col-xl-5 col-md-12 col-sm-12 col-12 layout-spacing">
+                    @if(($applicant->status ?? '') != 'A')
+                    <div class="statbox widget box box-shadow mb-2">
+                        <div class="row align-items-center">
+
+                            <div class="col-lg-12">
+                                <div class="switch-wrapper d-flex justify-content-between align-items-center">
+                                    <label class="switch-label mb-0 fw-bold text-end" for="Queryswitch">If you have any queries</label>
+                                    <div class="switch form-switch-custom switch-inline form-switch-primary form-switch-custom inner-text-toggle">
+                                        <div class="input-checkbox">
+                                            <span class="switch-chk-label label-left">Yes</span>
+                                            <input class="switch-input" type="checkbox" id="Queryswitch" role="switch">
+                                            <span class="switch-chk-label label-right">No</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="box box-shadow" id="queryOptions" style="display: none;">
+                            <div class="row mt-2">
+                                <div class="col-lg-12">
+                                   <div class="form-group">
+                                     
+                                        {{-- <label class="fw-bold">Select Query Type:</label> --}}
+                                        <select class="form-control" id="queryType" name="queryType[]" multiple>
+                                            <option value="general">General Query</option>
+                                            <option value="technical">Technical Query</option>
+                                            <option value="other">Other</option>
+                                        </select>
+
+                                        <span id="query_error" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="statbox widget box box-shadow">
+                        <div class="row">
+                            <div class="col-xl-12 col-md-12 col-sm-12 col-12">
+                                <div class="widget-header">
+                                <h4>Remarks</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12 col-md-offset-2">
+                                <textarea class="form-control placement-top" id="remarks" name="remarks" rows="4" cols="50" maxlength="250"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 remarks-actions-wrap w-100">
+
+                            @php
+                            $role = Auth::user()->name; // Current role name
+                            $workflow = [
+                                'Supervisor' => $applicant->status == 'RE'? 'Secretary' : 'Accountant',
+                                'Supervisor2' => $applicant->status == 'RE'? 'Secretary' : 'Accountant',
+                                'Accountant' => 'Secretary',
+                                'Secretary'  => 'President',
+                                'President'  => null, // last step
+                            ];
+
+                            @endphp
+
+                            @if ($role == 'Supervisor' || $role == 'Supervisor2')
+                                <div class="row justify-content-center">
+                                    <div class="col-12">
+                                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+                                            {{-- Forward to Accountant --}}
+                                            <button class="btn btn-success" id="forwardbtn" {{ $isVerified == 'Yes'? '' : 'disabled' }} >
+                                                Forward to {{ $workflow[$role] }}
+                                            </button>
+                                            <button class="btn btn-warning">On Hold</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @elseif ($role == 'Accountant')
+                                <div class="row justify-content-center">
+                                    <div class="col-12">
+                                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+                                            {{-- Forward to Secretary --}}
+                                            <button class="btn btn-success" id="forwardbtn" data-bs-toggle="modal" data-bs-target="#declarationModal">
+                                                Forward to {{ $workflow[$role] }}
+                                            </button>
+                                            <button class="btn btn-warning">On Hold</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @elseif ($role == 'Secretary')
+                                <div class="row justify-content-center">
+                                    <div class="col-12 col-xl-10">
+                                        {{-- Row 1: Forward / Approve + Reject --}}
+                                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-2">
+                                            @if ($applicant->form_name !== 'S')
+                                                <button class="btn btn-success" id="confirmApprovalBtn">
+                                                    Submit / Approve
+                                                </button>
+                                            @else
+                                                <button class="btn btn-success" id="confirmForwardPres">
+                                                    Forward to {{ $workflow[$role] }}
+                                                </button>
+                                            @endif
+                                            <button class="btn btn-danger reject_application" data-bs-toggle="modal" data-bs-target="#rejectionModal">Reject</button>
+                                        </div>
+                                        {{-- Row 2: Return actions (single line) --}}
+                                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+                                            <button id="confirmReturnBtn" class="btn btn-warning">
+                                                Return to Supervisor
+                                            </button>
+                                            <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
+                                                Return to Applicant
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @elseif ($role == 'President')
+                                <div class="row justify-content-center">
+                                    <div class="col-12 col-xl-10">
+                                        {{-- Row 1: Approve + Reject --}}
+                                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-2">
+                                            <button class="btn btn-success" id="confirmApprovalBtn">
+                                                Submit / Approve
+                                            </button>
+                                            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectionModal">Reject</button>
+                                        </div>
+                                        {{-- Row 2: Return actions (single line) --}}
+                                        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+                                            <button id="confirmReturnBtn" class="btn btn-warning">
+                                                Return to Supervisor
+                                            </button>
+                                            <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
+                                                Return to Applicant
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                        </div>
+                    </div>
+                    @include('admin.include.workflow_timeline')
+                    @endif
+                <!-- ----------------------------- -->
         </div>
     </div>
 </div>
@@ -1442,6 +1520,8 @@
             var selected = [];
             $('.return-to-applicant-query:checked').each(function () { selected.push($(this).val()); });
             var remarks = $('#returnToApplicantRemarks').val().trim();
+            var staff_remarks = $('#remarks').val().trim();
+            var staff_queryType = $("#queryType").val();
             $('#returnToApplicantQueryError').hide();
             if (selected.length === 0) {
                 $('#returnToApplicantQueryError').show();
@@ -1455,7 +1535,9 @@
                 data: {
                     application_id: applicationId,
                     'return_applicant_query[]': selected,
-                    remarks: remarks
+                    remarks: remarks,
+                    staff_remarks: staff_remarks,
+                    "staff_queryType[]": staff_queryType
                 },
                 success: function (response) {
                     if (response.status === 'success') {

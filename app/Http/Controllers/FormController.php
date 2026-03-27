@@ -27,11 +27,6 @@ use Illuminate\Support\Facades\Log;
 
 class FormController extends BaseController
 {
-//       public function __construct()
-// {
-//     parent::__construct();   
-//     $this->middleware('web');
-// }
 
     protected $today,$dbNow;
     public function __construct()
@@ -208,32 +203,41 @@ class FormController extends BaseController
         $proof_doc = TnelbApplicantsSign::where('application_id', $appl_id)->first();
         $applicationid = $appl_id;
 
-        $queries = DB::table('tnelb_query_applicable')
-            ->where('application_id', $appl_id)
-            ->where('query_status', 'P')
-            ->orderByDesc('id')
-            ->get();
+        // Applicant-facing copy: only what was recorded in return-to-applicant log (not tnelb_query_applicable / internal staff queries)
+        $queries = collect();
+        $queryReasonsForValidation = [];
+        $returnRemarks = '';
 
-        // Remarks entered by staff while returning application (stored in return log / workflow, not in query_applicable)
-        $returnRemarks = Schema::hasTable('tnelb_return_to_applicant_log')
-            ? (string) (DB::table('tnelb_return_to_applicant_log')
+        if (Schema::hasTable('tnelb_return_to_applicant_log')) {
+            $returnLogRow = DB::table('tnelb_return_to_applicant_log')
                 ->where('application_id', $appl_id)
                 ->orderByDesc('id')
-                ->value('remarks') ?? '')
-            : '';
+                ->first();
 
-        $queryReasonsForValidation = [];
-        foreach ($queries as $q) {
-            $items = is_string($q->query_type) ? json_decode($q->query_type, true) : $q->query_type;
-            if (is_array($items)) {
+            if ($returnLogRow) {
+                $returnRemarks = trim((string) ($returnLogRow->remarks ?? ''));
+                $queryTypesRaw = $returnLogRow->query_types ?? null;
+                $items = is_string($queryTypesRaw) ? json_decode($queryTypesRaw, true) : $queryTypesRaw;
+                if (!is_array($items)) {
+                    $items = ($queryTypesRaw !== null && $queryTypesRaw !== '' && is_string($queryTypesRaw))
+                        ? [$queryTypesRaw]
+                        : [];
+                }
                 foreach ($items as $item) {
                     if (is_string($item) && $item !== '') {
                         $queryReasonsForValidation[] = $item;
                     }
                 }
+                $queryReasonsForValidation = array_values(array_unique($queryReasonsForValidation));
+
+                if ($queryReasonsForValidation !== [] || $returnRemarks !== '') {
+                    $queries = collect([(object) [
+                        'query_type' => json_encode($queryReasonsForValidation),
+                        'raised_by' => $returnLogRow->returned_by_role ?? null,
+                    ]]);
+                }
             }
         }
-        $queryReasonsForValidation = array_values(array_unique($queryReasonsForValidation));
 
         return view('user_login.edit_returned_application', compact(
             'applicationid',
@@ -1047,7 +1051,7 @@ class FormController extends BaseController
             $updateData = [
                 'status'       => 'RE',
                 'processed_by' => 'AP',
-                'updated_at'   => now(),
+                'updated_at'   => $this->dbNow,
                 'payment_status' => $app->payment_status,
             ];
             DB::table('tnelb_application_tbl')
@@ -1057,7 +1061,7 @@ class FormController extends BaseController
             DB::table('tnelb_query_applicable')
                 ->where('application_id', $appl_id)
                 ->where('query_status', 'P')
-                ->update(['query_status' => 'R', 'updated_at' => now()]);
+                ->update(['query_status' => 'R', 'updated_at' => $this->dbNow]);
 
             $supervisorRoleId = DB::table('mst__staffs__tbls')
                 ->where('name', 'Supervisor')
@@ -1075,8 +1079,7 @@ class FormController extends BaseController
                     'remarks'        => 'Resubmitted by applicant after query.',
                     'queries'        => null,
                     'raised_by'      => null,
-                    'created_at'     => now(),
-                    'updated_at'     => now(),
+                    'created_at'     => $this->dbNow,
                 ]);
             }
 

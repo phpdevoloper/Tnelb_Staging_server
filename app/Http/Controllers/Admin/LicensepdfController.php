@@ -1306,13 +1306,39 @@ class LicensepdfController extends Controller
             .card { border: 1px solid #000; padding: 18px; box-sizing: border-box; width: 100%; }
             .header { color: #003366; text-align: center; font-size: 15pt; font-weight: bold; margin-bottom: 16px; }
             .content { font-size: 14pt; }
-            .photo {
+            /* Same layout as generateLicensePDF (EN): photo & QR 38×38 mm, no inner borders */
+            .photo-frame, .qr-box {
                 width: 38mm;
                 height: 38mm;
-                border: 0.3mm solid #000;
+                border: none;
                 box-sizing: border-box;
+                margin: 0 auto;
                 overflow: hidden;
+                padding: 0;
+                text-align: center;
             }
+            .photo-inner {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                text-align: center;
+            }
+            .sign-frame {
+                width: 38mm;
+                height: 14mm;
+                border: none;
+                box-sizing: border-box;
+                margin: 0 auto;
+                text-align: center;
+            }
+            .sign-inner {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                line-height: 14mm;
+            }
+            .qr-box table { border-collapse: collapse; }
+            .qr-box td { padding: 0; vertical-align: middle; }
            .info-table {
                 font-size: 14pt;
                 border-collapse: collapse;
@@ -1343,7 +1369,7 @@ class LicensepdfController extends Controller
             <div class="header">
                 <table class="header text-center" style="width: 100%;" >
                 <tr>
-                    <td >தமிழ்நா அர</td>
+                    <td >தமிழ்நாடு அரசு</td>
                 </tr>
                 <tr>
                     <td >மின்சார உரிைமயாளர்கள் வாரியம்</td>
@@ -1411,46 +1437,50 @@ class LicensepdfController extends Controller
 
                         </td>
 
-                        <!-- RIGHT : PHOTO -->
+                        <!-- RIGHT : PHOTO / SIGN / QR (aligned with English licence PDF) -->
                         <td width="30%" valign="top">
                             <table width="100%" cellspacing="0" cellpadding="0">
-                                    <!-- PHOTO ROW -->
-                                    <tr>
-                                        <td align="center">
-                                            <div class="photo">
-                                                '.($photoPath
-                                                    ? '<img src="'.$photoPath.'" style="width:52mm; height:52mm; object-fit:cover;">'
-                                                    : '').'
+                                <tr>
+                                    <td align="center">
+                                        <div class="photo-frame">
+                                            <div class="photo-inner">
+                                            '.($photoPath
+                                                ? '<img src="'.$photoPath.'" style="width:38mm; height:38mm; object-fit:cover; display:block; margin:0 auto;">'
+                                                : '').'
                                             </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td align="center">
-                                            <div class="photo">
-                                                '.($signPath
-                                                    ? '<img src="'.$signPath.'" style="width:52mm; height:20mm; object-fit:cover;">'
-                                                    : '').'
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td height="3mm"></td>
+                                </tr>
+                                <tr>
+                                    <td align="center">
+                                        <div class="sign-frame">
+                                            <div class="sign-inner">
+                                            '.($signPath
+                                                ? '<img src="'.$signPath.'" style="width:34mm; height:10mm; object-fit:contain; vertical-align:middle;">'
+                                                : '<span style="font-size:8pt; color:#666;">—</span>').'
                                             </div>
-                                        </td>
-                                    </tr>
-
-                                    <!-- SPACE BETWEEN PHOTO & QR -->
-                                    <tr>
-                                        <td height="3mm"></td>
-                                    </tr>
-
-                                    <!-- QR ROW -->
-                                    <tr>
-                                        <td align="center">
-                                            <barcode code="'.$qrValue.'" type="QR" size="1.6" error="M" />
-                                        </td>
-                                    </tr>
-
-                                    <!-- BOTTOM SAFE SPACE -->
-                                    <tr>
-                                        <td height="4mm"></td>
-                                    </tr>
-                                </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td height="3mm"></td>
+                                </tr>
+                                <tr>
+                                    <td align="center">
+                                        <div class="qr-box">
+                                            <table width="100%" height="100%"><tr><td align="center" valign="middle">
+                                            <barcode code="'.$qrValue.'" type="QR" size="1.42" error="M" />
+                                            </td></tr></table>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td height="4mm"></td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
@@ -2049,23 +2079,39 @@ class LicensepdfController extends Controller
             .header-title { font-size: 20pt; font-weight: bold; line-height: 1.2; }
             .header-sub { font-size: 12.5pt; font-weight: bold; line-height: 1.3; margin-top: 2mm; }
             .content { font-size: 14pt; }
-            .photo {
+            /* Photo and QR use the same square (width × height) */
+            .photo-frame, .qr-box {
                 width: 38mm;
                 height: 38mm;
-                border: 0.3mm solid #000;
+                border: none;
                 box-sizing: border-box;
+                margin: 0 auto;
                 overflow: hidden;
+                padding: 0;
+                text-align: center;
             }
-            .sign-box {
+            .photo-inner {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                text-align: center;
+            }
+            .sign-frame {
                 width: 38mm;
                 height: 14mm;
-                border: 0.3mm solid #000;
+                border: none;
                 box-sizing: border-box;
-                overflow: hidden;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                margin: 0 auto;
+                text-align: center;
             }
+            .sign-inner {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                line-height: 14mm;
+            }
+            .qr-box table { border-collapse: collapse; }
+            .qr-box td { padding: 0; vertical-align: middle; }
            .info-table {
                 font-size: 14pt;
                 border-collapse: collapse;
@@ -2158,10 +2204,12 @@ class LicensepdfController extends Controller
                                 <!-- PHOTO ROW -->
                                 <tr>
                                     <td align="center">
-                                        <div class="photo">
+                                        <div class="photo-frame">
+                                            <div class="photo-inner">
                                             '.($photoPath
-                                                ? '<img src="'.$photoPath.'" style="width:22mm; height:22mm; object-fit:cover;">'
+                                                ? '<img src="'.$photoPath.'" style="width:38mm; height:38mm; object-fit:cover; display:block; margin:0 auto;">'
                                                 : '').'
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -2174,10 +2222,12 @@ class LicensepdfController extends Controller
                                 <!-- SIGNATURE ROW -->
                                 <tr>
                                     <td align="center">
-                                        <div class="sign-box">
+                                        <div class="sign-frame">
+                                            <div class="sign-inner">
                                             '.($signPath
-                                                ? '<img src="'.$signPath.'" style="width:34mm; height:10mm; object-fit:contain;">'
+                                                ? '<img src="'.$signPath.'" style="width:34mm; height:10mm; object-fit:contain; vertical-align:middle;">'
                                                 : '<span style="font-size:8pt; color:#666;">Signature not available</span>').'
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -2187,10 +2237,14 @@ class LicensepdfController extends Controller
                                     <td height="3mm"></td>
                                 </tr>
 
-                                <!-- QR ROW -->
+                                <!-- QR ROW (same 38×38 mm box as photo) -->
                                 <tr>
                                     <td align="center">
-                                        <barcode code="'.$qrValue.'" type="QR" size="1.15" error="M" />
+                                        <div class="qr-box">
+                                            <table width="100%" height="100%"><tr><td align="center" valign="middle">
+                                            <barcode code="'.$qrValue.'" type="QR" size="1.42" error="M" />
+                                            </td></tr></table>
+                                        </div>
                                     </td>
                                 </tr>
 

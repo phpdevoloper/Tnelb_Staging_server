@@ -20,7 +20,7 @@
             <td @if($sts == 'QU') class="return-cell" @endif>
                 @if($sts == 'QU')
                     <div class="return-ribbon-wrapper">
-                        <span class="return-ribbon">RETURN</span>
+                        <span class="return-ribbon">RETURNED</span>
                     </div>
                 @endif
                 {{ $paginatedData->firstItem() + $index }}
@@ -56,7 +56,7 @@
                     @elseif ($sts == 'F')
                         <span class="btn btn-warning btn-sm">In Progress</span>
                     @elseif ($sts == 'QU')
-                        <span class="btn btn-sm bg-return">Return</span>
+                        <span class="btn btn-sm bg-return">Returned</span>
                     @elseif ($sts == 'RJ')
                         <span class="btn btn-danger btn-sm">Rejected</span>
                     @elseif ($sts == 'RE')

@@ -126,13 +126,13 @@
                                         Form <span class="form-title-hyphen">-</span> {{ $application_details->form_name }} /
                                         Certificate <span class="form-title-hyphen">-</span> {{ $application_details->license_name }}
                                         <br class="form-title-br">
-                                        <span class="d-block form-title-return">
+                                        {{-- <span class="d-block form-title-return">
                                         @if(isset($application_details->form_name) && $application_details->form_name === 'W')
                                             RETURN
                                         @else
                                             Return
                                         @endif
-                                        </span>
+                                        </span> --}}
                                     </h6>
                                 </div>
                             </div>

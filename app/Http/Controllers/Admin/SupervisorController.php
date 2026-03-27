@@ -20,6 +20,15 @@ use function PHPUnit\Framework\isNull;
 
 class SupervisorController extends Controller
 {
+    protected $today,$dbNow;
+    public function __construct()
+    {
+        $this->today = Carbon::today()->toDateString();
+        $this->dbNow  = DB::selectOne("SELECT date_trunc('second', NOW()::timestamp) AS db_now")->db_now;
+
+
+    }
+
     public function index()
     {
         $userFormID = Auth::user()->form_id;
@@ -670,7 +679,7 @@ class SupervisorController extends Controller
             'query_status'   => $query_status,
             // "Yes" or "No"
             'remarks'        => $request->remarks,
-            'created_at'     => now(), // Automatically managed if model has timestamps
+            'created_at'     => $this->dbNow,
             'login_id'       => $staffID,
             'queries'        => $queryTypeJson,
             'raised_by'      => $query_status == 'P' ? $raised_by : '',
@@ -683,7 +692,7 @@ class SupervisorController extends Controller
             ->update([
                 'status'        => $status, // Role-based forwarding
                 'processed_by'  => $processed_by, // Role-based forwarding
-                'updated_at' => now(),
+                'updated_at' => $this->dbNow,
             ]);
 
         return response()->json([
@@ -1422,7 +1431,7 @@ class SupervisorController extends Controller
                 'appl_status'    => 'A',
                 'remarks'        => $request->remarks ?? 'No remarks provided',
                 'forwarded_to'   => $request->forwarded_to ?? null, // No forwarding since it's approved
-                'created_at'     => now(),
+                'created_at'     => $this->dbNow,
             ]);
 
 
@@ -1480,7 +1489,7 @@ class SupervisorController extends Controller
                     'issued_by'      => $processedBy,
                     'issued_at'      => $issuedAt,
                     'expires_at'     => $expiresAt,
-                    'created_at'     => now(),
+                    'created_at'     => $this->dbNow,
                 ]);
 
                 $licenseNumber = $application->license_number;

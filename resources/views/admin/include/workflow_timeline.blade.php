@@ -1,8 +1,15 @@
 <style>
-    /* Match theme specificity: .timeline-line .item-timeline .t-text p sets color */
-    #timelineMinimal .timeline-line .item-timeline .t-text p.t-meta-return {
+    /* External return to applicant (SE/PR + QU) — purple */
+    #timelineMinimal .timeline-line .item-timeline .t-text p.t-meta-applicant-return {
         font-size: 12px;
         color: #9611b1;
+        font-weight: 500;
+    }
+    /* Internal query / internal return details — red */
+    #timelineMinimal .timeline-line .item-timeline .t-text p.t-meta-internal {
+        font-size: 12px;
+        color: #b91c1c;
+        font-weight: 500;
     }
 </style>
 <div id="timelineMinimal" class="layout-spacing mt-4">
@@ -22,27 +29,86 @@
                             <p class="t-time">{{ format_date_other($row->created_at) }}</p>
 
                             <div class="t-dot 
-                                {{ $row->appl_status == 'RE' ? 't-dot-danger' : ($row->appl_status == 'A' ? 't-dot-success' : 't-dot-info') }}">
+                                {{ $row->appl_status == 'RE' ? 't-dot-danger' : ($row->appl_status == 'A' ? 't-dot-success' : ($row->appl_status == 'QU' ? 't-dot-warning' : 't-dot-info')) }}">
                             </div>
 
                             <div class="t-text">
                                 @php
                                     $processedBy = $row->processed_by;
+                                    $applStatus = strtoupper((string) ($row->appl_status ?? ''));
                                     $roleLabel = match ($processedBy) {
                                         'SE' => 'Secretary',
                                         'PR' => 'President',
+                                        'S', 'S2' => 'Supervisor',
+                                        'A', 'AC' => 'Accountant',
+                                        'AP' => 'Applicant',
+                                        'Accountant' => 'Accountant',
                                         default => $processedBy,
                                     };
-                                    $isApplicantResubmission = $row->appl_status == 'RE' && $processedBy === 'AP';
+                                    $isApplicantResubmission = $applStatus === 'RE' && $processedBy === 'AP';
+                                    $isExternalApplicantReturn = $applStatus === 'QU'
+                                        && in_array($processedBy, ['SE', 'PR'], true);
+                                    $hasPendingQuery = ($row->query_status ?? null) === 'P';
+                                    $raisedByRaw = trim((string) ($row->raised_by ?? ''));
+                                    if ($raisedByRaw !== '' && !ctype_digit($raisedByRaw)) {
+                                        $queryRaisedByLabel = match ($raisedByRaw) {
+                                            'SE' => 'Secretary',
+                                            'PR' => 'President',
+                                            'S', 'S2' => 'Supervisor',
+                                            'A', 'AC' => 'Accountant',
+                                            default => $raisedByRaw,
+                                        };
+                                    } else {
+                                        $queryRaisedByLabel = $roleLabel;
+                                    }
+                                    $returnLogInternalQ = $row->return_log_internal_queries ?? [];
+                                    if (!is_array($returnLogInternalQ)) {
+                                        $returnLogInternalQ = [];
+                                    }
+                                    if ($returnLogInternalQ === [] && isset($row->return_queries) && is_array($row->return_queries)) {
+                                        $returnLogInternalQ = $row->return_queries;
+                                    }
+                                    $returnLogInternalQ = array_values(array_filter(
+                                        $returnLogInternalQ,
+                                        static fn ($item) => is_string($item) && $item !== ''
+                                    ));
+                                    $forwardedRoleName = trim((string) ($row->role_name ?? $row->name ?? ''));
+                                    $returnLogInternalRemark = $row->remarks
+                                        ?? $row->return_remarks_raw
+                                        ?? null;
+                                    $returnRemarksDisplay = $row->return_remarks ?? $row->return_remarks_raw ?? null;
+                                    $queries = $row->queries ?? null;
+                                    if ($queries === null || $queries === '') {
+                                        $queries = [];
+                                    } elseif (is_string($queries)) {
+                                        $decoded = json_decode($queries, true);
+                                        $queries = is_array($decoded) ? $decoded : [];
+                                    } elseif (!is_array($queries)) {
+                                        $queries = [];
+                                    }
+                                    $queries = array_values(array_filter(
+                                        $queries,
+                                        static fn ($item) => is_string($item) && $item !== ''
+                                    ));
+                                    // SE/PR return: workflow.queries is often null; applicant list comes from return-log query_types (hydrated)
+                                    $applicantFacingQueries = $returnLogInternalQ !== [] ? $returnLogInternalQ : $queries;
+                                    $remarksInColoredBlock = $hasPendingQuery || $isExternalApplicantReturn;
                                 @endphp
 
                                 @if ($isApplicantResubmission)
                                     <p>Resubmitted by Applicant</p>
-                                @elseif ($row->appl_status == 'RE')
+                                    {{-- @if (!empty($row->remarks))
+                                        <p class="t-meta-time mb-0">
+                                            <span class="fw-semibold">Remarks:</span> {{ $row->remarks }}
+                                        </p>
+                                    @endif --}}
+                                @elseif ($isExternalApplicantReturn)
                                     <p>Returned by {{ $roleLabel }}</p>
-                                @elseif ($row->appl_status == 'A')
+                                @elseif ($applStatus === 'RE')
+                                    <p>Returned by {{ $roleLabel }}</p>
+                                @elseif ($applStatus === 'A')
                                     <p>Approved by {{ $roleLabel }}</p>
-                                @elseif ($row->appl_status == 'RJ')
+                                @elseif ($applStatus === 'RJ')
                                     <p class="text-danger">Rejected by {{ $roleLabel }}</p>
                                 @else
                                     <p>Processed by {{ $roleLabel }}</p>
@@ -50,39 +116,57 @@
 
                                 @if (!$isApplicantResubmission)
                                     <p class="t-meta-time">
-                                        @if ($row->appl_status == 'RJ')
+                                        @if ($applStatus === 'RJ')
                                             Reason: {{ $row->reject_reason }}
-                                        @else
-                                            @if (!$row->name)
-                                                @if (in_array($processedBy, ['SE', 'PR'], true) && strtoupper((string) ($row->appl_status ?? '')) === 'QU')
-                                                    <span class="fw-semibold">Application returned to Applicant</span><br>
-                                                @endif
-                                            @else
-                                                Forwarded to {{ $row->name }} <br>
+                                        @elseif ($forwardedRoleName !== '')
+                                            Forwarded to {{ $forwardedRoleName }}
+                                            @if (!$remarksInColoredBlock && !empty($row->remarks))
+                                                <br>
                                                 Remarks: {{ $row->remarks }}
                                             @endif
+                                        @elseif ($isExternalApplicantReturn)
+                                            {{-- Title + remarks live in purple block below --}}
                                         @endif
                                     </p>
                                 @endif
 
-                                @if ($processedBy !== 'Accountant' && !$isApplicantResubmission)
-                                    @if ($row->query_status == 'P')
-                                        <p class="t-meta-return">
-                                            Note: Query raised by {{ $roleLabel }}
-                                            @php
-                                                $queries = $row->queries;
-                                                if (is_string($queries)) {
-                                                    $queries = json_decode($queries, true);
-                                                }
-                                            @endphp
-                                            @if (!empty($queries) && is_array($queries))
-                                                ({{ implode(', ', $queries) }})
-                                            @endif
+                                {{-- Case 1: Secretary/President → return to applicant (purple) --}}
+                                @if ($isExternalApplicantReturn)
+                                    <p class="t-meta-time">Application returned to Applicant</p>
+                                    <p class="t-meta-time mb-0">
+                                        <span class="fw-semibold">Remark :</span>
+                                        {{ $returnLogInternalRemark !== null && $returnLogInternalRemark !== '' ? $returnLogInternalRemark : '—' }}
+                                    </p>
+                                    @if ($queries !== [] && $queries != $applicantFacingQueries)
+                                        <p class="t-meta-internal mb-1">
+                                            <span class="fw-semibold">Internal query:</span>
+                                            {{ implode(', ', $queries) }}
                                         </p>
-                                        <p class="t-meta-return">
-                                            @if (!empty($row->remarks))
-                                                Remarks: {{ $row->remarks }}
-                                            @endif
+                                    @endif
+                                    @if ($applicantFacingQueries !== [])
+                                        <p class="t-meta-applicant-return mb-1">
+                                            <span class="fw-semibold">Query:</span>
+                                            {{ implode(', ', $applicantFacingQueries) }}
+                                        </p>
+                                    @endif
+                                    <p class="t-meta-applicant-return mb-1">
+                                        <span class="fw-semibold">Return remark :</span>
+                                        {{ $returnRemarksDisplay !== null && $returnRemarksDisplay !== '' ? $returnRemarksDisplay : '—' }}
+                                    </p>
+                                @endif
+
+                                {{-- Case 2: Supervisor / Accountant / internal — query raised (red) --}}
+                                @if ($hasPendingQuery && !$isExternalApplicantReturn && !$isApplicantResubmission)
+                                    <p class="t-meta-internal mb-1">
+                                        <span class="fw-semibold">Query raised by {{ $queryRaisedByLabel }}</span>
+                                        @if (!empty($queries))
+                                            ({{ implode(', ', $queries) }})
+                                        @endif
+                                    </p>
+                                    @if (!empty($row->remarks))
+                                        <p class="t-meta-time mb-0">
+                                            <span>Remark:</span>
+                                            {{ $row->remarks }}
                                         </p>
                                     @endif
                                 @endif
@@ -103,4 +187,3 @@
         </div>
     </div>
 </div>
-

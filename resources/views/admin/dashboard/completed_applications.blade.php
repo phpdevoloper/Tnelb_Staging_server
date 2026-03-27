@@ -14,6 +14,16 @@
         background-color: rgb(239 241 243) !important;
     }
 
+    /* Form code line under licence title — high contrast black */
+    .completed-appl-form-label {
+        color: #000000 !important;
+    }
+
+    .js-completed-badge.active-completed-filter {
+        box-shadow: 0 0 0 2px rgba(0, 129, 199, 0.55);
+        background-color: rgba(0, 129, 199, 0.12);
+    }
+
     /* Ensure DataTables header text is visible */
     #secretary-inprogress-table thead th {
         background-color: #004185 !important;
@@ -92,18 +102,26 @@
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <div class="fw-semibold">{{ $summary['licence_name'] ?? 'Unknown Licence' }}</div>
-                                                    <small class="text-muted d-block mb-1">{{ $summary['form_name'] ?? '-' }}</small>
-                                                    <div class="d-flex flex-wrap align-items-center gap-3 mt-1">
+                                                    <small class="d-block mb-1 completed-appl-form-label">{{ $summary['form_name'] ?? '-' }}</small>
+                                                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
                                                         @php
-                                                            $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
+                                                            $completedNew = (int) ($summary['completed_new_count'] ?? 0);
+                                                            $completedRenewal = (int) ($summary['completed_renewal_count'] ?? 0);
                                                         @endphp
+                                                        <span class="fw-semibold text-muted me-1">Completed :</span>
                                                         <a href="#"
                                                             class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge @if ($loop->first) js-completed-badge-default @endif"
-                                                            data-form-id="{{ $summary['id'] ?? '' }}">
-                                                            Completed
-                                                            <span class="ms-1 fw-bold text-danger">
-                                                                {{ $completedTotal }}
-                                                            </span>
+                                                            data-form-id="{{ $summary['id'] ?? '' }}"
+                                                            data-form-type="N">
+                                                            New
+                                                            <span class="ms-1 fw-bold text-danger">{{ $completedNew }}</span>
+                                                        </a>
+                                                        <a href="#"
+                                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                            data-form-id="{{ $summary['id'] ?? '' }}"
+                                                            data-form-type="R">
+                                                            Renewal
+                                                            <span class="ms-1 fw-bold text-danger">{{ $completedRenewal }}</span>
                                                         </a>
                                                     </div>
                                                 </div>
@@ -156,18 +174,26 @@
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="fw-semibold">{{ $summary['licence_name'] ?? 'Unknown Licence' }}</div>
-                                            <small class="text-muted d-block mb-1">{{ $summary['form_name'] ?? '-' }}</small>
+                                            <small class="d-block mb-1 completed-appl-form-label">{{ $summary['form_name'] ?? '-' }}</small>
                                             <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
                                                 @php
-                                                    $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
+                                                    $completedNew = (int) ($summary['completed_new_count'] ?? 0);
+                                                    $completedRenewal = (int) ($summary['completed_renewal_count'] ?? 0);
                                                 @endphp
+                                                <span class="fw-semibold text-muted me-1">Completed :</span>
                                                 <a href="#"
                                                     class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
-                                                    data-form-id="{{ $summary['id'] ?? '' }}">
-                                                    Completed
-                                                    <span class="ms-1 fw-bold text-danger">
-                                                        {{ $completedTotal }}
-                                                    </span>
+                                                    data-form-id="{{ $summary['id'] ?? '' }}"
+                                                    data-form-type="N">
+                                                    New
+                                                    <span class="ms-1 fw-bold text-danger">{{ $completedNew }}</span>
+                                                </a>
+                                                <a href="#"
+                                                    class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                    data-form-id="{{ $summary['id'] ?? '' }}"
+                                                    data-form-type="R">
+                                                    Renewal
+                                                    <span class="ms-1 fw-bold text-danger">{{ $completedRenewal }}</span>
                                                 </a>
                                             </div>
                                         </div>
@@ -190,28 +216,28 @@
                             @foreach(collect($amendmentCards) as $summary)
                             <div class="d-flex align-items-center px-3 py-2 mb-1 rounded-3 bg-custom-card">
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="fw-semibold">{{ $summary['licence_name'] ?? 'Unknown Licence' }}</div>
-                                            <small class="text-muted">{{ $summary['form_name'] ?? '-' }}</small>
-                                        </div>
-                                        <div class="text-end">
-                                            <div class="d-flex align-items-center gap-2">
-                                                @php
-                                                    $newHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'N']);
-                                                    $renewHref = route('admin.view_applications', ['form_id' => $summary['id'], 'form_type' => 'R']);
-                                                    $completedTotal = (int) ($summary['completed_new_count'] ?? 0) + (int) ($summary['completed_renewal_count'] ?? 0);
-                                                @endphp
-                                                <a href="#"
-                                                    class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
-                                                    data-form-id="{{ $summary['id'] ?? '' }}">
-                                                    Completed
-                                                    <span class="ms-1 fw-bold text-danger">
-                                                        {{ $completedTotal }}
-                                                    </span>
-                                                </a>
-                                            </div>
-                                        </div>  
+                                    <div class="fw-semibold">{{ $summary['licence_name'] ?? 'Unknown Licence' }}</div>
+                                    <small class="d-block mb-1 completed-appl-form-label">{{ $summary['form_name'] ?? '-' }}</small>
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                                        @php
+                                            $completedNew = (int) ($summary['completed_new_count'] ?? 0);
+                                            $completedRenewal = (int) ($summary['completed_renewal_count'] ?? 0);
+                                        @endphp
+                                        <span class="fw-semibold text-muted me-1">Completed :</span>
+                                        <a href="#"
+                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                            data-form-id="{{ $summary['id'] ?? '' }}"
+                                            data-form-type="N">
+                                            New
+                                            <span class="ms-1 fw-bold text-danger">{{ $completedNew }}</span>
+                                        </a>
+                                        <a href="#"
+                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                            data-form-id="{{ $summary['id'] ?? '' }}"
+                                            data-form-type="R">
+                                            Renewal
+                                            <span class="ms-1 fw-bold text-danger">{{ $completedRenewal }}</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -380,20 +406,31 @@
             $(document).on('click', '.js-completed-badge', function(e) {
                 e.preventDefault();
 
-                const formId = $(this).data('form-id');
+                const $btn = $(this);
+                const formId = $btn.data('form-id');
                 if (!formId) return;
+
+                const formType = ($btn.attr('data-form-type') || '').trim();
 
                 const $table = $('#secretary-inprogress-table');
                 if (!$table.length) return;
+
+                $('.js-completed-badge').removeClass('active-completed-filter');
+                $btn.addClass('active-completed-filter');
 
                 // Simple loading state
                 const $tbody = $table.find('tbody');
                 $tbody.html('<tr><td colspan="9" class="text-center">Loading...</td></tr>');
 
+                const ajaxData = { form_id: formId };
+                if (formType === 'N' || formType === 'R') {
+                    ajaxData.form_type = formType;
+                }
+
                 $.ajax({
                     url: "{{ route('admin.completed_applications.data') }}",
                     method: "GET",
-                    data: { form_id: formId },
+                    data: ajaxData,
                     success: function(resp) {
                         renderRows($table, (resp && resp.data) ? resp.data : []);
                         // scroll to table

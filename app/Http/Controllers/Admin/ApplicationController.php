@@ -6,15 +6,25 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Admin\SupervisorModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Mst_Form_s_w;
 
 use App\Models\Admin\WorkflowA;
 
 use App\Models\EA_Application_model;
-
+use Illuminate\Support\Carbon;
 
 class ApplicationController extends Controller
 {
+
+    protected $today,$dbNow;
+    public function __construct()
+    {
+        $this->today = Carbon::today()->toDateString();
+        $this->dbNow  = DB::selectOne("SELECT date_trunc('second', NOW()::timestamp) AS db_now")->db_now;
+
+
+    }
     
 
     public function get_wh_apps()
@@ -218,6 +228,8 @@ class ApplicationController extends Controller
      */
     public function returnToApplicant(Request $request)
     {
+        // dd($request->all());
+        // exit;
         $staff = Auth::user();
         $staffID = Auth::user()->id;
 
@@ -226,6 +238,8 @@ class ApplicationController extends Controller
             'return_applicant_query'   => 'required|array|min:1',
             'return_applicant_query.*' => 'required|string|max:255',
             'remarks'                  => 'nullable|string|max:500',
+            'staff_remarks'            => 'nullable|string|max:500',
+            'staff_queryType'          => 'nullable|array',
         ]);
 
         $applicant = DB::table('tnelb_application_tbl')
@@ -248,7 +262,9 @@ class ApplicationController extends Controller
 
         $queryList = $request->return_applicant_query;
         $queryTypeJson = is_array($queryList) ? json_encode($queryList) : json_encode([$queryList]);
+        $staff_queryTypeJson = is_array($request->staff_queryType) ? json_encode($request->staff_queryType) : json_encode([$request->staff_queryType]);
         $remarks = $request->remarks ?? '';
+        $staff_remarks = $request->staff_remarks ?? '';
 
         // Record the return-to-applicant entry for audit
         DB::table('tnelb_return_to_applicant_log')->insert([
@@ -258,8 +274,7 @@ class ApplicationController extends Controller
             'returned_by_name'       => $staff->name ?? null,
             'query_types'           => $queryTypeJson,
             'remarks'               => $remarks,
-            'created_at'            => now(),
-            'updated_at'            => now(),
+            'created_at'            => $this->dbNow
         ]);
 
         SupervisorModel::create([
@@ -270,19 +285,19 @@ class ApplicationController extends Controller
             'role_id'        => $staff->roles_id, // Role id from mst_roles (FK), not user id
             'is_verified'    => 'Yes',
             'query_status'   => 'P',
-            'remarks'        => $remarks,
-            'created_at'     => now(),
+            'remarks'        => $staff_remarks,
+            'created_at'     => $this->dbNow,
             'login_id'       => $staffID,
-            'queries'        => $queryTypeJson,
+            'queries'        => $staff_queryTypeJson,
             'raised_by'      => $processed_by,
         ]);
 
         DB::table('tnelb_query_applicable')->insert([
             'application_id' => $request->application_id,
-            'query_type'      => $queryTypeJson,
+            'query_type'      => $staff_queryTypeJson,
             'raised_by'       => $processed_by,
             'query_status'    => 'P',
-            'created_at'      => now(),
+            'created_at'      => $this->dbNow,
         ]);
 
         DB::table('tnelb_application_tbl')
@@ -290,7 +305,7 @@ class ApplicationController extends Controller
             ->update([
                 'status'      => 'QU',
                 'processed_by' => $processed_by,
-                'updated_at'  => now(),
+                'updated_at'  => $this->dbNow,
             ]);
 
         return response()->json([

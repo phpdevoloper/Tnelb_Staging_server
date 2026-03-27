@@ -1009,7 +1009,7 @@ class LoginController extends Controller
 
     /**
      * AJAX: return completed applications list for Completed Applications dashboard table.
-     * Filters by form_id (mst_licences.id) and returns unified rows across tables.
+     * Filters by form_id (mst_licences.id). Optional form_type=N|R filters appl_type (new vs renewal).
      */
     public function completedApplicationsData(Request $request)
     {
@@ -1022,6 +1022,22 @@ class LoginController extends Controller
         if ($formId <= 0) {
             return response()->json(['data' => []]);
         }
+
+        $formTypeFilter = strtoupper(trim((string) $request->query('form_type', '')));
+        $applyApplTypeFilter = in_array($formTypeFilter, ['N', 'R'], true);
+
+        // Match dashboard counts: explicit R = renewal; anything else counts as new
+        $applyApplTypeScope = function ($query, string $tableAlias) use ($applyApplTypeFilter, $formTypeFilter) {
+            if (!$applyApplTypeFilter) {
+                return;
+            }
+            $col = $tableAlias . '.appl_type';
+            if ($formTypeFilter === 'R') {
+                $query->whereRaw('UPPER(TRIM(COALESCE(' . $col . ", ''))) = 'R'");
+            } else {
+                $query->whereRaw('UPPER(TRIM(COALESCE(' . $col . ", ''))) <> 'R'");
+            }
+        };
 
         // Security: only allow forms assigned to this staff
         $assignedFormsQuery = \App\Models\Admin\StaffAssigned::where('user_id', $staff->id)
@@ -1058,8 +1074,9 @@ class LoginController extends Controller
             $rows = DB::table('tnelb_form_p as ta')
                 ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
                 ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
-                ->where('ta.app_status', 'A')
-                ->select(
+                ->where('ta.app_status', 'A');
+            $applyApplTypeScope($rows, 'ta');
+            $rows = $rows->select(
                     'ta.application_id',
                     'ta.applicant_name',
                     'ta.created_at',
@@ -1085,8 +1102,9 @@ class LoginController extends Controller
                 $rows = DB::table($tbl . ' as ta')
                     ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
                     ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
-                    ->where('ta.application_status', 'A')
-                    ->select(
+                    ->where('ta.application_status', 'A');
+                $applyApplTypeScope($rows, 'ta');
+                $rows = $rows->select(
                         'ta.application_id',
                         'ta.applicant_name',
                         'ta.created_at',
@@ -1105,8 +1123,9 @@ class LoginController extends Controller
                     ->leftJoin('tnelb_license as tl', 'tl.application_id', '=', 'ta.application_id')
                     ->leftJoin('tnelb_renewal_license as tr', 'tr.application_id', '=', 'ta.application_id')
                     ->where('ta.form_id', $formId)
-                    ->where('ta.status', 'A')
-                    ->select(
+                    ->where('ta.status', 'A');
+                $applyApplTypeScope($rows, 'ta');
+                $rows = $rows->select(
                         'ta.application_id',
                         'ta.applicant_name',
                         'ta.created_at',
@@ -1348,13 +1367,12 @@ class LoginController extends Controller
             ->select('*')
             ->first();
 
-        $workflows = DB::table('tnelb_workflow')
-            ->leftjoin('tnelb_application_tbl', 'tnelb_workflow.application_id', '=', 'tnelb_application_tbl.application_id')
-            ->leftjoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
-            ->where('tnelb_workflow.application_id', $applicant_id) // Filter by specific application
-            ->select('tnelb_workflow.*', 'mst__roles.name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name')
-            ->orderBy('tnelb_workflow.id', 'desc')
-            ->get();
+        $workflows = $this->queryCompetencyWorkflowsWithReturnApplicantLog(
+            $applicant_id,
+            ['mst_roles.role_name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name'],
+            true,
+            true
+        );
 
         $workflows1 = DB::table('mst__roles')
             ->select('*')
@@ -2899,16 +2917,14 @@ class LoginController extends Controller
 
 
 
-        $workflows = DB::table('tnelb_workflow')
-            ->leftjoin('tnelb_application_tbl', 'tnelb_workflow.application_id', '=', 'tnelb_application_tbl.application_id')
-            ->leftjoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
-            ->where('tnelb_workflow.application_id', $applicant_id) // Filter by specific application
-            ->select('tnelb_workflow.*', 'mst__roles.name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name')
-            ->orderBy('tnelb_workflow.id', 'desc')
-            ->get();
+        $workflows = $this->queryCompetencyWorkflowsWithReturnApplicantLog(
+            $applicant_id,
+            ['mst_roles.role_name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name'],
+            true,
+            true
+        );
 
-
-
+        
 
         $queries = DB::table('tnelb_query_applicable as qa')
             ->leftJoin('tnelb_application_tbl as ta', 'qa.application_id', '=', 'ta.application_id')
@@ -2917,8 +2933,6 @@ class LoginController extends Controller
             ->select('qa.*')
             ->orderByDesc('qa.id')
             ->get();
-
-
 
         return view('admin.dashboard.view_application', compact(
             'applicant',
@@ -2960,12 +2974,12 @@ class LoginController extends Controller
 
         if ($applicant) {
             $user_entry = $applicant;
-            $workflows = DB::table('tnelb_workflow')
-                ->leftJoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
-                ->where('tnelb_workflow.application_id', $applicant_id)
-                ->select('tnelb_workflow.*', 'mst__roles.name')
-                ->orderBy('tnelb_workflow.id', 'desc')
-                ->get();
+            $workflows = $this->queryCompetencyWorkflowsWithReturnApplicantLog(
+                $applicant_id,
+                ['mst_roles.role_name'],
+                false,
+                true
+            );
         }
 
         // 2. Form P
@@ -2978,12 +2992,12 @@ class LoginController extends Controller
                     'applicant_name' => $row->applicant_name ?? 'N/A',
                 ]);
                 $user_entry = $applicant;
-                $workflows = DB::table('tnelb_workflow')
-                    ->leftJoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
-                    ->where('tnelb_workflow.application_id', $applicant_id)
-                    ->select('tnelb_workflow.*', 'mst__roles.name')
-                    ->orderBy('tnelb_workflow.id', 'desc')
-                    ->get();
+                $workflows = $this->queryCompetencyWorkflowsWithReturnApplicantLog(
+                    $applicant_id,
+                    ['mst_roles.role_name'],
+                    false,
+                    true
+                );
             }
         }
 
@@ -3002,9 +3016,9 @@ class LoginController extends Controller
                     ]);
                     $user_entry = $applicant;
                     $workflows = DB::table('tnelb_workflow_a')
-                        ->leftJoin('mst__roles', 'tnelb_workflow_a.forwarded_to', '=', 'mst__roles.id')
+                        ->leftJoin('mst_roles', 'tnelb_workflow_a.forwarded_to', '=', 'mst_roles.r_id')
                         ->where('tnelb_workflow_a.application_id', $applicant_id)
-                        ->select('tnelb_workflow_a.*', 'mst__roles.name')
+                        ->select('tnelb_workflow_a.*', 'mst_roles.role_name')
                         ->orderBy('tnelb_workflow_a.id', 'desc')
                         ->get();
                     break;
@@ -3052,5 +3066,100 @@ class LoginController extends Controller
             'documents',
             'uploadedPhoto'
         ));
+    }
+
+    /**
+     * Competency (tnelb_workflow) rows with correlated subqueries to
+     * tnelb_return_to_applicant_log for QU + SE/PR (return-to-applicant audit).
+     * PostgreSQL only (uses interval, extract(epoch)).
+     *
+     * @param  list<string|\Illuminate\Database\Query\Expression>  $extraSelect
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function queryCompetencyWorkflowsWithReturnApplicantLog(
+        string $applicationId,
+        array $extraSelect = [],
+        bool $joinApplicationTbl = true,
+        bool $orderByIdDesc = true
+    ) {
+        $q = DB::table('tnelb_workflow');
+
+        if ($joinApplicationTbl) {
+            $q->leftJoin('tnelb_application_tbl', 'tnelb_workflow.application_id', '=', 'tnelb_application_tbl.application_id');
+        }
+
+        $q->leftJoin('mst_roles', 'tnelb_workflow.forwarded_to', '=', 'mst_roles.r_id')
+            ->where('tnelb_workflow.application_id', $applicationId);
+
+        $select = array_merge(['tnelb_workflow.*'], $extraSelect);
+
+        if (Schema::hasTable('tnelb_return_to_applicant_log')) {
+            $logTable = 'tnelb_return_to_applicant_log';
+            $colQ = Schema::hasColumn($logTable, 'query_types')
+                ? 'r.query_types as return_query_types'
+                : 'NULL::json';
+            $colR = Schema::hasColumn($logTable, 'remarks')
+                ? 'r.remarks as return_remarks'
+                : 'NULL::text';
+
+            $subFromWhere = "FROM {$logTable} r
+                WHERE r.application_id = tnelb_workflow.application_id
+                  AND tnelb_workflow.appl_status = 'QU'
+                  AND tnelb_workflow.processed_by IN ('SE', 'PR')
+                  AND r.returned_by_role = tnelb_workflow.processed_by
+                  AND r.created_at <= tnelb_workflow.created_at + interval '10 seconds'
+                  AND r.created_at >= tnelb_workflow.created_at - interval '2 minutes'
+                ORDER BY abs(extract(epoch from (tnelb_workflow.created_at - r.created_at)))
+                LIMIT 1";
+
+            $select[] = DB::raw("(SELECT {$colQ} {$subFromWhere}) AS return_query_types_raw");
+            $select[] = DB::raw("(SELECT {$colR} {$subFromWhere}) AS return_remarks_raw");
+        }
+
+        $q->select($select);
+
+        if ($orderByIdDesc) {
+            $q->orderByDesc('tnelb_workflow.id');
+        }
+
+        return $this->hydrateWorkflowReturnLogFields($q->get());
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, object>  $workflows
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function hydrateWorkflowReturnLogFields($workflows)
+    {
+        foreach ($workflows as $row) {
+            $row->return_log_internal_queries = [];
+            $row->return_log_internal_remarks = null;
+
+            if (property_exists($row, 'return_query_types_raw')) {
+                $raw = $row->return_query_types_raw;
+                unset($row->return_query_types_raw);
+                if ($raw !== null && $raw !== '') {
+                    $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
+                    if (is_array($decoded)) {
+                        $row->return_queries = $decoded;
+                        $row->return_log_internal_queries = $decoded;
+                    }
+                }
+            }
+
+            if (property_exists($row, 'return_remarks_raw')) {
+                $fromLog = $row->return_remarks_raw;
+                if ($fromLog !== null && $fromLog !== '') {
+                    $row->return_log_internal_remarks = $fromLog;
+                    $existing = $row->return_remarks ?? null;
+                    if ($existing === null || $existing === '') {
+                        $row->return_remarks = $fromLog;
+                    }
+                }
+                unset($row->return_remarks_raw);
+            }
+        }
+
+        return $workflows;
     }
 }
