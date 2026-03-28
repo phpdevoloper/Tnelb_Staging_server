@@ -10,7 +10,8 @@
     }
 
     .custom-fieldset {
-        border: 1px solid #ccc;
+        border: 1px solid #34495e;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
         padding: 1rem;
         border-radius: 6px;
         margin-bottom: 1.5rem;
@@ -58,11 +59,11 @@
 
     .pagination .page-link {
     cursor: pointer;
-}
-.pagination .active .page-link {
-    background-color: #007bff;
-    border-color: #007bff;
-}
+    }
+    .pagination .active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
 
 
     /* your colors */
@@ -71,33 +72,163 @@
     .legend .kindaawesome { background-color: #0000ff; }
     .legend .notawesome   { background-color: #000000; } */
 
-    /* RETURN ribbon for returned applications in pagination list */
+    /* RETURN ribbon: clip to cell so it cannot draw into the row above; centered + shallower angle */
     .return-cell {
         position: relative;
+        overflow: hidden;
+        text-align: center;
+        vertical-align: middle;
+        min-width: 0;
+        padding: 1.35rem 2px 0.4rem;
     }
 
     .return-ribbon-wrapper {
         position: absolute;
-        top: 33px;
-        left: -2px;
-        z-index: 5;
+        top: 0.62rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
         pointer-events: none;
     }
 
     .return-ribbon {
-        display: inline-block;
+        display: block;
+        width: 76px;
+        padding: 3px 0;
+        margin: 0 auto;
         background: #6f42c1;
         color: #fff;
-        font-size: 8px;
-        font-weight: 600;
-        width: 60px;
-        height: 14px;
-        line-height: 14px;
+        font-size: 6.5px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.15;
         text-align: center;
-        transform: rotate(-45deg);
-        transform-origin: left top;
-        box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        transform: rotate(-32deg);
+        transform-origin: center center;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
         text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .return-sno-num {
+        position: relative;
+        z-index: 1;
+        display: block;
+        margin-top: 0.4rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    /* Toolbar row: page length (left) + search (right), table-header styling */
+    .applications-table-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+    }
+    .applications-page-length-toolbar {
+        margin-bottom: 0;
+    }
+    .applications-search-toolbar {
+        margin-left: auto;
+    }
+    .applications-search-inner {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.5rem;
+        padding: 4px 8px;
+        line-height: 1.2;
+        background: var(--primary-color-login, #34495e);
+        color: #fff;
+        border: 1px solid #c5bebe;
+        border-radius: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+    .applications-search-input {
+        min-width: 11rem;
+        width: 14rem;
+        max-width: min(22rem, 56vw);
+        padding: 2px 6px !important;
+        font-size: 0.72rem !important;
+        font-weight: 500 !important;
+        line-height: 1.25 !important;
+        color: #1e293b !important;
+        border: 1px solid #c5bebe !important;
+        border-radius: 2px !important;
+        background: #fff !important;
+    }
+    .applications-search-input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+    .applications-search-input:focus {
+        border-color: #ecf0f1 !important;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45) !important;
+        outline: none;
+    }
+
+    /* Page length — same visual language as .table-login thead (#34495e, white text) */
+    .applications-page-length-inner {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.5rem;
+        padding: 4px 8px;
+        line-height: 1.2;
+        background: var(--primary-color-login, #34495e);
+        color: #fff;
+        border: 1px solid #c5bebe;
+        border-radius: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+    .applications-page-length-label {
+        margin: 0;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #fff;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+    .applications-page-length-select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        min-width: 2.75rem !important;
+        width: auto !important;
+        max-width: 3.5rem;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 2px 1.2rem 2px 5px !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        line-height: 1.2 !important;
+        color: #1e293b !important;
+        border: 1px solid #c5bebe !important;
+        border-radius: 2px !important;
+        background-color: #fff !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2334495e' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.25rem center;
+        background-size: 0.55rem;
+        cursor: pointer;
+    }
+    .applications-page-length-select:hover {
+        border-color: #ecf0f1 !important;
+        background-color: #f8fafc !important;
+    }
+    .applications-page-length-select:focus {
+        border-color: #ecf0f1 !important;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45) !important;
+        outline: none;
+    }
+    .applications-page-length-hint {
+        font-size: 0.68rem;
+        color: rgba(255, 255, 255, 0.88);
+        font-weight: 500;
+        letter-spacing: 0.02em;
     }
 
     
@@ -155,7 +286,7 @@
                                     </div>
                                     @endif
 
-                                    <table class="table table-bordered " width="100%">
+                                    <table class="table table-login " width="100%">
                                         <thead class="text-center">
                                             <tr>
                                                 <th>Licence Name / Certificate Name</th>
@@ -217,7 +348,7 @@
                                             if ($staffRecords->count() > 0) {
                                             foreach ($staffRecords as $staff) {
                                             if (!empty($staff->cc_validity)) {
-                                            $ccValidity = \Carbon\Carbon::parse($staff->cc_validity);
+                                            $ccValidity = Carbon::parse($staff->cc_validity);
 
                                             $CCNumber = $staff->cc_number;
                                             if ($ccValidity->lt($today)) {
@@ -259,13 +390,13 @@
                                                     @endphp
 
                                                     @if($isExpired)
-                                                    <span class="badge text-danger text-white">License Expired</span>
+                                                    <span class="badge text-danger text-white">Expired</span>
                                                     @else
                                                     @if($hasBankExpired || $hasStaffExpired)
 
-                                                    <span class="badge text-danger text-white" style="line-height: 20px;"> License Expired</span>
+                                                    <span class="badge text-danger text-white" style="line-height: 20px;"> Expired</span>
                                                     @else
-                                                    <span class="badge text-success text-white">License Active</span>
+                                                    <span class="badge text-success text-white">Active</span>
                                                     @endif
                                                     @endif
                                                 </td>
@@ -277,7 +408,7 @@
                                                     @endphp
                                                     @if($isExpired)
                                                     <span class="text-danger" style="font-weight:600; font-size:13px; ">
-                                                        License Expired: {{ Carbon::parse($workflow->expires_at)->format('d-m-Y') }}
+                                                        Expired: {{ Carbon::parse($workflow->expires_at)->format('d-m-Y') }}
                                                     </span>
                                                     @else
 
@@ -455,12 +586,10 @@
 
                         <!-- ----------------- -->
                         <div class="tasks-section-login d-none d-sm-block">
+                            <h5 class="mb-2">
+                                <strong>Status of Applications ( Competency Certificate )</strong>
+                            </h5>
                             <fieldset class="custom-fieldset">
-                                <legend class="custom-legend">
-                                    <h5 class="mb-2">
-                                        <strong>Status of Applications ( Competency Certificate )</strong>
-                                    </h5>
-                                </legend>
                                 <ul class="legend justify-content-end mb-2">
                                     <li><span class="bg-info"></span> Draft</li>
                                     <li><span class="bg-primary"></span> Submitted</li>
@@ -468,9 +597,27 @@
                                     <li><span class="bg-warning"></span> In Progress</li>
                                     <li><span class="bg-success"></span> Completed</li>
                                     <li><span class="bg-danger"></span> Rejected</li>
-                                    <li><span class="bg-return"></span> Return </li>
+                                    <li><span class="bg-return"></span> Returned </li>
                                     
                                 </ul>
+                                <div class="applications-table-toolbar">
+                                    <div class="applications-page-length-toolbar">
+                                        <div class="applications-page-length-inner">
+                                            <label for="applicationsPerPageSelect" class="applications-page-length-label text-nowrap">Show</label>
+                                            <select id="applicationsPerPageSelect" name="per_page" class="applications-page-length-select" aria-label="Entries per page">
+                                                @foreach ([5, 10, 20, 50, 100] as $n)
+                                                    <option value="{{ $n }}" @selected((int) $paginatedData->perPage() === $n)>{{ $n }}</option>
+                                                @endforeach
+                                            </select>
+                                            <span class="applications-page-length-hint text-nowrap">entries</span>
+                                        </div>
+                                    </div>
+                                    <div class="applications-search-toolbar">
+                                        <div class="applications-search-inner">
+                                            <input type="search" id="applicationsSearchInput" name="search" value="{{ request('search', '') }}" class="applications-search-input" placeholder="Search" maxlength="120" autocomplete="off" aria-label="Search applications table">
+                                        </div>
+                                    </div>
+                                </div>
                                 <div id="applicationsTable">
                                     @include('user_login.pagination-list')
                                 </div>
@@ -704,10 +851,10 @@
 
 
                         <div class="tasks-section-login d-none d-sm-block">
+                            <h5 class="mb-2">
+                                <strong>Status of Applications ( Contractor Licence )</strong>
+                            </h5>
                             <fieldset class="custom-fieldset">
-                                <legend class="custom-legend">
-                                    <h5 class="mb-2"><strong>Status of Applications ( Contractor Licence )</strong></h5>
-                                </legend>
                                 <ul class="legend justify-content-end mb-2">
                                     <li><span class="bg-info"></span> Draft</li>
                                     <li><span class="bg-primary"></span> Submitted</li>
@@ -715,7 +862,7 @@
                                     <li><span class="bg-warning"></span> In Progress</li>
                                     <li><span class="bg-success"></span> Completed</li>
                                     <li><span class="bg-danger"></span> Rejected</li>
-                                    <li><span class="bg-return"></span> Return </li>
+                                    <li><span class="bg-return"></span> Returned </li>
                                     
                                 </ul>
                                 <table class="table-login" >
@@ -1067,7 +1214,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const tables = document.querySelectorAll(".table-login");
-    const rowsPerPage = 10;
+    const rowsPerPage = 5;
 
     tables.forEach((table, tableIndex) => {
         const rows = table.querySelectorAll("tbody tr");
@@ -1136,5 +1283,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 $("#applicationsTable").html(data);
             }
         });
+    });
+
+    function applicationsTableAjaxUrl(page) {
+        var perPage = $('#applicationsPerPageSelect').val() || '5';
+        var search = ($('#applicationsSearchInput').val() || '').trim();
+        var url = "{{ route('dashboard') }}?page=" + encodeURIComponent(page || 1) + "&per_page=" + encodeURIComponent(perPage);
+        if (search.length) {
+            url += "&search=" + encodeURIComponent(search);
+        }
+        return url;
+    }
+
+    $(document).on('change', '#applicationsPerPageSelect', function () {
+        $.ajax({
+            url: applicationsTableAjaxUrl(1),
+            type: 'GET',
+            success: function (data) {
+                $('#applicationsTable').html(data);
+            }
+        });
+    });
+
+    var applicationsSearchDebounceTimer = null;
+    $(document).on('input', '#applicationsSearchInput', function () {
+        clearTimeout(applicationsSearchDebounceTimer);
+        applicationsSearchDebounceTimer = setTimeout(function () {
+            $.ajax({
+                url: applicationsTableAjaxUrl(1),
+                type: 'GET',
+                success: function (data) {
+                    $('#applicationsTable').html(data);
+                }
+            });
+        }, 350);
     });
 </script>

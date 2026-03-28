@@ -122,12 +122,11 @@
                                                     @endif
 
                                                     <div class="mt-3">
-                                                        <p class="fw-bold mb-1">Applicant Signature</p>
                                                         @if($signPath)
                                                             <img src="{{ asset($signPath) }}"
                                                                  alt="Applicant Signature"
                                                                  class="img-fluid rounded border"
-                                                                 style="width: 150px; height: 70px; object-fit: contain; background: #fff;"
+                                                                 style="width: 100px; height: 50px; object-fit: contain; background: #fff;"
                                                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                                             <p class="text-muted mb-0" style="display: none;">No signature available</p>
                                                         @else
@@ -394,15 +393,15 @@
                                             @endphp
 
                                             <div class="row mb-2">
-                                                <div class="col-md-6">
-                                                    <h6 class="fw-bold mb-0">Documents Uploaded:</h6>
+                                                <div class="col-md-12 col-lg-12">
+                                                    <h6 class="fw-bold mt-2">Documents Uploaded:</h6>
                                                     <div class="row align-items-center mt-1 g-1">
-                                                        <div class="col-6">
-                                                            <p class="fw-bold mb-0 small">Aadhaar:</p>
+                                                        <div class="col-lg-6">
+                                                            <p class="fw-bold mb-0" style="color: #000;">Aadhaar:</p>
                                                         </div>
-                                                        <div class="col-6">
+                                                        <div class="col-lg-6 text-end">
                                                             @if (!empty($applicant->aadhaar_doc))
-                                                                <div class="fw-bold mb-0 small">
+                                                                <div class="fw-bold mb-0" style="color: #515365">
                                                                     {{ $masked }}
                                                                     <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
                                                                         target="_blank" class="text-primary"
@@ -659,7 +658,7 @@
                                         <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-2">
                                             @if ($applicant->form_name !== 'S')
                                                 <button class="btn btn-success" id="confirmApprovalBtn">
-                                                    Submit / Approve
+                                                    Approve
                                                 </button>
                                             @else
                                                 <button class="btn btn-success" id="confirmForwardPres">
@@ -686,7 +685,7 @@
                                         {{-- Row 1: Approve + Reject --}}
                                         <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-2">
                                             <button class="btn btn-success" id="confirmApprovalBtn">
-                                                Submit / Approve
+                                                Approve
                                             </button>
                                             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectionModal">Reject</button>
                                         </div>
@@ -857,7 +856,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-info" id="confirmReturnToApplicantModalBtn">Confirm Return to Applicant</button>
+                <button type="button" class="btn btn-info" id="confirmReturnToApplicantModalBtn">Return to Applicant</button>
             </div>
         </div>
     </div>

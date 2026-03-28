@@ -716,9 +716,125 @@ $workflows_cl = $workflows_cl
             ->toArray();
 
         // Pagination code started
-        $perPage = 10;
+        $allowedPerPage = [5, 10, 20, 50, 100];
+        $perPage = (int) request()->input('per_page', 5);
+        if (! in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 5;
+        }
         $mergedData = $workflows_present->merge($all_form_p);
         $mergedData = $mergedData->sortByDesc('created_at')->values();
+
+        $search = trim((string) request()->input('search', ''));
+        if (mb_strlen($search) > 120) {
+            $search = mb_substr($search, 0, 120);
+        }
+        if ($search !== '') {
+            $needle = mb_strtolower($search, 'UTF-8');
+
+            // Full calendar date (e.g. 27/03/2026) → match "Applied on" only (created_at / dt_submit),
+            // not updated_at / other timestamps (avoids wrong rows when activity date ≠ applied date).
+            $appliedDateYmd = null;
+            foreach (['d/m/Y', 'j/n/Y', 'd-m-Y', 'd.m.Y', 'Y-m-d', 'd/m/y'] as $fmt) {
+                try {
+                    $parsed = Carbon::createFromFormat($fmt, $search);
+                    if ($parsed instanceof Carbon) {
+                        $appliedDateYmd = $parsed->format('Y-m-d');
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    //
+                }
+            }
+
+            if ($appliedDateYmd !== null) {
+                $mergedData = $mergedData->filter(function ($row) use ($appliedDateYmd) {
+                    foreach (['created_at', 'dt_submit'] as $field) {
+                        $raw = data_get($row, $field);
+                        if ($raw === null || $raw === '') {
+                            continue;
+                        }
+                        try {
+                            if (Carbon::parse($raw)->format('Y-m-d') === $appliedDateYmd) {
+                                return true;
+                            }
+                        } catch (\Throwable $e) {
+                            //
+                        }
+                    }
+
+                    return false;
+                })->values();
+            } else {
+                $mergedData = $mergedData->filter(function ($row) use ($needle) {
+                    $parts = [];
+
+                    foreach (get_object_vars($row) as $v) {
+                        if ($v === null || $v === '') {
+                            continue;
+                        }
+                        if ($v instanceof \DateTimeInterface) {
+                            $dt = Carbon::instance($v);
+                            $parts[] = $dt->format('Y-m-d');
+                            $parts[] = $dt->format('d/m/Y');
+                            $parts[] = $dt->format('j/n/Y');
+                            $parts[] = $dt->format('d-m-Y');
+                            $parts[] = $dt->format('j-n-Y');
+                            $parts[] = $dt->format('m/d/Y');
+
+                            continue;
+                        }
+                        if (is_scalar($v)) {
+                            $s = (string) $v;
+                            $parts[] = $s;
+                            if (preg_match('/^\d{4}-\d{2}-\d{2}/', $s) || preg_match('/^\d{2,4}-\d{2}-\d{2}\s+\d/', $s)) {
+                                try {
+                                    $dt = Carbon::parse(substr($s, 0, 19));
+                                    $parts[] = $dt->format('d/m/Y');
+                                    $parts[] = $dt->format('j/n/Y');
+                                    $parts[] = $dt->format('d/m/y');
+                                    $parts[] = $dt->format('d-m-Y');
+                                    $parts[] = $dt->format('j-n-Y');
+                                    $parts[] = $dt->format('Y-m-d');
+                                    $parts[] = $dt->format('m/d/Y');
+                                    $parts[] = $dt->format('d.m.Y');
+                                } catch (\Throwable $e) {
+                                    //
+                                }
+                            }
+                        }
+                    }
+
+                    $ps = strtolower((string) ($row->payment_status ?? ''));
+                    if (in_array($ps, ['payment', 'paid'], true)) {
+                        $parts[] = 'success';
+                        $parts[] = 'payment';
+                    } else {
+                        $parts[] = 'pending';
+                    }
+
+                    $st = strtoupper((string) ($row->status ?? $row->application_status ?? $row->app_status ?? ''));
+                    $byCode = [
+                        'P' => ['submitted'],
+                        'F' => ['in progress'],
+                        'QU' => ['returned'],
+                        'RJ' => ['rejected'],
+                        'RE' => ['resubmitted'],
+                        'A' => ['approved', 'completed'],
+                    ];
+                    if ($st !== '' && isset($byCode[$st])) {
+                        $parts = array_merge($parts, $byCode[$st]);
+                    }
+
+                    $hay = mb_strtolower(
+                        implode(' ', array_unique(array_filter($parts, static fn ($p) => $p !== ''))),
+                        'UTF-8'
+                    );
+
+                    return $hay !== '' && str_contains($hay, $needle);
+                })->values();
+            }
+        }
+
         $page = LengthAwarePaginator::resolveCurrentPage();
         $currentPageItems = $mergedData->slice(($page - 1) * $perPage, $perPage)->values();
 

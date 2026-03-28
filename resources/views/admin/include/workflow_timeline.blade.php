@@ -17,7 +17,7 @@
         <div class="widget-header">
             <div class="row">
                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <h4>Workflow</h4>
+                    <h4>Application - Process Flow</h4>
                 </div>
             </div>
         </div>
@@ -139,14 +139,14 @@
                                     </p>
                                     @if ($queries !== [] && $queries != $applicantFacingQueries)
                                         <p class="t-meta-internal mb-1">
-                                            <span class="fw-semibold">Internal query:</span>
-                                            {{ implode(', ', $queries) }}
+                                            <span class="fw-semibold">Note: Query</span>
+                                            ({{ implode(', ', $queries) }})
                                         </p>
                                     @endif
                                     @if ($applicantFacingQueries !== [])
                                         <p class="t-meta-applicant-return mb-1">
-                                            <span class="fw-semibold">Query:</span>
-                                            {{ implode(', ', $applicantFacingQueries) }}
+                                            <span class="fw-semibold">Note: Query</span>
+                                            ({{ implode(', ', $applicantFacingQueries) }})
                                         </p>
                                     @endif
                                     <p class="t-meta-applicant-return mb-1">

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\RoleHelper;
 
 class FormController extends BaseController
 {
@@ -807,6 +808,8 @@ class FormController extends BaseController
                 'payment_status'    => 'payment',
                 'certificate_no'      => $request->competency_certificate_no,
                 'certificate_date'    => $request->certificate_date,
+                'submitted_date'      => $this->dbNow,
+                'updated_at'          => $this->dbNow,
             ]);
 
 
@@ -1063,9 +1066,7 @@ class FormController extends BaseController
                 ->where('query_status', 'P')
                 ->update(['query_status' => 'R', 'updated_at' => $this->dbNow]);
 
-            $supervisorRoleId = DB::table('mst__staffs__tbls')
-                ->where('name', 'Supervisor')
-                ->value('roles_id');
+            $supervisorRoleId = RoleHelper::supervisorWorkflowRoleId(Auth::user());
 
             if ($supervisorRoleId) {
                 SupervisorModel::create([

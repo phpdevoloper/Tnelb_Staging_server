@@ -351,7 +351,7 @@
                                                     </td>
                                                     <td>{{ $application->applicant_name ?? 'N/A' }}</td>
                                                     @if($isCompletedList)
-                                                    <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                    <td>{{ format_date_other($application->submitted_date) }}</td>
                                                     <td class="text-center">
                                                         @if($isCompleted)
                                                             <span class="badge rounded-pill bg-success">Completed</span>
@@ -381,7 +381,7 @@
                                                     @else
                                                     <td>{{ $application->license_name ?? 'N/A' }}</td>
                                                     <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
-                                                    <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                    <td>{{ format_date_other($application->submitted_date) }}</td>
                                                     <td>
                                                         <a href="{{ $detailUrl }}">
                                                             <button type="button" class="btn btn-primary" data-bs-placement="bottom" title="Forward Application">
@@ -494,7 +494,7 @@
                                                         @else
                                                         <td>{{ $application->license_name ?? 'N/A' }}</td>
                                                         <td>{{ in_array($application->payment_status ?? null, ['payment', 'paid'], true) ? 'Success' : ($application->payment_status ?? 'N/A') }}</td>
-                                                        <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                        <td>{{ format_date_other($application->submitted_date) }}</td>
                                                         <td>
                                                             <a href="{{ $detailUrlR }}">
                                                                 <button type="button" class="btn btn-primary" data-bs-placement="bottom" title="Forward Application">
@@ -565,7 +565,7 @@
                                                                     <span class="badge rounded-pill bg-success">Resubmitted</span>
                                                                 @endif
                                                             </td>
-                                                            <td>{{ format_date_other($application->created_at ?? $application->dt_submit) }}</td>
+                                                            <td>{{ format_date_other($application->submitted_date) }}</td>
                                                             <td>
                                                                 <a href="{{ $detailUrl }}">
                                                                     <button type="button" class="btn btn-primary" data-bs-placement="bottom" title="View Application">

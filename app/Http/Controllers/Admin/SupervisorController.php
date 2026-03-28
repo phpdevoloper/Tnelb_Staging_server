@@ -80,7 +80,10 @@ class SupervisorController extends Controller
                 if ($applTypeFilter) {
                     $query->where('ta.appl_type', $applTypeFilter);
                 }
-                $workflows = $query->orderByDesc('ta.id')->get();
+                $workflows = $query
+                    ->orderByDesc('ta.submitted_date')
+                    ->orderByDesc('ta.id')
+                    ->get();
             } else {
                 $twLast = DB::table('tnelb_workflow')->select('application_id', DB::raw('MAX(id) as max_id'))->groupBy('application_id');
                 $currentAppIds = DB::table('tnelb_workflow as tw')
@@ -96,7 +99,10 @@ class SupervisorController extends Controller
                         DB::raw("'Form P' as form_name"),
                         DB::raw('ta.license_name as license_name'),
                         DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
-                    )->orderByDesc('ta.id')->get();
+                    )
+                    ->orderByDesc('ta.submitted_date')
+                    ->orderByDesc('ta.id')
+                    ->get();
                 if ($applTypeFilter) {
                     $workflows = collect($workflows)->filter(function ($row) use ($applTypeFilter) {
                         return strtoupper((string) ($row->appl_type ?? '')) === $applTypeFilter;
@@ -112,6 +118,7 @@ class SupervisorController extends Controller
                         ->orWhereRaw("(ta.app_status IN ('P','RE') AND EXISTS (SELECT 1 FROM tnelb_workflow tw WHERE tw.application_id = ta.application_id AND tw.appl_status = 'QU'))");
                 })
                 ->select('ta.*', DB::raw("'Form P' as form_name"), DB::raw('ta.license_name as license_name'))
+                ->orderByDesc('ta.submitted_date')
                 ->orderByDesc('ta.id');
             if ($applTypeFilter) {
                 $returnedQuery->where('ta.appl_type', $applTypeFilter);
@@ -134,10 +141,7 @@ class SupervisorController extends Controller
         // Supervisor: show (1) apps with no workflow, OR (2) latest workflow RE and forwarded_to Supervisor (resubmitted).
         // Other roles: show apps currently forwarded to them (latest workflow row).
         if ($isSupervisorRole) {
-            $supervisorRoleId = (int) (DB::table('mst__staffs__tbls')->where('name', 'Supervisor')->value('roles_id') ?? 0);
-            if ($supervisorRoleId === 0) {
-                $supervisorRoleId = $roleId;
-            }
+            $supervisorRoleId = RoleHelper::supervisorWorkflowRoleId($staff);
             $twLast = DB::table('tnelb_workflow')
                 ->select('application_id', DB::raw('MAX(id) as max_id'))
                 ->groupBy('application_id');
@@ -179,6 +183,7 @@ class SupervisorController extends Controller
                     DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
                 )
                 ->distinct()
+                ->orderByDesc('ta.submitted_date')
                 ->orderByDesc('ta.id')
                 ->get();
 
@@ -204,6 +209,7 @@ class SupervisorController extends Controller
                         DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name'),
                         DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
                     )
+                    ->orderByDesc('ta.submitted_date')
                     ->orderByDesc('ta.id')
                     ->get();
             }
@@ -225,6 +231,7 @@ class SupervisorController extends Controller
                     DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
                     DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
                 )
+                ->orderByDesc('ta.submitted_date')
                 ->orderByDesc('ta.id')
                 ->get();
         } else {
@@ -300,6 +307,7 @@ class SupervisorController extends Controller
                     DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
                 )
                 ->distinct()
+                ->orderByDesc('ta.submitted_date')
                 ->orderByDesc('ta.id')
                 ->get();
 
@@ -309,6 +317,7 @@ class SupervisorController extends Controller
         [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
             return strtoupper((string) ($row->appl_type ?? '')) === 'R';
         });
+        
 
         return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal', 'returned_applications'));
     }

@@ -1369,7 +1369,8 @@ div.collapse-menu {
 .project-card-login {
   background: #fff;
   padding: 1rem;
-  border: 1px solid #035ab38c;
+  border-radius: 6px;
+  border: 1px solid #34495e;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   flex: 1 1 calc(50% - 1rem);
 }
