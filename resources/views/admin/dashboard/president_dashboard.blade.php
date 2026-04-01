@@ -41,6 +41,58 @@
     .bg-custom-card {
         background-color: rgb(239 241 243) !important;
     }
+
+    #dashboard-inprogress-table td.corner-ribbon-cell {
+        position: relative;
+        overflow: hidden;
+        vertical-align: middle !important;
+        min-width: 3.35rem;
+        text-align: center;
+        padding-top: 1rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+    #dashboard-inprogress-table .corner-ribbon-resubmitted {
+        position: absolute;
+        top: 17px;
+        left: -24px;
+        width: 99px;
+        padding: 5px 0 4px;
+        box-sizing: content-box;
+        background: #2e7d32;
+        color: #fff;
+        font-size: 0.52rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.1;
+        text-transform: uppercase;
+        text-align: center;
+        white-space: nowrap;
+        transform: rotate(-45deg);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+        pointer-events: none;
+        z-index: 2;
+    }
+    #dashboard-inprogress-table .sno-num-inprog {
+        position: relative;
+        z-index: 1;
+        display: inline-block;
+    }
+
+    /* DataTables sort arrows — white on dark blue header */
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting:before,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting:after,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_asc:before,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_asc:after,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_desc:before,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_desc:after,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_asc_disabled:before,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_asc_disabled:after,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_desc_disabled:before,
+    #dashboard-inprogress-table.dataTable thead > tr > th.sorting_desc_disabled:after {
+        color: #ffffff !important;
+        opacity: 1 !important;
+        filter: brightness(0) invert(1);
+    }
 </style>
 
 <div id="content" class="main-content">
@@ -257,7 +309,7 @@
                             </div>
                             <div class="card-body" style="padding: 5px 15px;">
                                 <div class="table-responsive">
-                                    <table id="secretary-inprogress-table" class="table dt-table-hover table-striped table-bordered zero-config" style="width:100%">
+                                    <table id="dashboard-inprogress-table" class="table dt-table-hover table-striped table-bordered zero-config" style="width:100%">
                                         <thead class="text-center">
                                             <tr>
                                                 <th>S.No</th>
@@ -275,7 +327,6 @@
                                             @php $i = 1; @endphp
                                             @foreach ($inprogress as $row)
                                             <tr>
-                                                <td>{{ $i }}</td>
                                                 @php
                                                     $badge_class = 'badge-secondary';
                                                     $fn = strtoupper($row->form_name ?? '');
@@ -285,21 +336,53 @@
                                                     elseif ($fn == 'WH') $badge_class = 'badge-warning';
                                                     elseif ($fn == 'P') $badge_class = 'badge-info';
                                                     elseif (in_array($fn, ['B', 'EB', 'SB'])) $badge_class = 'badge-primary';
-                                                    // Received from: who forwarded it (processed_by)
                                                     $received_from = '';
-                                                    if (($row->processed_by ?? '') === 'S') $received_from = 'Supervisor';
-                                                    elseif (($row->processed_by ?? '') === 'A') $received_from = 'Accountant';
-                                                    elseif (($row->processed_by ?? '') === 'SE') $received_from = 'Secretary';
-                                                    elseif (($row->processed_by ?? '') === 'PR') $received_from = 'President';
-                                                    // Pending with: who has it now (next in chain)
+                                                    if (($row->processed_by ?? '') === 'S' || ($row->processed_by ?? '') === 'S2') {
+                                                        $received_from = 'Supervisor';
+                                                    } elseif (($row->processed_by ?? '') === 'A') {
+                                                        $received_from = 'Accountant';
+                                                    } elseif (($row->processed_by ?? '') === 'SE') {
+                                                        $received_from = 'Secretary';
+                                                    } elseif (($row->processed_by ?? '') === 'PR') {
+                                                        $received_from = 'President';
+                                                    }
                                                     $pending_with = '';
                                                     $row_status = strtoupper($row->status ?? '');
-                                                    if ($row_status === 'QU') $pending_with = 'Applicant';
-                                                    elseif (empty($row->processed_by)) $pending_with = 'Supervisor';
-                                                    elseif (($row->processed_by ?? '') === 'S') $pending_with = 'Accountant';
-                                                    elseif (($row->processed_by ?? '') === 'A') $pending_with = 'Secretary';
-                                                    elseif (($row->processed_by ?? '') === 'SE') $pending_with = 'President';
+                                                    $forwardRoleRaw = trim((string) ($row->latest_forward_role_name ?? ''));
+                                                    $forwardNorm = strtolower($forwardRoleRaw);
+                                                    if ($row_status === 'QU') {
+                                                        $pending_with = 'Applicant';
+                                                    } elseif ($forwardRoleRaw !== '') {
+                                                        if (str_contains($forwardNorm, 'secretary')) {
+                                                            $pending_with = 'Secretary';
+                                                        } elseif (str_contains($forwardNorm, 'president')) {
+                                                            $pending_with = 'President';
+                                                        } elseif (str_contains($forwardNorm, 'accountant')) {
+                                                            $pending_with = 'Accountant';
+                                                        } elseif (str_contains($forwardNorm, 'supervisor')) {
+                                                            $pending_with = 'Supervisor';
+                                                        } else {
+                                                            $pending_with = $forwardRoleRaw;
+                                                        }
+                                                    } elseif (empty($row->processed_by)) {
+                                                        $pending_with = 'Supervisor';
+                                                    } elseif (($row->processed_by ?? '') === 'S' || ($row->processed_by ?? '') === 'S2') {
+                                                        $pending_with = 'Accountant';
+                                                    } elseif (($row->processed_by ?? '') === 'A') {
+                                                        $pending_with = 'Secretary';
+                                                    } elseif (($row->processed_by ?? '') === 'SE') {
+                                                        $pending_with = 'President';
+                                                    }
+                                                    $showResubmittedRibbon = !empty($row->has_return_history)
+                                                        && $row_status !== 'QU'
+                                                        && \in_array($pending_with, ['Secretary', 'President'], true);
                                                 @endphp
+                                                <td class="{{ $showResubmittedRibbon ? 'corner-ribbon-cell' : '' }}">
+                                                    @if ($showResubmittedRibbon)
+                                                        <span class="corner-ribbon-resubmitted">Resubmitted</span>
+                                                    @endif
+                                                    <span class="sno-num-inprog">{{ $i }}</span>
+                                                </td>
                                                 <td><a href="{{ ($row->form_name ?? '') == 'P' ? route('admin.application_details_formp', ['applicant_id' => $row->application_id]) : route('admin.applicants_detail', ['applicant_id' => $row->application_id]) }}">{{ $row->application_id }}</a></td>
                                                 <td><span class="badge {{ $badge_class }}">FORM {{ $row->form_name }}</span></td>
                                                 <td>{{ format_date_other($row->created_at) }}</td>

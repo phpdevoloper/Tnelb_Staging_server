@@ -316,7 +316,9 @@
                                                 @php
                                                     $appStatus = $application->status ?? $application->application_status ?? $application->app_status ?? null;
                                                     $isCompleted = in_array($appStatus, ['A'], true);
-                                                    $wasReturned = !empty($application->has_return_history) && $application->has_return_history;
+                                                    $__hr = $application->has_return_history ?? false;
+                                                    $wasReturned = $__hr === true || $__hr === 1 || $__hr === '1'
+                                                        || (is_string($__hr) && strtoupper($__hr) === 'T');
                                                     $fn = strtoupper((string)($application->form_name ?? ''));
 
                                                     if (($is_completed_list ?? false) && $isCompleted) {
@@ -446,7 +448,9 @@
                                                                 ? route('admin.application_details_formp', ['applicant_id' => $application->application_id])
                                                                 : route('admin.applicants_detail', ['applicant_id' => $application->application_id]);
                                                         }
-                                                        $wasReturnedR = !empty($application->has_return_history) && $application->has_return_history;
+                                                        $__hrR = $application->has_return_history ?? false;
+                                                        $wasReturnedR = $__hrR === true || $__hrR === 1 || $__hrR === '1'
+                                                            || (is_string($__hrR) && strtoupper($__hrR) === 'T');
                                                         $isReturnedToApplicantR = strtoupper((string) ($appStatusR ?? '')) === 'QU';
                                                         $showResubmittedR = $wasReturnedR && !$isReturnedToApplicantR && !$isCompletedR;
                                                     @endphp

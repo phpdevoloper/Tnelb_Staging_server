@@ -772,8 +772,6 @@
 
                         @if($returnapplication->isNotEmpty())
 
-                        
-
                         <div class="projects-section-login active_license">
                            
                             <div class="project-list-login mt-2">

@@ -304,7 +304,8 @@ class SupervisorController extends Controller
                 ->select(
                     'ta.*',
                     DB::raw('COALESCE(ml.form_name, ta.form_name) as form_name'),
-                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name')
+                    DB::raw('COALESCE(ml.licence_name, ta.license_name) as license_name'),
+                    DB::raw("EXISTS (SELECT 1 FROM tnelb_workflow tw2 WHERE tw2.application_id = ta.application_id AND tw2.appl_status = 'QU') AS has_return_history")
                 )
                 ->distinct()
                 ->orderByDesc('ta.submitted_date')

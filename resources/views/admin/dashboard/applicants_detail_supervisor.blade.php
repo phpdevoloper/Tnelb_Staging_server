@@ -5,6 +5,88 @@
     .tab-content {
         padding: 0px 20px;
     }
+
+    /* Compact education / work tables — fit inside column; avoid horizontal scroll */
+    .applicant-detail-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .applicant-detail-compact-table {
+        table-layout: fixed;
+        width: 100%;
+        max-width: 100%;
+        font-size: 0.8125rem;
+        margin-bottom: 0;
+        border-collapse: collapse;
+    }
+    .applicant-detail-compact-table thead th {
+        padding: 0.3rem 0.35rem;
+        vertical-align: middle;
+        line-height: 1.2;
+    }
+    .applicant-detail-compact-table tbody td {
+        padding: 0.3rem 0.35rem;
+        vertical-align: middle;
+        line-height: 1.25;
+        overflow: hidden;
+    }
+    .applicant-detail-compact-table .col-wrap {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+    }
+    .applicant-detail-compact-table .col-doc {
+        text-align: center;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .applicant-detail-compact-table .col-doc .doc-pdf-link {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        max-width: 100%;
+        font-size: 0.72rem;
+        line-height: 1.15;
+        text-decoration: none;
+    }
+    .applicant-detail-compact-table .col-doc .doc-pdf-link:hover {
+        text-decoration: underline;
+    }
+    .applicant-detail-compact-table .col-doc .doc-thumb {
+        max-width: 48px;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+    .applicant-detail-compact-table.edu-qual-table th:nth-child(1) { width: 12%; }
+    .applicant-detail-compact-table.edu-qual-table th:nth-child(2) { width: 38%; }
+    .applicant-detail-compact-table.edu-qual-table th:nth-child(3) { width: 10%; }
+    .applicant-detail-compact-table.edu-qual-table th:nth-child(4) { width: 23%; }
+    .applicant-detail-compact-table.edu-qual-table th:nth-child(5) { width: 17%; }
+    .applicant-detail-compact-table.work-exp-table th:nth-child(1) { width: 36%; }
+    .applicant-detail-compact-table.work-exp-table th:nth-child(2) { width: 40%; }
+    .applicant-detail-compact-table.work-exp-table th:nth-child(3) { width: 24%; }
+    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(1) { width: 30%; }
+    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(2) { width: 26%; }
+    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(3) { width: 20%; }
+    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(4) { width: 24%; }
+
+    /* Document link next to masked fields (outside compact tables) */
+    .applicant-inline-doc-link {
+        font-size: 0.72rem;
+        line-height: 1.2;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        text-decoration: none;
+    }
+    .applicant-inline-doc-link:hover {
+        text-decoration: underline;
+    }
 </style>
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
@@ -137,28 +219,28 @@
                                             </div>
 
                                             <h6 class="mt-2 mb-2 fw-bold">Educational Qualifications</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                            <div class="applicant-detail-table-wrap">
+                                                <table class="table table-sm table-bordered applicant-detail-compact-table edu-qual-table">
                                                     <thead>
                                                         <tr>
                                                             <th>Degree</th>
                                                             <th>Institution</th>
-                                                            <th>Year of Passing</th>
-                                                            <th>Certificate No</th>
-                                                            <th>Documents</th>
+                                                            <th>Year</th>
+                                                            <th>Cert. No</th>
+                                                            <th>Doc</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @forelse ($educationalQualifications as $education)
                                                         <tr>
-                                                            <td style="max-width: 10%;">{{ $education->educational_level }}</td>
-                                                            <td style="width: 20%;">{{ $education->institute_name }}</td>
-                                                            <td style="width: 20%;">{{ $education->year_of_passing }}</td>
+                                                            <td class="col-wrap">{{ $education->educational_level }}</td>
+                                                            <td class="col-wrap">{{ $education->institute_name }}</td>
+                                                            <td class="col-wrap">{{ $education->year_of_passing }}</td>
                                                             @php
                                                                 $certificateNo = data_get($education, 'certificate_no');
                                                                 $percentage = data_get($education, 'percentage');
                                                             @endphp
-                                                            <td style="width: 20%;">
+                                                            <td class="col-wrap">
                                                                 @if($certificateNo !== null && $certificateNo !== '')
                                                                     {{ $certificateNo }}
                                                                 @elseif($percentage !== null && $percentage !== '')
@@ -167,22 +249,25 @@
                                                                     N/A
                                                                 @endif
                                                             </td>
-                                                            <td style="text-align:center;">
+                                                            <td class="col-doc">
                                                                 @if(!empty($education->upload_document))
                                                                     @php
                                                                         $fileExtension = strtolower(pathinfo($education->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION));
                                                                     @endphp
-                                                                    @if(in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif']))
-                                                                        <img src="{{ url($education->upload_document) }}" alt="Education Document" width="100">
+                                                                    @if(\in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'], true))
+                                                                        <a href="{{ url($education->upload_document) }}" target="_blank" rel="noopener noreferrer" title="View image">
+                                                                            <img src="{{ url($education->upload_document) }}" alt="" class="doc-thumb">
+                                                                        </a>
                                                                     @elseif($fileExtension === 'pdf')
-                                                                        <a href="{{ url($education->upload_document) }}" target="_blank">
-                                                                            <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                        <a href="{{ url($education->upload_document) }}" target="_blank" rel="noopener noreferrer" class="doc-pdf-link text-primary" title="View document">
+                                                                            <i class="fa fa-file-pdf-o text-danger"></i>
+                                                                            <span>View Document</span>
                                                                         </a>
                                                                     @else
-                                                                        No Documents Uploaded
+                                                                        <span class="text-muted small">—</span>
                                                                     @endif
                                                                 @else
-                                                                    No Documents Uploaded
+                                                                    <span class="text-muted small">—</span>
                                                                 @endif
                                                             </td>
                                                         </tr>
@@ -197,41 +282,44 @@
                                            
                                             @if (in_array(($applicant->form_name ?? ''), ['S', 'W'], true))
                                                 <h6 class="mt-2 mb-2 fw-bold">Work Experience</h6>
-                                                <div class="table-responsive">
-                                                    <table class="table table-bordered">
+                                                <div class="applicant-detail-table-wrap">
+                                                    <table class="table table-sm table-bordered applicant-detail-compact-table work-exp-table {{ (($applicant->form_name ?? '') == 'S') ? 'work-exp-with-doc' : '' }}">
                                                         <thead>
                                                             <tr>
-                                                                <th>Company Name</th>
+                                                                <th>Company</th>
                                                                 <th>Designation</th>
-                                                                <th>Years of Experience</th>
+                                                                <th>Exp.</th>
                                                                 @if (($applicant->form_name ?? '') == 'S')
-                                                                    <th>Document</th>
+                                                                    <th>Doc</th>
                                                                 @endif
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             @forelse ($workExperience as $experience)
                                                             <tr>
-                                                                <td>{{ $experience->company_name }}</td>
-                                                                <td>{{ $experience->designation }}</td>
-                                                                <td>{{ $experience->experience }} years</td>
+                                                                <td class="col-wrap">{{ $experience->company_name }}</td>
+                                                                <td class="col-wrap">{{ $experience->designation }}</td>
+                                                                <td class="col-wrap">{{ $experience->experience }} yrs</td>
                                                                 @if (($applicant->form_name ?? '') == 'S')
-                                                                    <td style="text-align:center;">
+                                                                    <td class="col-doc">
                                                                         @if (!empty($experience->upload_document))
                                                                             @php
-                                                                                $fileExtension = pathinfo($experience->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
+                                                                                $fileExtension = strtolower(pathinfo($experience->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION));
                                                                             @endphp
-                                                                            @if(in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif']))
-                                                                                <img src="{{ url($experience->upload_document) }}" alt="Experience Document" width="100">
-                                                                            @elseif(strtolower($fileExtension) === 'pdf')
-                                                                                <a href="{{ url($experience->upload_document) }}" target="_blank">
-                                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                            @if(\in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'], true))
+                                                                                <a href="{{ url($experience->upload_document) }}" target="_blank" rel="noopener noreferrer" title="View image">
+                                                                                    <img src="{{ url($experience->upload_document) }}" alt="" class="doc-thumb">
+                                                                                </a>
+                                                                            @elseif($fileExtension === 'pdf')
+                                                                                <a href="{{ url($experience->upload_document) }}" target="_blank" rel="noopener noreferrer" class="doc-pdf-link text-primary" title="View document">
+                                                                                    <i class="fa fa-file-pdf-o text-danger"></i>
+                                                                                    <span>View Document</span>
                                                                                 </a>
                                                                             @else
-                                                                                No Documents Uploaded
+                                                                                <span class="text-muted small">—</span>
                                                                             @endif
                                                                         @else
-                                                                            No Documents Uploaded
+                                                                            <span class="text-muted small">—</span>
                                                                         @endif
                                                                     </td>
                                                                 @endif
@@ -403,11 +491,13 @@
                                                             @if (!empty($applicant->aadhaar_doc))
                                                                 <div class="fw-bold mb-0" style="color: #515365">
                                                                     {{ $masked }}
-                                                                    <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
-                                                                        target="_blank" class="text-primary"
+                                                                    (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
+                                                                        target="_blank"
+                                                                        class="text-primary applicant-inline-doc-link"
                                                                         title="Open Aadhaar document">
-                                                                        <i class="fa fa-file-pdf-o text-danger"></i>
-                                                                    </a>
+                                                                        <i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i>
+                                                                        <span>View Document</span>
+                                                                    </a>)
                                                                 </div>
                                                             @else
                                                                 <div class="mb-0 text-muted small">No document</div>

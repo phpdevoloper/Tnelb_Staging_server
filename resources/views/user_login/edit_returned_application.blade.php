@@ -1002,7 +1002,7 @@
                                             <div>
                                                 <label class="container">
                                                     <div class="declaration-container">
-                                                        <input type="checkbox" id="declarationCheckbox" required checked>
+                                                        <input type="checkbox" id="declarationCheckbox" required>
 
                                                         <span class="checkmark"></span>
                                                         <div>
@@ -1047,7 +1047,7 @@
                                                         </div>
 
                                                     </div>
-                                                    <span id="checkboxError" class="text-danger" style="display: none;">Please check the declaration box before proceeding.</span>
+                                                    <span id="checkboxError" class="form-text text-danger d-none mt-2" role="alert">Please check the declaration before submitting.</span>
                                                 </label>
                                             </div>
                                             <input type="hidden" id="form_name" name="form_name"
@@ -1156,6 +1156,12 @@
     })();
 </script>
 <script>
+    $(document).on('change', '#declarationCheckbox', function() {
+        if ($(this).prop('checked')) {
+            $('#checkboxError').addClass('d-none');
+        }
+    });
+
     $(document).on('click', '#submitCorrectionsBtn', function() {
         var btn = $(this);
         var url = btn.data('url');
@@ -1163,13 +1169,15 @@
         if (!form || !url) return;
 
         if (!$('#declarationCheckbox').prop('checked')) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'warning', title: 'Declaration', text: 'Please accept the declaration before submitting.' });
-            } else {
-                alert('Please accept the declaration before submitting.');
+            $('#checkboxError').removeClass('d-none');
+            var $cb = $('#declarationCheckbox');
+            if ($cb.length) {
+                $cb[0].focus();
+                $cb[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             return;
         }
+        $('#checkboxError').addClass('d-none');
 
         var reasons = window.returnApplicationQueryReasons || [];
         var err = [];

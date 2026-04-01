@@ -12,7 +12,7 @@ class RoleHelper {
      * @return int|null
      */
     public static function getRole($roleName) {
-        return DB::table('mst__roles')->where('id', $roleName)->value('name');
+        return DB::table('mst_roles')->where('r_id', $roleName)->value('role_name');
     }
 
     /**

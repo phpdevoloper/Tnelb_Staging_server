@@ -409,7 +409,7 @@ $workflows_cl = $workflows_cl
 
         $workflows_present = DB::table('tnelb_application_tbl as ta')
             ->where('ta.login_id', $loginId)
-            ->orderBy('ta.created_at', 'desc')
+            ->orderBy('ta.submitted_date', 'desc')
             ->get()
             ->map(function ($workflow) {
 
@@ -521,7 +521,7 @@ $workflows_cl = $workflows_cl
                     LIMIT 1
                 ) AS next_application_id")
             )
-            ->orderBy('ta.created_at', 'desc')
+            ->orderBy('ta.submitted_date', 'desc')
             ->get();
 
 
@@ -529,7 +529,7 @@ $workflows_cl = $workflows_cl
 
         $all_form_p = DB::table('tnelb_form_p as ta')
             ->where('ta.login_id', $loginId)
-            ->orderBy('ta.created_at', 'desc')
+            ->orderBy('ta.submitted_date', 'desc')
             ->get()
             ->map(function ($workflow) {
                 
@@ -722,7 +722,7 @@ $workflows_cl = $workflows_cl
             $perPage = 5;
         }
         $mergedData = $workflows_present->merge($all_form_p);
-        $mergedData = $mergedData->sortByDesc('created_at')->values();
+        $mergedData = $mergedData->sortByDesc('submitted_date')->values();
 
         $search = trim((string) request()->input('search', ''));
         if (mb_strlen($search) > 120) {

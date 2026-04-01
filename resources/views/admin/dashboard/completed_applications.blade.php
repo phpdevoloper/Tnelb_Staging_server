@@ -31,6 +31,11 @@
         font-weight: 600;
     }
 
+    #js-completed-applications-title {
+        white-space: normal;
+        line-height: 1.35;
+    }
+
 </style>
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
@@ -112,14 +117,16 @@
                                                         <a href="#"
                                                             class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge @if ($loop->first) js-completed-badge-default @endif"
                                                             data-form-id="{{ $summary['id'] ?? '' }}"
-                                                            data-form-type="N">
+                                                            data-form-type="N"
+                                                            data-licence-name="{{ $summary['licence_name'] ?? '' }}">
                                                             New
                                                             <span class="ms-1 fw-bold text-danger">{{ $completedNew }}</span>
                                                         </a>
                                                         <a href="#"
                                                             class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
                                                             data-form-id="{{ $summary['id'] ?? '' }}"
-                                                            data-form-type="R">
+                                                            data-form-type="R"
+                                                            data-licence-name="{{ $summary['licence_name'] ?? '' }}">
                                                             Renewal
                                                             <span class="ms-1 fw-bold text-danger">{{ $completedRenewal }}</span>
                                                         </a>
@@ -182,16 +189,18 @@
                                                 @endphp
                                                 <span class="fw-semibold text-muted me-1">Completed :</span>
                                                 <a href="#"
-                                                    class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                                    class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge @if (empty($competencyCards) && $loop->first) js-completed-badge-default @endif"
                                                     data-form-id="{{ $summary['id'] ?? '' }}"
-                                                    data-form-type="N">
+                                                    data-form-type="N"
+                                                    data-licence-name="{{ $summary['licence_name'] ?? '' }}">
                                                     New
                                                     <span class="ms-1 fw-bold text-danger">{{ $completedNew }}</span>
                                                 </a>
                                                 <a href="#"
                                                     class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
                                                     data-form-id="{{ $summary['id'] ?? '' }}"
-                                                    data-form-type="R">
+                                                    data-form-type="R"
+                                                    data-licence-name="{{ $summary['licence_name'] ?? '' }}">
                                                     Renewal
                                                     <span class="ms-1 fw-bold text-danger">{{ $completedRenewal }}</span>
                                                 </a>
@@ -225,16 +234,18 @@
                                         @endphp
                                         <span class="fw-semibold text-muted me-1">Completed :</span>
                                         <a href="#"
-                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
+                                            class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge @if (empty($competencyCards) && empty($contractorCards) && $loop->first) js-completed-badge-default @endif"
                                             data-form-id="{{ $summary['id'] ?? '' }}"
-                                            data-form-type="N">
+                                            data-form-type="N"
+                                            data-licence-name="{{ $summary['licence_name'] ?? '' }}">
                                             New
                                             <span class="ms-1 fw-bold text-danger">{{ $completedNew }}</span>
                                         </a>
                                         <a href="#"
                                             class="badge outline-badge-info fw-semibold text-decoration-none js-completed-badge"
                                             data-form-id="{{ $summary['id'] ?? '' }}"
-                                            data-form-type="R">
+                                            data-form-type="R"
+                                            data-licence-name="{{ $summary['licence_name'] ?? '' }}">
                                             Renewal
                                             <span class="ms-1 fw-bold text-danger">{{ $completedRenewal }}</span>
                                         </a>
@@ -248,14 +259,28 @@
                 @endif
             </div>
             @php
-                //var_dump($staff->name);die;
+                // Default table header (first "New" badge: competency → contractor → amendment)
+                $completedApplicationsDefaultTitleSuffix = '';
+                if (!empty($competencyCards)) {
+                    $firstCompleted = collect($competencyCards)->first();
+                    $ln = trim((string) ($firstCompleted['licence_name'] ?? ''));
+                    $completedApplicationsDefaultTitleSuffix = $ln !== '' ? ($ln . ' - New Application') : 'New Application';
+                } elseif (!empty($contractorCards)) {
+                    $firstCompleted = collect($contractorCards)->first();
+                    $ln = trim((string) ($firstCompleted['licence_name'] ?? ''));
+                    $completedApplicationsDefaultTitleSuffix = $ln !== '' ? ($ln . ' - New Application') : 'New Application';
+                } elseif (!empty($amendmentCards)) {
+                    $firstCompleted = collect($amendmentCards)->first();
+                    $ln = trim((string) ($firstCompleted['licence_name'] ?? ''));
+                    $completedApplicationsDefaultTitleSuffix = $ln !== '' ? ($ln . ' - New Application') : 'New Application';
+                }
             @endphp
             
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow-sm">
                         <div class="card-header bg-info">
-                            <h5 class="mb-0 text-white">Completed Applications</h5>
+                            <h5 id="js-completed-applications-title" class="mb-0 text-white">Completed Application : @if($completedApplicationsDefaultTitleSuffix !== ''){{ $completedApplicationsDefaultTitleSuffix }}@endif</h5>
                         </div>
                         <div class="card-body" style="padding: 5px 15px;">
                             <div class="table-responsive">
@@ -266,7 +291,6 @@
                                             <th>Application Id</th>
                                             <th>Applicant's Name</th>
                                             <th>Applied On</th>
-                                            <th>Status</th>
                                             <th>Licence No</th>
                                             <th>Issued At</th>
                                             <th>Expires At</th>
@@ -308,6 +332,28 @@
                     .replace(/'/g, '&#039;');
             }
 
+            const completedTableTitlePrefix = 'Completed Application : ';
+
+            function updateCompletedTableTitle($btn) {
+                const $title = $('#js-completed-applications-title');
+                if (!$title.length) return;
+
+                let rawName = ($btn.attr('data-licence-name') || '').trim();
+                if (!rawName) {
+                    rawName = $btn.closest('.bg-custom-card').find('.fw-semibold').filter(function() {
+                        return !$(this).hasClass('text-muted');
+                    }).first().text().trim();
+                }
+                const formType = ($btn.attr('data-form-type') || '').trim();
+                const typeLabel = formType === 'R' ? 'Renewal' : 'New Application';
+
+                if (rawName) {
+                    $title.text(completedTableTitlePrefix + rawName + ' - ' + typeLabel);
+                } else {
+                    $title.text(completedTableTitlePrefix.trim());
+                }
+            }
+
             function formatDateDDMMYYYY(val) {
                 if (!val) return '';
                 const raw = String(val).trim();
@@ -333,8 +379,6 @@
                     const appId = escapeHtml(r.application_id);
                     const appName = escapeHtml(r.applicant_name);
                     const appliedOn = escapeHtml(formatDateDDMMYYYY(r.applied_on));
-                    const statusText = (r.status ?? '').toString();
-                    const status = escapeHtml(statusText);
                     const licNo = escapeHtml(r.license_number);
                     const issuedAt = escapeHtml(formatDateDDMMYYYY(r.issued_at));
                     const expiresAt = escapeHtml(formatDateDDMMYYYY(r.expires_at));
@@ -368,21 +412,12 @@
                           `
                         : '';
 
-                    // Status badge (bootstrap-style)
-                    const statusLower = statusText.trim().toLowerCase();
-                    let statusClass = 'badge-secondary';
-                    if (statusLower === 'completed' || statusLower === 'approved' || statusLower === 'a') statusClass = 'badge-success';
-                    else if (statusLower === 'pending' || statusLower === 'p') statusClass = 'badge-warning';
-                    else if (statusLower === 'rejected' || statusLower === 'r') statusClass = 'badge-danger';
-                    const statusCell = status ? `<span class="badge rounded-pill ${statusClass}">${status}</span>` : '';
-
                     return `
                         <tr>
                             <td>${escapeHtml(r.sno)}</td>
                             <td>${appId ? (viewUrl !== '#' ? `<a href="${viewUrl}" class="fw-semibold text-primary" target="_blank">${appId}</a>` : `<span class="fw-semibold">${appId}</span>`) : ''}</td>
                             <td>${appName}</td>
                             <td>${appliedOn}</td>
-                            <td>${statusCell}</td>
                             <td>${licNo}</td>
                             <td>${issuedAt}</td>
                             <td>${expiresAt}</td>
@@ -407,8 +442,12 @@
                 e.preventDefault();
 
                 const $btn = $(this);
-                const formId = $btn.data('form-id');
-                if (!formId) return;
+                updateCompletedTableTitle($btn);
+
+                const formIdRaw = ($btn.attr('data-form-id') || '').trim();
+                if (formIdRaw === '') {
+                    return;
+                }
 
                 const formType = ($btn.attr('data-form-type') || '').trim();
 
@@ -420,9 +459,9 @@
 
                 // Simple loading state
                 const $tbody = $table.find('tbody');
-                $tbody.html('<tr><td colspan="9" class="text-center">Loading...</td></tr>');
+                $tbody.html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
 
-                const ajaxData = { form_id: formId };
+                const ajaxData = { form_id: formIdRaw };
                 if (formType === 'N' || formType === 'R') {
                     ajaxData.form_type = formType;
                 }
@@ -439,7 +478,7 @@
                     },
                     error: function(xhr) {
                         const msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to load data';
-                        $tbody.html(`<tr><td colspan="9" class="text-center text-danger">${escapeHtml(msg)}</td></tr>`);
+                        $tbody.html(`<tr><td colspan="8" class="text-center text-danger">${escapeHtml(msg)}</td></tr>`);
                     }
                 });
             });
@@ -447,6 +486,7 @@
             $(function() {
                 const $default = $('.js-completed-badge-default').first();
                 if ($default.length) {
+                    updateCompletedTableTitle($default);
                     $default.trigger('click');
                 }
             });
