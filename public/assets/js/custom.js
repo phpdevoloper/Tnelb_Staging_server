@@ -454,6 +454,28 @@ $(document).ready(function () {
         $(this).closest('.file-section').replaceWith(fileInput);
     });
 
+    $(document).on('click', '.remove-inst', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $row = $(this).closest('tr');
+        const $flag = $row.find('input.removed-document-inst[name="removed_document_inst[]"]');
+        if ($flag.length) {
+            $flag.val('1');
+        }
+        const idx = $('#institute-container .institute-fields').index($row);
+        const nameAttr = idx >= 0 ? `institute_document[${idx}]` : 'institute_document[0]';
+        const fileInput = `<div class="file-section"><input type="file" class="form-control" name="${nameAttr}" accept=".pdf,application/pdf,.png,.jpg,.jpeg"></div>`;
+        $(this).closest('.file-section').replaceWith(fileInput);
+    });
+
+    $(document).on('change', 'input[type="file"][name^="institute_document["]', function () {
+        const $row = $(this).closest('tr');
+        const $flag = $row.find('input.removed-document-inst[name="removed_document_inst[]"]');
+        if ($flag.length && this.files && this.files.length > 0) {
+            $flag.val('0');
+        }
+    });
+
 
     $(document).on('click', '.remove_edu', function() {
         let edu_id = $(this).data('edu_id'); 
@@ -505,6 +527,10 @@ $(document).ready(function () {
 
 
     $(document).on('click', '.remove-docs', function () {
+        const $td = $(this).closest('td');
+        // Legacy pages could have a hidden .aadhaar-doc-input alongside the container (duplicate name="aadhaar_doc").
+        $td.find('.aadhaar-doc-input').remove();
+
         let inputHtml = `
             <div class="aadhaar-doc-input">
                 <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
@@ -512,10 +538,16 @@ $(document).ready(function () {
                 <small class="text-danger file-error"></small>
             </div>
         `;
-    
+
         $(this).closest('.aadhaar-doc-container').replaceWith(inputHtml);
 
         $('#aadhaar_doc_removed').val('1');
+    });
+
+    $(document).on('change', '#aadhaar_doc', function () {
+        if (this.files && this.files.length > 0) {
+            $('#aadhaar_doc_removed').val('0');
+        }
     });
 
     // PAN document removed

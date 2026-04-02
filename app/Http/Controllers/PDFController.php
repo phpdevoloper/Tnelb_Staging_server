@@ -14,6 +14,9 @@ use App\Models\TnelbAppsInstitute;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use TCPDF;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
+use Mpdf\HTMLParserMode;
 use Mpdf\Mpdf;
 use Stichoza\GoogleTranslate\GoogleTranslate;
 
@@ -63,238 +66,354 @@ class PDFController extends Controller
     }
 
     public function generateFormPPDF($newApplicationId)
-{
-    $form = TnelbFormP::where('application_id', $newApplicationId)->first();
-    $education = Mst_education::where('application_id', $newApplicationId)->get();
-    $experience = Mst_experience::where('application_id', $newApplicationId)->get();
-    $institutes = TnelbAppsInstitute::where('application_id', $newApplicationId)->get();
-    $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->first();
-    $payment = DB::table('payments')->where('application_id', $newApplicationId)->first();
+    {
+        $form = TnelbFormP::where('application_id', $newApplicationId)->first();
+        $education = Mst_education::where('application_id', $newApplicationId)->get();
+        $experience = Mst_experience::where('application_id', $newApplicationId)->get();
+        $institutes = TnelbAppsInstitute::where('application_id', $newApplicationId)->get();
+        $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->first();
+        $payment = DB::table('payments')->where('application_id', $newApplicationId)->first();
 
-    if (!$form) {
-        return redirect()->back()->with('error', 'No records found!');
-    }
+        if (!$form) {
+            return redirect()->back()->with('error', 'No records found!');
+        }
 
-    $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
-    $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
-    $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
+        $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
+        $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
+        $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
+        $maskedUpper = mb_strtoupper($masked, 'UTF-8');
 
-    $mpdf = new \Mpdf\Mpdf([
-        'mode' => 'utf-8',
-        'format' => 'A4',
-        'default_font' => 'helvetica',
-        'margin_left' => 15,
-        'margin_right' => 15,
-        'margin_top' => 18,
-        'margin_bottom' => 18,
-    ]);
+        // Match generatePDF(): A4, helvetica 10pt, acknowledgement-style layout
+        $applicantNameUpper = mb_strtoupper($form->applicant_name ?? '', 'UTF-8');
+        $fatherNameUpper = mb_strtoupper($form->fathers_name ?? '', 'UTF-8');
+        $addressRaw = $form->applicants_address ?? '';
+        $addressUpper = mb_strtoupper($addressRaw, 'UTF-8');
+        $dobDisplay = trim(($form->d_o_b ?? '') . ' (' . ($form->age ?? '') . ' YEARS)');
+        $dobDisplay = mb_strtoupper($dobDisplay, 'UTF-8');
+        $appIdUpper = mb_strtoupper($form->application_id ?? '', 'UTF-8');
+        $formNameUpper = mb_strtoupper($form->form_name ?? 'P', 'UTF-8');
+        $applTypeCode = strtoupper(trim($form->appl_type ?? 'N'));
 
-    $mpdf->WriteHTML('
-    <style>
-        body{font-family:helvetica;font-size:10pt;}
-        table{border-collapse:collapse;width:100%;}
-        .no-border td{border:none;padding:4px 6px;}
-        .tbl-bordered td,.tbl-bordered th{border:1px solid #000;padding:5px;text-align:center;}
-        .label{width:35%;font-weight:bold;}
-        .colon{width:2%;}
-    </style>
-    ', \Mpdf\HTMLParserMode::HEADER_CSS);
+        $certificateText = match ($form->form_name) {
+            'P' => 'Application for Power Generating Station Operation & Maintenance Competency Certificate',
+            'S' => 'Application for Competency Certificate for Supervisor',
+            'W' => 'Application for Competency Certificate for Wireman',
+            'WH' => 'Application for Competency Certificate for Wireman Helper',
+            default => 'Application for Power Generating Station Operation & Maintenance Competency Certificate',
+        };
+        $certificateTextUpper = mb_strtoupper($certificateText, 'UTF-8');
 
-    $certificateText = match ($form->form_name) {
-        'S' => 'Application for Competency Certificate for Supervisor',
-        'W' => 'Application for Competency Certificate for Wireman',
-        'WH' => 'Application for Competency Certificate for Wireman Helper',
-        default => 'Application for Competency Certificate',
-    };
+        if (empty($form->previously_number) || empty($form->previously_date)) {
+            $prevAppValue = 'NO';
+        } else {
+            $prevAppValue = 'YES, ' . mb_strtoupper((string) ($form->previously_number ?? ''), 'UTF-8')
+                . ', ' . mb_strtoupper(format_date($form->previously_date) ?? '', 'UTF-8');
+        }
 
-    $html = '
+        $employerUpper = mb_strtoupper(trim($form->employer_detail ?? '') !== '' ? trim($form->employer_detail) : 'NIL', 'UTF-8');
 
-    <table class="no-border">
-    <tr><td style="text-align:center;font-weight:bold;">GOVERNMENT OF TAMILNADU</td></tr>
-    <tr><td style="text-align:center;font-weight:bold;">THE ELECTRICAL LICENSING BOARD</td></tr>
-    <tr><td style="text-align:center;">Thiru.Vi.Ka.Industrial Estate, Guindy, Chennai – 600032</td></tr>
-    <tr><td style="text-align:center;font-weight:bold;">Form "' . $form->form_name . '"</td></tr>
-    <tr><td style="text-align:center;">' . $certificateText . '</td></tr>
-    <tr><td style="text-align:center;">Application Number : <strong>' . $form->application_id . '</strong></td></tr>
-    </table>
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font_size' => 10,
+            'default_font' => 'helvetica',
+        ]);
 
-    <br>
+        $mpdf->WriteHTML('
+        <style>
+            body { font-family: helvetica, sans-serif; font-size: 9pt; line-height: 1.4; }
+            table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+            td, th { padding: 4px; vertical-align: top; }
 
-    <table class="no-border">
+            .header-table { width: 100%; margin-top: 0; }
+            .header-table td { border: none; text-align: center; padding: 2px 4px; }
 
-    <tr>
-        <td class="label">1. Name of the Applicant</td>
-        <td class="colon">:</td>
-        <td>' . $form->applicant_name . '</td>
+            /* Fixed grid: item # | label | : | value | photo (govt-style alignment) */
+            table.form-p-grid {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+                margin-top: 0;
+            }
+            table.form-p-grid td {
+                border: none;
+                vertical-align: top;
+                padding: 5px 3px;
+            }
+            table.form-p-grid td.fp-num {
+                width: 6%;
+                text-align: right;
+                padding-right: 8px;
+                padding-left: 0;
+            }
+            table.form-p-grid td.fp-label {
+                width: 42%;
+                text-align: left;
+            }
+            table.form-p-grid td.fp-colon {
+                width: 3%;
+                text-align: center;
+                padding-left: 8px;
+                padding-right: 2px;
+            }
+            table.form-p-grid td.fp-val {
+                width: 25%;
+                text-align: left;
+                word-wrap: break-word;
+                padding-left: 4px;
+            }
+            table.form-p-grid td.fp-photo {
+                width: 24%;
+                text-align: center;
+            }
+            table.form-p-grid td.fp-section-span {
+                padding: 7px 6px;
+                text-align: left;
+            }
+            table.form-p-grid.form-p-top { margin-top: 20px; }
+            table.form-p-grid.form-p-section-hdr { margin-top: 10px; }
 
-        <td rowspan="4" style="text-align:right;">';
+            .tbl-bordered td, .tbl-bordered th { border: 1px solid #000; text-align: center; }
+            .tbl-bordered th:first-child,
+            .tbl-bordered td:first-child { width: 8%; text-align: center; }
 
-    if ($applicant_photo && file_exists(public_path($applicant_photo->upload_path))) {
-        $html .= '<img src="' . public_path($applicant_photo->upload_path) . '" width="120" height="150" style="border:1px solid;">';
-    } else {
-        $html .= 'No Photo';
-    }
+            .section-table { width: 95%; margin: 1% 0 0 5%; }
 
-    $html .= '</td>
-    </tr>
+            .payment-table { width: 90%; margin: 10px auto 0 auto; }
+            .payment-table th,
+            .payment-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+            .payment-table th { text-align: center; font-weight: bold; }
 
-    <tr>
-        <td class="label">2. Father\'s Name</td>
-        <td class="colon">:</td>
-        <td>' . $form->fathers_name . '</td>
-    </tr>
+            table.form-p-grid.form-p-qs-final { margin-top: 22px; margin-bottom: 4px; }
+            table.form-p-grid.form-p-qs-final tr.form-p-q6 > td,
+            table.form-p-grid.form-p-qs-final tr.form-p-q7 > td {
+                padding-top: 14px;
+                padding-bottom: 6px;
+            }
+        </style>', HTMLParserMode::HEADER_CSS);
 
-    <tr>
-        <td class="label">3. Address of the Applicant</td>
-        <td class="colon">:</td>
-        <td>' . $this->formatAddressToThreeLines($form->applicants_address) . '</td>
-    </tr>
+        $words = preg_split('/\s+/', trim($addressUpper));
+        $formattedAddress = '';
+        foreach (array_chunk($words, 3) as $chunk) {
+            $formattedAddress .= implode(' ', $chunk) . '<br>';
+        }
 
-    <tr>
-        <td class="label">4. Date of Birth and Age</td>
-        <td class="colon">:</td>
-        <td>' . $form->d_o_b . ' (' . $form->age . ' years)</td>
-    </tr>
-
-    </table>
-
-    <h4>5. (i) Details of Technical Qualification passed by the applicant</h4>
-
-    <table class="tbl-bordered">
-    <tr>
-    <th>S.No</th><th>Education Level</th><th>Institution</th><th>Year of Passing</th><th>Percentage</th>
-    </tr>';
-
-    foreach ($education as $i => $edu) {
-        $html .= '
-        <tr>
-        <td>' . ($i + 1) . '</td>
-        <td>' . $edu->educational_level . '</td>
-        <td>' . $edu->institute_name . '</td>
-        <td>' . $edu->year_of_passing . '</td>
-        <td>' . $edu->percentage . '%</td>
-        </tr>';
-    }
-
-    $html .= '</table>
-
-    <h4>(ii) Institute in which the applicant has undergone the training and the period</h4>
-
-    <table class="tbl-bordered">
-    <tr>
-    <th>S.No</th><th>Institute Name & Address</th><th>Duration</th><th>From Date</th><th>To Date</th>
-    </tr>';
-
-    foreach ($institutes as $i => $inst) {
-        $html .= '
-        <tr>
-        <td>' . ($i + 1) . '</td>
-        <td>' . $inst->institute_name_address . '</td>
-        <td>' . $inst->duration . ' Years</td>
-        <td>' . format_date($inst->from_date) . '</td>
-        <td>' . format_date($inst->to_date) . '</td>
-        </tr>';
-    }
-
-    $html .= '</table>
-
-    <h4>(iii) Power Station to which he is attached at present</h4>
-
-    <table class="tbl-bordered">
-    <tr>
-    <th>S.No</th><th>Power Station Name</th><th>Experience</th><th>Designation</th>
-    </tr>';
-
-    $hasExpData = $experience->contains(function ($exp) {
-        return trim($exp->company_name ?? '') !== '' ||
-               trim($exp->experience ?? '') !== '' ||
-               trim($exp->designation ?? '') !== '';
-    });
-
-    if (!$hasExpData) {
-        $html .= '<tr><td>1</td><td>Nil</td><td>Nil</td><td>Nil</td></tr>';
-    } else {
-        foreach ($experience as $i => $exp) {
-            $html .= '
+        $html = '
+        <table class="header-table">
             <tr>
-            <td>' . ($i + 1) . '</td>
-            <td>' . ($exp->company_name ?: 'Nil') . '</td>
-            <td>' . ($exp->experience ? $exp->experience . ' Years' : 'Nil') . '</td>
-            <td>' . ($exp->designation ?: 'Nil') . '</td>
+                <td style="font-size:12pt; font-weight:bold;">GOVERNMENT OF TAMILNADU</td>
+            </tr>
+            <tr>
+                <td style="font-size:11pt; font-weight:bold;">THE ELECTRICAL LICENSING BOARD</td>
+            </tr>
+            <tr>
+                <td>THIRU.VI.KA.INDUSTRIAL.ESTATE, GUINDY, CHENNAI – 600032.</td>
+            </tr>
+            <tr>
+                <td style="font-size:11pt; font-weight:bold;">
+                    FORM "' . $formNameUpper . ($applTypeCode === 'R' ? '" - RENEWAL' : '"') . '
+                </td>
+            </tr>
+            <tr>
+                <td>' . e($certificateTextUpper) . '</td>
+            </tr>
+            <tr>
+                <td style="font-size:11pt; font-weight:bold;">
+                    APPLICATION NUMBER: <span>' . e($appIdUpper) . '</span>
+                </td>
+            </tr>
+        </table>';
+
+        // Applicant & photo — single fixed grid so #, labels, colons, values align with (IV)/6/7
+        $html .= '<table class="form-p-grid form-p-top" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="fp-num">1.</td>
+            <td class="fp-label">NAME OF THE APPLICANT</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . e($applicantNameUpper) . '</td>
+            <td class="fp-photo" rowspan="4">';
+
+        if ($applicant_photo && file_exists(public_path($applicant_photo->upload_path))) {
+            $html .= '<img src="' . public_path($applicant_photo->upload_path) . '" style="width:120px; height:140px; border:1px solid;">';
+        } else {
+            $html .= '<span>No Photo</span>';
+        }
+
+        $html .= '</td>
+        </tr>
+        <tr>
+            <td class="fp-num">2.</td>
+            <td class="fp-label">FATHER\'S NAME</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . e($fatherNameUpper) . '</td>
+        </tr>
+        <tr>
+            <td class="fp-num">3.</td>
+            <td class="fp-label">ADDRESS OF THE APPLICANT</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . $formattedAddress . '</td>
+        </tr>
+        <tr>
+            <td class="fp-num">4.</td>
+            <td class="fp-label">DATE OF BIRTH AND AGE</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . e($dobDisplay) . '</td>
+        </tr>
+        <tr>
+            <td class="fp-num">5.</td>
+            <td class="fp-section-span" colspan="4">(I) DETAILS OF TECHNICAL QUALIFICATION PASSED BY THE APPLICANT</td>
+        </tr>
+        </table>';
+
+        $html .= '
+        <div class="section-table">
+        <table class="tbl-bordered">
+        <tr>
+        <th style="font-size:9pt;">S.NO</th>
+        <th style="font-size:9pt;">EDUCATION LEVEL</th>
+        <th style="font-size:9pt;">INSTITUTION</th>
+        <th style="font-size:9pt;">YEAR OF PASSING</th>
+        <th style="font-size:9pt;">CERTIFICATE NO</th>
+        </tr>';
+        foreach ($education as $i => $edu) {
+            $html .= '<tr>
+                <td>' . ($i + 1) . '</td>
+                <td>' . e($edu->educational_level ?? '') . '</td>
+                <td>' . e($edu->institute_name ?? '') . '</td>
+                <td>' . e((string) ($edu->year_of_passing ?? '')) . '</td>
+                <td>' . e($edu->certificate_no ?? '') . '</td>
             </tr>';
         }
-    }
+        $html .= '</table></div>';
 
-    $html .= '</table>';
+        $html .= '<table class="form-p-grid form-p-section-hdr" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="fp-num"></td>
+            <td class="fp-section-span" colspan="4">(II) INSTITUTE IN WHICH THE APPLICANT HAS UNDERGONE THE TRAINING AND THE PERIOD</td>
+        </tr>
+        </table>
+        <div class="section-table">
+        <table class="tbl-bordered">
+        <tr>
+        <th style="font-size:9pt;">S.NO</th>
+        <th style="font-size:9pt;">INSTITUTE NAME &amp; ADDRESS</th>
+        <th style="font-size:9pt;">DURATION</th>
+        <th style="font-size:9pt;">FROM DATE</th>
+        <th style="font-size:9pt;">TO DATE</th>
+        </tr>';
+        foreach ($institutes as $i => $inst) {
+            $html .= '<tr>
+                <td>' . ($i + 1) . '</td>
+                <td>' . e($inst->institute_name_address ?? '') . '</td>
+                <td>' . e((string) ($inst->duration ?? '')) . ' YEARS</td>
+                <td>' . e(format_date($inst->from_date) ?? '') . '</td>
+                <td>' . e(format_date($inst->to_date) ?? '') . '</td>
+            </tr>';
+        }
+        $html .= '</table></div>';
 
-    $employer = trim($form->employer_detail ?? '') ?: 'Nil';
+        $html .= '<table class="form-p-grid form-p-section-hdr" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="fp-num"></td>
+            <td class="fp-section-span" colspan="4">(III) POWER STATION TO WHICH HE IS ATTACHED AT PRESENT</td>
+        </tr>
+        </table>
+        <div class="section-table">
+        <table class="tbl-bordered">
+        <tr>
+        <th style="font-size:9pt;">S.NO</th>
+        <th style="font-size:9pt;">POWER STATION NAME</th>
+        <th style="font-size:9pt;">EXPERIENCE</th>
+        <th style="font-size:9pt;">DESIGNATION</th>
+        </tr>';
 
-    $html .= '
+        $hasExpData = $experience->contains(function ($exp) {
+            return trim($exp->company_name ?? '') !== ''
+                || trim($exp->experience ?? '') !== ''
+                || trim($exp->designation ?? '') !== '';
+        });
 
-    <table class="no-border">
+        if (!$hasExpData) {
+            $html .= '<tr><td>1</td><td>NIL</td><td>NIL</td><td>NIL</td></tr>';
+        } else {
+            foreach ($experience as $i => $exp) {
+                $html .= '<tr>
+                    <td>' . ($i + 1) . '</td>
+                    <td>' . e(mb_strtoupper($exp->company_name ?: 'NIL', 'UTF-8')) . '</td>
+                    <td>' . e($exp->experience !== null && $exp->experience !== '' ? mb_strtoupper($exp->experience . ' YEARS', 'UTF-8') : 'NIL') . '</td>
+                    <td>' . e(mb_strtoupper($exp->designation ?: 'NIL', 'UTF-8')) . '</td>
+                </tr>';
+            }
+        }
+        $html .= '</table></div>';
 
-    <tr>
-        <td width="5%"></td>
-        <td width="65%">(iv) Name of the employer</td>
-        <td width="2%">:</td>
-        <td width="28%">' . $employer . '</td>
-    </tr>
-
-    <tr>
-        <td>6.</td>
-        <td colspan="3">Have you made any previous application? If so, State reference No. and date</td>
-    </tr>
-
-    <tr>
-        <td>7.</td>
-        <td>Aadhaar Number</td>
-        <td>:</td>
-        <td>' . $masked . '</td>
-    </tr>
-
-    </table>';
-
-    if ($payment) {
-
-        $type = strtoupper($form->appl_type ?? 'N') === 'N' ? 'New Application' : 'Renewal Application';
-
-        $html .= '
-
-        <br><br>
-
-        <p style="text-align:center;font-weight:bold;">Payment Details</p>
-
-        <table class="no-border" style="width:60%;margin-left:20%;">
-
-        <tr><td>Application ID</td><td>:</td><td>' . $newApplicationId . '</td></tr>
-        <tr><td>Applicant Name</td><td>:</td><td>' . $form->applicant_name . '</td></tr>
-        <tr><td>Type of Form</td><td>:</td><td>' . $type . '</td></tr>
-        <tr><td>Bank Name</td><td>:</td><td>State Bank of India</td></tr>
-        <tr><td>Mode of Payment</td><td>:</td><td>UPI</td></tr>
-        <tr><td>Payment Date</td><td>:</td><td>' . \Carbon\Carbon::parse($payment->created_at)->format('d-m-Y') . '</td></tr>
-        <tr><td>Transaction ID</td><td>:</td><td>' . ($payment->transaction_id ?? 'N/A') . '</td></tr>
-        <tr><td>Total Amount</td><td>:</td><td>₹ ' . ($payment->amount ?? 'N/A') . '</td></tr>
-
+        $html .= '<table class="form-p-grid form-p-qs-final" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="fp-num"></td>
+            <td class="fp-label">(IV) NAME OF THE EMPLOYER</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . e($employerUpper) . '</td>
+            <td class="fp-photo">&nbsp;</td>
+        </tr>
+        <tr class="form-p-q6">
+            <td class="fp-num">6.</td>
+            <td class="fp-label">HAVE YOU MADE ANY PREVIOUS APPLICATION? IF SO, STATE REFERENCE NO. AND DATE</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . e($prevAppValue) . '</td>
+            <td class="fp-photo">&nbsp;</td>
+        </tr>
+        <tr class="form-p-q7">
+            <td class="fp-num">7.</td>
+            <td class="fp-label">AADHAAR NUMBER</td>
+            <td class="fp-colon">:</td>
+            <td class="fp-val">' . e($maskedUpper) . '</td>
+            <td class="fp-photo">&nbsp;</td>
+        </tr>
         </table>';
+
+        if ($payment) {
+            $paymentType = mb_strtoupper($payment->payment_mode ?? 'ONLINE', 'UTF-8');
+            $transactionNo = mb_strtoupper($payment->transaction_id ?? 'N/A', 'UTF-8');
+            $paymentDate = mb_strtoupper(\Carbon\Carbon::parse($payment->created_at)->format('d-m-Y'), 'UTF-8');
+            $amountValue = mb_strtoupper('₹ ' . ($payment->amount ?? 'N/A'), 'UTF-8');
+            $statusValue = mb_strtoupper($payment->payment_status ?? 'N/A', 'UTF-8');
+
+            $html .= '
+            <br><br>
+            <div style="font-family: Arial, sans-serif; font-size:10pt;">
+            <p style="font-size:11pt; font-weight:bold; margin-top:10px; text-align:center;">PAYMENT DETAILS</p>
+            <table class="payment-table">
+                <tr>
+                    <th>PAYMENT TYPE</th>
+                    <th>TRANSACTION NUMBER</th>
+                    <th>PAYMENT DATE</th>
+                    <th>AMOUNT</th>
+                    <th>PAYMENT STATUS</th>
+                </tr>
+                <tr>
+                    <td>' . e($paymentType) . '</td>
+                    <td>' . e($transactionNo) . '</td>
+                    <td>' . e($paymentDate) . '</td>
+                    <td>' . e($amountValue) . '</td>
+                    <td>' . e($statusValue) . '</td>
+                </tr>
+            </table>
+            </div>';
+        }
+
+        $html .= '<br><br>
+        <table width="100%" style="border-collapse:collapse; margin-top:10px;">
+            <tr>
+                <td style="text-align:left;"><strong>Place:</strong> Chennai</td>
+                <td style="text-align:right;"><strong>Date:</strong> ' . date('d-m-Y') . '</td>
+            </tr>
+        </table>';
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('Application_Details.pdf', 'I'))
+            ->header('Content-Type', 'application/pdf');
     }
-
-    $html .= '
-
-    <br>
-
-    <table class="no-border">
-    <tr>
-        <td style="text-align:left;width:50%;"><strong>Place:</strong> Chennai</td>
-        <td style="text-align:right;width:50%;"><strong>Date:</strong> ' . date('d-m-Y') . '</td>
-    </tr>
-    </table>
-    ';
-
-    $mpdf->WriteHTML($html);
-
-    return response($mpdf->Output('Application_Details.pdf', 'I'))
-        ->header('Content-Type', 'application/pdf');
-}
 
 
     public function generateFormPPDFTA($newApplicationId)
@@ -307,6 +426,7 @@ class PDFController extends Controller
         $experience = Mst_experience::where('application_id', $newApplicationId)->get();
         $institutes = TnelbAppsInstitute::where('application_id', $newApplicationId)->get();
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $newApplicationId)->first();
+        $payment = DB::table('payments')->where('application_id', $newApplicationId)->first();
 
         if (!$form) {
             return redirect()->back()->with('error', 'No records found!');
@@ -316,15 +436,15 @@ class PDFController extends Controller
         $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
         $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'default_font' => 'marutham',
             'fontDir' => array_merge(
-                (new \Mpdf\Config\ConfigVariables())->getDefaults()['fontDir'],
+                (new ConfigVariables())->getDefaults()['fontDir'],
                 [public_path('fonts')]
             ),
             'fontdata' => array_merge(
-                (new \Mpdf\Config\FontVariables())->getDefaults()['fontdata'],
+                (new FontVariables())->getDefaults()['fontdata'],
                 [
                     'marutham' => [
                         'R' => 'Marutham.ttf',
@@ -362,7 +482,7 @@ class PDFController extends Controller
                 line-height: 1.6;
             }
             
-        </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
+        </style>', HTMLParserMode::HEADER_CSS);
     
         $certificateText = match ($form->form_name) {
             'S' => 'Application for Competency Certificate for Supervisor',
@@ -576,7 +696,7 @@ class PDFController extends Controller
         //     return wordwrap($text, $length, '<br>', true);
         // };
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
             'default_font_size' => 10,
@@ -628,7 +748,7 @@ class PDFController extends Controller
             .payment-table th,
             .payment-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
             .payment-table th { text-align: center; font-weight: bold; }
-        </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
+        </style>', HTMLParserMode::HEADER_CSS);
     
         $certificateText = match ($form->form_name) {
             'S' => 'Acknowledgement Slip for Supervisor Competency Certificate',
@@ -1163,10 +1283,10 @@ class PDFController extends Controller
         if (!$form) {
             return redirect()->back()->with('error', 'பதிவுகள் கிடைக்கவில்லை!');
         }
-        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $defaultConfig = (new ConfigVariables())->getDefaults();
         $fontDirs = $defaultConfig['fontDir'];
 
-        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $defaultFontConfig = (new FontVariables())->getDefaults();
         $fontData = $defaultFontConfig['fontdata'];
 
         $mpdf = new Mpdf([
@@ -1745,7 +1865,7 @@ class PDFController extends Controller
 
 
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
             'default_font_size' => 10,
@@ -1764,7 +1884,7 @@ class PDFController extends Controller
             .tbl-bordered td, .tbl-bordered th { border: 1px solid #000; text-align: center; }
             .tbl-no-border td { border: none; padding-bottom: 12px; }
             .photo-cell { text-align:center; }
-        </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
+        </style>', HTMLParserMode::HEADER_CSS);
     
         $certificateText = match ($form->form_name) {
             'S' => 'Application for Competency Certificate for Supervisor',

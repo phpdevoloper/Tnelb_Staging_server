@@ -9,6 +9,7 @@ use App\Models\Mst_education;
 use App\Models\Mst_experience;
 use App\Models\MstLicence;
 use App\Models\TnelbApplicantPhoto;
+use App\Models\TnelbApplicantsSign;
 use App\Models\TnelbAppsInstitute;
 use App\Models\TnelbFormP;
 use Carbon\Carbon;
@@ -73,9 +74,7 @@ class FormPController extends BaseController
             'license_name'         => 'required|string|max:2',
             // 'form_id'              => 'required|integer',
             // 'amount'               => 'required|numeric|min:0',
-            'certificate_no'            => 'nullable|string',
-            'certificate_date'              => 'nullable|date',
-
+            'certificate_date'    => 'nullable|date',
 
             // education arrays
             'educational_level'    => 'required|array|min:1',
@@ -108,6 +107,7 @@ class FormPController extends BaseController
 
             // single files
             'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50', // 1MB
+            'upload_sign'         => 'required|image|mimes:jpg,jpeg,png|max:50',
             'aadhaar_doc'          => 'nullable|mimes:pdf|max:250',
 
             // multiple files (arrays)
@@ -406,7 +406,19 @@ class FormPController extends BaseController
                 ]);
             }
 
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
 
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
+                    ]
+                );
+            }
 
             DB::commit();
 
@@ -439,11 +451,15 @@ class FormPController extends BaseController
         $applicationId = $request->application_id;
         $existingForm = TnelbFormP::where('application_id', $applicationId)->first();
         $existingPhoto = TnelbApplicantPhoto::where('application_id', $applicationId)->first();
+        $existingSign = TnelbApplicantsSign::where('application_id', $applicationId)->first();
 
         if (!$existingForm && $applicationId) {
             return response()->json(['status' => 'error', 'message' => 'Draft not found!'], 404);
         }
         $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
+            ? 'image|mimes:jpg,jpeg,png|max:50'
+            : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+        $uploadSignRule = (!$existingSign || empty($existingSign->uploaded_doc))
             ? 'image|mimes:jpg,jpeg,png|max:50'
             : 'nullable|image|mimes:jpg,jpeg,png|max:50';
         $aadhaarDocRule = 'nullable|mimes:pdf|max:250';
@@ -470,6 +486,7 @@ class FormPController extends BaseController
             'certificate_no'      => 'nullable|array',
             'certificate_no.*'    => 'nullable|string|max:20',
             'upload_photo'   => $uploadPhotoRule,
+            'upload_sign'    => $uploadSignRule,
             'aadhaar_doc'    => $aadhaarDocRule,
 
             'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
@@ -560,7 +577,7 @@ class FormPController extends BaseController
                     'applicants_address' => $request->applicants_address,
                     'd_o_b'              => $request->d_o_b ?? 0,
                     'age'                => $request->age,
-                    'status'             => 'P',
+                    'app_status'             => 'P',
                     'previously_number'  => $request->previously_number ?? 0,
                     'previously_date'    => $request->previously_date ?? 0,
                     'employer_detail'     => $request->employer_name,
@@ -768,7 +785,19 @@ class FormPController extends BaseController
                 );
             }
 
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
 
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
+                    ]
+                );
+            }
 
             // Process Payment for update
             DB::commit();
@@ -847,6 +876,8 @@ class FormPController extends BaseController
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
 
+        $applicant_sign = TnelbApplicantsSign::where('application_id', $appl_id)->first();
+
         $proof_doc = Schema::hasTable('mst_documents')
             ? Mst_documents::where('application_id', $appl_id)->first()
             : null;
@@ -889,6 +920,7 @@ class FormPController extends BaseController
             'apps_doc',
             'license_details',
             'applicant_photo',
+            'applicant_sign',
             'proof_doc',
             'institutes',
             'queries',
@@ -918,12 +950,17 @@ class FormPController extends BaseController
         $existingForm = TnelbFormP::where('application_id', $applicationId)->first();
 
         $existingPhoto = TnelbApplicantPhoto::where('application_id', $applicationId)->first();
+        $existingSign = TnelbApplicantsSign::where('application_id', $applicationId)->first();
 
         if (!$existingForm && $applicationId) {
             return response()->json(['status' => 'error', 'message' => 'Draft not found!'], 404);
         }
 
         $uploadPhotoRule = (!$existingPhoto || empty($existingPhoto->upload_path))
+            ? 'image|mimes:jpg,jpeg,png|max:50'
+            : 'nullable|image|mimes:jpg,jpeg,png|max:50';
+
+        $uploadSignRule = (!$existingSign || empty($existingSign->uploaded_doc))
             ? 'image|mimes:jpg,jpeg,png|max:50'
             : 'nullable|image|mimes:jpg,jpeg,png|max:50';
 
@@ -955,6 +992,7 @@ class FormPController extends BaseController
 
 
             'upload_photo'   => $uploadPhotoRule,
+            'upload_sign'    => $uploadSignRule,
             'aadhaar_doc'    => $aadhaarDocRule,
 
             'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
@@ -1055,7 +1093,7 @@ class FormPController extends BaseController
                 'applicants_address' => $request->applicants_address,
                 'd_o_b'             => $request->d_o_b ?? null,
                 'age'               => $request->age,
-                'status'            => 'P', // Pending (for both draft/submit)
+                'app_status'            => 'P', // Pending (for both draft/submit)
                 'previously_number' => $request->previously_number ?? null,
                 'previously_date'   => $request->previously_date ?? null,
                 'wireman_details'   => $request->wireman_details,
@@ -1301,6 +1339,20 @@ class FormPController extends BaseController
                     [
                         'login_id' => $loginId,
                         'upload_path' => 'attached_documents/' . $photoName,
+                    ]
+                );
+            }
+
+            if ($request->hasFile('upload_sign')) {
+                $signFile = $request->file('upload_sign');
+                $signName = 'sign_' . time() . '.' . $signFile->getClientOriginalExtension();
+                $signFile->move(public_path('attached_documents'), $signName);
+
+                TnelbApplicantsSign::updateOrCreate(
+                    ['application_id' => $applicationId],
+                    [
+                        'login_id'     => $loginId,
+                        'uploaded_doc' => 'attached_documents/' . $signName,
                     ]
                 );
             }

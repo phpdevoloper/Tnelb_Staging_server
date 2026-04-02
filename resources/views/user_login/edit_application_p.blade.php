@@ -264,45 +264,44 @@
                                                             var_dump($edu_details->isEmpty());die;
                                                         @endphp --}}
                                                         @if ($edu_details->isNotEmpty())
-                                                        @foreach ($edu_details as $edu_details)
+                                                        @foreach ($edu_details as $edu)
                                                         <tr class="education-fields text-center">
                                                             <td>{{ $loop->iteration }}</td>
                                                             <td>
                                                                 <select class="form-control" name="educational_level[]">
-                                                                    <option disabled {{ empty($edu_details->educational_level) ? 'selected' : '' }}>Select Education</option>
-                                                                    <option value="BEM" {{ $edu_details->educational_level == 'BEM' ? 'selected' : '' }}>B.E(Mechanical)</option>
-                                                                    <option value="BEE" {{ $edu_details->educational_level == 'BEE' ? 'selected' : '' }}>B.E(Electrical)</option>
-                                                                    <option value="DME" {{ $edu_details->educational_level == 'DME' ? 'selected' : '' }}>Diploma(Mechanical)</option>
-                                                                    <option value="DEE" {{ $edu_details->educational_level == 'DEE' ? 'selected' : '' }}>Diploma(Electrical)</option>
+                                                                    <option disabled {{ empty($edu->educational_level) ? 'selected' : '' }}>Select Education</option>
+                                                                    <option value="BEM" {{ $edu->educational_level == 'BEM' ? 'selected' : '' }}>B.E(Mechanical)</option>
+                                                                    <option value="BEE" {{ $edu->educational_level == 'BEE' ? 'selected' : '' }}>B.E(Electrical)</option>
+                                                                    <option value="DME" {{ $edu->educational_level == 'DME' ? 'selected' : '' }}>Diploma(Mechanical)</option>
+                                                                    <option value="DEE" {{ $edu->educational_level == 'DEE' ? 'selected' : '' }}>Diploma(Electrical)</option>
                                                                 </select>
                                                             </td>
-                                                            <td><input type="text" class="form-control" name="institute_name[]" value="{{ isset($edu_details->institute_name) ? $edu_details->institute_name : '' }}"></td>
+                                                            <td><input type="text" class="form-control" name="institute_name[]" value="{{ isset($edu->institute_name) ? $edu->institute_name : '' }}"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
-                                                                    <option value="0" disabled {{ empty($edu_details->year_of_passing) ? 'selected' : '' }}>Select Year</option>
+                                                                    <option value="0" disabled {{ empty($edu->year_of_passing) ? 'selected' : '' }}>Select Year</option>
                                                                     @php
                                                                         $currentYear = date('Y');
                                                                     @endphp
                                                                     @for ($year = $currentYear; $year >= 1980; $year--)
-                                                                        <option value="{{ $year }}" {{ $edu_details->year_of_passing == $year ? 'selected' : '' }}>
+                                                                        <option value="{{ $year }}" {{ $edu->year_of_passing == $year ? 'selected' : '' }}>
                                                                             {{ $year }}
                                                                         </option>
                                                                     @endfor
                                                                 </select>
                                                             </td>
                                                             <td>
-                                                                <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" value="{{ $edu_details->certificate_no ?? '' }}" placeholder="Certificate No">
+                                                                <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" value="{{ $edu->certificate_no ?? '' }}" placeholder="Certificate No">
                                                             </td>
                                                             <td>
                                                                 <div class="d-flex align-items-center file-section">
-                                                                    @if (!empty($edu_details->upload_document))
+                                                                    @if (!empty($edu->upload_document))
                                                                     <div>
-                                                                        <?php //var_dump(!empty($edu_details->upload_document)); ?>
-                                                                            <a class="text-primary" href="{{ url('public/'. $edu_details->upload_document) }}" target="_blank">
+                                                                            <a class="text-primary" href="{{ asset($edu->upload_document) }}" target="_blank">
                                                                                 <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                             </a>
                                                                         </div>
-                                                                        <button class="btn btn-sm btn-danger ml-3 remove-doc_edu">Remove</button>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-doc_edu">Remove</button>
                                                                     @else
                                                                     <div>
                                                                         <input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf">
@@ -312,14 +311,14 @@
                                                             </td>
 
                                                             <td>
-                                                                <button type="button" class="btn btn-danger remove-education remove_edu" data-edu_id = "{{ $edu_details->id }}" data-url= "{{ route('delete_education') }}">
+                                                                <button type="button" class="btn btn-danger remove-education remove_edu" data-edu_id = "{{ $edu->id }}" data-url= "{{ route('delete_education') }}">
                                                                     <i class="fa fa-minus"></i>
                                                                 </button>
                                                             </td>
 
                                                                 <!-- 🔹 Add hidden fields here -->
-                                                                <input type="hidden" name="edu_id[]" value="{{ $edu_details->id }}">
-                                                                <input type="hidden" name="existing_document[]" value="{{ $edu_details->upload_document }}">
+                                                                <input type="hidden" name="edu_id[]" value="{{ $edu->id }}">
+                                                                <input type="hidden" name="existing_document[]" value="{{ $edu->upload_document }}">
                                                         </tr>
                                                         @endforeach
                                                         @else
@@ -421,11 +420,11 @@
                                                             @if (!empty($institute->upload_doc))
                                                                 <div class="d-flex align-items-center file-section">
                                                                     <div>
-                                                                        <a class="text-primary" href="{{ url($institute->upload_doc) }}" target="_blank">
+                                                                        <a class="text-primary" href="{{ asset($institute->upload_doc) }}" target="_blank">
                                                                             <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                         </a>
                                                                     </div>
-                                                                    <button class="btn btn-sm btn-danger ml-3 remove-inst">Remove</button>
+                                                                    <button type="button" class="btn btn-sm btn-danger ml-3 remove-inst">Remove</button>
                                                                 </div>
                                                             @else
                                                                 <input class="form-control" name="institute_document[]" type="file" accept=".pdf,application/pdf">
@@ -438,6 +437,7 @@
                                                         </td>
                                                          <input type="hidden" name="institute_id[]" value="{{ $institute->id ?? '' }}">
                                                         <input type="hidden" name="exist_institute_document[]" value="{{ $institute->upload_doc ?? '' }}">
+                                                        <input type="hidden" name="removed_document_inst[]" value="0" class="removed-document-inst">
                                                     </tr>
                                                     @endforeach
                                                     @else
@@ -465,6 +465,7 @@
                                                            </td>
                                                            <input type="hidden" name="institute_id[]">
                                                            <input type="hidden" name="institute_existdocument[]">
+                                                           <input type="hidden" name="removed_document_inst[]" value="0" class="removed-document-inst">
                                                         </tr>
 
                                                     @endif
@@ -531,11 +532,11 @@
                                                                 @if (!empty($exp_details->upload_document))
                                                                     <div class="d-flex align-items-center file-section">
                                                                         <div>
-                                                                            <a class="text-primary" href="{{ url('public/'.$exp_details->upload_document) }}" target="_blank">
+                                                                            <a class="text-primary" href="{{ asset($exp_details->upload_document) }}" target="_blank">
                                                                                 <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                             </a>
                                                                         </div>
-                                                                        <button class="btn btn-sm btn-danger ml-3 remove-doc_work">Remove</button>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-doc_work">Remove</button>
                                                                     </div>
                                                                 @else
                                                                     <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
@@ -817,20 +818,22 @@
                                                             </td>
                                                             <td>
                                                                 @if (!empty($application_details->aadhaar_doc))
+                                                                    {{-- Only one name="aadhaar_doc" in the form: avoid duplicate empty file input breaking FormData/hasFile after Remove --}}
                                                                     <div class="aadhaar-doc-container">
                                                                         <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $application_details->aadhaar_doc]) }}" target="_blank" style="color: #007bff;">
                                                                             <i class="fa fa-file-pdf-o" style="color: red;"></i> View
                                                                         </a>
                                                                         <button type="button" class="btn btn-sm btn-danger ml-3 remove-docs">Remove</button>
                                                                     </div>
-                                                                @endif
-                                                                    <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }}">
+                                                                @else
+                                                                    <div class="aadhaar-doc-input">
                                                                         <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
                                                                         <span class="file-limit"> File type: PDF (Max 250 KB) </span>
                                                                         <small class="text-danger file-error"></small>
                                                                     </div>
+                                                                @endif
 
-                                                                    <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
+                                                                <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
                                                                 
                                                             </td>
                                                         </tr>
@@ -845,9 +848,10 @@
 
                                                     <div class="mt-2 text-center">
                                                         @php
-                                                            $signatureSrc = !empty($proof_doc?->uploaded_doc) ? asset($proof_doc->uploaded_doc) : '';
+                                                            $signaturePath = $applicant_sign?->uploaded_doc ?? null;
+                                                            $signatureSrc = !empty($signaturePath) ? url($signaturePath) : '';
                                                             $signatureStyle = 'max-width: 120px; max-height: 60px; border:1px solid #ccc; border-radius:4px;';
-                                                            if (empty($proof_doc?->uploaded_doc)) {
+                                                            if (empty($signaturePath)) {
                                                                 $signatureStyle .= '; display:none;';
                                                             }
                                                         @endphp
@@ -858,14 +862,14 @@
                                                              style="{{ $signatureStyle }}"
                                                              alt="Uploaded Signature">
 
-                                                        @if(!empty($proof_doc?->uploaded_doc))
+                                                        @if(!empty($signaturePath))
                                                             <button type="button"
                                                                     class="btn btn-primary btn-sm mb-2"
                                                                     onclick="toggleSignInput()">Edit/Upload Signature</button>
                                                         @endif
 
                                                         <div id="sign-input-wrapper"
-                                                             style="{{ !empty($proof_doc?->uploaded_doc) ? 'display: none;' : 'display: block;' }}; width: 100%; max-width: 280px; margin: 0 auto;">
+                                                             style="{{ !empty($signaturePath) ? 'display: none;' : 'display: block;' }}; width: 100%; max-width: 280px; margin: 0 auto;">
                                                             <span class="file-limit d-block text-start"> File type: JPG, PNG (Max 50 KB) </span>
                                                             <input autocomplete="off"
                                                                    class="form-control text-box single-line mb-1"
@@ -873,7 +877,7 @@
                                                                    name="upload_sign"
                                                                    type="file"
                                                                    accept=".jpg,.jpeg,.png"
-                                                                   required>
+                                                                   @if(empty($signaturePath)) required @endif>
                                                             <span class="error-message text-danger d-block text-start"></span>
                                                         </div>
                                                     </div>
@@ -1227,6 +1231,7 @@
                         </td>
                         <input type="hidden" name="institute_id[]">
                         <input type="hidden" name="institute_document[]">
+                        <input type="hidden" name="removed_document_inst[]" value="0" class="removed-document-inst">
                     </tr>
                 `;
             $('#institute-container').append(newRow);
