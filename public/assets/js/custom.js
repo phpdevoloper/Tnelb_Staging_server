@@ -104,8 +104,7 @@ $(document).ready(function () {
                 if (
                     checkDate.getFullYear() !== year ||
                     checkDate.getMonth() !== month - 1 ||
-                    checkDate.getDate() !== day ||
-                    year < 1900 || year > new Date().getFullYear()
+                    checkDate.getDate() !== day 
                 ) {
                     dateErrorBox.text("Enter a valid date");
                     isValid = false;

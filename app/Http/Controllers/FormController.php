@@ -1467,11 +1467,12 @@ class FormController extends BaseController
                     $work = $workId ? Mst_experience::find($workId) : null;
             
                     // ✅ File Handling
+                    // A new valid upload must be processed even when "Remove" was clicked first (replace flow).
                     $filePath = null;
                     $isFileRemoved = isset($request->removed_document_work[$key]) && $request->removed_document_work[$key] == '1';
             
-                    if (!$isFileRemoved && isset($request->file("work_document")[$key])) {
-                        $file = $request->file("work_document")[$key];
+                    if (isset($request->file('work_document')[$key])) {
+                        $file = $request->file('work_document')[$key];
             
                         if ($file && $file->isValid()) {
                             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
@@ -1487,7 +1488,9 @@ class FormController extends BaseController
                             'company_name'    => $company ?? null,
                             'experience'      => $request->experience[$key] ?? null,
                             'designation'     => $request->designation[$key] ?? null,
-                            'upload_document' => $isFileRemoved ? null : ($filePath ?? $work->upload_document),
+                            'upload_document' => $filePath !== null
+                                ? $filePath
+                                : ($isFileRemoved ? null : $work->upload_document),
                         ]);
                     } else {
                         // 🔹 INSERT new record
@@ -2164,12 +2167,12 @@ class FormController extends BaseController
                                     : null;
                     $oldDoc      = $request->existing_work_document[$key] ?? null;
 
-                    if ($removed) {
-                        $finalDoc = null;
-                    } elseif ($newDoc) {
+                    if ($newDoc) {
                         $filename = time() . '_' . uniqid() . '.' . $newDoc->getClientOriginalExtension();
                         $newDoc->move(public_path('work_experience'), $filename);
                         $finalDoc = 'work_experience/' . $filename;
+                    } elseif ($removed) {
+                        $finalDoc = null;
                     } else {
                         $finalDoc = $oldDoc ?: null;
                     }

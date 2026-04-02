@@ -345,6 +345,7 @@
                                                     <div class="col-lg-4 col-6">
                                                         @php
                                                             $hasPreviousEaQual = !empty($applicant->previously_number) || !empty($applicant->previously_date);
+                                                            
                                                             if (!$hasPreviousEaQual) {
                                                                 $value = 'No';
                                                             } else {
@@ -366,6 +367,57 @@
                                                                 <div class="col-6 col-md-5 col-lg-4 text-center">
                                                                     <p class="mb-1">
                                                                         <strong>Date :</strong> {{ !empty($applicant->previously_date) ? format_date($applicant->previously_date) : '—' }}
+                                                                        @if ($applicant->admincverify == null)
+                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_date }}" data-license_date="{{ $applicant->previously_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                                        @elseif($applicant->admincverify == 1)
+                                                                            <span class="text-success ms-2">(Valid Certificate.)</span>
+                                                                        @elseif($applicant->admincverify == 2)
+                                                                            <span class="text-danger ms-2">(Invalid Certificate.)</span>
+                                                                        @endif
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-lg-8 col-6">
+                                                        <h6 class="mt-2 mb-2 fw-bold">
+                                                            Do you possess Wireman Competency Certificate / Supervisor Competency Certificate issued by this Board?
+                                                        </h6>
+                                                    </div>
+                                                    <div class="col-lg-4 col-6">
+                                                        @php
+                                                            $hasPreviousEaQual = !empty($applicant->certificate_no) || !empty($applicant->certificate_date);
+                                                            
+                                                            if (!$hasPreviousEaQual) {
+                                                                $value = 'No';
+                                                            } else {
+                                                                $value = 'Yes' ;
+                                                            }
+                                                        @endphp
+                                                        <p class="mt-2 mb-1">
+                                                            {{ $value }}
+                                                        </p>
+                                                    </div>
+                                                    @if ($hasPreviousEaQual)
+                                                        <div class="col-12">
+                                                            <div class="row justify-content-center">
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>License Number :</strong> {{ $applicant->certificate_no ?: '—' }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                    <p class="mb-1">
+                                                                        <strong>Date :</strong> {{ !empty($applicant->certificate_date) ? format_date($applicant->certificate_date) : '—' }}
+                                                                        @if ($applicant->admincverify == null)
+                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                                        @elseif($applicant->admincverify == 1)
+                                                                            <span class="text-success ms-2">(Valid License.)</span>
+                                                                        @elseif($applicant->admincverify == 2)
+                                                                            <span class="text-danger ms-2">(Invalid License.)</span>
+                                                                        @endif
                                                                     </p>
                                                                 </div>
                                                             </div>

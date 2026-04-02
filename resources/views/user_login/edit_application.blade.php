@@ -769,7 +769,7 @@
                                                                 }else{
                                                                     $cert_type = 'certificate';
                                                                 }
-
+                                                                
                                                             @endphp
                                                             <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12" value="{{ $application_details->certificate_no }}" 
                                                             {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
@@ -795,7 +795,7 @@
                                                                 <button type="button" class="btn btn-danger remove_verify" data-type="superviser_two" style="margin-left: 10px;">Delete</button>
                                                                 <button type="button" class="btn btn-primary verify-btn d-none" data-type="certificate" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
                                                             @else
-                                                                <button type="button" class="btn btn-primary verify-btn" data-type="certificate" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
+                                                                <button type="button" class="btn btn-primary verify-btn" data-type="{{ $cert_type }}" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
                                                             @endif
                                                                 
                                                         </div>

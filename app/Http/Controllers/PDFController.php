@@ -1391,48 +1391,47 @@ class PDFController extends Controller
         $html .= '
     <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border" style="border-collapse: collapse; margin-top:10px;">';
 
-       if ($form->form_name == 'S') {
-          
-            $html .= '
-                <tr >
-                    <td colspan="2">
-                        <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border">
-                            <tr>
-                                <td width="70%" >7.
-                                    இதற்கு முன்பு மின் உதவியாளர் தகுதிச்சான்றிதழுக்கு விண்ணப்பித்துள்ளீர்களா? 
-                                    ஆம் என்றால் அதன் எண் மற்றும் தேதியை குறிப்பிடவும்.
-                                </td>
-                                <td width="30%" >
-                                    ' . e($value) . '
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>';
-        }
-
 
         if ($form->form_name == 'S') {
-            $no = '8';
-            $html .= renderRow(
-                '<h4>'.$no.'. இந்த வாரியம் வழங்கிய கம்பி இணைப்பாளர் தகுதி சான்றிதழ் / மேற்பார்வையாளர் திறன் சான்றிதழ் உங்களிடம் உள்ளதா? இருந்தால், அதன் விவரங்களை வழங்கி, அதனை ஒப்படைக்கவும்.</h4>',
-                $form->form_name == 'S' ? $certno : $value
-            );
+            $html .= '
+            <tr >
+                <td colspan="2">
+                    <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border">
+                        <tr>
+                            <td width="70%" >7.
+                                இதற்கு முன்பு மின் உதவியாளர் தகுதிச்சான்றிதழுக்கு விண்ணப்பித்துள்ளீர்களா? 
+                                ஆம் என்றால் அதன் எண் மற்றும் தேதியை குறிப்பிடவும்.
+                            </td>
+                            <td width="30%" >
+                                ' . e($value) . '
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>';
 
-            $html .= renderRow(
-                '<h4>9. ஆதார் எண்</h4>',
-                $aadhaar
-            );
-    
-            // $html .= renderRow(
-            //     '<h4>10. நிரந்தர கணக்கு எண்</h4>',
-            //     $pancard
-            // );
+            $no = '8';
+            $certAnswer = $form->form_name == 'S' ? $certno : $value;
+            $html .= '
+            <tr>
+                <td colspan="2">
+                    <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border">
+                        <tr>
+                            <td width="70%">' . $no . '.
+                                இந்த வாரியம் வழங்கிய மின்கம்பியாளர் தகுதி சான்றிதழ் / மேற்பார்வையாளர் தகுதி சான்றிதழ் உங்களிடம் உள்ளதா? இருந்தால், அதன் விவரங்களை வழங்கி, அதனை ஒப்படைக்கவும்.
+                            </td>
+                            <td width="30%">' . e($certAnswer) . '</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>';
+
+            $aadhaarNo = '9';
 
         }else{
             // WH: no experience section, so certificate = 6, Aadhaar = 7. Others: 7 and 8.
             $no = ($form->form_name == 'WH') ? '6' : '7';
-            $aadhaarNo = ($form->form_name == 'WH') ? '7' : '8';
+            
             if ($form->form_name == 'WH') {
                 $html .= renderRow(
                     '<h4>'.$no.'. இதற்கு முன்னாள் விண்ணப்பம் செய்து மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக.</h4>',
@@ -1445,13 +1444,15 @@ class PDFController extends Controller
                 );
 
             }
-
-            $html .= renderRow(
-                '<h4>'.$aadhaarNo.'. ஆதார் எண்</h4>',
-                $aadhaar
-            );
+            $aadhaarNo = ($form->form_name == 'WH') ? '7' : '8';
         }
 
+        
+        
+        $html .= renderRow(
+            '<h4>'.$aadhaarNo.'. ஆதார் எண்</h4>',
+            $aadhaar
+        );
 
 
         

@@ -1260,19 +1260,13 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 
-    <script>
-        $(document).ready(function() {
-            $(document).on('click', '.clicktopayment', function() {
-                console.log('sdfdsf');
-            });
-        });
-    </script>
-
-    <script>
+<script>
     $(document).on('click', '.pagination a', function (e) {
         e.preventDefault();
 
         var url = $(this).attr('href');
+
+        console.log(url);
 
         $.ajax({
             url: url,
