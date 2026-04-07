@@ -535,7 +535,7 @@ class PDFController extends Controller
         <table class="tbl-bordered">
         <tr>
         <th class="ta">வரிைச எண</th><th class="ta">கல்வி நிலை</th><th class="ta">கல்வி நிறுவனம்</th><th class="ta">தேர்ச்சி பெற்ற ஆண்டு</th>
-        <th class="ta">சதவீதம்</th>
+        <th class="ta">சான்றிதழ் எண்</th>
         </tr>';
         foreach ($education as $i => $edu) {
             $html .= '<tr>
@@ -543,7 +543,7 @@ class PDFController extends Controller
                 <td>' . $edu->educational_level . '</td>
                 <td>' . $edu->institute_name . '</td>
                 <td>' . $edu->year_of_passing . '</td>
-                <td>' . $edu->percentage . '%</td>
+                <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
         $html .= '</table>';
@@ -621,44 +621,30 @@ class PDFController extends Controller
 
         // Append English payment details at bottom, if available
         if ($payment) {
-            $applType = strtoupper(trim($form->appl_type ?? 'N'));
-            $typeOfForm = ($applType === 'N') ? 'New Application' : 'Renewal Application';
+            $paymentType = mb_strtoupper($payment->payment_mode ?? 'ONLINE', 'UTF-8');
+            $transactionNo = mb_strtoupper($payment->transaction_id ?? 'N/A', 'UTF-8');
+            $paymentDate = mb_strtoupper(\Carbon\Carbon::parse($payment->created_at)->format('d-m-Y'), 'UTF-8');
+            $amountValue = mb_strtoupper('₹ ' . ($payment->amount ?? 'N/A'), 'UTF-8');
+            $statusValue = mb_strtoupper($payment->payment_status ?? 'N/A', 'UTF-8');
+
             $html .= '
             <br><br>
             <div style="font-family: Arial, sans-serif; font-size:10pt;">
-            <p style="font-size:11pt; font-weight:bold; margin-top:10px; text-align:center;">Payment Details</p>
-            <table style="border-collapse:collapse; width:70%; margin:8px auto 0 auto; font-size:10pt; border:none;">
+            <p style="font-size:11pt; font-weight:bold; margin-top:10px; text-align:center;">PAYMENT DETAILS</p>
+            <table class="payment-table">
                 <tr>
-                    <th style="width:35%; text-align:left; padding:4px 6px; border:none;">Application ID</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">' . e($newApplicationId) . '</td>
+                    <th>PAYMENT TYPE</th>
+                    <th>TRANSACTION NUMBER</th>
+                    <th>PAYMENT DATE</th>
+                    <th>AMOUNT</th>
+                    <th>PAYMENT STATUS</th>
                 </tr>
                 <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Applicant Name</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">' . e($form->applicant_name) . '</td>
-                </tr>
-                <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Type of Form</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">' . $typeOfForm . '</td>
-                </tr>
-                <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Bank Name</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">State Bank of India</td>
-                </tr>
-                <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Mode of Payment</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">UPI</td>
-                </tr>
-                <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Payment Date</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">' . \Carbon\Carbon::parse($payment->created_at)->format('d-m-Y') . '</td>
-                </tr>
-                <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Transaction ID</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">' . e($payment->transaction_id ?? 'N/A') . '</td>
-                </tr>
-                <tr>
-                    <th style="text-align:left; padding:4px 6px; border:none;">Total Amount</th>
-                    <td style="padding:4px 6px; border:none; text-align:left;">₹ ' . e($payment->amount ?? 'N/A') . '</td>
+                    <td>' . e($paymentType) . '</td>
+                    <td>' . e($transactionNo) . '</td>
+                    <td>' . e($paymentDate) . '</td>
+                    <td>' . e($amountValue) . '</td>
+                    <td>' . e($statusValue) . '</td>
                 </tr>
             </table>
             </div>';

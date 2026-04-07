@@ -24,7 +24,7 @@ class LicenseController extends Controller
     public function verifylicense(Request $request)
     {
 
-
+        
         $request->validate([
             'license_number' => 'required|string',
             'date' => 'required|date',
@@ -48,9 +48,7 @@ class LicenseController extends Controller
             'H' => 'whcert',
             'C'  => 'scert'
         ];
-
-
-        $table = $tableMap[$licensePrefix] ?? 'tnelb_license';
+        $table = $tableMap[$licensePrefix];
 
         if($table == 'tnelb_license'){
             $licenseNum = $licenseNumber;
@@ -72,20 +70,20 @@ class LicenseController extends Controller
             if(!empty($request->type)){
                 if ($request->type == "License") {
                     Mst_Form_s_w::where('application_id', $request->application_id)
-                    ->update(['adminLverify' => 1]);
+                    ->update(['license_verify' => 1]);
                 }else{
                     Mst_Form_s_w::where('application_id', $request->application_id)
-                    ->update(['adminCverify' => 1]);
+                    ->update(['cert_verify' => 1]);
                 }
             }
         }else {
             if(!empty($request->type)){
                 if ($request->type == "License") {
                     Mst_Form_s_w::where('application_id', $request->application_id)
-                    ->update(['adminLverify' => 2]);
+                    ->update(['license_verify' => 2]);
                 }else{
                     Mst_Form_s_w::where('application_id', $request->application_id)
-                    ->update(['adminCverify' => 2]);
+                    ->update(['cert_verify' => 2]);
                 }
             }
         }

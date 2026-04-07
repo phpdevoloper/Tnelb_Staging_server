@@ -23,6 +23,12 @@ use Illuminate\Support\Facades\Log;
 
 class FormPController extends Controller
 {
+    protected $today,$dbNow;
+    public function __construct()
+    {
+        $this->today = Carbon::today()->toDateString();
+        $this->dbNow  = DB::selectOne("SELECT date_trunc('second', NOW()::timestamp) AS db_now")->db_now;
+    }
     public function view_application_formp($applicant_id)
     {
 
@@ -392,7 +398,7 @@ class FormPController extends Controller
             'is_verified'    => $request->checkboxes ?? 'Yes',
             'query_status'   => $query_status,
             'remarks'        => $request->remarks,
-            'created_at'     => now(),
+            'created_at'     => $this->dbNow,
             'login_id'       => $staffID,
             'queries'        => $queryTypeJson,
             'raised_by'      => $query_status === 'P' ? $raised_by : '',
@@ -458,7 +464,7 @@ class FormPController extends Controller
             'is_verified'    => $request->checkboxes ?? 'Yes',
             'query_status'   => $query_status,
             'remarks'        => $request->remarks,
-            'created_at'     => now(),
+            'created_at'     => $this->dbNow,
             'login_id'       => $staffID,
             'queries'        => $queryTypeJson,
             'raised_by'      => $query_status === 'P' ? $raised_by : '',
@@ -469,7 +475,7 @@ class FormPController extends Controller
             ->update([
                 'app_status'   => 'RE',
                 'processed_by' => $processed_by,
-                'updated_at'   => now(),
+                'updated_at'   => $this->dbNow,
             ]);
 
         $role = DB::table('mst__roles')->where('id', $request->forwarded_to)->value('name');
@@ -529,8 +535,7 @@ class FormPController extends Controller
             'returned_by_name'      => $staff->name ?? null,
             'query_types'           => $queryTypeJson,
             'remarks'               => $remarks,
-            'created_at'            => now(),
-            'updated_at'            => now(),
+            'created_at'            => $this->dbNow,
         ]);
 
         // Workflow entry marking returned to applicant (QU)
@@ -543,7 +548,7 @@ class FormPController extends Controller
             'is_verified'    => 'Yes',
             'query_status'   => 'P',
             'remarks'        => $remarks,
-            'created_at'     => now(),
+            'created_at'     => $this->dbNow,
             'login_id'       => $staffID,
             'queries'        => $queryTypeJson,
             'raised_by'      => $processed_by,
@@ -555,7 +560,7 @@ class FormPController extends Controller
             'query_type'     => $queryTypeJson,
             'raised_by'      => $processed_by,
             'query_status'   => 'P',
-            'created_at'     => now(),
+            'created_at'     => $this->dbNow,
         ]);
 
         // Mark Form P app as under query (QU) for applicant
@@ -564,7 +569,7 @@ class FormPController extends Controller
             ->update([
                 'app_status'   => 'QU',
                 'processed_by' => $processed_by,
-                'updated_at'   => now(),
+                'updated_at'   => $this->dbNow,
             ]);
 
         return response()->json([
@@ -612,14 +617,14 @@ class FormPController extends Controller
                 ->update([
                     'app_status'     => 'RE',
                     'processed_by'   => 'AP',
-                    'updated_at'     => now(),
+                    'updated_at'     => $this->dbNow,
                     'payment_status' => $app->payment_status,
                 ]);
 
             DB::table('tnelb_query_applicable')
                 ->where('application_id', $appl_id)
                 ->where('query_status', 'P')
-                ->update(['query_status' => 'R', 'updated_at' => now()]);
+                ->update(['query_status' => 'R', 'updated_at' => $this->dbNow]);
 
             $supervisorRoleId = DB::table('mst__staffs__tbls')
                 ->where('name', 'Supervisor')
@@ -637,8 +642,8 @@ class FormPController extends Controller
                     'remarks'        => 'Resubmitted by applicant after query (Form P).',
                     'queries'        => null,
                     'raised_by'      => null,
-                    'created_at'     => now(),
-                    'updated_at'     => now(),
+                    'created_at'     => $this->dbNow,
+                    'updated_at'     => $this->dbNow,
                 ]);
             }
 
@@ -677,7 +682,7 @@ class FormPController extends Controller
             'role_id'        => Auth::user()->roles_id,
             'appl_status'    => $request->appl_status,
             'reject_reason'   => $request->reason ?? '',
-            'created_at'     => now(),
+            'created_at'     => $this->dbNow,
             'login_id'       => $request->login_id,
         ]);
 
@@ -685,7 +690,7 @@ class FormPController extends Controller
             ->where('application_id', $request->application_id)
             ->update([
                 'app_status'   => $request->appl_status,
-                'updated_at'   => now(),
+                'updated_at'   => $this->dbNow,
             ]);
 
         return response()->json([
@@ -694,482 +699,7 @@ class FormPController extends Controller
         ]);
     }
 
-     // forward application-------------------------------------------------------------------
-      public function forwardApplicationformb(Request $request, $role)
-    {
-
-     
-
-        $staff = Auth::user();
-
-        $staffID = Auth::user()->id;
-
-        $request->validate([
-            'application_id' => 'required|string',
-            'processed_by'   => 'required|string',
-            'forwarded_to'   => 'required|string',
-            'role_id'        => 'required|integer',
-            'checkboxes'     => 'nullable|string',
-            'queryswitch'    => 'nullable|string',
-            'queryType'      => 'array',
-            'remarks'        => 'nullable|string'
-        ]);
-
-
-        
-
-
-        $applicant = B_Application::where('application_id', $request->application_id)
-            ->select('*')
-          
-            ->first();
-
-        $queryTypeJson = $request->queryType && is_array($request->queryType) && count($request->queryType) > 0
-            ? json_encode($request->queryType) : null;
-
-      
-
-        if ($request->application_status === 'RE') {
-            $processed_by = match ($staff->name) {
-                'President'   => 'PR',
-                'Secretary'   => 'SE',
-                'Supervisor'  => 'SPRE',
-                'Supervisor2' => 'S2',
-                'Accountant'     => 'A',
-                default       => abort(403, 'Unauthorized'),
-            };
-        } else {
-            $processed_by = match ($staff->name) {
-                'President'   => 'PR',
-                'Secretary'   => 'SE',
-                'Supervisor'  => 'S',
-                'Supervisor2' => 'S2',
-                'Accountant'     => 'A',
-                default       => abort(403, 'Unauthorized'),
-            };
-        }
-
-
-        $query_status = ($request->queryswitch === 'Yes') ? 'P' : null;
-        $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
-    
-
-        if ($processed_by == 'A') {
-            $last_workflow = WorkflowA::where('application_id', $request->application_id)
-                ->orderBy('id', 'desc')   // latest entry first
-                ->first();
-
-            $query_status = $last_workflow->query_status == 'P' ? 'P' : '';
-            if ($last_workflow->query_status == 'P') {
-                $query_status = 'P';
-                $queryTypeJson = $last_workflow->queries;
-            }
-        }
-
-
-
-
-        // DB::table('tnelb_query_applicable')->insert([
-        //     'application_id' => $request->application_id,
-        //     'query_type'     => $queryTypeJson,
-        //     'raised_by'      => $raised_by,
-        //     'query_status'   => $query_status,
-        //     'created_at'     => now(),
-        // ]);
-
-
-        // $formType = DB::table('tnelb_eb_applications')
-        //     ->where('application_id', $request->application_id)
-        //     ->select('form_id')
-        //     ->first();
-
-
-
-        $status = match ($staff->name) {
-            'President' => 'A',
-            // 'Secretary'  => $formType->form_id == 1 ? 'F' : 'A',
-            'Secretary' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor2' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Accountant'    => 'F',
-            default      => abort(403, 'Unauthorized'),
-        };
-
-        // dd($request->queryswitch);
-
-        // die;
-
-        // Insert data into tnelb_workflow table
-        $workflow = WorkflowA::create([ // Ensure this is the correct model
-            'application_id' => $request->application_id,
-            'appl_status'    => $applicant->status == 'RE' ? 'RF' : 'F', // Forwarded
-            'processed_by'   => $request->processed_by,
-            'forwarded_to'   => $request->forwarded_to,
-            'role_id'        => $request->role_id,
-            'is_verified'    => $request->checkboxes ?? 'Yes',
-            'query_status'   => $query_status,
-            // "Yes" or "No"
-            'remarks'        => $request->remarks,
-            'created_at'     => now(), // Automatically managed if model has timestamps
-            'login_id'       => $staffID,
-            'queries'        => $queryTypeJson,
-            'raised_by'      => $query_status == 'P' ? $raised_by : '',
-        ]);
-
-        // dd($workflow);
-        // exit;
-
-
-        
-             WorkflowA::where('application_id', $request->application_id)
-              ->where('processed_by', $request->processed_by)
-              ->where('role_id', $request->role_id)
-                ->orderByDesc('id')
-                ->limit(1)
-                ->update([
-                    'created_at' => DB::raw('NOW()'),
-                ]);
-        
-
-        B_Application::where('application_id', $request->application_id)
-            ->update([
-                'application_status' => $status, // Role-based forwarding
-                'processed_by'  => $processed_by, // Role-based forwarding
-                'updated_at' => DB::raw('NOW()'),
-            ]);
-
-
-
-
-        
-
-        if ($request->application_status === 'RE') {
-            $role1 = 'Secretary';
-            $message = "Application Forwarded to $role1 successfully!";
-        } else {
-            $message = "Application Forwarded to $role successfully!";
-        }
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => $message,
-        ], 201);
-    }
-
-
-       // ---------------approve application--------------------
-
-     public function approveApplicationformb(Request $request)
-    {
-
-    // dd($request->oldapplicationId);
-    // exit;
-
-        $request->validate([
-            'application_id'    => 'required|string',
-            'processed_by'      => 'required|string',
-            'forwarded_to'      => 'nullable|integer',
-            'remarks'           => 'nullable|string',
-            'validity_override' => 'nullable|string',
-            'oldapplicationId'  => 'nullable|string',
-            'qc_validity_date'  => 'nullable|date',
-            'bank_validity'     => 'nullable|date',
-            'licensename'       => 'required|string',
-        ]);
-
-        $application = DB::table('tnelb_eb_applications')
-            ->where('application_id', $request->application_id)
-            ->first();
-
-        if (!$application) {
-            return response()->json(['error' => 'Application not found'], 404);
-        }
-
-        DB::beginTransaction();
-
-        try {
-            /* -------------------- BASIC UPDATE -------------------- */
-
-            $processed = Auth::user()->name === 'President' ? 'PR' : 'SE';
-
-            DB::table('tnelb_eb_applications')
-                ->where('application_id', $request->application_id)
-                ->update([
-                    'application_status' => 'A',
-                    'processed_by'       => $processed,
-                    'updated_at'         => DB::raw('NOW()'),
-                ]);
-
-            $appl_type = trim($application->appl_type); // R or N
-            // $issuedAt  = DB::raw('NOW()');
-
-            $issuedAt  = $application->dt_submit;
-
-            // dd($issuedAt);
-            // exit;
-            $expiresAt = null;
-            $newSerial = null;
-
-            /* -------------------- GET LICENCE VALIDITY MONTHS -------------------- */
-
-            $form = DB::table('mst_licences')
-                ->where('cert_licence_code', $request->licensename)
-                ->where('status', 1)
-                ->first();
-
-            $validity = DB::table('mst_fees_validity')
-                ->where('licence_id', $form->id)
-                ->where('form_type', $appl_type)
-                ->where('status', 1)
-                ->whereDate('validity_start_date', '<=', now())
-                ->orderBy('validity_start_date', 'desc')
-                ->first();
-
-            $monthsToAdd = $validity->validity ?? 0;
-
-            /* -------------------- NORMAL EXPIRY CALCULATION -------------------- */
-
-            if ($appl_type === 'R') {
-
-                // Renewal → old expiry + months
-                $oldExpiry = DB::table('tnelb_renewal_license')
-                    ->where('application_id', $request->oldapplicationId)
-                    ->value('expires_at');
-
-                $baseExpiry = $oldExpiry
-                    ? Carbon::parse($oldExpiry)
-                    : now();
-
-                $expiresAt = $baseExpiry->copy()->addMonths($monthsToAdd)->toDateString();
-
-            } else {
-
-                // Fresh → today + months
-                $expiresAt = now()->addMonths($monthsToAdd)->toDateString();
-            }
-
-            /* -------------------- OVERRIDE (POPUP CONFIRMED) -------------------- */
-
-            if ($request->validity_override === 'YES') {
-
-            // dd('111');
-            // exit;
-
-                $qcValidity   = $request->qc_validity_date
-                    ? Carbon::parse($request->qc_validity_date)
-                    : null;
-
-                $bankValidity = $request->bank_validity
-                    ? Carbon::parse($request->bank_validity)
-                    : null;
-
-                $expiresAt = collect([
-                    Carbon::parse($expiresAt),
-                    $qcValidity,
-                    $bankValidity,
-                ])->filter()->min()->toDateString();
-
-                // dd($expiresAt);
-                // exit;
-            }
-
-            /* -------------------- LICENSE INSERT / UPDATE -------------------- */
-
-            if ($appl_type === 'R') {
-
-                DB::table('tnelb_renewal_license')->insert([
-                    'login_id'       => $application->login_id,
-                    'license_number' => $application->license_number,
-                    'application_id' => $request->application_id,
-                    'issued_by'      => $request->processed_by,
-                    'issued_at'      => $issuedAt,
-                    'expires_at'     => $expiresAt,
-                    'created_at'     => DB::raw('NOW()'),
-                ]);
-
-                $newSerial = $application->license_number;
-
-            } else {
-
-                $prefix    = $application->license_name;
-                $yearMonth = now()->format('Ym');
-
-                $lastSerial = DB::table('tnelb_license')
-                    ->where('license_number', 'LIKE', "L{$prefix}{$yearMonth}%")
-                    ->orderByDesc('license_number')
-                    ->value('license_number');
-
-                $next = $lastSerial ? str_pad((int)substr($lastSerial, -5) + 1, 5, '0', STR_PAD_LEFT) : '00001';
-
-                $newSerial = "L{$prefix}{$yearMonth}{$next}";
-
-                DB::table('tnelb_license')->insert([
-                    'application_id' => $request->application_id,
-                    'license_number' => $newSerial,
-                    'issued_by'      => $request->processed_by,
-                    'issued_at'      => $issuedAt,
-                    'expires_at'     => $expiresAt,
-                ]);
-            }
-
-            /* -------------------- WORKFLOW -------------------- */
-
-            DB::table('tnelb_workflow_a')->insert([
-                'application_id' => $request->application_id,
-                'processed_by'   => $request->processed_by,
-                'role_id'        => Auth::user()->roles_id,
-                'appl_status'    => 'A',
-                'remarks'        => $request->remarks ?? 'No remarks provided',
-                'forwarded_to'   => $request->forwarded_to,
-                'created_at'     => now(),
-            ]);
-
-            //   WorkflowA::where('application_id', $request->application_id)
-            //   ->where('processed_by', $request->processed_by)
-            //   ->where('role_id', Auth::user()->roles_id)
-            //     ->update([
-                
-            //         'created_at' => DB::raw('NOW()'),
-            //     ]);
-
-             WorkflowA::where('application_id', $request->application_id)
-              ->where('processed_by', $request->processed_by)
-              ->where('role_id', Auth::user()->roles_id)
-                ->orderByDesc('id')
-                ->limit(1)
-                ->update([
-                    'created_at' => DB::raw('NOW()'),
-                ]);
-
-            DB::commit();
-
-            return response()->json([
-                'status'         => 'success',
-                'message'        => $appl_type === 'R'
-                    ? "Renewal approved till " . date('d/m/Y', strtotime($expiresAt))
-                    : "License issued till " . date('d/m/Y', strtotime($expiresAt)),
-                'license_number' => $newSerial,
-                'issued_at'      => $issuedAt,
-                'expires_at'     => $expiresAt,
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Approval failed',
-                'msg'   => $e->getMessage()
-            ], 500);
-        }
-    }
-
-
-      // ------------------return ------------------------------------------
-    public function returntoSupervisorformb(Request $request){
-
-        $staff = Auth::user();
-        
-        $staffID = Auth::user()->id;
-
-// dd($request->forwaded_to);
-// exit;
-        $request->validate([
-            'application_id' => 'required|string',
-            'return_by'      => 'required|string',
-            'forwarded_to'   => 'required|string',
-            'checkboxes'     => 'nullable|string',
-            'queryswitch'    => 'nullable|string',
-            'queryType'      => 'array',
-            'remarks'        => 'nullable|string'
-        ]);
-        
-        
-             $query_status = null;
-        $queryTypeJson = json_encode($request->queryType);
-
-        
-    if ($request->queryswitch == 'Yes' && !empty($request->queryType) || ($request->queryswitch == 'true')) {
-            $query_status = "P";
-        }
-        
-
-        $formType = DB::table('tnelb_eb_applications')
-                        ->where('application_id', $request->application_id)
-                       
-                        ->first();
-
-// dd($formType->form_name);
-// exit;
-
-        // $status = match ($staff->name) {
-        //     'President' => 'A',
-        //     'Secretary'  => ($formType->form_id == 1 ? 'F' : 'A'),
-        //     'Supervisor' => 'F',
-        //     'Auditor'    => 'F',
-        //     default      => abort(403, 'Unauthorized'),
-        // };
-                      
-        $processed_by = match ($staff->name) {
-            'President'  => 'PR',
-            'Secretary'  => 'SE',
-            'Supervisor' => 'S',
-            'Accountant'    => 'A',
-            default      => abort(403, 'Unauthorized'),
-        };
-
-        $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
-        // var_dump($queryTypeJson);die;
-
-        // Insert data into tnelb_workflow table
-        $workflow = WorkflowA::create([ // Ensure this is the correct model
-            'application_id' => $request->application_id,
-            'appl_status'    => 'RE', // Forwarded
-            'processed_by'   => $request->return_by,
-            'forwarded_to'   => $request->forwarded_to,
-            'role_id'        => $staffID,
-            'is_verified'    => $request->checkboxes,
-            'query_status'   => $query_status,
-            // "Yes" or "No"
-            'remarks'        => $request->remarks,
-            'created_at'     => now(), // Automatically managed if model has timestamps
-            'login_id'       => $staffID,
-            'queries'        => $queryTypeJson,
-            'raised_by'      => $query_status == 'P' ? $raised_by : ''
-        ]);
-
-
-        // Update application status
-       
-              WorkflowA::where('application_id', $request->application_id)
-                 ->where('processed_by', $request->return_by)
-                 ->where('role_id', $staffID)
-                ->orderByDesc('id')
-                ->limit(1)
-                ->update([
-                    'created_at' => DB::raw('NOW()'),
-                ]);
-        
-
-        B_Application::where('application_id', $request->application_id)
-            ->update([
-                'application_status' =>  'RE', 
-                'processed_by'  => $processed_by, 
-                'updated_at' => DB::raw('NOW()'),
-            ]);
-
-
-        //Get Role 
-        $role = DB::table('mst__roles')
-        ->where('id', $request->forwarded_to)
-        ->select('name')
-        ->first();
-        // var_dump($role->name);die;
-        
-
-        return response()->json([
-            'status' => "success",
-            'message' => "Application Returned to $role->name successfully!",
-        ], 201);
-    }
+   
 
  // --------------------completed SA ---------------------------------
     public function completed_formb()

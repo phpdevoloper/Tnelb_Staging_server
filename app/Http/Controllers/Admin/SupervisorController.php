@@ -595,7 +595,7 @@ class SupervisorController extends Controller
     public function forwardApplication(Request $request, $role)
     {
 
-        // var_dump($role);die;
+        
 
 
         $staff = Auth::user();
@@ -637,17 +637,17 @@ class SupervisorController extends Controller
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
 
 
-        if ($processed_by == 'A') {
-            $last_workflow = SupervisorModel::where('application_id', $request->application_id)
-                ->orderBy('id', 'desc')   // latest entry first
-                ->first();
+        // if ($processed_by == 'A') {
+        //     $last_workflow = SupervisorModel::where('application_id', $request->application_id)
+        //         ->orderBy('id', 'desc')   // latest entry first
+        //         ->first();
 
-            $query_status = $last_workflow->query_status == 'P' ? 'P' : '';
-            if ($last_workflow->query_status == 'P') {
-                $query_status = 'P';
-                $queryTypeJson = $last_workflow->queries;
-            }
-        }
+        //     $query_status = $last_workflow->query_status == 'P' ? 'P' : '';
+        //     if ($last_workflow->query_status == 'P') {
+        //         $query_status = 'P';
+        //         $queryTypeJson = $last_workflow->queries;
+        //     }
+        // }
 
 
 

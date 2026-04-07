@@ -5,6 +5,41 @@
     .tab-content {
         padding: 0px 20px;
     }
+    .table-education-qual-wrap {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+    }
+    .table-education-qual {
+        table-layout: fixed;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 0;
+    }
+    /* Wrap header text in all applicant-detail tables (overrides any nowrap on th) */
+    #tabsSimple .table thead th {
+        white-space: normal !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: normal;
+        line-height: 1.35;
+        vertical-align: middle;
+        padding: 0.45rem 0.5rem;
+    }
+    .table-education-qual tbody td {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        vertical-align: middle;
+    }
+    .table-education-qual tbody td a {
+        white-space: normal;
+        word-break: break-word;
+    }
+    .table-education-qual img {
+        max-width: 100%;
+        height: auto;
+    }
 </style>
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
@@ -38,7 +73,7 @@
 
                     </div>
                 </div>
-                <div id="tabsSimple" class="col-xl-7 col-md-12 col-sm-12 col-12 layout-spacing">
+                <div id="tabsSimple" class="col-xl-8 col-md-12 col-sm-12 col-12 layout-spacing">
                     <div class="statbox widget box box-shadow">
                         <div class="widget-header">
                             <div class="row">
@@ -74,25 +109,25 @@
                                                         <table class="table table-sm">
                                                             <tbody>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end" style="width: 30%;">Applicant Id:</td>
+                                                                    <td class="fw-bold" style="width: 30%;">Applicant Id:</td>
                                                                     <td>{{ $applicant->application_id }}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end">Applicant Name:</td>
+                                                                    <td class="fw-bold">Applicant Name:</td>
                                                                     <td>{{ $applicant->applicant_name }}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end">Father's Name:</td>
+                                                                    <td class="fw-bold">Father's Name:</td>
                                                                     <td>{{ $applicant->fathers_name }}</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end align-top">Address:</td>
+                                                                    <td class="fw-bold align-top">Address:</td>
                                                                     <td style="white-space: normal; word-break: break-word;">
                                                                         {{ $applicant->applicants_address }}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="fw-bold text-end">D.O.B & Age:</td>
+                                                                    <td class="fw-bold">D.O.B & Age:</td>
                                                                     <td>{{ $applicant->d_o_b }} ({{ $applicant->age }} years old)</td>
                                                                 </tr>
                                                             </tbody>
@@ -152,12 +187,19 @@
                                             </div> --}}
 
                                             <h6 class="mt-2 mb-2 fw-bold">Educational Qualifications</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                            <div class="table-education-qual-wrap mb-2">
+                                                <table class="table table-bordered table-sm table-education-qual">
+                                                    <colgroup>
+                                                        <col style="width: 14%;">
+                                                        <col style="width: 30%;">
+                                                        <col style="width: 14%;">
+                                                        <col style="width: 18%;">
+                                                        <col style="width: 24%;">
+                                                    </colgroup>
                                                     <thead>
                                                         <tr>
-                                                            <th>Degree</th>
-                                                            <th>Institution</th>
+                                                            <th>Education Level</th>
+                                                            <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
                                                             <th>Certificate No</th>
                                                             <th>Documents</th>
@@ -166,11 +208,11 @@
                                                     <tbody>
                                                         @forelse ($educationalQualifications as $education)
                                                         <tr>
-                                                            <td style="max-width: 10%;">{{ $education->educational_level }}</td>
-                                                            <td style="width: 20%;">{{ $education->institute_name }}</td>
-                                                            <td style="width: 20%;">{{ $education->year_of_passing }}</td>
-                                                            <td style="width: 20%;">{{ $education->certificate_no ?? '—' }}</td>
-                                                            <td style="text-align:center;">
+                                                            <td>{{ $education->educational_level }}</td>
+                                                            <td>{{ $education->institute_name }}</td>
+                                                            <td>{{ $education->year_of_passing }}</td>
+                                                            <td>{{ $education->certificate_no ?? '—' }}</td>
+                                                            <td class="text-center">
                                                                 @if(!empty($education->upload_document))
                                                                 @php
                                                                     $fileExtension = pathinfo($education->upload_document ?? 'unknown.pdf', PATHINFO_EXTENSION);
@@ -178,11 +220,11 @@
                                                                 @if(in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif']))
                                                                 <img src="{{ url($education->upload_document) }}" alt="Education Document" width="100">
                                                                 @elseif(strtolower($fileExtension) === 'pdf')
-                                                                <a href="{{ url($education->upload_document) }}" target="_blank">
-                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
-                                                                </a>
+                                                                    <a href="{{ url($education->upload_document) }}" target="_blank" style="font-size: small;">
+                                                                        <i class="fa fa-file-pdf-o" style="color:red"></i> View Document
+                                                                    </a>
                                                                 @else
-                                                                <a href="{{ url($education->upload_document) }}" target="_blank"><i class="fa fa-file-o"></i></a>
+                                                                <a href="{{ url($education->upload_document) }}" target="_blank" style="font-size: small;"><i class="fa fa-file-o"></i>View Document</a>
                                                                 @endif
                                                                 @else
                                                                 No Documents Uploaded
@@ -207,7 +249,7 @@
                                                             <th>Duration(Years)</th>
                                                             <th>From Date</th>
                                                             <th>To Date</th>
-                                                            <th>Uploaded Document</th>
+                                                            <th>Document</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -221,8 +263,8 @@
 
                                                                 @if($institutes->upload_doc)
                                                                 <!-- Show Image -->
-                                                                <a href="{{ url($institutes->upload_doc) }}" target="_blank">
-                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                <a href="{{ url($institutes->upload_doc) }}" target="_blank" style="font-size: small;">
+                                                                    <i class="fa fa-file-pdf-o" style="color:red"></i> View Document
                                                                 </a>
                                                                 @else
                                                                     No Documents Uploaded
@@ -238,6 +280,7 @@
                                                         @endforelse
                                                     </tbody>
                                                 </table>
+                                            </div>
 
                                             <h6 class="mt-2 mb-2 fw-bold">Power Station to which he is attached at present</h6>
                                             <div class="table-responsive">
@@ -258,8 +301,8 @@
                                                             <td>{{ $exp->experience ?? '—' }}</td>
                                                             <td style="text-align:center;">
                                                                 @if(!empty($exp->upload_document))
-                                                                <a href="{{ url($exp->upload_document) }}" target="_blank">
-                                                                    <i class="fa fa-file-pdf-o" style="font-size:28px;color:red"></i>
+                                                                <a href="{{ url($exp->upload_document) }}" target="_blank" style="font-size: small;">
+                                                                    <i class="fa fa-file-pdf-o" style="color:red"></i> View Document
                                                                 </a>
                                                                 @else
                                                                 — 
@@ -275,18 +318,24 @@
                                                 </table>
                                             </div>
 
-                                            <h6 class="mt-3 mb-2 fw-bold">Employer name</h6>
-                                            <p class="mb-2">{{ $applicant->employer_detail ?? '—' }}</p>
-
-                                            <h6 class="mt-3 mb-2 fw-semibold text-primary border-bottom pb-1">
-                                                Previous Application No & Date?
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-lg-6 col-6">
-                                                    <p class="mb-1"><strong>Application Number / Date:</strong></p>
+                                            <div class="row mt-3 mb-2">
+                                                <div class="col-12 col-sm-6">
+                                                    <h6 class="fw-bold">Name of the employer:</h6>
                                                 </div>
-                                                <div class="col-lg-6 col-6">
-                                                    @php
+                                                <div class="col-12 col-sm-6">
+                                                    <p class="mb-0">{{ $applicant->employer_detail ?? '—' }}</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-lg-8 col-6">
+                                                    <h6 class="mt-3 mb-2 fw-bold pb-1">
+                                                        Have you made any previous application? If so, State reference No. and date
+                                                    </h6>
+                                                </div>
+                                                <div class="col-lg-4 col-6">
+                                                    <p class="mt-2 mb-1 mt-lg-2">
+                                                        @php
                                                         if (empty($applicant->previously_number) && empty($applicant->previously_date)) {
                                                             $prev_val = 'No';
                                                         } else {
@@ -294,49 +343,61 @@
                                                                 (!empty($applicant->previously_date) ? format_date($applicant->previously_date) : '');
                                                         }
                                                     @endphp
-                                                    <p class="mb-1">
-                                                        @if($prev_val === 'No')
-                                                            {{ $prev_val }}
-                                                        @else
-                                                            {!! $prev_val !!}
-                                                            @if (($applicant->adminlverify ?? null) === null)
-                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_number }}" data-license_date="{{ $applicant->previously_date }}" data-type="License" style="cursor: pointer;">Verify</span>
-                                                            @elseif($applicant->adminlverify == 1)
-                                                                <span class="text-success ms-2">(Valid License.)</span>
-                                                            @elseif($applicant->adminlverify == 2)
-                                                                <span class="text-danger ms-2">(Invalid License.)</span>
-                                                            @endif
-                                                        @endif
                                                     </p>
                                                 </div>
+                                                @if (!empty($prev_val))
+                                                    <div class="col-12">
+                                                        <div class="row justify-content-center">
+                                                            <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                <p class="mb-1">
+                                                                    <strong>Application Number :</strong> {{ $applicant->previously_number ?: '—' }}
+                                                                </p>
+                                                            </div>
+                                        
+                                                            <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                                <p class="mb-1">
+                                                                    <strong>Date :</strong> {{ format_date($applicant->previously_date) ?: '—' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
-
-                                            <!-- ----------------------------------------------- -->
-                                            <hr>
                                             @php
                                                 $decryptedaadhar = $applicant->aadhaar ? safeDecrypt($applicant->aadhaar) : '';
                                                 $masked          = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : ($applicant->aadhaar ? 'Invalid Aadhaar' : '—');
                                             @endphp
 
                                             <div class="row mb-2">
-                                                <div class="col-md-12">
-                                                    <h6 class="fw-bold mb-0">Aadhaar:</h6>
-                                                    <p class="mb-0">
-                                                        {{ $masked }}
-                                                        @if(!empty($applicant->aadhaar_doc))
-                                                        (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}" target="_blank" class="text-primary">
-                                                            <i class="fa fa-file-pdf-o text-danger"></i>
-                                                        </a>)
-                                                        @else
-                                                        (—)
-                                                        @endif
-                                                    </p>
+                                                <div class="col-md-12 col-lg-12">
+                                                    <h6 class="fw-bold mt-3">Documents Uploaded:</h6>
+                                                    <div class="row align-items-center mt-1 g-1">
+                                                        <div class="col-lg-6">
+                                                            <p class="fw-bold mb-0" style="color: #000;">Aadhaar:</p>
+                                                        </div>
+                                                        <div class="col-lg-6 text-end">
+                                                            @if (!empty($applicant->aadhaar_doc))
+                                                                <div class="fw-bold mb-0" style="color: #515365">
+                                                                    {{ $masked }}
+                                                                    (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
+                                                                        target="_blank"
+                                                                        class="text-primary applicant-inline-doc-link"
+                                                                        title="Open Aadhaar document">
+                                                                        <i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i>
+                                                                        <span>View Document</span>
+                                                                    </a>)
+                                                                </div>
+                                                            @else
+                                                                <div class="mb-0 text-muted small">No document</div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             </div>
                                         </div>
-                                    </div>
+                                    
                                     <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
                                         <?php //var_dump($workflows->first()->is_verified);die; ?>
                                         @php
@@ -482,7 +543,7 @@
                     </div>
                 </div>
 
-                    <div class="col-xl-5 col-md-12 col-sm-12 col-12 layout-spacing">
+                    <div class="col-xl-4 col-md-12 col-sm-12 col-12 layout-spacing">
                         <div class="statbox widget box box-shadow mb-2">
                             <div class="row align-items-center">
 
