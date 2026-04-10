@@ -56,6 +56,94 @@
         font-family: 'FontAwesome';
         display: inline-block;
     }
+
+    /* Form S — work experience: compact table, readable dates, small total field */
+    #work-table.work-exp-table {
+        font-size: 0.8125rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    #work-table.work-exp-table thead th {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.35rem 0.4rem;
+        vertical-align: middle;
+        line-height: 1.25;
+    }
+    #work-table.work-exp-table tbody td {
+        padding: 0.4rem 0.45rem;
+        vertical-align: top;
+    }
+    #work-table .work-exp-col-type {
+        width: 12%;
+        max-width: 10.5rem;
+    }
+    #work-table .work-exp-col-employer {
+        width: 16%;
+        max-width: 12rem;
+    }
+    #work-table .work-exp-col-years {
+        width: 32%;
+        min-width: 17rem;
+    }
+    #work-table .work-exp-col-designation {
+        width: 12%;
+    }
+    #work-table .work-exp-col-upload {
+        width: 22%;
+    }
+    #work-table .work-exp-col-actions {
+        width: 2.75rem;
+        white-space: nowrap;
+    }
+    #work-table .work-exp-upload-head {
+        font-size: 0.72rem;
+        line-height: 1.2;
+    }
+    #work-table .work-exp-upload-head .file-limit {
+        font-size: 0.68rem;
+    }
+    #work-table .work-exp-inline {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 0.35rem 0.5rem;
+    }
+    #work-table .work-exp-date-group {
+        flex: 1 1 9.5rem;
+        min-width: 9.5rem;
+        max-width: 11rem;
+    }
+    #work-table .work-exp-total-inline {
+        flex: 0 0 auto;
+        min-width: 4.25rem;
+        max-width: 5rem;
+    }
+    #work-table .work-exp-label-fromto {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0.2rem;
+        line-height: 1.2;
+    }
+    #work-table .work-date-from,
+    #work-table .work-date-to {
+        font-size: 0.8125rem;
+        color: #212529;
+        min-width: 9.5rem;
+        width: 100%;
+    }
+    #work-table .work-year-total-display {
+        max-width: 4.5rem;
+        font-size: 0.7rem;
+        padding: 0.22rem 0.3rem;
+        line-height: 1.3;
+        text-align: center;
+    }
+    #work-table .work-employer-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.15rem !important;
+    }
 </style>
 
 <section class="">
@@ -245,11 +333,11 @@
                                                         <tr class="education-fields">
                                                             <td> <select class="form-control" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
-                                                                    <option value="PG">PG</option>
-                                                                    <option value="UG">UG</option>
-                                                                    <option value="B.E">B.E</option>
-                                                                    <option value="M.E">M.E</option>
-                                                                </select></td>
+                                                                    <option value="DEE">Diploma(Electrical Engineering)</option>
+                                                                    <option value="BEE">B.E(Electrical Engineering)</option>
+                                                                    <option value="MEE">M.E(Electrical Engineering)</option>
+                                                                </select>
+                                                            </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
@@ -299,17 +387,18 @@
                                         </div>
 
                                         <div class="table-responsive">
-                                            <table class="table table-bordered" id="work-table">
+                                            <table class="table table-bordered table-sm work-exp-table" id="work-table">
                                                 <thead>
                                                     <tr>
-                                                        <th>Company Name / Contractor</th>
-                                                        <th>Years of Experience</th>
-                                                        <th>Designation</th>
-                                                        <th class="text-center">Upload Document (Experience Certificate)
-                                                            <br><span class="file-limit"> File type: PDF(Min 5 KB To Max 200 KB)</span>
+                                                        <th class="work-exp-col-type">Employment type</th>
+                                                        <th class="work-exp-col-employer">Employer / organization</th>
+                                                        <th class="work-exp-col-years">Year of Experience</th>
+                                                        <th class="work-exp-col-designation">Designation</th>
+                                                        <th class="text-center work-exp-col-upload work-exp-upload-head">Upload Document
+                                                            <br><span class="file-limit">File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                         </th>
-                                                        <th>
-                                                            <button type="button" class="btn btn-primary add-more-work">
+                                                        <th class="work-exp-col-actions text-center p-1">
+                                                            <button type="button" class="btn btn-primary btn-sm add-more-work py-0 px-2" title="Add row">
                                                                 <i class="fa fa-plus"></i>
                                                             </button>
                                                         </th>
@@ -317,20 +406,51 @@
                                                 </thead>
                                                 <tbody id="work-container">
                                                     <tr class="work-fields">
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80">
+                                                        <td class="work-exp-col-type">
+                                                            <select class="form-control form-control-sm work-employment-type" name="work_employment_type[]" required>
+                                                                <option value="" selected disabled>Select type</option>
+                                                                <option value="company">Company</option>
+                                                                <option value="contractor">Contractor</option>
+                                                                <option value="apprentice">Apprentice</option>
+                                                                <option value="electrical_inspector">Electrical Inspector / Assistant Electrical Inspector</option>
+                                                                <option value="retired_employees">Retired Employees</option>
+                                                            </select>
                                                         </td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50">
+                                                        <td class="work-employer-cell work-exp-col-employer">
+                                                            <label class="small text-muted work-employer-label d-block mb-1">—</label>
+                                                            <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" disabled>
+                                                            <div class="work-block work-block--intimation mt-1" style="display: none;">
+                                                                <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
+                                                                <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" disabled>
+                                                            </div>
                                                         </td>
-                                                        <td>
-                                                            <input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80">
+                                                        <td class="work-exp-col-years">
+                                                            <div class="work-exp-inline">
+                                                                <div class="work-exp-date-group">
+                                                                    <label class="work-exp-label-fromto d-block">From (date)</label>
+                                                                    <input type="date" class="form-control form-control-sm work-date-from" name="work_date_from[]" disabled title="From date" aria-label="Year of experience from date">
+                                                                </div>
+                                                                <div class="work-exp-date-group">
+                                                                    <label class="work-exp-label-fromto d-block">To (date)</label>
+                                                                    <input type="date" class="form-control form-control-sm work-date-to" name="work_date_to[]" disabled title="To date" aria-label="Year of experience to date">
+                                                                </div>
+                                                                <div class="work-exp-total-inline">
+                                                                    <label class="work-exp-label-fromto d-block">Total yrs</label>
+                                                                    <input type="text" class="form-control form-control-sm work-year-total-display" readonly placeholder="—" tabindex="-1" aria-label="Total years of experience">
+                                                                    <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="">
+                                                                </div>
+                                                            </div>
+                                                            <input type="hidden" name="work_level[]" class="work-level-sync" value="" tabindex="-1" aria-hidden="true">
+                                                            <input type="hidden" name="experience[]" class="experience-sync" value="" tabindex="-1" aria-hidden="true">
                                                         </td>
-                                                        <td>
-                                                            <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                        <td class="work-exp-col-designation">
+                                                            <input autocomplete="off" class="form-control form-control-sm" name="designation[]" type="text" maxlength="80">
                                                         </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-danger remove-work">
+                                                        <td class="work-exp-col-upload">
+                                                            <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                        </td>
+                                                        <td class="work-exp-col-actions text-center p-1">
+                                                            <button type="button" class="btn btn-danger btn-sm remove-work py-0 px-2" title="Remove row">
                                                                 <i class="fa fa-trash-o"></i>
                                                             </button>
                                                         </td>
@@ -364,7 +484,7 @@
                                                 </div>
                                                 <div class="row" id="previously_details" style="display: none;">
                                                     <div class="col-12 col-md-2 text-md-right">
-                                                        <label> License Number <span style="color: red;">*</span></label>
+                                                        <label> Certificate No<span style="color: red;">*</span></label>
 
                                                     </div>
                                                     <div class="col-12 col-md-2">
@@ -399,7 +519,7 @@
                                             <div class="col-12 col-md-12 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-9 ">
-                                                        <label for="Name">8. Do you possess Wireman Competency Certificate / Supervisor Competency Certificate issued by this Board? If so furnish the details and surrender the same.
+                                                        <label for="Name">8. Do you possess Wireman Competency Certificate issued by this Board? If so furnish the details and surrender the same.
                                                         </label>
                                                         <br>
                                                         <label for="tamil" class="tamil">இந்த வாரியம் வழங்கிய கம்பி இணைப்பாளர் திறன் சான்றிதழ் / மேற்பார்வையாளர் திறன் சான்றிதழ் உங்களிடம் உள்ளதா? இருந்தால், அதன் விவரங்களை வழங்கி, அதனை ஒப்படைக்கவும்.
@@ -440,7 +560,7 @@
                                                 </div>
                                                 <div class="row mt-3" id="wireman_details" style="display: {{ $hasOldPrefill ? 'flex' : 'none' }};">
                                                     <div class="col-12 col-md-4 text-md-right">
-                                                        <label>Wireman / Supervisor Competency Certificate Number <span style="color: red;">*</span></label>
+                                                        <label>Certificate No <span style="color: red;">*</span></label>
 
                                                     </div>
                                                     <div class="col-12 col-md-3">
@@ -520,6 +640,28 @@
                                                     </tr>
                                                     <tr>
                                                         <td style="vertical-align: middle;">(iii)</td>
+                                                        <td style="vertical-align: middle;">
+                                                            <label for="pancard">PAN Card Number</label>
+                                                            <br>
+                                                            <label for="pancard" class="tamil">நிரந்தர கணக்கு எண்</label>
+                                                        </td>
+                                                        <td style="width:20%;">
+                                                            <input type="text" class="form-control text-box text-uppercase" name="pancard" id="pancard" maxlength="10" autocomplete="off" style="max-width:260px;" placeholder="e.g. ABCDE1234F">
+                                                            <span id="pancard-error" class="text-danger d-block"></span>
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            <label for="pancard_doc">(iv) Upload PAN Card Document</label>
+                                                            <br>
+                                                            <label for="pancard_doc" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</label>
+                                                        </td>
+                                                        <td style="width:25%;">
+                                                            <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf" style="max-width:280px;">
+                                                            <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
+                                                            <small class="text-danger file-error"></small>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="vertical-align: middle;">(v)</td>
                                                         <td style="vertical-align: middle;">
                                                             <label for="upload_sign">Upload Signature <span style="color: red;">*</span></label>
                                                             <br>
@@ -622,10 +764,9 @@
                 newRow.innerHTML = `
 <td><select class="form-control" name="educational_level[]" required>
                         <option selected disabled>Select Education</option>
-                        <option value="PG">PG</option>
-                        <option value="UG">UG</option>
-                        <option value="B.E">B.E</option>
-                        <option value="M.E">M.E</option>
+                        <option value="DEE">Diploma(Electrical Engineering)</option>
+                        <option value="BEE">B.E(Electrical Engineering)</option>
+                        <option value="MEE">M.E(Electrical Engineering)</option>
                 </select></td>
                 <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
                 <td>
@@ -669,62 +810,173 @@
         });
     </script>
     <script>
-        document.addEventListener("click", function(e) {
-            let container = document.getElementById("work-container");
-            let workRows = container.querySelectorAll(".work-fields");
+        (function() {
+            var EMP_LABELS = {
+                '': '—',
+                company: 'Company name <span class="text-danger">*</span>',
+                contractor: 'Contractor / firm name <span class="text-danger">*</span>',
+                apprentice: 'Establishment / training organization <span class="text-danger">*</span>',
+                electrical_inspector: 'Office / department <span class="text-danger">*</span>',
+                retired_employees: 'Name of PSU (State / Central / Corporation) <span class="text-danger">*</span>'
+            };
 
-            // Prevent adding more than 3 entries
-            if (e.target.closest(".add-more-work")) {
-                if (workRows.length >= 3) {
-                $('#work-table').next('.work-error').remove();
-
-                $('<div class="text-danger mt-2 work-error">You can add a maximum of 3 work experience entries.</div>')
-                .insertAfter('#work-table');
-
-                setTimeout(() => {
-                    $('.work-error').fadeOut();
-                }, 7000);
-
-                return;
+            function $workRow(el) {
+                return $(el).closest('tr.work-fields');
             }
 
-                let newRow = document.createElement("tr");
-                newRow.classList.add("work-fields");
-
-                newRow.innerHTML = `
-            <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
-                <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max  ="50" placeholder="0-50"></td>
-                <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
-                <td><input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf"></td>
-                <td>
-                <button type="button" class="btn btn-danger remove-work">
-                <i class="fa fa-trash-o"></i>
-                </button>
-                </td>
-                `;
-
-                container.appendChild(newRow);
+            function syncLegacyHidden($tr) {
+                var emp = ($tr.find('.work-employer-input').val() || '').trim();
+                var tot = ($tr.find('.work-experience-total-hidden').val() || '').trim();
+                $tr.find('.work-level-sync').val(emp);
+                $tr.find('.experience-sync').val(tot);
             }
 
-            // Remove row functionality
-            if (e.target.closest(".remove-work")) {
-                if (workRows.length <= 1) {
-
-                    $('#work-table').next('.work-error').remove();
-
-                    $('<div class="text-danger mt-2 work-error">You must have at least one work experience entry.</div>')
-                    .insertAfter('#work-table');
-
-                    setTimeout(() => {
-                        $('.work-error').fadeOut();
-                    }, 7000);
-
+            function updateTotalYears($tr) {
+                var fromStr = ($tr.find('.work-date-from').val() || '').trim();
+                var toStr = ($tr.find('.work-date-to').val() || '').trim();
+                var display = '';
+                var hidden = '';
+                if (!fromStr || !toStr) {
+                    $tr.find('.work-year-total-display').val('');
+                    $tr.find('.work-experience-total-hidden').val('');
+                    syncLegacyHidden($tr);
                     return;
                 }
-                e.target.closest("tr").remove();
+                var from = new Date(fromStr + 'T12:00:00');
+                var to = new Date(toStr + 'T12:00:00');
+                if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+                    $tr.find('.work-year-total-display').val('');
+                    $tr.find('.work-experience-total-hidden').val('');
+                    syncLegacyHidden($tr);
+                    return;
+                }
+                if (to < from) {
+                    display = 'Invalid range';
+                    hidden = '';
+                } else {
+                    var msPerDay = 86400000;
+                    var years = (to - from) / msPerDay / 365.25;
+                    var rounded = Math.round(years * 10) / 10;
+                    hidden = rounded.toFixed(1);
+                    display = rounded.toFixed(1);
+                }
+                $tr.find('.work-year-total-display').val(display);
+                $tr.find('.work-experience-total-hidden').val(hidden);
+                syncLegacyHidden($tr);
             }
-        });
 
+            function applyEmploymentType($tr) {
+                var t = $tr.find('.work-employment-type').val() || '';
+                var $label = $tr.find('.work-employer-label');
+                $label.html(EMP_LABELS[t] || EMP_LABELS['']);
+
+                var $emp = $tr.find('.work-employer-input');
+                var $yFrom = $tr.find('.work-date-from');
+                var $yTo = $tr.find('.work-date-to');
+                var $blockInt = $tr.find('.work-block--intimation');
+                var $intDate = $tr.find('.work-intimation-date');
+
+                if (!t) {
+                    $emp.prop('disabled', true).prop('required', false);
+                    $yFrom.prop('disabled', true).prop('required', false);
+                    $yTo.prop('disabled', true).prop('required', false);
+                    $blockInt.hide();
+                    $intDate.prop('disabled', true).prop('required', false);
+                    syncLegacyHidden($tr);
+                    return;
+                }
+
+                $emp.prop('disabled', false).prop('required', true);
+                $yFrom.prop('disabled', false).prop('required', true);
+                $yTo.prop('disabled', false).prop('required', true);
+
+                if (t === 'contractor') {
+                    $blockInt.show();
+                    $intDate.prop('disabled', false).prop('required', true);
+                } else {
+                    $blockInt.hide();
+                    $intDate.prop('disabled', true).prop('required', false).val('');
+                }
+
+                updateTotalYears($tr);
+                syncLegacyHidden($tr);
+            }
+
+            function initWorkRow($tr) {
+                applyEmploymentType($tr);
+            }
+
+            $(document).ready(function() {
+                $('#work-container .work-fields').each(function() {
+                    initWorkRow($(this));
+                });
+            });
+
+            $(document).on('change', '.work-employment-type', function() {
+                applyEmploymentType($workRow(this));
+            });
+
+            $(document).on('change', '.work-date-from, .work-date-to', function() {
+                updateTotalYears($workRow(this));
+            });
+
+            $(document).on('input change', '.work-employer-input, .work-intimation-date', function() {
+                syncLegacyHidden($workRow(this));
+            });
+
+            document.addEventListener('click', function(e) {
+                var container = document.getElementById('work-container');
+                if (!container) return;
+                var workRows = container.querySelectorAll('.work-fields');
+
+                if (e.target.closest('.add-more-work')) {
+                    if (workRows.length >= 3) {
+                        $('#work-table').next('.work-error').remove();
+                        $('<div class="text-danger mt-2 work-error">You can add a maximum of 3 work experience entries.</div>')
+                            .insertAfter('#work-table');
+                        setTimeout(function() { $('.work-error').fadeOut(); }, 7000);
+                        return;
+                    }
+
+                    var first = container.querySelector('.work-fields');
+                    var newRow = first.cloneNode(true);
+                    newRow.querySelectorAll('input[type="file"]').forEach(function(el) { el.value = ''; });
+                    newRow.querySelectorAll('.work-date-from, .work-date-to').forEach(function(inp) {
+                        inp.value = '';
+                    });
+                    var typeSel = newRow.querySelector('.work-employment-type');
+                    if (typeSel) typeSel.selectedIndex = 0;
+                    var wtd = newRow.querySelector('.work-year-total-display');
+                    if (wtd) wtd.value = '';
+                    var hTot = newRow.querySelector('.work-experience-total-hidden');
+                    if (hTot) hTot.value = '';
+                    var hLevel = newRow.querySelector('.work-level-sync');
+                    if (hLevel) hLevel.value = '';
+                    var hEx = newRow.querySelector('.experience-sync');
+                    if (hEx) hEx.value = '';
+                    var empIn = newRow.querySelector('.work-employer-input');
+                    if (empIn) empIn.value = '';
+                    var intIn = newRow.querySelector('.work-intimation-date');
+                    if (intIn) intIn.value = '';
+                    var desIn = newRow.querySelector('input[name="designation[]"]');
+                    if (desIn) desIn.value = '';
+                    container.appendChild(newRow);
+                    initWorkRow($(newRow));
+                    return;
+                }
+
+                if (e.target.closest('.remove-work')) {
+                    if (workRows.length <= 1) {
+                        $('#work-table').next('.work-error').remove();
+                        $('<div class="text-danger mt-2 work-error">You must have at least one work experience entry.</div>')
+                            .insertAfter('#work-table');
+                        setTimeout(function() { $('.work-error').fadeOut(); }, 7000);
+                        return;
+                    }
+                    e.target.closest('tr').remove();
+                }
+            });
+        })();
 
         $('#verify_form_s').on('click', function() {
             const licenseNumber = $('#certificate_no').val().trim().toUpperCase();

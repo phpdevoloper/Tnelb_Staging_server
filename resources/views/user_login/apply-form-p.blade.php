@@ -500,35 +500,35 @@
                                                             <small class="text-danger file-error"></small>
                                                         </td>
                                                     </tr>
-                                                    {{-- <tr>
-                                                        <td>(iv)</td>
+                                                    <tr>
+                                                        <td>(iii)</td>
                                                         <td>
-                                                            <label for="Name">Pan Card Number <span style="color: red;">*</span></label>
+                                                            <label for="pancard">PAN Card Number</label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">நிரந்தர கணக்கு எண்</label>
+                                                            <label for="pancard" class="tamil">நிரந்தர கணக்கு எண்</label>
                                                         </td>
                                                         <td>
-                                                            <input type="text" class="form-control text-box " name="pancard" id="pancard">
-                                                            <p id="pancard-error" class="text-danger"></p>
+                                                            <input type="text" class="form-control text-box text-uppercase" name="pancard" id="pancard" maxlength="10" autocomplete="off" placeholder="e.g. ABCDE1234F">
+                                                            <span id="pancard-error" class="text-danger d-block"></span>
                                                         </td>
                                                         <td>
-                                                            <label for="Name">(v) Upload Pan Card Document <span style="color: red;">*</span></label>
+                                                            <label for="pancard_doc">(iv) Upload PAN Card Document</label>
                                                             <br>
-                                                            <label for="tamil" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும் </label>
+                                                            <label for="pancard_doc" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</label>
                                                         </td>
                                                         <td>
                                                             <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
-                                                            <span class="file-limit"> File type: PDF (Max 250 KB) </span><br>
-                                                            <p class="text-danger file-error"></p>
+                                                            <span class="file-limit"> File type: PDF (Max 250 KB) </span>
+                                                            <small class="text-danger file-error"></small>
                                                         </td>
-                                                    </tr> --}}
+                                                    </tr>
                                                 </table>
                                             </div>
 
                                             <div class="col-12 col-md-6 ">
                                                 <div class="row align-items-center">
                                                     <div class="col-12 col-md-5 ">
-                                                        <label for="upload_sign">(ii) Upload Signature <span style="color: red;">*</span></label>
+                                                        <label for="upload_sign">(v) Upload Signature <span style="color: red;">*</span></label>
                                                         <br>
                                                         <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                     </div>

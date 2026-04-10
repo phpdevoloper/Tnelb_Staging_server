@@ -121,6 +121,38 @@
         font-weight: 500;
     }
 
+    .demo-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.55rem 1.25rem;
+    }
+
+    .demo-info-field {
+        min-width: 0;
+    }
+
+    .demo-info-field .info-label {
+        display: inline-block;
+        margin-right: 0.35rem;
+    }
+
+    .demo-info-field--full {
+        grid-column: 1 / -1;
+    }
+
+    @media (max-width: 1199.98px) {
+        .demo-info-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .demo-info-grid {
+            grid-template-columns: 1fr;
+            gap: 0.45rem 0;
+        }
+    }
+
     .demo-btn-signup {
         border: 2px solid #1a6b6b;
         color: #1a6b6b;
@@ -315,16 +347,24 @@
                 <div class="demo-info-card">
                     <div class="row align-items-start">
                         <div class="col">
-                            <p class="mb-2">
-                                <span class="info-label">{{ $labelCloudReg ?? 'Cloud Reg. A/C No.:' }}</span>
-                                <a href="#" class="account-link info-value">{{ $cloudRegAccountNo ?? 'NCS01-20141224-00000973' }}</a>
-                                <span class="ms-2"><span class="info-label">{{ $labelProject ?? 'Project:' }}</span> <span class="info-value">{{ $projectName ?? 'District Portal of India' }}</span></span>
-                                <span class="ms-2"><span class="info-label">{{ $labelProjectDesc ?? 'Project Description:' }}</span> <span class="info-value">{{ $projectDescription ?? 'GOI Search Project - NIC' }}</span></span>
-                            </p>
-                            <p class="mb-0">
-                                <span class="info-label">{{ $labelOrg ?? 'Project Organisation:' }}</span>
-                                <span class="info-value">{{ $projectOrganisation ?? 'Central, National Informatics Centre (NIC), (Address: NIC, E-Wing, Rajaji Bhavan, Chennai-90, Tamil Nadu)' }}</span>
-                            </p>
+                            <div class="demo-info-grid">
+                                <div class="demo-info-field">
+                                    <span class="info-label">{{ $labelCloudReg ?? 'Cloud Reg. A/C No.:' }}</span>
+                                    <a href="#" class="account-link info-value">{{ $cloudRegAccountNo ?? 'NCS01-20141224-00000973' }}</a>
+                                </div>
+                                <div class="demo-info-field">
+                                    <span class="info-label">{{ $labelProject ?? 'Project:' }}</span>
+                                    <span class="info-value">{{ $projectName ?? 'District Portal of India' }}</span>
+                                </div>
+                                <div class="demo-info-field">
+                                    <span class="info-label">{{ $labelProjectDesc ?? 'Project Description:' }}</span>
+                                    <span class="info-value">{{ $projectDescription ?? 'GOI Search Project - NIC' }}</span>
+                                </div>
+                                <div class="demo-info-field demo-info-field--full">
+                                    <span class="info-label">{{ $labelOrg ?? 'Project Organisation:' }}</span>
+                                    <span class="info-value">{{ $projectOrganisation ?? 'Central, National Informatics Centre (NIC), (Address: NIC, E-Wing, Rajaji Bhavan, Chennai-90, Tamil Nadu)' }}</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-auto pt-1">
                             <button type="button" class="btn demo-btn-signup">{{ $btnSignupDetails ?? 'View Signup Details' }}</button>

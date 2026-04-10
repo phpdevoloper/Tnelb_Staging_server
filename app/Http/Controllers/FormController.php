@@ -49,6 +49,12 @@ class FormController extends BaseController
         ->first();
     }
 
+    /** Competency certificate forms stored in Mst_Form_s_w (Form S, W, WH, P). */
+    private function isCompetencyForm(?string $formName): bool
+    {
+        return in_array($formName, ['S', 'W', 'WH', 'P'], true);
+    }
+
 
     public function editApplication($appl_id)
     {
@@ -264,10 +270,16 @@ class FormController extends BaseController
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
 
+        if ($this->isCompetencyForm($request->form_name)) {
+            $raw = $request->input('pancard');
+            $pc = is_string($raw) ? strtoupper(preg_replace('/\s+/', '', $raw)) : '';
+            $request->merge(['pancard' => $pc === '' ? null : $pc]);
+        }
+
         
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
         $educationLevelRule = ($request->form_name === 'S')
-            ? 'required|string|in:UG,PG,B.E,M.E|max:50'
+            ? 'required|string|in:DEE,BEE,MEE|max:50'
             : 'required|string|max:50';
 
         $rules = [
@@ -283,7 +295,6 @@ class FormController extends BaseController
             'previously_date'      => 'nullable|date',
             'wireman_details'      => 'nullable|string|max:255',
             'aadhaar'              => 'required|string|digits:12',
-            // 'pancard'              => 'required|string|size:10',
             'form_name'            => 'required|string|max:2',
             'license_name'         => 'required|string|max:2',
             'form_id'              => 'required|integer',
@@ -314,7 +325,6 @@ class FormController extends BaseController
             'upload_photo'         => 'required|image|mimes:jpg,jpeg,png|max:50',
             'upload_sign'          => 'required|image|mimes:jpg,jpeg,png|max:50',
             'aadhaar_doc'          => 'required|mimes:pdf|min:10|max:250',
-            // 'pancard_doc'          => 'required|mimes:pdf|min:10|max:250',
             
             // multiple files (arrays)
             'education_document'   => 'required|array|min:1',
@@ -325,6 +335,11 @@ class FormController extends BaseController
                 : 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
             
         ];
+
+        if ($this->isCompetencyForm($request->form_name)) {
+            $rules['pancard'] = 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/';
+            $rules['pancard_doc'] = 'nullable|mimes:pdf|min:10|max:250';
+        }
 
         $messages = [
             
@@ -370,7 +385,10 @@ class FormController extends BaseController
             'fathers_name.max' => 'Father\'s name may not be greater than 80 characters.',
             'applicants_address.max' => 'Address may not be greater than 255 characters.',
             'competency_certificate_no.max' => 'Certificate number may not be greater than 80 characters.',
-            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
+            'pancard.required' => 'PAN card number is required.',
+            'pancard.regex' => 'Enter a valid 10-character PAN (e.g. ABCDE1234F).',
+            'pancard_doc.required' => 'PAN card document upload is required.',
             
              'education_document.*.max'    => 'Educational document must not be greater than 200 kilobytes.',
             'work_document.required'           => 'Please upload at least one experience document.',
@@ -421,7 +439,10 @@ class FormController extends BaseController
         DB::beginTransaction();
         
         $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
-        
+        $encrypted_pancard = ($this->isCompetencyForm($request->form_name) && $request->filled('pancard'))
+            ? Crypt::encryptString($request->pancard)
+            : null;
+
         try {
             // Generate New Application ID
             $appl_type = $request->appl_type ?? '';
@@ -463,6 +484,19 @@ class FormController extends BaseController
                 
                 file_put_contents($destinationPath . '/' . $aadhaarFilename, $encrypted);
             }
+
+            $panFilename = null;
+            if ($this->isCompetencyForm($request->form_name) && $request->hasFile('pancard_doc')) {
+                $panFile = $request->file('pancard_doc');
+                $panContents = file_get_contents($panFile->getRealPath());
+                $panEncrypted = Crypt::encrypt($panContents);
+                $panFilename = time() . '_' . rand(10000, 9999999) . '_pan.bin';
+                $destinationPath = storage_path('app/private_documents');
+                if (!is_dir($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+                file_put_contents($destinationPath . '/' . $panFilename, $panEncrypted);
+            }
             
             $form = Mst_Form_s_w::create([
                 'login_id'            => $loginId,
@@ -479,10 +513,12 @@ class FormController extends BaseController
                 'form_id'             => $request->form_id,
                 'license_name'        => $request->license_name,
                 'aadhaar'             => $encrypted_aadhaar,
+                'pancard'             => $encrypted_pancard,
                 'status'              => 'P',
                 'appl_type'           => $appl_type,
                 'payment_status'      => ($action === 'draft') ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
+                'pan_doc'             => $panFilename,
                 'certificate_no'      => $request->competency_certificate_no,
                 'certificate_date'    => $request->certificate_date,
                 'cert_verify'         => $request->cert_verify ?? '0',
@@ -656,6 +692,12 @@ class FormController extends BaseController
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
 
+        if ($this->isCompetencyForm($request->form_name ?? null)) {
+            $raw = $request->input('pancard');
+            $pc = is_string($raw) ? strtoupper(preg_replace('/\s+/', '', $raw)) : '';
+            $request->merge(['pancard' => $pc === '' ? null : $pc]);
+        }
+
         $existingForm = Mst_Form_s_w::where('application_id', $applicationId)->first();
         $existingPhoto = TnelbApplicantPhoto::where('application_id', $applicationId)->first();
 
@@ -675,8 +717,15 @@ class FormController extends BaseController
 
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
         $educationLevelRule = ($request->form_name === 'S')
-            ? 'required|string|in:UG,PG,B.E,M.E|max:50'
+            ? 'required|string|in:DEE,BEE,MEE|max:50'
             : 'required|string|max:50';
+
+        $pancardRule = $this->isCompetencyForm($request->form_name)
+            ? 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/'
+            : 'nullable';
+        $pancardDocRule = $this->isCompetencyForm($request->form_name)
+            ? 'nullable|mimes:pdf|max:250'
+            : 'nullable';
 
         $rules = [
             'login_id'           => 'required|string',
@@ -689,6 +738,7 @@ class FormController extends BaseController
             'previously_date'    => 'nullable|date',
             'wireman_details'    => 'nullable|string|max:255',
             'aadhaar'            => 'required|string|digits:12',
+            'pancard'            => $pancardRule,
             'form_name'          => 'required|string|max:2',
             'license_name'       => 'required|string|max:2',
             'form_id'            => 'required|integer',
@@ -713,6 +763,7 @@ class FormController extends BaseController
             'upload_photo'   => $uploadPhotoRule,
             'upload_sign'    => $uploadSignRule,
             'aadhaar_doc'    => $aadhaarDocRule,
+            'pancard_doc'    => $pancardDocRule,
 
             'education_document'   => 'nullable|array',
             'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
@@ -726,7 +777,8 @@ class FormController extends BaseController
             'work_document.*.max'    => 'Experience document size permitted only 5 KB to 200 KB.',
             'd_o_b.after_or_equal' => 'Date of Birth must not be more than 100 years ago.',
             'd_o_b.before_or_equal' => 'Age must be at least 18 years.',
-            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
+            'pancard.regex' => 'Enter a valid 10-character PAN (e.g. ABCDE1234F).',
 
         ];
 
@@ -771,6 +823,9 @@ class FormController extends BaseController
         try {
 
             $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
+            $encrypted_pancard_update = ($this->isCompetencyForm($request->form_name ?? null) && $request->filled('pancard'))
+                ? Crypt::encryptString($request->pancard)
+                : $existingForm->pancard;
 
             $aadhaarFilename = $existingForm ? $existingForm->aadhaar_doc : null;
 
@@ -791,6 +846,19 @@ class FormController extends BaseController
             file_put_contents($destinationPath . '/' . $aadhaarFilename, $encrypted);
             }
 
+            $panFilenameUpdate = $existingForm->pan_doc;
+            if ($this->isCompetencyForm($request->form_name ?? null) && $request->hasFile('pancard_doc')) {
+                $pFile = $request->file('pancard_doc');
+                $pContents = file_get_contents($pFile->getRealPath());
+                $pEnc = Crypt::encrypt($pContents);
+                $panFilenameUpdate = time() . '_' . rand(10000, 9999999) . '_pan.bin';
+                $destinationPath = storage_path('app/private_documents');
+                if (!is_dir($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+                file_put_contents($destinationPath . '/' . $panFilenameUpdate, $pEnc);
+            }
+
 
             // ✅ Update existing draft
             $existingForm->update([
@@ -804,7 +872,9 @@ class FormController extends BaseController
                 'previously_date'   => $request->previously_date,
                 'wireman_details'   => $request->wireman_details,
                 'aadhaar'           => $encrypted_aadhaar,
+                'pancard'           => $encrypted_pancard_update,
                 'aadhaar_doc'       => $aadhaarFilename,
+                'pan_doc'           => $panFilenameUpdate,
                 'payment_status'    => 'payment',
                 'certificate_no'      => $request->competency_certificate_no,
                 'certificate_date'    => $request->certificate_date,
@@ -1178,6 +1248,11 @@ class FormController extends BaseController
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
 
+        if ($this->isCompetencyForm($request->form_name ?? null) && $request->filled('pancard')) {
+            $request->merge([
+                'pancard' => strtoupper(preg_replace('/\s+/', '', $request->pancard)),
+            ]);
+        }
 
         $applicationId = $id;
         $existingForm = Mst_Form_s_w::where('application_id', $applicationId)->first();
@@ -1200,7 +1275,7 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
             $educationLevelRuleDraft = ($request->form_name === 'S')
-                ? 'nullable|string|in:UG,PG,B.E,M.E|max:50'
+                ? 'nullable|string|in:DEE,BEE,MEE|max:50'
                 : 'nullable|string|max:50';
 
             $request->validate([
@@ -1265,7 +1340,7 @@ class FormController extends BaseController
             'designation.*.max'             => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
 
         ]);
 
@@ -1325,6 +1400,29 @@ class FormController extends BaseController
                 // ✅ Keep the old one
                 $aadhaarFilename = $form?->aadhaar_doc ?? null;
             }
+
+            $encrypted_pancard = null;
+            $panFilename = null;
+            if ($this->isCompetencyForm($request->form_name ?? null)) {
+                if ($request->filled('pancard')) {
+                    $encrypted_pancard = Crypt::encryptString($request->pancard);
+                } elseif ($form && $form->pancard) {
+                    $encrypted_pancard = $form->pancard;
+                }
+                if ($request->hasFile('pancard_doc')) {
+                    $pFile = $request->file('pancard_doc');
+                    $pContents = file_get_contents($pFile->getRealPath());
+                    $pEnc = Crypt::encrypt($pContents);
+                    $panFilename = time() . '_' . rand(10000, 9999999) . '_pan.bin';
+                    $destinationPath = storage_path('app/private_documents');
+                    if (!is_dir($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+                    file_put_contents($destinationPath . '/' . $panFilename, $pEnc);
+                } else {
+                    $panFilename = $form?->pan_doc ?? null;
+                }
+            }
            
              
             // 🔹 Prepare Data
@@ -1343,10 +1441,12 @@ class FormController extends BaseController
                 'form_id'           => $request->form_id,
                 'license_name'      => $request->license_name,
                 'aadhaar'           => $encrypted_aadhaar ?? null,
+                'pancard'           => $encrypted_pancard,
                 'appl_type'         => $request->appl_type,
                 'license_number'    => $request->license_number,
                 'payment_status'    => $action === 'draft' ? 'draft' : 'payment',
                 'aadhaar_doc'         => $aadhaarFilename,
+                'pan_doc'             => $panFilename,
                 'certificate_no'      => $request->competency_certificate_no ?? null,
                 'certificate_date'   => $request->certificate_date ?? null,
                 'application_id'    => $applicationId,
@@ -1565,7 +1665,11 @@ class FormController extends BaseController
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
 
-
+        if ($this->isCompetencyForm($request->form_name ?? null) && $request->filled('pancard')) {
+            $request->merge([
+                'pancard' => strtoupper(preg_replace('/\s+/', '', $request->pancard)),
+            ]);
+        }
 
         $applicationId = $id;
 
@@ -1587,7 +1691,7 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
         $educationLevelRuleDraft = ($request->form_name === 'S')
-            ? 'nullable|string|in:UG,PG,B.E,M.E|max:50'
+            ? 'nullable|string|in:DEE,BEE,MEE|max:50'
             : 'nullable|string|max:50';
       
 
@@ -1644,7 +1748,7 @@ class FormController extends BaseController
             'designation.*.max'          => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'educational_level.*.in' => 'For FORM S, only UG, PG, B.E, or M.E degrees are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
         ]);
 
         $action    = $request->form_action; // "draft" or "submit"
@@ -1700,6 +1804,22 @@ class FormController extends BaseController
                     ?? Mst_Form_s_w::where('application_id', $id)->value('aadhaar_doc');
             }
 
+            $encrypted_pancard_renewal = null;
+            $panFilenameRenewal = null;
+            if ($this->isCompetencyForm($request->form_name ?? null)) {
+                if ($request->filled('pancard')) {
+                    $encrypted_pancard_renewal = Crypt::encryptString($request->pancard);
+                } elseif ($form && $form->pancard) {
+                    $encrypted_pancard_renewal = $form->pancard;
+                }
+                if ($request->hasFile('pancard_doc')) {
+                    $panFilenameRenewal = $storeEncryptedPrivate($request->file('pancard_doc'));
+                } else {
+                    $panFilenameRenewal = $form?->pan_doc
+                        ?? Mst_Form_s_w::where('application_id', $id)->value('pan_doc');
+                }
+            }
+
             // assemble master application data (APPLICATION ENTRY ✅)
             $data = [
                 'login_id'           => $loginId,
@@ -1716,10 +1836,12 @@ class FormController extends BaseController
                 'form_id'            => $request->form_id,
                 'license_name'       => $request->license_name,
                 'aadhaar'            => $encrypted_aadhaar,
+                'pancard'            => $encrypted_pancard_renewal,
                 'appl_type'          => $appl_type,           // ensure 'R'
                 'license_number'     => $request->license_number,
                 'payment_status'     => 'draft',
                 'aadhaar_doc'        => $aadhaarFilename ?? null,
+                'pan_doc'            => $panFilenameRenewal,
                 'certificate_no'     => $request->competency_certificate_no ?? null,
                 'certificate_date'   => $request->certificate_date ?? null,
                 'application_id'     => $applicationId,
@@ -1927,6 +2049,13 @@ class FormController extends BaseController
         $request->merge([
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
+
+        if ($this->isCompetencyForm($request->form_name ?? null) && $request->filled('pancard')) {
+            $request->merge([
+                'pancard' => strtoupper(preg_replace('/\s+/', '', $request->pancard)),
+            ]);
+        }
+
         $applicationId = $id;
         $existingForm = Mst_Form_s_w::where('application_id', $applicationId)->first();
         $existingPhoto = TnelbApplicantPhoto::where('application_id', $applicationId)->first();
@@ -2049,12 +2178,8 @@ class FormController extends BaseController
                     $aadhaarFilename = Mst_Form_s_w::where('application_id', $id)->value('aadhaar_doc');
                 }
             }
-                 
-            $renewal_form = Mst_Form_s_w::updateOrCreate(
-                [
-                    'application_id' => $applicationId
-                ],
-                [
+
+            $renewalPayload = [
                     'login_id'           => $loginId,
                     'applicant_name'     => $request->applicant_name ?? $request->Applicant_Name,
                     'fathers_name'       => $request->fathers_name ?? $request->Fathers_Name,
@@ -2078,7 +2203,40 @@ class FormController extends BaseController
                     'cert_verify'        => $request->cert_verify ?? '0',
                     'license_verify'     => $request->l_verify ?? '0',
                     'old_application'    => $id ?? '',
-                ]
+            ];
+
+            if ($this->isCompetencyForm($request->form_name ?? null)) {
+                $encrypted_pancard_u = null;
+                $panFilenameU = null;
+                if ($request->filled('pancard')) {
+                    $encrypted_pancard_u = Crypt::encryptString($request->pancard);
+                } else {
+                    $encrypted_pancard_u = $form?->pancard
+                        ?? Mst_Form_s_w::where('application_id', $id)->value('pancard');
+                }
+                if ($request->hasFile('pancard_doc')) {
+                    $pf = $request->file('pancard_doc');
+                    $pContents = file_get_contents($pf->getRealPath());
+                    $pEnc = Crypt::encrypt($pContents);
+                    $panFilenameU = time() . '_' . rand(10000, 9999999) . '_pan.bin';
+                    $destinationPath = storage_path('app/private_documents');
+                    if (!is_dir($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+                    file_put_contents($destinationPath . '/' . $panFilenameU, $pEnc);
+                } else {
+                    $panFilenameU = $form?->pan_doc
+                        ?? Mst_Form_s_w::where('application_id', $id)->value('pan_doc');
+                }
+                $renewalPayload['pancard'] = $encrypted_pancard_u;
+                $renewalPayload['pan_doc'] = $panFilenameU;
+            }
+
+            $renewal_form = Mst_Form_s_w::updateOrCreate(
+                [
+                    'application_id' => $applicationId
+                ],
+                $renewalPayload
             );
 
             $applicationId = $renewal_form->application_id;

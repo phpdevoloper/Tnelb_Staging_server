@@ -709,11 +709,10 @@ $(document).ready(function() {
                 } else if (eduLevel.length) {
                     let formName = ($('#form_name').val() || '').toString().toUpperCase();
                     if (formName === 'S') {
-                        // Keep in sync with server-side validation: UG, PG, B.E, M.E
-                        const allowed = ['UG', 'PG', 'B.E', 'M.E'];
+                        const allowed = ['DEE', 'BEE', 'MEE'];
                         const val = (eduLevel.val() || '').toString().toUpperCase();
                         if (val !== '' && !allowed.includes(val)) {
-                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only UG, PG, B.E, or M.E degrees are allowed.</span>');
+                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.</span>');
                             if (!firstErrorField) firstErrorField = eduLevel;
                             isValid = false;
                         }
@@ -929,6 +928,46 @@ $(document).ready(function() {
                     isValid = false;
                 } else {
                     aadhaarError.textContent = "";
+                }
+            }
+
+            const formNameUpper = ($('#form_name').val() || '').toString().toUpperCase();
+            const competencyFormNames = ['S', 'W', 'WH', 'P'];
+            if (competencyFormNames.includes(formNameUpper)) {
+                const panEl = document.getElementById('pancard');
+                const panErr = document.getElementById('pancard-error');
+                const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+                if (panEl) {
+                    const pv = (panEl.value || '').replace(/\s+/g, '').toUpperCase();
+                    if (pv === '') {
+                        if (panErr) panErr.textContent = '';
+                    } else if (!panRegex.test(pv)) {
+                        if (panErr) panErr.textContent = 'Enter a valid 10-character PAN (e.g. ABCDE1234F).';
+                        if (!firstErrorField) firstErrorField = $(panEl);
+                        isValid = false;
+                    } else if (panErr) {
+                        panErr.textContent = '';
+                    }
+                }
+                const panDoc = document.getElementById('pancard_doc');
+                if (panDoc && $(panDoc).is(':visible')) {
+                    $(panDoc).nextAll('.error-message').remove();
+                    if (panDoc.files.length > 0) {
+                        const file = panDoc.files[0];
+                        if (file) {
+                            const allowedType = 'application/pdf';
+                            const maxSize = 250 * 1024;
+                            if (file.type !== allowedType) {
+                                $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for PAN document.</span>');
+                                if (!firstErrorField) firstErrorField = $('#pancard_doc');
+                                isValid = false;
+                            } else if (file.size > maxSize) {
+                                $('#pancard_doc').after('<span class="error-message text-danger d-block mt-1">File size permitted only up to 250 KB.</span>');
+                                if (!firstErrorField) firstErrorField = $('#pancard_doc');
+                                isValid = false;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -2878,8 +2917,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
             
             modalBody.innerHTML = html;
             const el = document.querySelector("#instructionContent");
-            console.log("innerHTML:", el.innerHTML);
-            console.log("textContent:", el.textContent);
+            
 
             // return false;
 
