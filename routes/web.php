@@ -102,6 +102,7 @@ Route::get('/reload-captcha', [LoginController::class, 'reloadCaptcha']);
 // ------------------------ Protected Routes (Logged-in Users Only) ------------------------
 
 Route::middleware(['auth'])->group(function () {
+    Route::post('/form/upload-competency-row-doc', [FormController::class, 'uploadCompetencyRowDocument'])->name('form.upload_competency_row_doc');
     Route::get('/user_login', [RegisterController::class, 'user_login'])->name('user_login');
     Route::get('/apply-form-s', [RegisterController::class, 'apply_form_s'])->name('apply-form-s');
     Route::get('/apply-form-w', [RegisterController::class, 'apply_form_w'])->name('apply-form-w');

@@ -326,13 +326,15 @@ class FormController extends BaseController
             'upload_sign'          => 'required|image|mimes:jpg,jpeg,png|max:50',
             'aadhaar_doc'          => 'required|mimes:pdf|min:10|max:250',
             
-            // multiple files (arrays)
-            'education_document'   => 'required|array|min:1',
-            'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
-            'work_document'        => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'work_document.*'      => $isWorkOptional
-                ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200'
-                : 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
+            // multiple files (arrays) — file OR pre-uploaded path via existing_document / existing_work_document
+            'education_document'   => 'nullable|array',
+            'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+            'existing_document'    => 'nullable|array',
+            'existing_document.*'    => 'nullable|string|max:500',
+            'work_document'        => 'nullable|array',
+            'work_document.*'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+            'existing_work_document' => 'nullable|array',
+            'existing_work_document.*' => 'nullable|string|max:500',
             
         ];
 
@@ -426,6 +428,57 @@ class FormController extends BaseController
                 }
                 if ($des === '') {
                     $validator->errors()->add("designation.$i", 'Designation is required.');
+                }
+            }
+        });
+        $validator->after(function ($validator) use ($request, $isWorkOptional) {
+            if (! $this->isCompetencyForm($request->form_name ?? null)) {
+                return;
+            }
+
+            foreach ($request->educational_level ?? [] as $key => $level) {
+                if (
+                    empty($level)
+                    || empty($request->institute_name[$key] ?? null)
+                    || empty($request->year_of_passing[$key] ?? null)
+                ) {
+                    continue;
+                }
+                $hasFile = $request->hasFile('education_document.'.$key);
+                $existing = $request->input('existing_document.'.$key);
+                if (! $hasFile && ($existing === null || $existing === '')) {
+                    $validator->errors()->add(
+                        'education_document.'.$key,
+                        'Please choose a PDF and click Upload, or attach the certificate document before submitting.'
+                    );
+                }
+                if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'education')) {
+                    $validator->errors()->add('existing_document.'.$key, 'Invalid uploaded document reference.');
+                }
+            }
+
+            if ($isWorkOptional) {
+                return;
+            }
+
+            foreach ($request->work_level ?? [] as $key => $company) {
+                if (
+                    empty($company)
+                    || empty($request->experience[$key] ?? null)
+                    || empty($request->designation[$key] ?? null)
+                ) {
+                    continue;
+                }
+                $hasFile = $request->hasFile('work_document.'.$key);
+                $existing = $request->input('existing_work_document.'.$key);
+                if (! $hasFile && ($existing === null || $existing === '')) {
+                    $validator->errors()->add(
+                        'work_document.'.$key,
+                        'Please choose a PDF and click Upload, or attach the experience document before submitting.'
+                    );
+                }
+                if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'work')) {
+                    $validator->errors()->add('existing_work_document.'.$key, 'Invalid uploaded document reference.');
                 }
             }
         });
@@ -571,6 +624,9 @@ class FormController extends BaseController
                         $destinationPath = public_path('education_document');
                         $file->move($destinationPath, $filename);
                         $filePath = 'education_document/' . $filename;
+                    } elseif (! empty($request->existing_document[$key] ?? null)
+                        && $this->isValidCompetencyAjaxDocPath($request->existing_document[$key], 'education')) {
+                        $filePath = $request->existing_document[$key];
                     }
                     
                     Mst_education::create([
@@ -609,6 +665,9 @@ class FormController extends BaseController
                         $destinationPath = public_path('work_experience');
                         $file->move($destinationPath, $filename);
                         $filePath = 'work_experience/' . $filename;
+                    } elseif (! empty($request->existing_work_document[$key] ?? null)
+                        && $this->isValidCompetencyAjaxDocPath($request->existing_work_document[$key], 'work')) {
+                        $filePath = $request->existing_work_document[$key];
                     }
                     
                     Mst_experience::create([
@@ -766,10 +825,14 @@ class FormController extends BaseController
             'pancard_doc'    => $pancardDocRule,
 
             'education_document'   => 'nullable|array',
-            'education_document.*' => 'file|mimes:pdf,jpg,jpeg,png|max:200',
+            'education_document.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+            'existing_document'    => 'nullable|array',
+            'existing_document.*'  => 'nullable|string|max:500',
 
             'work_document'        => 'nullable|array',
-            'work_document.*'      => 'file|mimes:pdf,jpg,jpeg,png|max:200',
+            'work_document.*'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+            'existing_work_document' => 'nullable|array',
+            'existing_work_document.*' => 'nullable|string|max:500',
         ];
 
         $messages = [
@@ -811,6 +874,57 @@ class FormController extends BaseController
                 }
                 if ($des === '') {
                     $validator->errors()->add("designation.$i", 'Designation is required.');
+                }
+            }
+        });
+        $validator->after(function ($validator) use ($request, $isWorkOptional) {
+            if (! $this->isCompetencyForm($request->form_name ?? null)) {
+                return;
+            }
+
+            foreach ($request->educational_level ?? [] as $key => $level) {
+                if (
+                    empty($level)
+                    || empty($request->institute_name[$key] ?? null)
+                    || empty($request->year_of_passing[$key] ?? null)
+                ) {
+                    continue;
+                }
+                $hasFile = $request->hasFile('education_document.'.$key);
+                $existing = $request->input('existing_document.'.$key);
+                if (! $hasFile && ($existing === null || $existing === '')) {
+                    $validator->errors()->add(
+                        'education_document.'.$key,
+                        'Please choose a PDF and click Upload, or attach the certificate document before submitting.'
+                    );
+                }
+                if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'education')) {
+                    $validator->errors()->add('existing_document.'.$key, 'Invalid uploaded document reference.');
+                }
+            }
+
+            if ($isWorkOptional) {
+                return;
+            }
+
+            foreach ($request->work_level ?? [] as $key => $company) {
+                if (
+                    empty($company)
+                    || empty($request->experience[$key] ?? null)
+                    || empty($request->designation[$key] ?? null)
+                ) {
+                    continue;
+                }
+                $hasFile = $request->hasFile('work_document.'.$key);
+                $existing = $request->input('existing_work_document.'.$key);
+                if (! $hasFile && ($existing === null || $existing === '')) {
+                    $validator->errors()->add(
+                        'work_document.'.$key,
+                        'Please choose a PDF and click Upload, or attach the experience document before submitting.'
+                    );
+                }
+                if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'work')) {
+                    $validator->errors()->add('existing_work_document.'.$key, 'Invalid uploaded document reference.');
                 }
             }
         });
@@ -909,7 +1023,11 @@ class FormController extends BaseController
                     $education = $eduId ? Mst_education::find($eduId) : null;
             
                     // ✅ File Handling
-                    $filePath = $request->existing_document[$key] ?? null; // Default to existing file
+                    $existingEdu = $request->existing_document[$key] ?? null;
+                    $filePath = ($existingEdu !== null && $existingEdu !== ''
+                        && $this->isValidCompetencyAjaxDocPath($existingEdu, 'education'))
+                        ? $existingEdu
+                        : null;
             
                     if (isset($request->file("education_document")[$key])) {
                         $file = $request->file("education_document")[$key];
@@ -973,7 +1091,11 @@ class FormController extends BaseController
                     $work = $workId ? Mst_experience::find($workId) : null;
             
                     // ✅ Handle file upload
-                    $filePath = $request->existing_work_document[$key] ?? null;
+                    $existingW = $request->existing_work_document[$key] ?? null;
+                    $filePath = ($existingW !== null && $existingW !== ''
+                        && $this->isValidCompetencyAjaxDocPath($existingW, 'work'))
+                        ? $existingW
+                        : null;
                     if ($request->hasFile("work_document.$key")) {
                         $file = $request->file("work_document")[$key];
                         if ($file && $file->isValid()) {
@@ -2528,6 +2650,61 @@ class FormController extends BaseController
             ->header('Content-Disposition', 'inline; filename="' . $filename . '"');
     }
 
+
+    /**
+     * AJAX: upload a single education / work PDF for competency forms (Form S, etc.).
+     * Stores under public/education_document or public/work_experience.
+     */
+    public function uploadCompetencyRowDocument(Request $request)
+    {
+        if (! Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'document' => 'required|file|mimes:pdf|min:5|max:200',
+            'kind'     => 'required|in:education,work',
+            'login_id' => 'required|string',
+        ]);
+
+        if ((string) Auth::user()->login_id !== (string) $request->login_id) {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        $dir = $request->kind === 'education' ? 'education_document' : 'work_experience';
+        $file = $request->file('document');
+        $filename = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
+        $file->move(public_path($dir), $filename);
+        $path = $dir.'/'.$filename;
+
+        return response()->json([
+            'success' => true,
+            'path'    => $path,
+        ]);
+    }
+
+    /**
+     * Ensure a pre-uploaded relative path points to a real file under the expected folder.
+     */
+    private function isValidCompetencyAjaxDocPath(?string $path, string $kind): bool
+    {
+        if ($path === null || $path === '') {
+            return false;
+        }
+        $prefix = $kind === 'education' ? 'education_document/' : 'work_experience/';
+        if (! str_starts_with($path, $prefix)) {
+            return false;
+        }
+        $base = basename($path);
+        if ($base === '' || $base === '.' || $base === '..') {
+            return false;
+        }
+        if (! preg_match('/^[a-zA-Z0-9_.-]+$/', $base)) {
+            return false;
+        }
+
+        return is_file(public_path($path));
+    }
 
       public function getFormCost(Request $request)
     {

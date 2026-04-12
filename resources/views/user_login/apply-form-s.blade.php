@@ -50,9 +50,11 @@
         margin-left: 15px;
     }
 
-    /* Ensure Font Awesome icons show inside buttons (e.g. add/remove education/work) */
+    /* Ensure Font Awesome icons show inside buttons (e.g. add/remove education/work, table upload) */
     .comp_certificate .btn .fa,
-    .comp_certificate .btn i.fa {
+    .comp_certificate .btn i.fa,
+    .comp_certificate .form-s-file-upload-btn .fa,
+    .comp_certificate .form-s-file-upload-btn i.fa {
         font-family: 'FontAwesome';
         display: inline-block;
     }
@@ -96,6 +98,100 @@
         width: 2.75rem;
         white-space: nowrap;
     }
+    .form-s-file-upload-wrap {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    .form-s-file-upload-wrap .form-control {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    /* Tables (sections 5 & 6): file input + Upload combined as one control (input-group style) */
+    #education-table .form-s-file-upload-wrap--combined,
+    #work-table .form-s-file-upload-wrap--combined {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        align-self: flex-start;
+        gap: 0;
+        width: 100%;
+        min-width: 12rem;
+        max-width: 20rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #fff;
+    }
+    #education-table .form-s-file-upload-wrap--combined .form-control,
+    #work-table .form-s-file-upload-wrap--combined .form-control,
+    #education-table .form-s-file-upload-wrap--combined input[type="file"],
+    #work-table .form-s-file-upload-wrap--combined input[type="file"] {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+        font-size: 0.8125rem;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0.3rem 0.45rem;
+        background: #fff;
+    }
+    #education-table .form-s-file-upload-btn--table,
+    #work-table .form-s-file-upload-btn--table {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        width: auto !important;
+        min-width: 5.25rem;
+        box-sizing: border-box;
+        cursor: pointer;
+        background-color: #007bff;
+        border: 0 !important;
+        border-left: 1px solid #0062cc !important;
+        border-radius: 0 !important;
+        color: #fff;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        padding: 0.35rem 0.65rem;
+        line-height: 1.3;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    #education-table .form-s-file-upload-btn--table:hover,
+    #education-table .form-s-file-upload-btn--table:focus,
+    #work-table .form-s-file-upload-btn--table:hover,
+    #work-table .form-s-file-upload-btn--table:focus {
+        background-color: #0069d9;
+        color: #fff;
+        outline: none;
+        border-left-color: #005cbf !important;
+    }
+    #education-table td.form-s-actions-cell,
+    #work-table td.work-exp-col-actions {
+        vertical-align: middle;
+        width: 3rem;
+    }
+    #education-table .form-s-actions-stack,
+    #work-table .form-s-actions-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.35rem;
+    }
+    #education-table thead th:last-child,
+    #work-table thead th.work-exp-col-actions {
+        vertical-align: middle;
+        text-align: center;
+    }
+
     #work-table .work-exp-upload-head {
         font-size: 0.72rem;
         line-height: 1.2;
@@ -320,12 +416,14 @@
                                                             <th>Year of Passing</th>
                                                             <th>Certificate No</th>
                                                             <th class="text-center">Upload Document
-                                                                <br><span class="file-limit"> File type: PDF(Min 5 KB To Max 200 KB)</span>
+                                                                <br><span class="file-limit text-success small">File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                             </th>
-                                                            <th>
-                                                                <button type="button" class="btn btn-primary add-more">
-                                                                    <i class="fa fa-plus"></i>
-                                                                </button>
+                                                            <th class="text-center p-1">
+                                                                <div class="form-s-actions-stack">
+                                                                    <button type="button" class="btn btn-primary btn-sm add-more py-1 px-2" title="Add row">
+                                                                        <i class="fa fa-plus"></i>
+                                                                    </button>
+                                                                </div>
                                                             </th>
                                                         </tr>
                                                     </thead>
@@ -362,11 +460,18 @@
                                                                     required>
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
-                                                            <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
                                                             <td>
-                                                                <button type="button" class="btn btn-danger remove-education">
-                                                                    <i class="fa fa-trash-o"></i>
-                                                                </button>
+                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                    <input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf">
+                                                                    <button type="button" class="form-s-file-upload-btn form-s-file-upload-btn--table" title="Upload chosen PDF to server"><i class="fa fa-upload"></i> Upload</button>
+                                                                </div>
+                                                            </td>
+                                                            <td class="form-s-actions-cell text-center p-1">
+                                                                <div class="form-s-actions-stack">
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-education py-1 px-2" title="Remove row">
+                                                                        <i class="fa fa-trash-o"></i>
+                                                                    </button>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -395,12 +500,14 @@
                                                         <th class="work-exp-col-years">Year of Experience</th>
                                                         <th class="work-exp-col-designation">Designation</th>
                                                         <th class="text-center work-exp-col-upload work-exp-upload-head">Upload Document
-                                                            <br><span class="file-limit">File type: PDF(Min 5 KB To Max 200 KB)</span>
+                                                            <br><span class="file-limit text-success small">File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                         </th>
                                                         <th class="work-exp-col-actions text-center p-1">
-                                                            <button type="button" class="btn btn-primary btn-sm add-more-work py-0 px-2" title="Add row">
-                                                                <i class="fa fa-plus"></i>
-                                                            </button>
+                                                            <div class="form-s-actions-stack">
+                                                                <button type="button" class="btn btn-primary btn-sm add-more-work py-1 px-2" title="Add row">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </div>
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -447,12 +554,17 @@
                                                             <input autocomplete="off" class="form-control form-control-sm" name="designation[]" type="text" maxlength="80">
                                                         </td>
                                                         <td class="work-exp-col-upload">
-                                                            <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                            <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
+                                                                <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                <button type="button" class="form-s-file-upload-btn form-s-file-upload-btn--table" title="Upload chosen PDF to server"><i class="fa fa-upload"></i> Upload</button>
+                                                            </div>
                                                         </td>
                                                         <td class="work-exp-col-actions text-center p-1">
-                                                            <button type="button" class="btn btn-danger btn-sm remove-work py-0 px-2" title="Remove row">
-                                                                <i class="fa fa-trash-o"></i>
-                                                            </button>
+                                                            <div class="form-s-actions-stack">
+                                                                <button type="button" class="btn btn-danger btn-sm remove-work py-1 px-2" title="Remove row">
+                                                                    <i class="fa fa-trash-o"></i>
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -607,7 +719,10 @@
                                                         <td colspan="3">
                                                             <div class="d-flex align-items-center">
                                                                 <div class="flex-grow-1" style="max-width:280px;">
-                                                                    <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                    <div class="form-s-file-upload-wrap">
+                                                                        <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
+                                                                    </div>
                                                                     <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
                                                                 </div>
                                                                 <div class="ms-3">
@@ -633,7 +748,10 @@
                                                             <label for="aadhaar_doc" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
                                                         </td>
                                                         <td style="width:25%;">
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf" style="max-width:280px;">
+                                                            <div class="form-s-file-upload-wrap" style="max-width:280px;">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
+                                                            </div>
                                                             <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
                                                             <small class="text-danger file-error"></small>
                                                         </td>
@@ -655,7 +773,10 @@
                                                             <label for="pancard_doc" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</label>
                                                         </td>
                                                         <td style="width:25%;">
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf" style="max-width:280px;">
+                                                            <div class="form-s-file-upload-wrap" style="max-width:280px;">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
+                                                            </div>
                                                             <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
                                                             <small class="text-danger file-error"></small>
                                                         </td>
@@ -668,7 +789,10 @@
                                                             <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
                                                         </td>
                                                         <td colspan="3">
-                                                            <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" style="max-width:280px;" required>
+                                                            <div class="form-s-file-upload-wrap" style="max-width:280px;">
+                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" required>
+                                                                <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
+                                                            </div>
                                                             <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
                                                         </td>
                                                     </tr>
@@ -741,6 +865,74 @@
 
     <!-- JavaScript -->
     <script>
+        $(document).on('click', '.form-s-file-upload-btn:not(.form-s-file-upload-btn--table)', function(e) {
+            e.preventDefault();
+            var $file = $(this).closest('.form-s-file-upload-wrap').find('input[type="file"]').first();
+            if ($file.length) {
+                $file.trigger('click');
+            }
+        });
+
+        $(document).on('click', '.form-s-file-upload-btn--table', function(e) {
+            e.preventDefault();
+            var $btn = $(this);
+            var $wrap = $btn.closest('.form-s-file-upload-wrap');
+            var $file = $wrap.find('input[type="file"]').first();
+            if (!$file.length) {
+                return;
+            }
+            var fileEl = $file[0];
+            if (!fileEl.files || fileEl.files.length === 0) {
+                $file.trigger('click');
+                return;
+            }
+
+            var kind = $wrap.attr('data-upload-kind') || 'education';
+            var $tr = $wrap.closest('tr');
+            var rowIndex = $tr.parent().children('tr').index($tr);
+
+            var fd = new FormData();
+            fd.append('document', fileEl.files[0]);
+            fd.append('kind', kind);
+            fd.append('login_id', $('#login_id_store').val() || '');
+            fd.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+            $btn.prop('disabled', true);
+            $wrap.next('.form-s-upload-status').remove();
+            $wrap.find('.form-s-upload-status').remove();
+
+            $.ajax({
+                url: "{{ route('form.upload_competency_row_doc') }}",
+                type: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false
+            }).done(function(res) {
+                if (!res || !res.success || !res.path) {
+                    window.alert((res && res.message) ? res.message : 'Upload failed.');
+                    return;
+                }
+                $wrap.find('input.form-s-preactual-doc').remove();
+                var nameAttr = kind === 'education'
+                    ? 'existing_document[' + rowIndex + ']'
+                    : 'existing_work_document[' + rowIndex + ']';
+                $wrap.append($('<input>', { type: 'hidden', 'class': 'form-s-preactual-doc', name: nameAttr, value: res.path }));
+                fileEl.value = '';
+                $wrap.next('.form-s-upload-status').remove();
+                $wrap.after('<div class="text-success small form-s-upload-status mt-1">Uploaded</div>');
+            }).fail(function(xhr) {
+                var msg = 'Upload failed.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                }
+                window.alert(msg);
+            }).always(function() {
+                $btn.prop('disabled', false);
+            });
+        });
+
         document.addEventListener("click", function(e) {
             let container = document.getElementById("education-container");
             let educationRows = container.querySelectorAll(".education-fields");
@@ -781,11 +973,13 @@
                     <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" required>
                     <span class="error text-danger certificate-error"></span>
                 </td>
-                <td><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"></td>
-                <td>
-                    <button type="button" class="btn btn-danger remove-education">
-                        <i class="fa fa-trash-o"></i>
-                    </button>
+                <td><div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education"><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"><button type="button" class="form-s-file-upload-btn form-s-file-upload-btn--table" title="Upload chosen PDF to server"><i class="fa fa-upload"></i> Upload</button></div></td>
+                <td class="form-s-actions-cell text-center p-1">
+                    <div class="form-s-actions-stack">
+                        <button type="button" class="btn btn-danger btn-sm remove-education py-1 px-2" title="Remove row">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
                 </td>
             `;
 
