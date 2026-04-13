@@ -274,7 +274,7 @@
     <ul class="nav flex-column sidebar-login-v2__list">
         <li class="nav-item">
             <a class="nav-link d-flex align-items-center {{ $dashboardActive ? 'is-active' : '' }}"
-                href="{{ route('user_login') }}">
+                href="{{ route('dashboard') }}">
                 <i class="fa fa-home sidebar-login-v2__icon" aria-hidden="true"></i>
                 <span>Dashboard</span>
             </a>

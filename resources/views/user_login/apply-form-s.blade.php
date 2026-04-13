@@ -139,40 +139,6 @@
         padding: 0.3rem 0.45rem;
         background: #fff;
     }
-    #education-table .form-s-file-upload-btn--table,
-    #work-table .form-s-file-upload-btn--table {
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.25rem;
-        width: auto !important;
-        min-width: 5.25rem;
-        box-sizing: border-box;
-        cursor: pointer;
-        background-color: #007bff;
-        border: 0 !important;
-        border-left: 1px solid #0062cc !important;
-        border-radius: 0 !important;
-        color: #fff;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        padding: 0.35rem 0.65rem;
-        line-height: 1.3;
-        text-align: center;
-        white-space: nowrap;
-        -webkit-appearance: none;
-        appearance: none;
-    }
-    #education-table .form-s-file-upload-btn--table:hover,
-    #education-table .form-s-file-upload-btn--table:focus,
-    #work-table .form-s-file-upload-btn--table:hover,
-    #work-table .form-s-file-upload-btn--table:focus {
-        background-color: #0069d9;
-        color: #fff;
-        outline: none;
-        border-left-color: #005cbf !important;
-    }
     #education-table td.form-s-actions-cell,
     #work-table td.work-exp-col-actions {
         vertical-align: middle;
@@ -185,6 +151,24 @@
         align-items: center;
         justify-content: flex-start;
         gap: 0.35rem;
+    }
+    .local-file-preview {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.35rem;
+    }
+    .local-file-preview .preview-link {
+        color: #0056b3 !important;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .local-file-preview .img-preview {
+        width: 44px;
+        height: 44px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        object-fit: cover;
     }
     #education-table thead th:last-child,
     #work-table thead th.work-exp-col-actions {
@@ -461,9 +445,8 @@
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td>
-                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined">
                                                                     <input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf">
-                                                                    <button type="button" class="form-s-file-upload-btn form-s-file-upload-btn--table" title="Upload chosen PDF to server"><i class="fa fa-upload"></i> Upload</button>
                                                                 </div>
                                                             </td>
                                                             <td class="form-s-actions-cell text-center p-1">
@@ -555,8 +538,7 @@
                                                         </td>
                                                         <td class="work-exp-col-upload">
                                                             <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
-                                                                <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
-                                                                <button type="button" class="form-s-file-upload-btn form-s-file-upload-btn--table" title="Upload chosen PDF to server"><i class="fa fa-upload"></i> Upload</button>
+                                                                <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png">
                                                             </div>
                                                         </td>
                                                         <td class="work-exp-col-actions text-center p-1">
@@ -873,64 +855,48 @@
             }
         });
 
-        $(document).on('click', '.form-s-file-upload-btn--table', function(e) {
-            e.preventDefault();
-            var $btn = $(this);
-            var $wrap = $btn.closest('.form-s-file-upload-wrap');
-            var $file = $wrap.find('input[type="file"]').first();
-            if (!$file.length) {
+        function clearLocalPreview($fileInput) {
+            var $wrap = $fileInput.closest('.form-s-file-upload-wrap');
+            var $preview = $wrap.next('.local-file-preview');
+            var oldUrl = $preview.data('blobUrl');
+            if (oldUrl) URL.revokeObjectURL(oldUrl);
+            $preview.remove();
+        }
+
+        $(document).on('change', 'input[type="file"][name="education_document[]"], input[type="file"][name="work_document[]"]', function() {
+            var $input = $(this);
+            clearLocalPreview($input);
+
+            var file = this.files && this.files[0] ? this.files[0] : null;
+            if (!file) return;
+
+            var allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+            var maxSize = 200 * 1024;
+            if (allowed.indexOf(file.type) === -1) {
+                window.alert('Only PDF, JPG, PNG files are allowed.');
+                this.value = '';
                 return;
             }
-            var fileEl = $file[0];
-            if (!fileEl.files || fileEl.files.length === 0) {
-                $file.trigger('click');
+            if (file.size > maxSize) {
+                window.alert('File size should not exceed 200 KB.');
+                this.value = '';
                 return;
             }
 
-            var kind = $wrap.attr('data-upload-kind') || 'education';
-            var $tr = $wrap.closest('tr');
-            var rowIndex = $tr.parent().children('tr').index($tr);
-
-            var fd = new FormData();
-            fd.append('document', fileEl.files[0]);
-            fd.append('kind', kind);
-            fd.append('login_id', $('#login_id_store').val() || '');
-            fd.append('_token', $('meta[name="csrf-token"]').attr('content'));
-
-            $btn.prop('disabled', true);
-            $wrap.next('.form-s-upload-status').remove();
-            $wrap.find('.form-s-upload-status').remove();
-
-            $.ajax({
-                url: "{{ route('form.upload_competency_row_doc') }}",
-                type: 'POST',
-                data: fd,
-                processData: false,
-                contentType: false
-            }).done(function(res) {
-                if (!res || !res.success || !res.path) {
-                    window.alert((res && res.message) ? res.message : 'Upload failed.');
-                    return;
-                }
-                $wrap.find('input.form-s-preactual-doc').remove();
-                var nameAttr = kind === 'education'
-                    ? 'existing_document[' + rowIndex + ']'
-                    : 'existing_work_document[' + rowIndex + ']';
-                $wrap.append($('<input>', { type: 'hidden', 'class': 'form-s-preactual-doc', name: nameAttr, value: res.path }));
-                fileEl.value = '';
-                $wrap.next('.form-s-upload-status').remove();
-                $wrap.after('<div class="text-success small form-s-upload-status mt-1">Uploaded</div>');
-            }).fail(function(xhr) {
-                var msg = 'Upload failed.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    msg = xhr.responseJSON.message;
-                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                }
-                window.alert(msg);
-            }).always(function() {
-                $btn.prop('disabled', false);
-            });
+            var blobUrl = URL.createObjectURL(file);
+            var isImage = file.type.indexOf('image/') === 0;
+            var $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
+            if (isImage) {
+                $preview.append($('<img>', { src: blobUrl, class: 'img-preview', alt: 'Selected image preview' }));
+            }
+            $preview.append($('<a>', {
+                href: blobUrl,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                class: 'preview-link'
+            }).html(isImage ? '<i class="fa fa-image"></i> Preview image' : '<i class="fa fa-file-pdf-o" style="color:#d9534f;"></i> View Document'));
+            // $preview.append($('<span class="small text-muted">Temporary preview (not uploaded yet)</span>'));
+            $input.closest('.form-s-file-upload-wrap').after($preview);
         });
 
         document.addEventListener("click", function(e) {
@@ -973,7 +939,7 @@
                     <input type="text" class="form-control certificate-input" name="certificate_no[]" maxlength="20" required>
                     <span class="error text-danger certificate-error"></span>
                 </td>
-                <td><div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education"><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf"><button type="button" class="form-s-file-upload-btn form-s-file-upload-btn--table" title="Upload chosen PDF to server"><i class="fa fa-upload"></i> Upload</button></div></td>
+                <td><div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education"><input type="file" class="form-control" name="education_document[]" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png"></div></td>
                 <td class="form-s-actions-cell text-center p-1">
                     <div class="form-s-actions-stack">
                         <button type="button" class="btn btn-danger btn-sm remove-education py-1 px-2" title="Remove row">

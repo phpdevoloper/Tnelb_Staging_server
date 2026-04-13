@@ -57,6 +57,63 @@
         font-family: 'FontAwesome';
         display: inline-block;
     }
+    .form-s-file-upload-wrap {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    .form-s-file-upload-wrap .form-control {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    #education-table .form-s-file-upload-wrap--combined,
+    #work-table .form-s-file-upload-wrap--combined {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 0;
+        width: 100%;
+        min-width: 12rem;
+        max-width: 20rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #fff;
+    }
+    #education-table .form-s-file-upload-wrap--combined .form-control,
+    #work-table .form-s-file-upload-wrap--combined .form-control {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+        font-size: 0.8125rem;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0.3rem 0.45rem;
+        background: #fff;
+    }
+    .local-file-preview {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 0.5rem;
+        margin-top: 0.35rem;
+    }
+    .local-file-preview .preview-link {
+        color: #0056b3 !important;
+        text-decoration: underline;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .local-file-preview .img-preview {
+        width: 44px;
+        height: 44px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        object-fit: cover;
+    }
 </style>
 
 
@@ -376,17 +433,26 @@
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td>
-                                                                <div class="d-flex align-items-center file-section">
+                                                                <div class="file-section">
                                                                     @if (!empty($edu_details->upload_document))
-                                                                    <div>
-                                                                            <a class="text-primary" href="{{ asset($edu_details->upload_document) }}" target="_blank">
-                                                                                <i class="fa fa-file-pdf-o" style="color: red"></i> View
-                                                                            </a>
+                                                                    <div class="edu-doc-container">
+                                                                        <a class="text-primary" href="{{ asset($edu_details->upload_document) }}" target="_blank">
+                                                                            <i class="fa fa-file-pdf-o" style="color: red"></i> View
+                                                                        </a>
+                                                                        <a class="btn btn-sm btn-outline-primary ml-2" href="{{ asset($edu_details->upload_document) }}" download>Download</a>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-2 remove-doc_edu">Replace</button>
+                                                                    </div>
+                                                                    <div class="edu-doc-input d-none">
+                                                                        <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                            <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept=".pdf,application/pdf,image/jpeg,image/png">
                                                                         </div>
-                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-doc_edu">Remove</button>
+                                                                    </div>
                                                                     @else
-                                                                    <div>
-                                                                        <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept=".pdf,application/pdf">
+                                                                    <div class="edu-doc-container d-none"></div>
+                                                                    <div class="edu-doc-input">
+                                                                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                        <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                    </div>
                                                                     </div>
                                                                     @endif
                                                                 </div>
@@ -466,7 +532,11 @@
                                                                     required>
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
-                                                            <td><input type="file" class="form-control" name="education_document[0]" accept=".pdf,application/pdf"></td>
+                                                            <td>
+                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                    <input type="file" class="form-control" name="education_document[0]" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                </div>
+                                                            </td>
                                                             <td>
                                                                 <button type="button" class="btn btn-danger remove-education">
                                                                     <i class="fa fa-trash-o"></i>
@@ -545,7 +615,7 @@
                                                                 </td>
                                                                 @if(isset($application_details->form_name) && $application_details->form_name == 'S')
                                                                 <td>
-                                                                    <div class="d-flex align-items-center file-section">
+                                                                    <div class="file-section">
                                                                         @if (!empty($exp_details->upload_document))
                                                                             <div class="work-doc-container">
                                                                                 <a class="text-primary"
@@ -553,15 +623,20 @@
                                                                                    target="_blank">
                                                                                     <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                                 </a>
-                                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-work-doc">Remove</button>
+                                                                                <a class="btn btn-sm btn-outline-primary ml-2" href="{{ asset($exp_details->upload_document) }}" download>Download</a>
+                                                                                <button type="button" class="btn btn-sm btn-danger ml-2 remove-work-doc">Replace</button>
                                                                             </div>
                                                                             <div class="work-doc-input d-none">
-                                                                                <input class="form-control mt-1" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined mt-1" data-upload-kind="work">
+                                                                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                                </div>
                                                                             </div>
                                                                         @else
                                                                             <div class="work-doc-container d-none"></div>
                                                                             <div class="work-doc-input">
-                                                                                <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
+                                                                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                                </div>
                                                                             </div>
                                                                         @endif
                                                                     </div>
@@ -591,10 +666,12 @@
                                                                 </td>
                                                                 @if(isset($application_details->form_name) && $application_details->form_name == 'S')
                                                                 <td>
-                                                                    <div class="d-flex align-items-center file-section">
+                                                                    <div class="file-section">
                                                                         <div class="work-doc-container d-none"></div>
                                                                         <div class="work-doc-input">
-                                                                            <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                                                            <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
+                                                                                <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </td>
@@ -1083,6 +1160,50 @@
     })();
 </script>
 <script>
+    function clearLocalPreview($fileInput) {
+        var $wrap = $fileInput.closest('.form-s-file-upload-wrap');
+        var $preview = $wrap.next('.local-file-preview');
+        var oldUrl = $preview.data('blobUrl');
+        if (oldUrl) URL.revokeObjectURL(oldUrl);
+        $preview.remove();
+    }
+
+    $(document).on('change', 'input[type="file"][name^="education_document"], input[type="file"][name^="work_document"]', function() {
+        var $input = $(this);
+        clearLocalPreview($input);
+
+        var file = this.files && this.files[0] ? this.files[0] : null;
+        if (!file) return;
+
+        var allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+        var maxSize = 200 * 1024;
+        if (allowed.indexOf(file.type) === -1) {
+            window.alert('Only PDF, JPG, PNG files are allowed.');
+            this.value = '';
+            return;
+        }
+        if (file.size > maxSize) {
+            window.alert('File size should not exceed 200 KB.');
+            this.value = '';
+            return;
+        }
+
+        var blobUrl = URL.createObjectURL(file);
+        var isImage = file.type.indexOf('image/') === 0;
+        var $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
+        if (isImage) {
+            $preview.append($('<img>', { src: blobUrl, class: 'img-preview', alt: 'Selected image preview' }));
+        }
+        $preview.append($('<a>', {
+            href: blobUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            class: 'preview-link'
+        }).html(isImage ? '<i class="fa fa-image"></i> Preview image' : '<i class="fa fa-file-pdf-o" style="color:#d9534f;"></i> Preview PDF'));
+        $preview.append($('<span class="small text-muted">Temporary preview (not uploaded yet)</span>'));
+        $input.closest('.form-s-file-upload-wrap').after($preview);
+    });
+
     // Age calculation on DOB change
     $('#d_o_b').on('change', function() {
         const dob = new Date($(this).val());
@@ -1172,7 +1293,9 @@
                     <span class="error text-danger certificate-error"></span>
                 </td>
                 <td>
-                    <input type="file" class="form-control education-file" name="education_document[${eduIdx}]" accept=".pdf,application/pdf" required>
+                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                        <input type="file" class="form-control education-file" name="education_document[${eduIdx}]" accept=".pdf,application/pdf,image/jpeg,image/png" required>
+                    </div>
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger remove-education">
@@ -1204,6 +1327,17 @@
             // }
             e.target.closest("tr").remove();
         }
+    });
+
+    // Handle removing existing/newly uploaded education documents (toggle view <-> input)
+    $(document).on('click', '.remove-doc_edu', function(e) {
+        e.preventDefault();
+        var $row = $(this).closest('tr');
+        $row.find('.edu-doc-container').addClass('d-none');
+        $row.find('.edu-doc-input').removeClass('d-none');
+        $row.find('input[name="existing_document[]"]').first().val('');
+        $row.find('input[name="removed_document[]"]').first().val('1');
+        clearLocalPreview($row.find('.edu-doc-input input[type="file"]').first());
     });
 
 
@@ -1245,10 +1379,12 @@
                         <td><input type="text" class="form-control" name="designation[]"></td>
                         ${isSForm ? `
                         <td>
-                            <div class="d-flex align-items-center file-section">
+                            <div class="file-section">
                                 <div class="work-doc-container d-none"></div>
                                 <div class="work-doc-input">
-                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf">
+                                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
+                                        <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                    </div>
                                 </div>
                             </div>
                         </td>` : ''}
@@ -1291,7 +1427,9 @@
                 const row = $(e.target).closest('tr');
                 row.find('.work-doc-container').addClass('d-none');
                 row.find('.work-doc-input').removeClass('d-none');
+                row.find('input[name="existing_work_document[]"]').val('');
                 row.find('input[name="removed_document_work[]"]').val('1');
+                clearLocalPreview(row.find('.work-doc-input input[type="file"]').first());
             }
 
     });
