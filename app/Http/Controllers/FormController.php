@@ -55,6 +55,54 @@ class FormController extends BaseController
         return in_array($formName, ['S', 'W', 'WH', 'P'], true);
     }
 
+    private function hasWorkExperiencePayload(Request $request): bool
+    {
+        return $request->has('work_level')
+            || $request->has('work_employer_name')
+            || $request->has('designation');
+    }
+
+    private function getWorkRowIndexes(Request $request): array
+    {
+        $indexes = [];
+        foreach (['work_level', 'work_employer_name', 'designation', 'experience', 'work_experience_total'] as $field) {
+            $values = $request->input($field, []);
+            if (is_array($values)) {
+                $indexes = array_merge($indexes, array_keys($values));
+            }
+        }
+
+        $indexes = array_values(array_unique($indexes, SORT_REGULAR));
+        usort($indexes, static function ($a, $b) {
+            return (int) $a <=> (int) $b;
+        });
+
+        return $indexes;
+    }
+
+    private function mapWorkExperienceRow(Request $request, $key, ?string $formName): array
+    {
+        $normalizedForm = strtoupper((string) $formName);
+        $isFormS = $normalizedForm === 'S';
+
+        $companyName = $isFormS
+            ? trim((string) ($request->work_employer_name[$key] ?? $request->work_level[$key] ?? ''))
+            : trim((string) ($request->work_level[$key] ?? ''));
+
+        $experience = $isFormS
+            ? trim((string) ($request->work_experience_total[$key] ?? $request->experience[$key] ?? ''))
+            : trim((string) ($request->experience[$key] ?? ''));
+
+        $designation = trim((string) ($request->designation[$key] ?? ''));
+
+        return [
+            'company_name' => $companyName,
+            'experience' => $experience,
+            'designation' => $designation,
+            'is_empty' => ($companyName === '' && $experience === '' && $designation === ''),
+        ];
+    }
+
 
     public function editApplication($appl_id)
     {
@@ -643,9 +691,14 @@ class FormController extends BaseController
             }
             
             // process experience
-            if ($request->has('work_level')) {
-                foreach ($request->work_level as $key => $company) {
-                    if (empty($company) || empty($request->experience[$key]) || empty($request->designation[$key])) {
+            if ($this->hasWorkExperiencePayload($request)) {
+                foreach ($this->getWorkRowIndexes($request) as $key) {
+                    $workRow = $this->mapWorkExperienceRow($request, $key, $request->form_name ?? null);
+                    $company = $workRow['company_name'];
+                    $expYears = $workRow['experience'];
+                    $designation = $workRow['designation'];
+
+                    if (empty($company) || empty($expYears) || empty($designation)) {
                         continue;
                     }
                     
@@ -673,8 +726,8 @@ class FormController extends BaseController
                     Mst_experience::create([
                         'login_id'        => $loginId,
                         'company_name'    => $company,
-                        'experience'      => $request->experience[$key],
-                        'designation'     => $request->designation[$key],
+                        'experience'      => $expYears,
+                        'designation'     => $designation,
                         'application_id'  => $newApplicationId,
                         'exp_serial'      => $newExpSerial,
                         'upload_document' => $filePath,
@@ -1071,17 +1124,22 @@ class FormController extends BaseController
             
             
 
-            if ($request->has('work_level')) {
+            if ($this->hasWorkExperiencePayload($request)) {
                 // ✅ Fetch last exp_serial from DB once
                 $lastExp = Mst_experience::whereNotNull('exp_serial')->latest('id')->value('exp_serial');
                 $lastNum = $lastExp ? (int) str_replace('exp_', '', $lastExp) : 0;
             
-                foreach ($request->work_level as $key => $company) {
+                foreach ($this->getWorkRowIndexes($request) as $key) {
+                    $workRow = $this->mapWorkExperienceRow($request, $key, $request->form_name ?? null);
+                    $company = $workRow['company_name'];
+                    $expYears = $workRow['experience'];
+                    $designation = $workRow['designation'];
+
                     // ✅ Skip empty rows
                     if (
                         empty($company) ||
-                        empty($request->experience[$key] ?? null) ||
-                        empty($request->designation[$key] ?? null)
+                        empty($expYears) ||
+                        empty($designation)
                     ) {
                         continue;
                     }
@@ -1110,8 +1168,8 @@ class FormController extends BaseController
                         // 🔹 UPDATE existing record
                         $work->update([
                             'company_name'    => $company,
-                            'experience'      => $request->experience[$key],
-                            'designation'     => $request->designation[$key],
+                            'experience'      => $expYears,
+                            'designation'     => $designation,
                             'upload_document' => $filePath,
                         ]);
                     } else {
@@ -1122,8 +1180,8 @@ class FormController extends BaseController
                         Mst_experience::create([
                             'login_id'        => $loginId,
                             'company_name'    => $company,
-                            'experience'      => $request->experience[$key],
-                            'designation'     => $request->designation[$key],
+                            'experience'      => $expYears,
+                            'designation'     => $designation,
                             'application_id'  => $applicationId,
                             'exp_serial'      => $newExpSerial,
                             'upload_document' => $filePath,
@@ -1669,17 +1727,22 @@ class FormController extends BaseController
             }
             
 
-            if ($request->has('work_level')) {
+            if ($this->hasWorkExperiencePayload($request)) {
                 // ✅ Fetch last exp_serial from DB once
                 $lastExp = Mst_experience::whereNotNull('exp_serial')->latest('id')->value('exp_serial');
                 $lastNum = $lastExp ? (int) str_replace('exp_', '', $lastExp) : 0;
             
-                foreach ($request->work_level as $key => $company) {
+                foreach ($this->getWorkRowIndexes($request) as $key) {
+                    $workRow = $this->mapWorkExperienceRow($request, $key, $request->form_name ?? null);
+                    $company = $workRow['company_name'];
+                    $expYears = $workRow['experience'];
+                    $designation = $workRow['designation'];
+
                     // ✅ Skip empty rows
                     if (
                         empty($company) &&
-                        empty($request->experience[$key] ?? null) &&
-                        empty($request->designation[$key] ?? null)
+                        empty($expYears) &&
+                        empty($designation)
                     ) {
                         continue;
                     }
@@ -1708,8 +1771,8 @@ class FormController extends BaseController
                         // 🔹 UPDATE existing record
                         $work->update([
                             'company_name'    => $company ?? null,
-                            'experience'      => $request->experience[$key] ?? null,
-                            'designation'     => $request->designation[$key] ?? null,
+                            'experience'      => $expYears ?: null,
+                            'designation'     => $designation ?: null,
                             'upload_document' => $filePath !== null
                                 ? $filePath
                                 : ($isFileRemoved ? null : $work->upload_document),
@@ -1722,8 +1785,8 @@ class FormController extends BaseController
                         Mst_experience::create([
                             'login_id'        => $loginId,
                             'company_name'    => $company,
-                            'experience'      => $request->experience[$key],
-                            'designation'     => $request->designation[$key],
+                            'experience'      => $expYears,
+                            'designation'     => $designation,
                             'application_id'  => $applicationId,
                             'exp_serial'      => $newExpSerial,
                             'upload_document' => $filePath,
@@ -2046,14 +2109,15 @@ class FormController extends BaseController
             // -------------------------
             // ALWAYS-INSERT Work  ✅
             // -------------------------
-            if ($request->has('work_level')) {
+            if ($this->hasWorkExperiencePayload($request)) {
                 $lastExp = Mst_experience::whereNotNull('exp_serial')->latest('id')->value('exp_serial');
                 $lastNum = $lastExp ? (int) str_replace('exp_', '', $lastExp) : 0;
 
-                foreach ($request->work_level as $key => $company) {
-                    $companyName = $company ?? null;
-                    $expYears    = $request->experience[$key] ?? null;
-                    $designation = $request->designation[$key] ?? null;
+                foreach ($this->getWorkRowIndexes($request) as $key) {
+                    $workRow = $this->mapWorkExperienceRow($request, $key, $request->form_name ?? null);
+                    $companyName = $workRow['company_name'] ?: null;
+                    $expYears    = $workRow['experience'] ?: null;
+                    $designation = $workRow['designation'] ?: null;
 
                     $removed     = isset($request->removed_document_work[$key]) && $request->removed_document_work[$key] == '1';
                     $newDoc      = (isset($request->file('work_document')[$key]) && $request->file('work_document')[$key]->isValid())
@@ -2432,14 +2496,15 @@ class FormController extends BaseController
                 }
             }
             
-            if ($request->has('work_level')) {
+            if ($this->hasWorkExperiencePayload($request)) {
                 $lastExp = Mst_experience::whereNotNull('exp_serial')->latest('id')->value('exp_serial');
                 $lastNum = $lastExp ? (int) str_replace('exp_', '', $lastExp) : 0;
 
-                foreach ($request->work_level as $key => $company) {
-                    $companyName = $company ?? null;
-                    $expYears    = $request->experience[$key] ?? null;
-                    $designation = $request->designation[$key] ?? null;
+                foreach ($this->getWorkRowIndexes($request) as $key) {
+                    $workRow = $this->mapWorkExperienceRow($request, $key, $request->form_name ?? null);
+                    $companyName = $workRow['company_name'] ?: null;
+                    $expYears    = $workRow['experience'] ?: null;
+                    $designation = $workRow['designation'] ?: null;
 
                     $removed     = isset($request->removed_document_work[$key]) && $request->removed_document_work[$key] == '1';
                     $newDoc      = (isset($request->file('work_document')[$key]) && $request->file('work_document')[$key]->isValid())

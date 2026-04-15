@@ -596,8 +596,93 @@ $(document).ready(function() {
         //-------------------------------------------------- competency form submit action---------------------------------------
 
 
-        $('#submitPaymentBtn').on('click', function (e) {
+        async function isSelectedFileReadable(file) {
+            if (!file) return true;
+            if (typeof file.arrayBuffer !== 'function') return true;
+            try {
+                await file.arrayBuffer();
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        async function validateReadableSelectedFiles() {
+            const $form = $('#competency_form_ws');
+            if (!$form.length) return true;
+
+            const broken = [];
+            const fileInputs = $form.find('input[type="file"]').toArray();
+            for (const input of fileInputs) {
+                const file = input.files && input.files[0] ? input.files[0] : null;
+                if (!file) continue;
+
+                const ok = await isSelectedFileReadable(file);
+                if (!ok) {
+                    const labelText = $(`label[for="${input.id}"]`).first().text().trim() || input.name || input.id || 'Selected file';
+                    broken.push(labelText);
+                    input.value = '';
+                }
+            }
+
+            if (!broken.length) return true;
+
+            const unique = [...new Set(broken)];
+            const isEducationMissing = unique.length === 1 && /education_document/i.test(unique[0]);
+            const msg = isEducationMissing
+                ? 'Selected file is missing or deleted on education upload. Please choose the file again.'
+                : (unique.length === 1
+                    ? `Selected file is not accessible for "${unique[0]}". Please choose the file again.`
+                    : `Some selected files are not accessible: ${unique.join(', ')}. Please choose them again.`);
+            Swal.fire({
+                icon: 'warning',
+                title: 'File Not Accessible',
+                text: msg
+            });
+            return false;
+        }
+
+        $(document).on('click', '.local-file-preview .preview-link', async function (e) {
             e.preventDefault();
+
+            const $link = $(this);
+            const href = $link.attr('href');
+            const target = $link.attr('target') || '_blank';
+            const $preview = $link.closest('.local-file-preview');
+            const $fileInput = $preview.prevAll('.form-s-file-upload-wrap').first().find('input[type="file"]').first();
+            const input = $fileInput.get(0);
+            const file = input && input.files && input.files[0] ? input.files[0] : null;
+
+            if (!file) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File Not Accessible',
+                    text: 'Selected file is missing or deleted on education upload. Please choose the file again.'
+                });
+                return;
+            }
+
+            const readable = await isSelectedFileReadable(file);
+            if (!readable) {
+                if (input) input.value = '';
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File Not Accessible',
+                    text: 'Selected file is missing or deleted on education upload. Please choose the file again.'
+                });
+                return;
+            }
+
+            window.open(href, target);
+        });
+
+        $('#submitPaymentBtn').on('click', async function (e) {
+            e.preventDefault();
+
+            const readableFiles = await validateReadableSelectedFiles();
+            if (!readableFiles) {
+                return;
+            }
 
             $('.error-message').remove();
             $('.certificate-error').text('');
@@ -698,6 +783,7 @@ $(document).ready(function() {
             $('#education-container .education-fields').each(function () {
                 let eduLevel = $(this).find('select[name="educational_level[]"]');
                 let instituteName = $(this).find('input[name="institute_name[]"]');
+                let monthOfPassing = $(this).find('select[name="month_of_passing[]"]');
                 let yearOfPassing = $(this).find('select[name="year_of_passing[]"]');
                 let certificateNo = $(this).find('input[name="certificate_no[]"]');
                 let educationUpload = $(this).find('input[name="education_document[]"], input[name^="education_document["]');
@@ -725,8 +811,14 @@ $(document).ready(function() {
                     isValid = false;
                 }
 
+                if (monthOfPassing.length && (monthOfPassing.val() === null || monthOfPassing.val() === "")) {
+                    monthOfPassing.after('<span class="error-message text-danger d-block mt-1">Month of passing is required.</span>');
+                    if (!firstErrorField) firstErrorField = monthOfPassing;
+                    isValid = false;
+                }
+
                 if (yearOfPassing.length && (yearOfPassing.val() === "0" || yearOfPassing.val() === "")) {
-                    yearOfPassing.after('<span class="error-message text-danger d-block mt-1">Year of passing is required.</span>');
+                    yearOfPassing.after('<span class="error-message text-danger d-block mt-1">year of passing is required.</span>');
                     if (!firstErrorField) firstErrorField = yearOfPassing;
                     isValid = false;
                 }
@@ -750,23 +842,44 @@ $(document).ready(function() {
                     isValid = false;
                 }
 
-                if (educationUpload.length && educationUpload.val() === "") {
-                    educationUpload.after('<span class="error-message text-danger d-block mt-1">Education certificate upload is required.</span>');
+                const $educationUploadWrap = educationUpload.closest('.form-s-file-upload-wrap');
+                const $educationErrorTarget = $educationUploadWrap.length ? $educationUploadWrap : educationUpload;
+                const hasEducationFile = educationUpload.toArray().some(function (input) {
+                    if (!input) return false;
+                    const hasFiles = !!(input.files && input.files.length > 0);
+                    const hasValue = String(input.value || '').trim() !== '';
+                    return hasFiles || hasValue;
+                });
+                const hasEducationPreview = $(this).find('.local-file-preview .preview-link').length > 0;
+                const hasMarkedLocalSelection = educationUpload.toArray().some(function (input) {
+                    return input && String(input.getAttribute('data-has-local-file') || '') === '1';
+                });
+                const existingEduInput = $(this).find('input[name="existing_document[]"]').first();
+                const hasExistingEducationDoc = existingEduInput.length && (existingEduInput.val() || '').trim() !== '';
+
+                if (educationUpload.length && !hasEducationFile && !hasEducationPreview && !hasMarkedLocalSelection && !hasExistingEducationDoc) {
+                    $educationErrorTarget.after('<span class="error-message text-danger d-block mt-1">Education certificate upload is required.</span>');
                     if (!firstErrorField) firstErrorField = educationUpload;
                     isValid = false;
-                }else if (educationUpload.length && educationUpload[0].files.length > 0) {
-                    const file = educationUpload[0].files[0]; // ✅ use raw DOM element
+                } else if (educationUpload.length && hasEducationFile) {
+                    const firstInputWithFile = educationUpload.toArray().find(function (input) {
+                        if (!input) return false;
+                        const hasFiles = !!(input.files && input.files.length > 0);
+                        const hasValue = String(input.value || '').trim() !== '';
+                        return hasFiles || hasValue;
+                    });
+                    const file = firstInputWithFile ? firstInputWithFile.files[0] : null;
                     if (file) {
                         const allowedType = 'application/pdf';
                         const minSize = 5 * 1024;   // 5 KB
                         const maxSize = 250 * 1024; // 250 KB
 
                         if (file.type !== allowedType) {
-                            educationUpload.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Education upload.</span>');
+                            $educationErrorTarget.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Education upload.</span>');
                             if (!firstErrorField) firstErrorField = educationUpload;
                             isValid = false;
                         } else if (file.size < minSize || file.size > maxSize) {
-                            educationUpload.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
+                            $educationErrorTarget.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
                             if (!firstErrorField) firstErrorField = educationUpload;
                             isValid = false;
                         }
@@ -776,8 +889,97 @@ $(document).ready(function() {
 
             const formName = ($('#form_name').val() || '').trim();
             const workOptional = (formName === 'W' || formName === 'WH' || formName === 'P');
+            const isSWorkForm = (formName === 'S');
 
             $('#work-container .work-fields').each(function () {
+                if (isSWorkForm) {
+                    const employmentType = $(this).find('.work-employment-type');
+                    const employerInput = $(this).find('.work-employer-input');
+                    const fromDate = $(this).find('.work-date-from');
+                    const toDate = $(this).find('.work-date-to');
+                    const designation = $(this).find('input[name="designation[]"]');
+                    const workDocument = $(this).find('input[name="work_document[]"], input[name^="work_document["]');
+                    const existingDocInput = $(this).find('input[name="existing_work_document[]"]');
+                    const hasExistingDoc = existingDocInput.length && (existingDocInput.val() || '').trim() !== '';
+                    const hasFile = workDocument.length && workDocument[0].files.length > 0;
+                    const $workUploadWrap = workDocument.closest('.form-s-file-upload-wrap');
+                    const $workErrorTarget = $workUploadWrap.length ? $workUploadWrap : workDocument;
+
+                    if (employmentType.length && (!employmentType.val() || employmentType.val().trim() === '')) {
+                        employmentType.after('<span class="error-message text-danger d-block mt-1">Please select employment type.</span>');
+                        if (!firstErrorField) firstErrorField = employmentType;
+                        isValid = false;
+                    }
+
+                const selectedEmploymentType = (employmentType.val() || '').trim().toLowerCase();
+                if (selectedEmploymentType === 'contractor') {
+                    const intimationDate = $(this).find('.work-intimation-date');
+                    if (intimationDate.length && (intimationDate.val() || '').trim() === '') {
+                        intimationDate.after('<span class="error-message text-danger d-block mt-1">Intimation letter date is required for contractor.</span>');
+                        if (!firstErrorField) firstErrorField = intimationDate;
+                        isValid = false;
+                    }
+                }
+
+                    if (employerInput.length && employerInput.val().trim() === '') {
+                        employerInput.after('<span class="error-message text-danger d-block mt-1">Please enter employer / organization name.</span>');
+                        if (!firstErrorField) firstErrorField = employerInput;
+                        isValid = false;
+                    }
+
+                    if (fromDate.length && (fromDate.val() || '').trim() === '') {
+                        fromDate.after('<span class="error-message text-danger d-block mt-1">From date is required.</span>');
+                        if (!firstErrorField) firstErrorField = fromDate;
+                        isValid = false;
+                    }
+
+                    if (toDate.length && (toDate.val() || '').trim() === '') {
+                        toDate.after('<span class="error-message text-danger d-block mt-1">To date is required.</span>');
+                        if (!firstErrorField) firstErrorField = toDate;
+                        isValid = false;
+                    }
+
+                    if (fromDate.length && toDate.length && fromDate.val() && toDate.val()) {
+                        const from = new Date(fromDate.val() + 'T12:00:00');
+                        const to = new Date(toDate.val() + 'T12:00:00');
+                        if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && to < from) {
+                            toDate.after('<span class="error-message text-danger d-block mt-1">To date must be greater than or equal to From date.</span>');
+                            if (!firstErrorField) firstErrorField = toDate;
+                            isValid = false;
+                        }
+                    }
+
+                    if (designation.length && designation.val().trim() === '') {
+                        designation.after('<span class="error-message text-danger d-block mt-1">Designation is required.</span>');
+                        if (!firstErrorField) firstErrorField = designation;
+                        isValid = false;
+                    }
+
+                    if (!hasFile && !hasExistingDoc) {
+                        $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">Experience document is required.</span>');
+                        if (!firstErrorField) firstErrorField = workDocument.length ? workDocument : designation;
+                        isValid = false;
+                    } else if (hasFile) {
+                        const file = workDocument[0].files[0];
+                        if (file) {
+                            const allowedType = 'application/pdf';
+                            const minSize = 5 * 1024;
+                            const maxSize = 250 * 1024;
+
+                            if (file.type !== allowedType) {
+                                $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Experience certificate.</span>');
+                                if (!firstErrorField) firstErrorField = workDocument;
+                                isValid = false;
+                            } else if (file.size < minSize || file.size > maxSize) {
+                                $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
+                                if (!firstErrorField) firstErrorField = workDocument;
+                                isValid = false;
+                            }
+                        }
+                    }
+                    return;
+                }
+
                 const workLevel = $(this).find('input[name="work_level[]"]');
                 const experience = $(this).find('input[name="experience[]"]');
                 const designation = $(this).find('input[name="designation[]"]');
@@ -818,9 +1020,11 @@ $(document).ready(function() {
                 const hasFile = workDocument.length && workDocument[0].files.length > 0;
                 const existingDocInput = $(this).find('input[name="existing_work_document[]"]');
                 const hasExistingDoc = existingDocInput.length && (existingDocInput.val() || '').trim() !== '';
+                const $workUploadWrap = workDocument.closest('.form-s-file-upload-wrap');
+                const $workErrorTarget = $workUploadWrap.length ? $workUploadWrap : workDocument;
 
                 if (!workOptional && shouldValidateRow && !hasFile && !hasExistingDoc) {
-                    workDocument.after('<span class="error-message text-danger d-block mt-1">Experience document is required.</span>');
+                    $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">Experience document is required.</span>');
                     if (!firstErrorField) firstErrorField = workDocument.length ? workDocument : designation;
                     isValid = false;
                 } else if (hasFile) {
@@ -831,11 +1035,11 @@ $(document).ready(function() {
                         const maxSize = 250 * 1024; // 250 KB
 
                         if (file.type !== allowedType) {
-                            workDocument.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Experience certificate.</span>');
+                            $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Experience certificate.</span>');
                             if (!firstErrorField) firstErrorField = workDocument;
                             isValid = false;
                         } else if (file.size < minSize || file.size > maxSize) {
-                            workDocument.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
+                            $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
                             if (!firstErrorField) firstErrorField = workDocument;
                             isValid = false;
                         }
@@ -1063,6 +1267,42 @@ $(document).ready(function() {
 
             let license_name = $("#license_name").val();
             showDeclarationPopup(license_name);
+        });
+
+        // Clear row-level upload-required errors immediately on file change
+        // (so user doesn't need to click submit again to clear old message)
+        $(document).on('change', 'input[type="file"][name="education_document[]"], input[type="file"][name^="education_document["], input[type="file"][name="work_document[]"], input[type="file"][name^="work_document["]', function () {
+            var $input = $(this);
+            var $wrap = $input.closest('.form-s-file-upload-wrap');
+            var $target = $wrap.length ? $wrap : $input;
+            var $row = $input.closest('tr, .education-fields, .work-fields');
+
+            // Remove direct error rendered under this upload control
+            $target.nextAll('.error-message').each(function () {
+                var txt = ($(this).text() || '').toLowerCase();
+                if (
+                    txt.indexOf('education certificate upload is required') !== -1 ||
+                    txt.indexOf('experience document is required') !== -1 ||
+                    txt.indexOf('only pdf files are allowed for education upload') !== -1 ||
+                    txt.indexOf('only pdf files are allowed for experience certificate') !== -1 ||
+                    txt.indexOf('file size permitted only 5 kb to 200 kb') !== -1
+                ) {
+                    $(this).remove();
+                }
+            });
+
+            // Safety: also clear same message anywhere else in this row
+            if ($row.length) {
+                $row.find('.error-message').each(function () {
+                    var txt = ($(this).text() || '').toLowerCase();
+                    if (
+                        txt.indexOf('education certificate upload is required') !== -1 ||
+                        txt.indexOf('experience document is required') !== -1
+                    ) {
+                        $(this).remove();
+                    }
+                });
+            }
         });
 
 

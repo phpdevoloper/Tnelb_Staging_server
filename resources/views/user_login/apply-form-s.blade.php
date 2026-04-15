@@ -175,6 +175,34 @@
         vertical-align: middle;
         text-align: center;
     }
+    #education-table thead th {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.3rem 0.35rem;
+        vertical-align: middle;
+        line-height: 1.2;
+        text-align: center;
+    }
+    #education-table thead tr:nth-child(2) th {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.3rem;
+    }
+    #education-table thead th .file-limit {
+        font-size: 0.66rem;
+    }
+    #education-table tbody td {
+        text-align: center;
+        vertical-align: middle;
+    }
+    #education-table tbody .form-control,
+    #education-table tbody select,
+    #education-table tbody input {
+        font-size: 0.86rem;
+        line-height: 1.25;
+    }
+    #education-table tbody select option {
+        font-size: 0.86rem;
+    }
 
     #work-table .work-exp-upload-head {
         font-size: 0.72rem;
@@ -205,6 +233,32 @@
         color: #212529;
         margin-bottom: 0.2rem;
         line-height: 1.2;
+    }
+    #work-table thead th.work-exp-col-years {
+        vertical-align: top;
+    }
+    #work-table .work-exp-years-title {
+        text-align: center;
+        margin-bottom: 0.35rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+    }
+    #work-table .work-exp-inline--head {
+        align-items: flex-end;
+        border-top: 1px solid #dee2e6;
+        padding-top: 0.25rem;
+    }
+    #work-table .work-exp-inline--head .work-exp-label-fromto {
+        margin-bottom: 0;
+    }
+    #work-table .work-exp-inline--head .work-exp-date-group,
+    #work-table .work-exp-inline--head .work-exp-total-inline {
+        position: relative;
+        padding-left: 0.35rem;
+    }
+    #work-table .work-exp-inline--head .work-exp-date-group + .work-exp-date-group,
+    #work-table .work-exp-inline--head .work-exp-total-inline {
+        border-left: 1px solid #dee2e6;
     }
     #work-table .work-date-from,
     #work-table .work-date-to {
@@ -395,14 +449,15 @@
                                                 <table class="table table-bordered" id="education-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Education Level</th>
-                                                            <th>Institution/School Name</th>
-                                                            <th>Year of Passing</th>
-                                                            <th>Certificate No</th>
-                                                            <th class="text-center">Upload Document
+                                                            <th rowspan="2">S.No</th>
+                                                            <th rowspan="2">Education Level</th>
+                                                            <th rowspan="2">Institution/School Name</th>
+                                                            <th colspan="2" class="text-center">Year of Passing</th>
+                                                            <th rowspan="2">Certificate No</th>
+                                                            <th class="text-center" rowspan="2">Upload Document
                                                                 <br><span class="file-limit text-success small">File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                             </th>
-                                                            <th class="text-center p-1">
+                                                            <th class="text-center p-1" rowspan="2">
                                                                 <div class="form-s-actions-stack">
                                                                     <button type="button" class="btn btn-primary btn-sm add-more py-1 px-2" title="Add row">
                                                                         <i class="fa fa-plus"></i>
@@ -410,9 +465,14 @@
                                                                 </div>
                                                             </th>
                                                         </tr>
+                                                        <tr>
+                                                            <th class="text-center">Month</th>
+                                                            <th class="text-center">Year</th>
+                                                        </tr>
                                                     </thead>
                                                     <tbody id="education-container">
                                                         <tr class="education-fields">
+                                                            <td class="edu-serial text-center">1</td>
                                                             <td> <select class="form-control" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
                                                                     <option value="DEE">Diploma(Electrical Engineering)</option>
@@ -421,6 +481,23 @@
                                                                 </select>
                                                             </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]" maxlength="80"></td>
+                                                            <td>
+                                                                <select name="month_of_passing[]" class="form-control">
+                                                                    <option value="">Select Month</option>
+                                                                    <option value="01">Jan</option>
+                                                                    <option value="02">Feb</option>
+                                                                    <option value="03">Mar</option>
+                                                                    <option value="04">Apr</option>
+                                                                    <option value="05">May</option>
+                                                                    <option value="06">Jun</option>
+                                                                    <option value="07">Jul</option>
+                                                                    <option value="08">Aug</option>
+                                                                    <option value="09">Sep</option>
+                                                                    <option value="10">Oct</option>
+                                                                    <option value="11">Nov</option>
+                                                                    <option value="12">Dec</option>
+                                                                </select>
+                                                            </td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -478,9 +555,23 @@
                                             <table class="table table-bordered table-sm work-exp-table" id="work-table">
                                                 <thead>
                                                     <tr>
+                                                        <th class="work-exp-col-sno text-center">S.No</th>
                                                         <th class="work-exp-col-type">Employment type</th>
                                                         <th class="work-exp-col-employer">Employer / organization</th>
-                                                        <th class="work-exp-col-years">Year of Experience</th>
+                                                        <th class="work-exp-col-years work-exp-years-head" scope="col">
+                                                            <div class="work-exp-years-title">Year of Experience</div>
+                                                            <div class="work-exp-inline work-exp-inline--head">
+                                                                <div class="work-exp-date-group">
+                                                                    <span class="work-exp-label-fromto d-block">From (date)</span>
+                                                                </div>
+                                                                <div class="work-exp-date-group">
+                                                                    <span class="work-exp-label-fromto d-block">To (date)</span>
+                                                                </div>
+                                                                <div class="work-exp-total-inline">
+                                                                    <span class="work-exp-label-fromto d-block">Total yrs</span>
+                                                                </div>
+                                                            </div>
+                                                        </th>
                                                         <th class="work-exp-col-designation">Designation</th>
                                                         <th class="text-center work-exp-col-upload work-exp-upload-head">Upload Document
                                                             <br><span class="file-limit text-success small">File type: PDF(Min 5 KB To Max 200 KB)</span>
@@ -496,6 +587,7 @@
                                                 </thead>
                                                 <tbody id="work-container">
                                                     <tr class="work-fields">
+                                                        <td class="work-serial text-center">1</td>
                                                         <td class="work-exp-col-type">
                                                             <select class="form-control form-control-sm work-employment-type" name="work_employment_type[]" required>
                                                                 <option value="" selected disabled>Select type</option>
@@ -517,15 +609,12 @@
                                                         <td class="work-exp-col-years">
                                                             <div class="work-exp-inline">
                                                                 <div class="work-exp-date-group">
-                                                                    <label class="work-exp-label-fromto d-block">From (date)</label>
                                                                     <input type="date" class="form-control form-control-sm work-date-from" name="work_date_from[]" disabled title="From date" aria-label="Year of experience from date">
                                                                 </div>
                                                                 <div class="work-exp-date-group">
-                                                                    <label class="work-exp-label-fromto d-block">To (date)</label>
                                                                     <input type="date" class="form-control form-control-sm work-date-to" name="work_date_to[]" disabled title="To date" aria-label="Year of experience to date">
                                                                 </div>
                                                                 <div class="work-exp-total-inline">
-                                                                    <label class="work-exp-label-fromto d-block">Total yrs</label>
                                                                     <input type="text" class="form-control form-control-sm work-year-total-display" readonly placeholder="—" tabindex="-1" aria-label="Total years of experience">
                                                                     <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="">
                                                                 </div>
@@ -703,7 +792,6 @@
                                                                 <div class="flex-grow-1" style="max-width:280px;">
                                                                     <div class="form-s-file-upload-wrap">
                                                                         <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
-                                                                        <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
                                                                     </div>
                                                                     <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
                                                                 </div>
@@ -732,7 +820,6 @@
                                                         <td style="width:25%;">
                                                             <div class="form-s-file-upload-wrap" style="max-width:280px;">
                                                                 <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
                                                             </div>
                                                             <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
                                                             <small class="text-danger file-error"></small>
@@ -757,7 +844,6 @@
                                                         <td style="width:25%;">
                                                             <div class="form-s-file-upload-wrap" style="max-width:280px;">
                                                                 <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
                                                             </div>
                                                             <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
                                                             <small class="text-danger file-error"></small>
@@ -773,7 +859,6 @@
                                                         <td colspan="3">
                                                             <div class="form-s-file-upload-wrap" style="max-width:280px;">
                                                                 <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png" required>
-                                                                <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 form-s-file-upload-btn" title="Choose file to upload"><i class="fa fa-upload"></i> Upload</button>
                                                             </div>
                                                             <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
                                                         </td>
@@ -861,6 +946,7 @@
             var oldUrl = $preview.data('blobUrl');
             if (oldUrl) URL.revokeObjectURL(oldUrl);
             $preview.remove();
+            $fileInput.removeAttr('data-has-local-file');
         }
 
         $(document).on('change', 'input[type="file"][name="education_document[]"], input[type="file"][name="work_document[]"]', function() {
@@ -875,14 +961,17 @@
             if (allowed.indexOf(file.type) === -1) {
                 window.alert('Only PDF, JPG, PNG files are allowed.');
                 this.value = '';
+                $input.removeAttr('data-has-local-file');
                 return;
             }
             if (file.size > maxSize) {
                 window.alert('File size should not exceed 200 KB.');
                 this.value = '';
+                $input.removeAttr('data-has-local-file');
                 return;
             }
 
+            $input.attr('data-has-local-file', '1');
             var blobUrl = URL.createObjectURL(file);
             var isImage = file.type.indexOf('image/') === 0;
             var $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
@@ -899,9 +988,50 @@
             $input.closest('.form-s-file-upload-wrap').after($preview);
         });
 
+        $(document).on('change', '#aadhaar_doc, #pancard_doc', function() {
+            var $input = $(this);
+            clearLocalPreview($input);
+
+            var file = this.files && this.files[0] ? this.files[0] : null;
+            if (!file) return;
+
+            var minSize = 10 * 1024;
+            var maxSize = 250 * 1024;
+            if (file.type !== 'application/pdf') {
+                window.alert('Only PDF files are allowed.');
+                this.value = '';
+                return;
+            }
+            if (file.size < minSize) {
+                window.alert('File size must be at least 10 KB.');
+                this.value = '';
+                return;
+            }
+            if (file.size > maxSize) {
+                window.alert('File size should not exceed 250 KB.');
+                this.value = '';
+                return;
+            }
+
+            var blobUrl = URL.createObjectURL(file);
+            var $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
+            $preview.append($('<a>', {
+                href: blobUrl,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                class: 'preview-link'
+            }).html('<i class="fa fa-file-pdf-o" style="color:#d9534f;"></i> View Document'));
+            $input.closest('.form-s-file-upload-wrap').after($preview);
+        });
+
         document.addEventListener("click", function(e) {
             let container = document.getElementById("education-container");
             let educationRows = container.querySelectorAll(".education-fields");
+            const refreshEducationSerials = () => {
+                container.querySelectorAll('.education-fields .edu-serial').forEach((cell, idx) => {
+                    cell.textContent = String(idx + 1);
+                });
+            };
 
             // ✅ Prevent adding more than 5 entries
             if (e.target.closest(".add-more")) {
@@ -920,6 +1050,7 @@
                 let newRow = document.createElement("tr");
                 newRow.classList.add("education-fields");
                 newRow.innerHTML = `
+<td class="edu-serial text-center">${educationRows.length + 1}</td>
 <td><select class="form-control" name="educational_level[]" required>
                         <option selected disabled>Select Education</option>
                         <option value="DEE">Diploma(Electrical Engineering)</option>
@@ -927,6 +1058,23 @@
                         <option value="MEE">M.E(Electrical Engineering)</option>
                 </select></td>
                 <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" required></td>
+                <td>
+                    <select name="month_of_passing[]" class="form-control" required>
+                        <option value="">Select Month</option>
+                        <option value="01">Jan</option>
+                        <option value="02">Feb</option>
+                        <option value="03">Mar</option>
+                        <option value="04">Apr</option>
+                        <option value="05">May</option>
+                        <option value="06">Jun</option>
+                        <option value="07">Jul</option>
+                        <option value="08">Aug</option>
+                        <option value="09">Sep</option>
+                        <option value="10">Oct</option>
+                        <option value="11">Nov</option>
+                        <option value="12">Dec</option>
+                    </select>
+                </td>
                 <td>
                     <select name="year_of_passing[]" class="form-control" required>
                         <option value="0">Select Year</option>
@@ -950,6 +1098,7 @@
             `;
 
                 container.appendChild(newRow);
+                refreshEducationSerials();
             }
 
             /* Remove row functionality */
@@ -966,6 +1115,7 @@
                     return;
                 }
                 e.target.closest("tr").remove();
+                refreshEducationSerials();
             }
         });
     </script>
@@ -1065,11 +1215,17 @@
             function initWorkRow($tr) {
                 applyEmploymentType($tr);
             }
+            function refreshWorkSerials() {
+                $('#work-container .work-fields .work-serial').each(function(idx) {
+                    $(this).text(String(idx + 1));
+                });
+            }
 
             $(document).ready(function() {
                 $('#work-container .work-fields').each(function() {
                     initWorkRow($(this));
                 });
+                refreshWorkSerials();
             });
 
             $(document).on('change', '.work-employment-type', function() {
@@ -1122,6 +1278,7 @@
                     if (desIn) desIn.value = '';
                     container.appendChild(newRow);
                     initWorkRow($(newRow));
+                    refreshWorkSerials();
                     return;
                 }
 
@@ -1134,6 +1291,7 @@
                         return;
                     }
                     e.target.closest('tr').remove();
+                    refreshWorkSerials();
                 }
             });
         })();
@@ -1217,5 +1375,99 @@
                         .html("🚫 Error verifying license. Try again.");
                 },
             });
+        });
+
+        $(document).ready(async function() {
+            var modalEl = document.getElementById('competencyInstructionsModal');
+            if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                return;
+            }
+
+            var agreeCheckbox = modalEl.querySelector('#declaration-agree-renew');
+            var errorText = modalEl.querySelector('#declaration-error-renew');
+            var proceedBtn = modalEl.querySelector('#proceedPayment');
+            if (!agreeCheckbox || !errorText || !proceedBtn) {
+                return;
+            }
+
+            var acceptModal = new bootstrap.Modal(modalEl, {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            var modalBody = modalEl.querySelector('#instructionContent');
+            if (modalBody) {
+                modalBody.innerHTML = '<p class="mb-0 text-muted">Loading instructions...</p>';
+            }
+
+            try {
+                var instructionResponse = await $.ajax({
+                    url: "{{ route('licences.getFormInstruction') }}",
+                    type: "POST",
+                    data: {
+                        appl_type: ($('#appl_type').val() || 'N'),
+                        licence_code: ($('#license_name').val() || 'C'),
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+
+                if (modalBody) {
+                    if (instructionResponse && Number(instructionResponse.status) === 200 && instructionResponse.data) {
+                        try {
+                            var delta = JSON.parse(instructionResponse.data);
+                            if (typeof QuillDeltaToHtmlConverter !== 'undefined' && delta && delta.ops) {
+                                var converter = new QuillDeltaToHtmlConverter(delta.ops, {
+                                    multiLineParagraph: false,
+                                    listItemTag: "li",
+                                    paragraphTag: "p"
+                                });
+                                modalBody.innerHTML = converter.convert();
+                            } else {
+                                modalBody.textContent = instructionResponse.data;
+                            }
+                        } catch (parseErr) {
+                            modalBody.textContent = instructionResponse.data;
+                        }
+                    } else {
+                        modalBody.innerHTML = '<p class="mb-0 text-danger">Instruction not available.</p>';
+                    }
+                }
+            } catch (err) {
+                if (modalBody) {
+                    modalBody.innerHTML = '<p class="mb-0 text-danger">Unable to load instructions right now.</p>';
+                }
+            }
+
+            // Force acknowledgement on page load.
+            agreeCheckbox.checked = false;
+            errorText.classList.add('d-none');
+            acceptModal.show();
+
+            if (!modalEl.dataset.acceptGateBound) {
+                modalEl.dataset.acceptGateBound = '1';
+
+                modalEl.addEventListener('hide.bs.modal', function(e) {
+                    if (!agreeCheckbox.checked) {
+                        e.preventDefault();
+                        errorText.classList.remove('d-none');
+                    }
+                });
+
+                proceedBtn.addEventListener('click', function(e) {
+                    if (!agreeCheckbox.checked) {
+                        e.preventDefault();
+                        errorText.classList.remove('d-none');
+                        return;
+                    }
+                    errorText.classList.add('d-none');
+                    acceptModal.hide();
+                });
+
+                agreeCheckbox.addEventListener('change', function() {
+                    if (agreeCheckbox.checked) {
+                        errorText.classList.add('d-none');
+                    }
+                });
+            }
         });
     </script>

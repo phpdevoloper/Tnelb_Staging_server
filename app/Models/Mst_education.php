@@ -12,7 +12,8 @@ class Mst_education extends Model
     protected $table = 'tnelb_applicants_edu';
     protected $fillable = [
         'educational_level', 
-        'institute_name', 
+        'institute_name',
+        'month_passing',
         'year_of_passing', 
         'certificate_no', 
         'percentage',

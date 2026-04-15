@@ -151,8 +151,60 @@ $(document).ready(function () {
     });
 
 
-    $('#saveDraftBtn').on('click', function(e) {
+    async function isSelectedFileReadableForDraft(file) {
+        if (!file) return true;
+        if (typeof file.arrayBuffer !== 'function') return true;
+        try {
+            await file.arrayBuffer();
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    async function validateReadableSelectedFilesForDraft() {
+        const $form = $('#competency_form_ws');
+        if (!$form.length) return true;
+
+        const broken = [];
+        const fileInputs = $form.find('input[type="file"]').toArray();
+        for (const input of fileInputs) {
+            const file = input.files && input.files[0] ? input.files[0] : null;
+            if (!file) continue;
+
+            const ok = await isSelectedFileReadableForDraft(file);
+            if (!ok) {
+                const labelText = $(`label[for="${input.id}"]`).first().text().trim() || input.name || input.id || 'Selected file';
+                broken.push(labelText);
+                input.value = '';
+            }
+        }
+
+        if (!broken.length) return true;
+
+        const unique = [...new Set(broken)];
+        const isEducationMissing = unique.length === 1 && /education_document/i.test(unique[0]);
+        const msg = isEducationMissing
+            ? 'Selected file is missing or deleted on education upload. Please choose the file again.'
+            : (unique.length === 1
+                ? `Selected file is not accessible for "${unique[0]}". Please choose the file again.`
+                : `Some selected files are not accessible: ${unique.join(', ')}. Please choose them again.`);
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'File Not Accessible',
+            text: msg
+        });
+        return false;
+    }
+
+    $('#saveDraftBtn').on('click', async function(e) {
         e.preventDefault(); 
+
+        const readableFiles = await validateReadableSelectedFilesForDraft();
+        if (!readableFiles) {
+            return;
+        }
 
         $('.error-message').remove(); 
         let isValid = true;
@@ -196,6 +248,8 @@ $(document).ready(function () {
             );
 
             if (educationUpload.length && educationUpload[0].files.length > 0) {
+                const $educationUploadWrap = educationUpload.closest('.form-s-file-upload-wrap');
+                const $educationErrorTarget = $educationUploadWrap.length ? $educationUploadWrap : educationUpload;
                 const file = educationUpload[0].files[0]; // ✅ use raw DOM element
                 if (file) {
                     const allowedType = 'application/pdf';
@@ -203,11 +257,11 @@ $(document).ready(function () {
                     const maxSize = 250 * 1024; // 250 KB
 
                     if (file.type !== allowedType) {
-                        educationUpload.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Education upload.</span>');
+                        $educationErrorTarget.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Education upload.</span>');
                         if (!firstErrorField) firstErrorField = educationUpload;
                         isValid = false;
                     } else if (file.size < minSize || file.size > maxSize) {
-                        educationUpload.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
+                        $educationErrorTarget.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
                         if (!firstErrorField) firstErrorField = educationUpload;
                         isValid = false;
                     }
@@ -221,6 +275,8 @@ $(document).ready(function () {
             );
 
            if (workDocument.length && workDocument[0].files.length > 0) {
+                const $workUploadWrap = workDocument.closest('.form-s-file-upload-wrap');
+                const $workErrorTarget = $workUploadWrap.length ? $workUploadWrap : workDocument;
                 const file = workDocument[0].files[0]; // ✅ use raw DOM element
                 if (file) {
                     const allowedType = 'application/pdf';
@@ -228,11 +284,11 @@ $(document).ready(function () {
                     const maxSize = 250 * 1024; // 250 KB
 
                     if (file.type !== allowedType) {
-                        workDocument.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Experience certificate.</span>');
+                        $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">Only PDF files are allowed for Experience certificate.</span>');
                         if (!firstErrorField) firstErrorField = workDocument;
                         isValid = false;
                     } else if (file.size < minSize || file.size > maxSize) {
-                        workDocument.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
+                        $workErrorTarget.after('<span class="error-message text-danger d-block mt-1">File size permitted only 5 KB to 200 KB.</span>');
                         if (!firstErrorField) firstErrorField = workDocument;
                         isValid = false;
                     }

@@ -82,6 +82,128 @@
         overflow: hidden;
         background: #fff;
     }
+    #work-table.work-exp-table {
+        font-size: 0.8125rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    #work-table.work-exp-table thead th {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.35rem 0.4rem;
+        vertical-align: middle;
+        line-height: 1.25;
+    }
+    #work-table.work-exp-table tbody td {
+        padding: 0.4rem 0.45rem;
+        vertical-align: top;
+    }
+    #work-table .work-exp-col-type {
+        width: 12%;
+        max-width: 10.5rem;
+    }
+    #work-table .work-exp-col-employer {
+        width: 16%;
+        max-width: 12rem;
+    }
+    #work-table.work-exp-table .work-exp-col-years {
+        width: 32%;
+        min-width: 17rem;
+    }
+    #work-table.work-table-w thead th:nth-child(3),
+    #work-table.work-table-w tbody td:nth-child(3) {
+        width: 18%;
+        max-width: 11rem;
+    }
+    #work-table.work-table-w thead th:nth-child(4),
+    #work-table.work-table-w tbody td:nth-child(4) {
+        width: 28%;
+        min-width: 14rem;
+    }
+    #work-table .work-exp-col-designation {
+        width: 12%;
+    }
+    #work-table .work-exp-col-upload {
+        width: 22%;
+    }
+    #work-table .work-exp-col-actions {
+        width: 2.75rem;
+        white-space: nowrap;
+    }
+    #work-table .work-exp-upload-head {
+        font-size: 0.72rem;
+        line-height: 1.2;
+    }
+    #work-table .work-exp-upload-head .file-limit {
+        font-size: 0.68rem;
+    }
+    #work-table .work-exp-inline {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 0.35rem 0.5rem;
+    }
+    #work-table .work-exp-date-group {
+        flex: 1 1 9.5rem;
+        min-width: 9.5rem;
+        max-width: 11rem;
+    }
+    #work-table .work-exp-total-inline {
+        flex: 0 0 auto;
+        min-width: 4.25rem;
+        max-width: 5rem;
+    }
+    #work-table .work-exp-label-fromto {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0.2rem;
+        line-height: 1.2;
+    }
+    #work-table thead th.work-exp-col-years {
+        vertical-align: top;
+    }
+    #work-table .work-exp-years-title {
+        text-align: center;
+        margin-bottom: 0.35rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+    }
+    #work-table .work-exp-inline--head {
+        align-items: flex-end;
+        border-top: 1px solid #dee2e6;
+        padding-top: 0.25rem;
+    }
+    #work-table .work-exp-inline--head .work-exp-date-group,
+    #work-table .work-exp-inline--head .work-exp-total-inline {
+        position: relative;
+        padding-left: 0.35rem;
+    }
+    #work-table .work-exp-inline--head .work-exp-date-group + .work-exp-date-group,
+    #work-table .work-exp-inline--head .work-exp-total-inline {
+        border-left: 1px solid #dee2e6;
+    }
+    #work-table .work-exp-inline--head .work-exp-label-fromto {
+        margin-bottom: 0;
+    }
+    #work-table .work-date-from,
+    #work-table .work-date-to {
+        font-size: 0.8125rem;
+        color: #212529;
+        min-width: 9.5rem;
+        width: 100%;
+    }
+    #work-table .work-year-total-display {
+        max-width: 4.5rem;
+        font-size: 0.7rem;
+        padding: 0.22rem 0.3rem;
+        line-height: 1.3;
+        text-align: center;
+    }
+    #work-table .work-employer-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.15rem !important;
+    }
     #education-table .form-s-file-upload-wrap--combined .form-control,
     #work-table .form-s-file-upload-wrap--combined .form-control {
         flex: 1 1 auto;
@@ -341,24 +463,30 @@
                                                 </div>
                                             </div>
                                             <div class="table-responsive">
-                                                <table class="table table-bordered table-striped"
+                                                <table class="table table-bordered {{ (isset($application_details->form_name) && $application_details->form_name == 'S') ? '' : 'table-striped' }}"
                                                     id="education-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>S.No</th>
-                                                            <th>Education Level</th>
-                                                            <th>Institution/School Name</th>
-                                                            <th>Year of Passing</th>
-                                                            <th>Certificate No</th>
-                                                            <th class="text-center">Upload Document
-                                                                <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
+                                                            <th rowspan="2">S.No</th>
+                                                            <th rowspan="2">Education Level</th>
+                                                            <th rowspan="2">Institution/School Name</th>
+                                                            <th colspan="2" class="text-center">Year of Passing</th>
+                                                            <th rowspan="2">Certificate No</th>
+                                                            <th class="text-center" rowspan="2">Upload Document
+                                                                <br><span class="file-limit text-success small">File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                             </th>
-                                                            <th>
-                                                                <button type="button"
-                                                                    class="btn btn-primary add-more-education">
-                                                                    <i class="fa fa-plus"></i>
-                                                                </button>
+                                                            <th class="text-center p-1" rowspan="2">
+                                                                <div class="form-s-actions-stack">
+                                                                    <button type="button"
+                                                                        class="btn btn-primary btn-sm add-more add-more-education py-1 px-2" title="Add row">
+                                                                        <i class="fa fa-plus"></i>
+                                                                    </button>
+                                                                </div>
                                                             </th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th class="text-center">Month</th>
+                                                            <th class="text-center">Year</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="education-container">
@@ -368,16 +496,15 @@
                                                         @if ($edu_details->isNotEmpty())
                                                         @foreach ($edu_details as $edu_details)
                                                         <tr class="education-fields text-center" data-edu-index="{{ $loop->index }}">
-                                                            <td>{{ $loop->iteration }}</td>
+                                                            <td class="edu-serial text-center">{{ $loop->iteration }}</td>
                                                             <td>
                                                                 @php $formName = $application_details->form_name ?? ''; @endphp
                                                                 <select class="form-control" name="educational_level[]">
                                                                     <option disabled {{ empty($edu_details->educational_level) ? 'selected' : '' }}>Select Education</option>
                                                                     @if ($formName === 'S')
-                                                                        <option value="PG" {{ $edu_details->educational_level == 'PG' ? 'selected' : '' }}>PG</option>
-                                                                        <option value="UG" {{ $edu_details->educational_level == 'UG' ? 'selected' : '' }}>UG</option>
-                                                                        <option value="B.E" {{ $edu_details->educational_level == 'B.E' ? 'selected' : '' }}>B.E</option>
-                                                                        <option value="M.E" {{ $edu_details->educational_level == 'M.E' ? 'selected' : '' }}>M.E</option>
+                                                                        <option value="DEE" {{ $edu_details->educational_level == 'DEE' ? 'selected' : '' }}>Diploma(Electrical Engineering)</option>
+                                                                        <option value="BEE" {{ $edu_details->educational_level == 'BEE' ? 'selected' : '' }}>B.E(Electrical Engineering)</option>
+                                                                        <option value="MEE" {{ $edu_details->educational_level == 'MEE' ? 'selected' : '' }}>M.E(Electrical Engineering)</option>
                                                                     @elseif ($formName === 'W')
                                                                         <option value="NTC" {{ $edu_details->educational_level == 'NTC' ? 'selected' : '' }}>NTC</option>
                                                                         <option value="Provisional" {{ $edu_details->educational_level == 'Provisional' ? 'selected' : '' }}>Provisional</option>
@@ -411,6 +538,23 @@
                                                             @endphp
                                                             <td><input type="text" class="form-control" name="institute_name[]" value="{!! e($instituteDisplayValue) !!}"></td>
                                                             <td>
+                                                                <select name="month_of_passing[]" class="form-control">
+                                                                    <option value="">Select Month</option>
+                                                                    <option value="01">Jan</option>
+                                                                    <option value="02">Feb</option>
+                                                                    <option value="03">Mar</option>
+                                                                    <option value="04">Apr</option>
+                                                                    <option value="05">May</option>
+                                                                    <option value="06">Jun</option>
+                                                                    <option value="07">Jul</option>
+                                                                    <option value="08">Aug</option>
+                                                                    <option value="09">Sep</option>
+                                                                    <option value="10">Oct</option>
+                                                                    <option value="11">Nov</option>
+                                                                    <option value="12">Dec</option>
+                                                                </select>
+                                                            </td>
+                                                            <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0" disabled {{ empty($edu_details->year_of_passing) ? 'selected' : '' }}>Select Year</option>
                                                                     @php
@@ -435,33 +579,31 @@
                                                             <td>
                                                                 <div class="file-section">
                                                                     @if (!empty($edu_details->upload_document))
-                                                                    <div class="edu-doc-container">
-                                                                        <a class="text-primary" href="{{ asset($edu_details->upload_document) }}" target="_blank">
-                                                                            <i class="fa fa-file-pdf-o" style="color: red"></i> View
-                                                                        </a>
-                                                                        <a class="btn btn-sm btn-outline-primary ml-2" href="{{ asset($edu_details->upload_document) }}" download>Download</a>
-                                                                        <button type="button" class="btn btn-sm btn-danger ml-2 remove-doc_edu">Replace</button>
-                                                                    </div>
-                                                                    <div class="edu-doc-input d-none">
-                                                                        <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
-                                                                            <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                        <div class="edu-doc-container">
+                                                                            <a class="text-primary" href="{{ asset($edu_details->upload_document) }}" target="_blank">
+                                                                                <i class="fa fa-file-pdf-o" style="color: red"></i> View
+                                                                            </a>
+                                                                            <button type="button" class="btn btn-sm btn-danger ml-2 remove-doc_edu_confirm">Remove</button>
                                                                         </div>
-                                                                    </div>
+                                                                        <div class="edu-doc-input d-none">
+                                                                            <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                                <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept="{{ (isset($application_details->form_name) && $application_details->form_name == 'S') ? '.pdf,application/pdf' : '.pdf,application/pdf,image/jpeg,image/png' }}">
+                                                                            </div>
+                                                                        </div>
                                                                     @else
-                                                                    <div class="edu-doc-container d-none"></div>
-                                                                    <div class="edu-doc-input">
-                                                                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
-                                                                        <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept=".pdf,application/pdf,image/jpeg,image/png">
-                                                                    </div>
-                                                                    </div>
+                                                                        <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
+                                                                            <input type="file" class="form-control" name="education_document[{{ $loop->index }}]" accept="{{ (isset($application_details->form_name) && $application_details->form_name == 'S') ? '.pdf,application/pdf' : '.pdf,application/pdf,image/jpeg,image/png' }}">
+                                                                        </div>
                                                                     @endif
                                                                 </div>
                                                             </td>
 
-                                                            <td>
-                                                                <button type="button" class="btn btn-danger remove-education remove_edu" data-edu_id = "{{ $edu_details->id }}" data-url= "{{ route('delete_education') }}">
-                                                                    <i class="fa fa-trash-o"></i>
-                                                                </button>
+                                                            <td class="form-s-actions-cell text-center p-1">
+                                                                <div class="form-s-actions-stack">
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-education remove_edu py-1 px-2" data-edu_id = "{{ $edu_details->id }}" data-url= "{{ route('delete_education') }}" title="Remove row">
+                                                                        <i class="fa fa-trash-o"></i>
+                                                                    </button>
+                                                                </div>
                                                                 <!-- Keep IDs inside a cell to avoid invalid table markup causing dropped/misaligned inputs -->
                                                                 <input type="hidden" name="edu_id[]" value="{{ $edu_details->id }}">
                                                                 <input type="hidden" name="existing_document[]" value="{{ $edu_details->upload_document }}">
@@ -471,16 +613,15 @@
                                                         @endforeach
                                                         @else
                                                         <tr class="education-fields text-center" data-edu-index="0">
-                                                            <td>1</td>
+                                                            <td class="edu-serial text-center">1</td>
                                                             <td>
                                                                 @php $formName = $application_details->form_name ?? ''; @endphp
                                                                 <select class="form-control" name="educational_level[]">
                                                                     <option selected disabled>Select Education</option>
                                                                     @if ($formName === 'S')
-                                                                        <option value="PG">PG</option>
-                                                                        <option value="UG">UG</option>
-                                                                        <option value="B.E">B.E</option>
-                                                                        <option value="M.E">M.E</option>
+                                                                        <option value="DEE">Diploma(Electrical Engineering)</option>
+                                                                        <option value="BEE">B.E(Electrical Engineering)</option>
+                                                                        <option value="MEE">M.E(Electrical Engineering)</option>
                                                                     @elseif ($formName === 'W')
                                                                         <option value="NTC">NTC</option>
                                                                         <option value="Provisional">Provisional</option>
@@ -514,6 +655,23 @@
                                                             @endphp
                                                             <td><input type="text" class="form-control" name="institute_name[]" value="{!! e($defaultInstituteForEmptyRow) !!}"></td>
                                                             <td>
+                                                                <select name="month_of_passing[]" class="form-control">
+                                                                    <option value="">Select Month</option>
+                                                                    <option value="01">Jan</option>
+                                                                    <option value="02">Feb</option>
+                                                                    <option value="03">Mar</option>
+                                                                    <option value="04">Apr</option>
+                                                                    <option value="05">May</option>
+                                                                    <option value="06">Jun</option>
+                                                                    <option value="07">Jul</option>
+                                                                    <option value="08">Aug</option>
+                                                                    <option value="09">Sep</option>
+                                                                    <option value="10">Oct</option>
+                                                                    <option value="11">Nov</option>
+                                                                    <option value="12">Dec</option>
+                                                                </select>
+                                                            </td>
+                                                            <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
                                                                     @php
@@ -534,13 +692,15 @@
                                                             </td>
                                                             <td>
                                                                 <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
-                                                                    <input type="file" class="form-control" name="education_document[0]" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                    <input type="file" class="form-control" name="education_document[0]" accept="{{ (isset($application_details->form_name) && $application_details->form_name == 'S') ? '.pdf,application/pdf' : '.pdf,application/pdf,image/jpeg,image/png' }}">
                                                                 </div>
                                                             </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-danger remove-education">
-                                                                    <i class="fa fa-trash-o"></i>
-                                                                </button>
+                                                            <td class="form-s-actions-cell text-center p-1">
+                                                                <div class="form-s-actions-stack">
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-education py-1 px-2" title="Remove row">
+                                                                        <i class="fa fa-trash-o"></i>
+                                                                    </button>
+                                                                </div>
                                                                 <input type="hidden" name="edu_id[]" value="">
                                                                 <input type="hidden" name="existing_document[]" value="">
                                                                 <input type="hidden" class="removed-document-edu" name="removed_document[]" value="0">
@@ -577,115 +737,221 @@
                                                     </div>
                                                 </div>
                                                 <div class="table-responsive">
-                                                    <table class="table table-bordered table-striped" id="work-table">
+                                                    <table class="table table-bordered {{ (isset($application_details->form_name) && $application_details->form_name == 'S') ? 'table-sm work-exp-table' : 'table-striped' }} {{ (isset($application_details->form_name) && $application_details->form_name == 'W') ? 'work-table-w' : '' }}" id="work-table">
                                                         <thead>
                                                             <tr>
+                                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                                <th class="work-exp-col-sno text-center">S.No</th>
+                                                                <th class="work-exp-col-type">Employment type</th>
+                                                                <th class="work-exp-col-employer">Employer / organization</th>
+                                                                <th class="work-exp-col-years work-exp-years-head" scope="col">
+                                                                    <div class="work-exp-years-title">Year of Experience</div>
+                                                                    <div class="work-exp-inline work-exp-inline--head">
+                                                                        <div class="work-exp-date-group">
+                                                                            <span class="work-exp-label-fromto d-block">From (date)</span>
+                                                                        </div>
+                                                                        <div class="work-exp-date-group">
+                                                                            <span class="work-exp-label-fromto d-block">To (date)</span>
+                                                                        </div>
+                                                                        <div class="work-exp-total-inline">
+                                                                            <span class="work-exp-label-fromto d-block">Total yrs</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </th>
+                                                                @else
                                                                 <th>S.No</th>
                                                                 <th>Company Name / Contractor</th>
                                                                 <th>Years of Experience (Years)</th>
-                                                                <th>Designation</th>
+                                                                @endif
+                                                                <th class="work-exp-col-designation">Designation</th>
                                                                 @if(isset($application_details->form_name) && $application_details->form_name == 'S')
-                                                                    <th class="text-center">
-                                                                        Upload Document (Experience Certificate)
-                                                                        <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
+                                                                    <th class="text-center work-exp-col-upload work-exp-upload-head">
+                                                                        Upload Document
+                                                                        <br><span class="file-limit text-success small">File type: PDF(Min 5 KB To Max 200 KB)</span>
                                                                     </th>
                                                                 @endif
-                                                                <th class="text-center">
-                                                                    <button type="button" class="btn btn-primary add-more-work">
-                                                                        <i class="fa fa-plus"></i>
-                                                                    </button>
+                                                                <th class="work-exp-col-actions text-center p-1">
+                                                                    <div class="form-s-actions-stack">
+                                                                        <button type="button" class="btn btn-primary btn-sm add-more-work py-1 px-2" title="Add row">
+                                                                            <i class="fa fa-plus"></i>
+                                                                        </button>
+                                                                    </div>
                                                                 </th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="work-container">
                                                             @if ($exp_details->isNotEmpty())
-                                                            @foreach ($exp_details as $exp_details)
-                                                            <tr class="work-fields text-center">
-                                                                <td>
-                                                                    {{ $loop->iteration }}
-                                                                </td>
-                                                                <td>
-                                                                    <input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ isset($exp_details->company_name) && !empty($exp_details->company_name) ? $exp_details->company_name : '' }}">
-                                                                </td>
-                                                                <td>
-                                                                    <input autocomplete="off" class="form-control" name="experience[]" type="number" value="{{ isset($exp_details->experience) && !empty($exp_details->experience) ? $exp_details->experience : '' }}">
-                                                                </td>
-                                                                <td>
-                                                                    <input autocomplete="off" class="form-control" name="designation[]" type="text" value="{{ isset($exp_details->designation) && !empty($exp_details->designation) ? $exp_details->designation : '' }}">
-                                                                </td>
+                                                            @foreach ($exp_details as $expRow)
                                                                 @if(isset($application_details->form_name) && $application_details->form_name == 'S')
-                                                                <td>
-                                                                    <div class="file-section">
-                                                                        @if (!empty($exp_details->upload_document))
-                                                                            <div class="work-doc-container">
-                                                                                <a class="text-primary"
-                                                                                   href="{{ asset($exp_details->upload_document) }}"
-                                                                                   target="_blank">
-                                                                                    <i class="fa fa-file-pdf-o" style="color: red"></i> View
-                                                                                </a>
-                                                                                <a class="btn btn-sm btn-outline-primary ml-2" href="{{ asset($exp_details->upload_document) }}" download>Download</a>
-                                                                                <button type="button" class="btn btn-sm btn-danger ml-2 remove-work-doc">Replace</button>
+                                                                <tr class="work-fields">
+                                                                    <td class="work-serial text-center">{{ $loop->iteration }}</td>
+                                                                    <td class="work-exp-col-type">
+                                                                        <select class="form-control form-control-sm work-employment-type" name="work_employment_type[]" required>
+                                                                            <option value="company" selected>Company</option>
+                                                                            <option value="contractor">Contractor</option>
+                                                                            <option value="apprentice">Apprentice</option>
+                                                                            <option value="electrical_inspector">Electrical Inspector / Assistant Electrical Inspector</option>
+                                                                            <option value="retired_employees">Retired Employees</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <td class="work-employer-cell work-exp-col-employer">
+                                                                        <label class="small text-muted work-employer-label d-block mb-1">Company name <span class="text-danger">*</span></label>
+                                                                        <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" value="{{ $expRow->company_name ?? '' }}">
+                                                                        <div class="work-block work-block--intimation mt-1" style="display: none;">
+                                                                            <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
+                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" disabled>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="work-exp-col-years">
+                                                                        <div class="work-exp-inline">
+                                                                            <div class="work-exp-date-group">
+                                                                                <input type="date" class="form-control form-control-sm work-date-from" name="work_date_from[]" title="From date" aria-label="Year of experience from date">
                                                                             </div>
-                                                                            <div class="work-doc-input d-none">
-                                                                                <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined mt-1" data-upload-kind="work">
-                                                                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                            <div class="work-exp-date-group">
+                                                                                <input type="date" class="form-control form-control-sm work-date-to" name="work_date_to[]" title="To date" aria-label="Year of experience to date">
+                                                                            </div>
+                                                                            <div class="work-exp-total-inline">
+                                                                                <input type="text" class="form-control form-control-sm work-year-total-display" readonly placeholder="—" tabindex="-1" aria-label="Total years of experience" value="{{ $expRow->experience ?? '' }}">
+                                                                                <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="{{ $expRow->experience ?? '' }}">
+                                                                            </div>
+                                                                        </div>
+                                                                        <input type="hidden" name="work_level[]" class="work-level-sync" value="{{ $expRow->company_name ?? '' }}" tabindex="-1" aria-hidden="true">
+                                                                        <input type="hidden" name="experience[]" class="experience-sync" value="{{ $expRow->experience ?? '' }}" tabindex="-1" aria-hidden="true">
+                                                                    </td>
+                                                                    <td class="work-exp-col-designation">
+                                                                        <input autocomplete="off" class="form-control form-control-sm" name="designation[]" type="text" maxlength="80" value="{{ $expRow->designation ?? '' }}">
+                                                                    </td>
+                                                                    <td class="work-exp-col-upload">
+                                                                        <div class="file-section">
+                                                                            @if (!empty($expRow->upload_document))
+                                                                                <div class="work-doc-container">
+                                                                                    <a class="text-primary" href="{{ asset($expRow->upload_document) }}" target="_blank">
+                                                                                        <i class="fa fa-file-pdf-o" style="color: red"></i> View
+                                                                                    </a>
+                                                                                    <a class="btn btn-sm btn-outline-primary ml-2" href="{{ asset($expRow->upload_document) }}" download>Download</a>
+                                                                                    <button type="button" class="btn btn-sm btn-danger ml-2 remove-work-doc">Replace</button>
                                                                                 </div>
+                                                                                <div class="work-doc-input d-none">
+                                                                                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined mt-1" data-upload-kind="work">
+                                                                                        <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png">
+                                                                                    </div>
+                                                                                </div>
+                                                                            @else
+                                                                                <div class="work-doc-container d-none"></div>
+                                                                                <div class="work-doc-input">
+                                                                                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
+                                                                                        <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png">
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endif
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="work-exp-col-actions text-center p-1">
+                                                                        <div class="form-s-actions-stack">
+                                                                            <button type="button" class="btn btn-danger btn-sm remove-work remove_exp py-1 px-2" data-exp_id="{{ $expRow->id }}" data-url="{{ route('delete_experience') }}" title="Remove row">
+                                                                                <i class="fa fa-trash-o"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                    <input type="hidden" name="work_id[]" value="{{ $expRow->id ?? '' }}">
+                                                                    <input type="hidden" name="existing_work_document[]" value="{{ $expRow->upload_document ?? '' }}">
+                                                                    <input type="hidden" name="removed_document_work[]" value="0">
+                                                                </tr>
+                                                                @else
+                                                                <tr class="work-fields text-center">
+                                                                    <td>{{ $loop->iteration }}</td>
+                                                                    <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ $expRow->company_name ?? '' }}"></td>
+                                                                    <td><input autocomplete="off" class="form-control" name="experience[]" type="number" value="{{ $expRow->experience ?? '' }}"></td>
+                                                                    <td><input autocomplete="off" class="form-control" name="designation[]" type="text" value="{{ $expRow->designation ?? '' }}"></td>
+                                                                    <td>
+                                                                        <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id="{{ $expRow->id }}" data-url="{{ route('delete_experience') }}">
+                                                                            <i class="fa fa-trash-o"></i>
+                                                                        </button>
+                                                                    </td>
+                                                                    <input type="hidden" name="work_id[]" value="{{ $expRow->id ?? '' }}">
+                                                                    <input type="hidden" name="existing_work_document[]" value="">
+                                                                    <input type="hidden" name="removed_document_work[]" value="0">
+                                                                </tr>
+                                                                @endif
+                                                            @endforeach
+                                                            @else
+                                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                                <tr class="work-fields">
+                                                                    <td class="work-serial text-center">1</td>
+                                                                    <td class="work-exp-col-type">
+                                                                        <select class="form-control form-control-sm work-employment-type" name="work_employment_type[]" required>
+                                                                            <option value="" selected disabled>Select type</option>
+                                                                            <option value="company">Company</option>
+                                                                            <option value="contractor">Contractor</option>
+                                                                            <option value="apprentice">Apprentice</option>
+                                                                            <option value="electrical_inspector">Electrical Inspector / Assistant Electrical Inspector</option>
+                                                                            <option value="retired_employees">Retired Employees</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <td class="work-employer-cell work-exp-col-employer">
+                                                                        <label class="small text-muted work-employer-label d-block mb-1">—</label>
+                                                                        <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" disabled>
+                                                                        <div class="work-block work-block--intimation mt-1" style="display: none;">
+                                                                            <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
+                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" disabled>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="work-exp-col-years">
+                                                                        <div class="work-exp-inline">
+                                                                            <div class="work-exp-date-group">
+                                                                                <input type="date" class="form-control form-control-sm work-date-from" name="work_date_from[]" disabled title="From date" aria-label="Year of experience from date">
                                                                             </div>
-                                                                        @else
+                                                                            <div class="work-exp-date-group">
+                                                                                <input type="date" class="form-control form-control-sm work-date-to" name="work_date_to[]" disabled title="To date" aria-label="Year of experience to date">
+                                                                            </div>
+                                                                            <div class="work-exp-total-inline">
+                                                                                <input type="text" class="form-control form-control-sm work-year-total-display" readonly placeholder="—" tabindex="-1" aria-label="Total years of experience">
+                                                                                <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="">
+                                                                            </div>
+                                                                        </div>
+                                                                        <input type="hidden" name="work_level[]" class="work-level-sync" value="" tabindex="-1" aria-hidden="true">
+                                                                        <input type="hidden" name="experience[]" class="experience-sync" value="" tabindex="-1" aria-hidden="true">
+                                                                    </td>
+                                                                    <td class="work-exp-col-designation">
+                                                                        <input autocomplete="off" class="form-control form-control-sm" name="designation[]" type="text" maxlength="80">
+                                                                    </td>
+                                                                    <td class="work-exp-col-upload">
+                                                                        <div class="file-section">
                                                                             <div class="work-doc-container d-none"></div>
                                                                             <div class="work-doc-input">
                                                                                 <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
-                                                                                    <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
+                                                                                    <input class="form-control form-control-sm p-1" name="work_document[]" type="file" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png">
                                                                                 </div>
                                                                             </div>
-                                                                        @endif
-                                                                    </div>
-                                                                </td>
-                                                                @endif
-                                                                <td>
-                                                                    <button type="button" class="btn btn-danger remove-work remove_exp" data-exp_id = "{{ $exp_details->id }}" data-url= "{{ route('delete_experience') }}">
-                                                                        <i class="fa fa-trash-o"></i>
-                                                                    </button>
-                                                                </td>
-                                                                <input type="hidden" name="work_id[]" value="{{ $exp_details->id ?? '' }}">
-                                                                <input type="hidden" name="existing_work_document[]" value="{{ $exp_details->upload_document ?? '' }}">
-                                                                <input type="hidden" name="removed_document_work[]" value="0">
-                                                            </tr>
-                                                            @endforeach
-                                                            @else
-                                                            <tr class="work-fields text-center">
-                                                                <td>1</td>
-                                                                <td>
-                                                                    <input autocomplete="off" class="form-control" name="work_level[]" type="text">
-                                                                </td>
-                                                                <td>
-                                                                    <input autocomplete="off" class="form-control" name="experience[]" type="number">
-                                                                </td>
-                                                                <td>
-                                                                    <input autocomplete="off" class="form-control" name="designation[]" type="text">
-                                                                </td>
-                                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
-                                                                <td>
-                                                                    <div class="file-section">
-                                                                        <div class="work-doc-container d-none"></div>
-                                                                        <div class="work-doc-input">
-                                                                            <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
-                                                                                <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
-                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </td>
+                                                                    </td>
+                                                                    <td class="work-exp-col-actions text-center p-1">
+                                                                        <div class="form-s-actions-stack">
+                                                                            <button type="button" class="btn btn-danger btn-sm remove-work py-1 px-2" title="Remove row">
+                                                                                <i class="fa fa-trash-o"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                    <input type="hidden" name="work_id[]">
+                                                                    <input type="hidden" name="existing_work_document[]">
+                                                                    <input type="hidden" name="removed_document_work[]" value="0">
+                                                                </tr>
+                                                                @else
+                                                                <tr class="work-fields text-center">
+                                                                    <td>1</td>
+                                                                    <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
+                                                                    <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
+                                                                    <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
+                                                                    <td>
+                                                                        <button type="button" class="btn btn-danger remove-work">
+                                                                            <i class="fa fa-trash-o"></i>
+                                                                        </button>
+                                                                    </td>
+                                                                    <input type="hidden" name="work_id[]">
+                                                                    <input type="hidden" name="existing_work_document[]">
+                                                                    <input type="hidden" name="removed_document_work[]" value="0">
+                                                                </tr>
                                                                 @endif
-                                                                <td>
-                                                                    <button type="button" class="btn btn-danger remove-work">
-                                                                        <i class="fa fa-trash-o"></i>
-                                                                    </button>
-                                                                </td>
-
-                                                                <input type="hidden" name="work_id[]">
-                                                                <input type="hidden" name="existing_work_document[]">
-                                                                <input type="hidden" name="removed_document_work[]" value="0">
-                                                            </tr>
                                                             @endif
                                                         </tbody>
                                                     </table>
@@ -896,9 +1162,141 @@
                                                 }
                                             @endphp
                                             <hr>
+                                            @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                            <div class="row">
+                                                <div class="col-12 col-md-12">
+                                                    <table class="table mb-0">
+                                                        <tr>
+                                                            <td style="width:5%; vertical-align: middle;">(i)</td>
+                                                            <td style="width:25%; vertical-align: middle;">
+                                                                <label for="upload_photo">Upload Photo <span style="color: red;">*</span></label>
+                                                                <br>
+                                                                <label for="upload_photo" class="tamil">புகைப்படத்தைப் பதிவேற்றவும்</label>
+                                                            </td>
+                                                            <td colspan="3">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="flex-grow-1" style="max-width:280px;">
+                                                                        <div id="photo-input-wrapper" style="{{ !empty($applicant_photo->upload_path) ? 'display: none;' : 'display: block;' }}">
+                                                                            <div class="form-s-file-upload-wrap">
+                                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_photo" name="upload_photo" type="file" accept=".jpg,.jpeg,.png">
+                                                                            </div>
+                                                                            <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                                            <span class="error-message text-danger d-block text-start"></span>
+                                                                        </div>
+                                                                        @if (!empty($applicant_photo->upload_path))
+                                                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="togglePhotoInput()">Edit/Upload Photo</button>
+                                                                        @endif
+                                                                    </div>
+                                                                    <div class="ms-3">
+                                                                        <img id="preview_applicant" src="{{ !empty($applicant_photo->upload_path) ? url($applicant_photo->upload_path) : '' }}" alt="Photo preview" style="{{ !empty($applicant_photo->upload_path) ? 'display:block;' : 'display:none;' }} width:100px; height:120px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="vertical-align: middle;">(ii)</td>
+                                                            <td style="vertical-align: middle;">
+                                                                <label for="aadhaar">Aadhaar Number <span style="color: red;">*</span></label>
+                                                                <br>
+                                                                <label for="aadhaar" class="tamil">ஆதார் எண்</label>
+                                                            </td>
+                                                            <td style="width:20%;">
+                                                                <input type="text" class="form-control text-box" name="aadhaar" id="aadhaar" maxlength="14" style="max-width:260px;" value="{{ !empty($application_details->aadhaar) ? safeDecrypt($application_details->aadhaar) : '' }}">
+                                                                <span id="aadhaar-error" class="text-danger"></span>
+                                                            </td>
+                                                            <td style="vertical-align: middle;">
+                                                                <label for="aadhaar_doc">(iii) Upload Aadhaar Document <span style="color: red;">*</span></label>
+                                                                <br>
+                                                                <label for="aadhaar_doc" class="tamil">ஆதார் ஆவணத்தை பதிவேற்றவும் <span style="color: red;">*</span></label>
+                                                            </td>
+                                                            <td style="width:25%;">
+                                                                @if (!empty($application_details->aadhaar_doc))
+                                                                    <div class="aadhaar-doc-container mb-2 d-flex align-items-center">
+                                                                        <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $application_details->aadhaar_doc]) }}" target="_blank" style="color: #007bff;">
+                                                                            <i class="fa fa-file-pdf-o" style="color: red;"></i> View
+                                                                        </a>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-aadhaar-doc">Replace</button>
+                                                                    </div>
+                                                                @endif
+                                                                <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }}">
+                                                                    <div class="form-s-file-upload-wrap" style="max-width:280px;">
+                                                                        <input autocomplete="off" class="form-control text-box single-line" id="aadhaar_doc" name="aadhaar_doc" type="file" accept=".pdf,application/pdf">
+                                                                    </div>
+                                                                    <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
+                                                                    <small class="text-danger file-error"></small>
+                                                                </div>
+                                                                <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="vertical-align: middle;">(iii)</td>
+                                                            <td style="vertical-align: middle;">
+                                                                <label for="pancard">PAN Card Number</label>
+                                                                <br>
+                                                                <label for="pancard" class="tamil">நிரந்தர கணக்கு எண்</label>
+                                                            </td>
+                                                            <td style="width:20%;">
+                                                                <input type="text" class="form-control text-box text-uppercase" name="pancard" id="pancard" maxlength="10" autocomplete="off" style="max-width:260px;" placeholder="e.g. ABCDE1234F" value="{{ old('pancard', $application_details->pancard ?? '') }}">
+                                                                <span id="pancard-error" class="text-danger d-block"></span>
+                                                            </td>
+                                                            <td style="vertical-align: middle;">
+                                                                <label for="pancard_doc">(iv) Upload PAN Card Document</label>
+                                                                <br>
+                                                                <label for="pancard_doc" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</label>
+                                                            </td>
+                                                            <td style="width:25%;">
+                                                                @php $existingPanDoc = $application_details->pancard_doc ?? $application_details->pan_doc ?? ''; @endphp
+                                                                @if (!empty($existingPanDoc))
+                                                                    <div class="pan-doc-container mb-2 d-flex align-items-center">
+                                                                        <a href="{{ route('document.show', ['type' => 'pan', 'filename' => $existingPanDoc]) }}" target="_blank" style="color: #007bff;">
+                                                                            <i class="fa fa-file-pdf-o" style="color: red;"></i> View
+                                                                        </a>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-pan-doc">Replace</button>
+                                                                    </div>
+                                                                @endif
+                                                                <div class="pan-doc-input {{ !empty($existingPanDoc) ? 'd-none' : '' }}">
+                                                                    <div class="form-s-file-upload-wrap" style="max-width:280px;">
+                                                                        <input autocomplete="off" class="form-control text-box single-line" id="pancard_doc" name="pancard_doc" type="file" accept=".pdf,application/pdf">
+                                                                    </div>
+                                                                    <span class="file-limit d-block mt-1">File type: PDF (Max 250 KB)</span>
+                                                                    <small class="text-danger file-error"></small>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="vertical-align: middle;">(v)</td>
+                                                            <td style="vertical-align: middle;">
+                                                                <label for="upload_sign">Upload Signature <span style="color: red;">*</span></label>
+                                                                <br>
+                                                                <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
+                                                            </td>
+                                                            <td colspan="3">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="flex-grow-1" style="max-width:280px;">
+                                                                        <div id="sign-input-wrapper" style="{{ !empty($proof_doc?->uploaded_doc) ? 'display: none;' : 'display: block;' }}">
+                                                                            <div class="form-s-file-upload-wrap">
+                                                                                <input autocomplete="off" class="form-control text-box single-line" id="upload_sign" name="upload_sign" type="file" accept=".jpg,.jpeg,.png">
+                                                                            </div>
+                                                                            <span class="file-limit d-block mt-1">File type: JPG, PNG (Max 50 KB)</span>
+                                                                            <span class="error-message text-danger d-block text-start"></span>
+                                                                        </div>
+                                                                        @if(!empty($proof_doc?->uploaded_doc))
+                                                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="toggleSignInput()">Edit/Upload Signature</button>
+                                                                        @endif
+                                                                    </div>
+                                                                    <div class="ms-3">
+                                                                        <img id="preview_signature" src="{{ !empty($proof_doc?->uploaded_doc) ? asset($proof_doc->uploaded_doc) : '' }}" alt="Signature preview" style="{{ !empty($proof_doc?->uploaded_doc) ? 'display:block;' : 'display:none;' }} width:120px; max-height:60px; object-fit:cover; border:1px solid #ccc; border-radius:4px;">
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            @else
                                             <div class="row align-items-start">
                                                 {{-- Photo column --}}
-                                                <div class="col-12 col-md-4 mb-3 p-3">
+                                                <div class="col-12 col-md-3 mb-3 p-3">
                                                     <label for="upload_photo">
                                                         {{ $uploadQuestionNo }}. (i) Upload Passport Size Photo <span style="color: red;">*</span>
                                                     </label>
@@ -937,7 +1335,7 @@
                                                 </div>
 
                                                 {{-- Aadhaar column --}}
-                                                <div class="col-12 col-md-4 mb-3 p-3">
+                                                <div class="col-12 col-md-3 mb-3 p-3">
                                                     @php
                                                         $decryptedaadhar = !empty($application_details->aadhaar)
                                                             ? safeDecrypt($application_details->aadhaar)
@@ -968,26 +1366,79 @@
                                                                    style="color: #007bff;">
                                                                     <i class="fa fa-file-pdf-o" style="color: red;"></i> View
                                                                 </a>
-                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-docs">Remove</button>
+                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-aadhaar-doc">Replace</button>
                                                             </div>
                                                         @endif
                                                         <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }} mt-1">
-                                                            <input autocomplete="off"
-                                                                   class="form-control text-box single-line"
-                                                                   id="aadhaar_doc"
-                                                                   name="aadhaar_doc"
-                                                                   type="file"
-                                                                   accept=".pdf,application/pdf">
-                                                            <span class="file-limit d-block"> File type: PDF (Max 250 KB) </span>
+                                                            <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" style="max-width:280px;">
+                                                                <input autocomplete="off"
+                                                                       class="form-control text-box single-line"
+                                                                       id="aadhaar_doc"
+                                                                       name="aadhaar_doc"
+                                                                       type="file"
+                                                                       accept=".pdf,application/pdf">
+                                                            </div>
+                                                            <span class="file-limit d-block">File type: PDF (Max 250 KB)</span>
                                                             <small class="text-danger file-error"></small>
                                                         </div>
                                                         <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
                                                     </div>
                                                 </div>
 
+                                                @if(isset($application_details->form_name) && $application_details->form_name == 'S')
+                                                {{-- PAN column --}}
+                                                <div class="col-12 col-md-3 mb-3 p-3">
+                                                    <div class="mb-3">
+                                                        <label for="pancard">(iv) PAN Card Number</label>
+                                                        <br>
+                                                        <label for="pancard" class="tamil">நிரந்தர கணக்கு எண்</label>
+                                                        <input type="text"
+                                                               class="form-control text-box text-uppercase mt-1"
+                                                               name="pancard"
+                                                               id="pancard"
+                                                               maxlength="10"
+                                                               autocomplete="off"
+                                                               placeholder="e.g. ABCDE1234F"
+                                                               value="{{ old('pancard', $application_details->pancard ?? '') }}">
+                                                        <span id="pancard-error" class="text-danger d-block"></span>
+                                                    </div>
+
+                                                    <div>
+                                                        <label for="pancard_doc">(v) Upload PAN Card Document</label>
+                                                        <br>
+                                                        <label for="pancard_doc" class="tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</label>
+                                                        @php
+                                                            $existingPanDoc = $application_details->pancard_doc ?? $application_details->pan_doc ?? '';
+                                                        @endphp
+                                                        @if (!empty($existingPanDoc))
+                                                            <div class="pan-doc-container mt-1 d-flex align-items-center">
+                                                                <a href="{{ route('document.show', ['type' => 'pan', 'filename' => $existingPanDoc]) }}"
+                                                                   target="_blank"
+                                                                   style="color: #007bff;">
+                                                                    <i class="fa fa-file-pdf-o" style="color: red;"></i> View
+                                                                </a>
+                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-pan-doc">Replace</button>
+                                                            </div>
+                                                        @endif
+                                                        <div class="pan-doc-input {{ !empty($existingPanDoc) ? 'd-none' : '' }} mt-1">
+                                                            <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" style="max-width:280px;">
+                                                                <input autocomplete="off"
+                                                                       class="form-control text-box single-line"
+                                                                       id="pancard_doc"
+                                                                       name="pancard_doc"
+                                                                       type="file"
+                                                                       accept=".pdf,application/pdf">
+                                                            </div>
+                                                            <span class="file-limit d-block">File type: PDF (Max 250 KB)</span>
+                                                            <small class="text-danger file-error"></small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
+
                                                 {{-- Signature column --}}
-                                                <div class="col-12 col-md-4 mb-3 p-3">
-                                                    <label for="upload_sign">(iv) Upload Signature</label>
+                                                <div class="col-12 col-md-3 mb-3 p-3">
+                                                    <label for="upload_sign">({{ (isset($application_details->form_name) && $application_details->form_name == 'S') ? 'vi' : 'iv' }}) Upload Signature</label>
                                                     <br>
                                                     <label for="upload_sign" class="tamil">கையொப்பத்தைப் பதிவேற்றவும்</label>
 
@@ -1022,6 +1473,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            @endif
                                             <hr>
                                             <div>
                                                 <label class="container">
@@ -1166,6 +1618,7 @@
         var oldUrl = $preview.data('blobUrl');
         if (oldUrl) URL.revokeObjectURL(oldUrl);
         $preview.remove();
+        $fileInput.removeAttr('data-has-local-file');
     }
 
     $(document).on('change', 'input[type="file"][name^="education_document"], input[type="file"][name^="work_document"]', function() {
@@ -1180,14 +1633,17 @@
         if (allowed.indexOf(file.type) === -1) {
             window.alert('Only PDF, JPG, PNG files are allowed.');
             this.value = '';
+            $input.removeAttr('data-has-local-file');
             return;
         }
         if (file.size > maxSize) {
             window.alert('File size should not exceed 200 KB.');
             this.value = '';
+            $input.removeAttr('data-has-local-file');
             return;
         }
 
+        $input.attr('data-has-local-file', '1');
         var blobUrl = URL.createObjectURL(file);
         var isImage = file.type.indexOf('image/') === 0;
         var $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
@@ -1199,9 +1655,60 @@
             target: '_blank',
             rel: 'noopener noreferrer',
             class: 'preview-link'
-        }).html(isImage ? '<i class="fa fa-image"></i> Preview image' : '<i class="fa fa-file-pdf-o" style="color:#d9534f;"></i> Preview PDF'));
-        $preview.append($('<span class="small text-muted">Temporary preview (not uploaded yet)</span>'));
+        }).html(isImage ? '<i class="fa fa-image"></i> Preview image' : '<i class="fa fa-file-pdf-o" style="color:#d9534f;"></i> View Document'));
         $input.closest('.form-s-file-upload-wrap').after($preview);
+    });
+
+    $(document).on('change', '#aadhaar_doc, #pancard_doc', function() {
+        var $input = $(this);
+        clearLocalPreview($input);
+
+        var file = this.files && this.files[0] ? this.files[0] : null;
+        if (!file) return;
+
+        var minSize = 10 * 1024;
+        var maxSize = 250 * 1024;
+        if (file.type !== 'application/pdf') {
+            window.alert('Only PDF files are allowed.');
+            this.value = '';
+            return;
+        }
+        if (file.size < minSize) {
+            window.alert('File size must be at least 10 KB.');
+            this.value = '';
+            return;
+        }
+        if (file.size > maxSize) {
+            window.alert('File size should not exceed 250 KB.');
+            this.value = '';
+            return;
+        }
+
+        var blobUrl = URL.createObjectURL(file);
+        var $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
+        $preview.append($('<a>', {
+            href: blobUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            class: 'preview-link'
+        }).html('<i class="fa fa-file-pdf-o" style="color:#d9534f;"></i> View Document'));
+        $input.closest('.form-s-file-upload-wrap').after($preview);
+    });
+
+    $(document).on('click', '.remove-aadhaar-doc', function(e) {
+        e.preventDefault();
+        $('.aadhaar-doc-container').addClass('d-none');
+        $('.aadhaar-doc-input').removeClass('d-none');
+        $('#aadhaar_doc_removed').val('1');
+        clearLocalPreview($('#aadhaar_doc'));
+    });
+
+    $(document).on('click', '.remove-pan-doc', function(e) {
+        e.preventDefault();
+        $('.pan-doc-container').addClass('d-none');
+        $('.pan-doc-input').removeClass('d-none');
+        $('#pancard_doc').val('');
+        clearLocalPreview($('#pancard_doc'));
     });
 
     // Age calculation on DOB change
@@ -1242,11 +1749,17 @@
     // Add more education row
     $(document).on('click', function(e) {
         if (!e.target.closest(".add-more-education") && !e.target.closest(".remove-education")) return;
+        const refreshEducationSerials = () => {
+            $('#education-container .education-fields td:first-child').each(function(index) {
+                $(this).text(index + 1);
+            });
+        };
 
         if (e.target.closest(".add-more-education")) {
             let container = document.getElementById("education-container");
             if (!container) return;
             let educationRows = container.querySelectorAll(".education-fields");
+            const isSForm = "{{ $application_details->form_name ?? '' }}" === 'S';
             const isWHForm = "{{ $application_details->form_name ?? '' }}" === 'WH';
             const isWOrWHForm = "{{ $application_details->form_name ?? '' }}" === 'W' || isWHForm;
 
@@ -1275,14 +1788,35 @@
 
             let newRow = `
             <tr class="education-fields text-center" data-edu-index="${eduIdx}">
-                <td>${serialNo}</td>
+                <td class="edu-serial text-center">${serialNo}</td>
                 <td> 
                     <select class="form-control" name="educational_level[]" required>
                         <option value="">Select Education</option>
-                        ${isWOrWHForm ? '<option value="Up to 8th Standard">Up to 8th Standard</option><option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option><option value="ITI Certificate">ITI Certificate</option>' : '<option value="PG">PG</option><option value="UG">UG</option><option value="B.E">B.E</option><option value="M.E">M.E</option>' + (isWHForm ? '<option value="8">8</option>' : '')}
+                        ${isSForm
+                            ? '<option value="DEE">Diploma(Electrical Engineering)</option><option value="BEE">B.E(Electrical Engineering)</option><option value="MEE">M.E(Electrical Engineering)</option>'
+                            : (isWOrWHForm
+                                ? '<option value="Up to 8th Standard">Up to 8th Standard</option><option value="Wireman Helper(H) Certificate">Wireman Helper(H) Certificate</option><option value="ITI Certificate">ITI Certificate</option>'
+                                : '<option value="PG">PG</option><option value="UG">UG</option><option value="B.E">B.E</option><option value="M.E">M.E</option>' + (isWHForm ? '<option value="8">8</option>' : ''))}
                     </select>
                 </td>
                 <td><input type="text" class="form-control" name="institute_name[]" required value="${isWHForm ? 'Dept of Employment & Training' : ''}"></td>
+                <td>
+                    <select name="month_of_passing[]" class="form-control" required>
+                        <option value="">Select Month</option>
+                        <option value="01">Jan</option>
+                        <option value="02">Feb</option>
+                        <option value="03">Mar</option>
+                        <option value="04">Apr</option>
+                        <option value="05">May</option>
+                        <option value="06">Jun</option>
+                        <option value="07">Jul</option>
+                        <option value="08">Aug</option>
+                        <option value="09">Sep</option>
+                        <option value="10">Oct</option>
+                        <option value="11">Nov</option>
+                        <option value="12">Dec</option>
+                    </select>
+                </td>
                 <td>
                     <select name="year_of_passing[]" class="form-control" required>
                         ${yearOptions}
@@ -1294,19 +1828,22 @@
                 </td>
                 <td>
                     <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="education">
-                        <input type="file" class="form-control education-file" name="education_document[${eduIdx}]" accept=".pdf,application/pdf,image/jpeg,image/png" required>
+                        <input type="file" class="form-control education-file" name="education_document[${eduIdx}]" accept="${isSForm ? '.pdf,application/pdf' : '.pdf,application/pdf,image/jpeg,image/png'}" required>
                     </div>
                 </td>
-                <td>
-                    <button type="button" class="btn btn-danger remove-education">
-                        <i class="fa fa-trash-o"></i>
-                    </button>
+                <td class="form-s-actions-cell text-center p-1">
+                    <div class="form-s-actions-stack">
+                        <button type="button" class="btn btn-danger btn-sm remove-education py-1 px-2" title="Remove row">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
                     <input type="hidden" name="edu_id[]" value="">
                     <input type="hidden" name="existing_document[]" value="">
                     <input type="hidden" class="removed-document-edu" name="removed_document[]" value="0">
                 </td>
             </tr> `;
             $('#education-container').append(newRow);
+            refreshEducationSerials();
 
         }
 
@@ -1326,113 +1863,298 @@
             //     return;
             // }
             e.target.closest("tr").remove();
+            refreshEducationSerials();
         }
     });
 
     // Handle removing existing/newly uploaded education documents (toggle view <-> input)
-    $(document).on('click', '.remove-doc_edu', function(e) {
+    $(document).on('click', '.remove-doc_edu_confirm', function(e) {
         e.preventDefault();
-        var $row = $(this).closest('tr');
-        $row.find('.edu-doc-container').addClass('d-none');
-        $row.find('.edu-doc-input').removeClass('d-none');
-        $row.find('input[name="existing_document[]"]').first().val('');
-        $row.find('input[name="removed_document[]"]').first().val('1');
-        clearLocalPreview($row.find('.edu-doc-input input[type="file"]').first());
-    });
+        var $button = $(this);
+        Swal.fire({
+            title: 'Do you want to remove the document?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                return;
+            }
 
+            var $row = $button.closest('tr');
+            var $docContainer = $row.find('.edu-doc-container');
+            var $docInput = $row.find('.edu-doc-input');
+
+            $docContainer.removeClass('d-flex align-items-center').addClass('d-none').hide();
+            $docInput.removeClass('d-none').show();
+            $row.find('input[name="existing_document[]"]').first().val('');
+            $row.find('input[name="removed_document[]"]').first().val('1');
+            clearLocalPreview($docInput.find('input[type="file"]').first());
+        });
+    });
 
     // Remove education row
     // $(document).on('click', '.remove-education', function() {
     //     $(this).closest('tr').remove();
     // });
 
-    // Add more work row
-    $(document).on('click', function(e) {
-        if (!e.target.closest(".add-more-work") && !e.target.closest(".remove-work") && !$(e.target).closest('.remove-work-doc').length) return;
+    (function() {
+        var isSForm = "{{ $application_details->form_name ?? '' }}" === 'S';
+        function refreshWorkSerials() {
+            $('#work-container .work-fields .work-serial').each(function(index) {
+                $(this).text(index + 1);
+            });
+            $('#work-container .work-fields.text-center td:first-child').each(function(index) {
+                if (!$(this).hasClass('work-serial')) {
+                    $(this).text(index + 1);
+                }
+            });
+        }
 
-        if (e.target.closest(".add-more-work")) {
-            let container = document.getElementById("work-container");
-            if (!container) return;
-            let workRows = container.querySelectorAll(".work-fields");
-            if (workRows.length >= 3) {
+        if (!isSForm) {
+            $(document).on('click', function(e) {
+                if (!e.target.closest(".add-more-work") && !e.target.closest(".remove-work")) return;
 
-                $('#work-table').next('.work-error').remove();
+                if (e.target.closest(".add-more-work")) {
+                    let container = document.getElementById("work-container");
+                    if (!container) return;
+                    let workRows = container.querySelectorAll(".work-fields");
+                    if (workRows.length >= 3) {
+                        $('#work-table').next('.work-error').remove();
+                        $('<div class="text-danger mt-2 work-error">You can add a maximum of 3 work experience entries.</div>').insertAfter('#work-table');
+                        setTimeout(() => { $('.work-error').fadeOut(); }, 7000);
+                        return;
+                    }
 
-                $('<div class="text-danger mt-2 work-error">You can add a maximum of 3 work experience entries.</div>')
-                .insertAfter('#work-table');
+                    let serialNo = $('#work-container .work-fields').length + 1;
+                    let newRow = `
+                        <tr class="work-fields text-center">
+                            <td>${serialNo}</td>
+                            <td><input type="text" class="form-control" name="work_level[]"></td>
+                            <td><input type="number" step="0.1" class="form-control" name="experience[]" min="0" max="50"></td>
+                            <td><input type="text" class="form-control" name="designation[]"></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-danger remove-work">
+                                    <i class="fa fa-trash-o"></i>
+                                </button>
+                            </td>
+                            <input type="hidden" name="work_id[]">
+                            <input type="hidden" name="existing_work_document[]">
+                            <input type="hidden" name="removed_document_work[]" value="0">
+                        </tr>
+                    `;
+                    $('#work-container').append(newRow);
+                    refreshWorkSerials();
+                }
 
-                setTimeout(() => {
-                    $('.work-error').fadeOut();
-                }, 7000);
+                if (e.target.closest(".remove-work")) {
+                    e.target.closest("tr").remove();
+                    refreshWorkSerials();
+                }
+            });
+            $(document).ready(function() {
+                refreshWorkSerials();
+            });
+            return;
+        }
 
-                // alert("You can add a maximum of 3 work experience entries.");
+        var EMP_LABELS = {
+            '': '—',
+            company: 'Company name <span class="text-danger">*</span>',
+            contractor: 'Contractor / firm name <span class="text-danger">*</span>',
+            apprentice: 'Establishment / training organization <span class="text-danger">*</span>',
+            electrical_inspector: 'Office / department <span class="text-danger">*</span>',
+            retired_employees: 'Name of PSU (State / Central / Corporation) <span class="text-danger">*</span>'
+        };
+
+        function $workRow(el) {
+            return $(el).closest('tr.work-fields');
+        }
+
+        function syncLegacyHidden($tr) {
+            var emp = ($tr.find('.work-employer-input').val() || '').trim();
+            var tot = ($tr.find('.work-experience-total-hidden').val() || '').trim();
+            $tr.find('.work-level-sync').val(emp);
+            $tr.find('.experience-sync').val(tot);
+        }
+
+        function updateTotalYears($tr) {
+            var fromStr = ($tr.find('.work-date-from').val() || '').trim();
+            var toStr = ($tr.find('.work-date-to').val() || '').trim();
+            var display = '';
+            var hidden = '';
+            if (!fromStr || !toStr) {
+                $tr.find('.work-year-total-display').val('');
+                $tr.find('.work-experience-total-hidden').val('');
+                syncLegacyHidden($tr);
+                return;
+            }
+            var from = new Date(fromStr + 'T12:00:00');
+            var to = new Date(toStr + 'T12:00:00');
+            if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+                $tr.find('.work-year-total-display').val('');
+                $tr.find('.work-experience-total-hidden').val('');
+                syncLegacyHidden($tr);
+                return;
+            }
+            if (to < from) {
+                display = 'Invalid range';
+                hidden = '';
+            } else {
+                var msPerDay = 86400000;
+                var years = (to - from) / msPerDay / 365.25;
+                var rounded = Math.round(years * 10) / 10;
+                hidden = rounded.toFixed(1);
+                display = rounded.toFixed(1);
+            }
+            $tr.find('.work-year-total-display').val(display);
+            $tr.find('.work-experience-total-hidden').val(hidden);
+            syncLegacyHidden($tr);
+        }
+
+        function applyEmploymentType($tr) {
+            var t = $tr.find('.work-employment-type').val() || '';
+            var $label = $tr.find('.work-employer-label');
+            $label.html(EMP_LABELS[t] || EMP_LABELS['']);
+
+            var $emp = $tr.find('.work-employer-input');
+            var $yFrom = $tr.find('.work-date-from');
+            var $yTo = $tr.find('.work-date-to');
+            var $blockInt = $tr.find('.work-block--intimation');
+            var $intDate = $tr.find('.work-intimation-date');
+
+            if (!t) {
+                $emp.prop('disabled', true).prop('required', false);
+                $yFrom.prop('disabled', true).prop('required', false);
+                $yTo.prop('disabled', true).prop('required', false);
+                $blockInt.hide();
+                $intDate.prop('disabled', true).prop('required', false);
+                syncLegacyHidden($tr);
                 return;
             }
 
-            let serialNo = $('#work-container .work-fields').length + 1;
-            const isSForm = "{{ $application_details->form_name ?? '' }}" === 'S';
-            let newRow = `
-                    <tr class="work-fields text-center">
-                        <td>${serialNo}</td>
-                        <td><input type="text" class="form-control" name="work_level[]"></td>
-                        <td><input type="number" step="0.1" class="form-control" name="experience[]" min="0" max="50"></td>
-                        <td><input type="text" class="form-control" name="designation[]"></td>
-                        ${isSForm ? `
-                        <td>
-                            <div class="file-section">
-                                <div class="work-doc-container d-none"></div>
-                                <div class="work-doc-input">
-                                    <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
-                                        <input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf,image/jpeg,image/png">
-                                    </div>
-                                </div>
-                            </div>
-                        </td>` : ''}
-                        <td class="text-center">
-                            <button type="button" class="btn btn-danger remove-work">
-                                <i class="fa fa-trash-o"></i>
-                            </button>
-                        </td>
-                        <input type="hidden" name="work_id[]">
-                        <input type="hidden" name="existing_work_document[]">
-                        <input type="hidden" name="removed_document_work[]" value="0">
-                    </tr>
-                `;
-            $('#work-container').append(newRow);
+            $emp.prop('disabled', false).prop('required', true);
+            $yFrom.prop('disabled', false).prop('required', true);
+            $yTo.prop('disabled', false).prop('required', true);
+
+            if (t === 'contractor') {
+                $blockInt.show();
+                $intDate.prop('disabled', false).prop('required', true);
+            } else {
+                $blockInt.hide();
+                $intDate.prop('disabled', true).prop('required', false).val('');
+            }
+
+            updateTotalYears($tr);
+            syncLegacyHidden($tr);
         }
 
-            if (e.target.closest(".remove-work")) {
-                // if (workRows.length <= 1) {
+        function initWorkRow($tr) {
+            if (($tr.find('.work-employment-type').val() || '') === '') {
+                $tr.find('.work-employment-type').val('company');
+            }
+            applyEmploymentType($tr);
+            syncLegacyHidden($tr);
+        }
 
-                //     $('#work-table').next('.work-error').remove();
+        $(document).ready(function() {
+            $('#work-container .work-fields').each(function() {
+                initWorkRow($(this));
+            });
+            refreshWorkSerials();
+        });
 
-                //     $('<div class="text-danger mt-2 work-error">You must have at least one work experience entry.</div>')
-                //     .insertAfter('#work-table');
+        $(document).on('change', '.work-employment-type', function() {
+            applyEmploymentType($workRow(this));
+        });
 
-                //     setTimeout(() => {
-                //         $('.work-error').fadeOut();
-                //     }, 7000);
+        $(document).on('change', '.work-date-from, .work-date-to', function() {
+            updateTotalYears($workRow(this));
+        });
 
-                    
-                //     // alert("You must have at least one work experience entry.");
-                //     return;
-                // }
-                e.target.closest("tr").remove();
+        $(document).on('input change', '.work-employer-input, .work-intimation-date', function() {
+            syncLegacyHidden($workRow(this));
+        });
 
+        $(document).on('click', '.remove-work-doc', function(e) {
+            e.preventDefault();
+            var $row = $(this).closest('tr');
+            $row.find('.work-doc-container').addClass('d-none');
+            $row.find('.work-doc-input').removeClass('d-none');
+            $row.find('input[name="existing_work_document[]"]').val('');
+            $row.find('input[name="removed_document_work[]"]').val('1');
+            clearLocalPreview($row.find('.work-doc-input input[type="file"]').first());
+        });
+
+        document.addEventListener('click', function(e) {
+            var container = document.getElementById('work-container');
+            if (!container) return;
+            var workRows = container.querySelectorAll('.work-fields');
+
+            if (e.target.closest('.add-more-work')) {
+                if (workRows.length >= 3) {
+                    $('#work-table').next('.work-error').remove();
+                    $('<div class="text-danger mt-2 work-error">You can add a maximum of 3 work experience entries.</div>').insertAfter('#work-table');
+                    setTimeout(function() { $('.work-error').fadeOut(); }, 7000);
+                    return;
+                }
+
+                var first = container.querySelector('.work-fields');
+                var newRow = first.cloneNode(true);
+                newRow.querySelectorAll('input[type="file"]').forEach(function(el) { el.value = ''; });
+                newRow.querySelectorAll('.work-date-from, .work-date-to').forEach(function(inp) { inp.value = ''; });
+                var typeSel = newRow.querySelector('.work-employment-type');
+                if (typeSel) typeSel.value = '';
+                var wtd = newRow.querySelector('.work-year-total-display');
+                if (wtd) wtd.value = '';
+                var hTot = newRow.querySelector('.work-experience-total-hidden');
+                if (hTot) hTot.value = '';
+                var hLevel = newRow.querySelector('.work-level-sync');
+                if (hLevel) hLevel.value = '';
+                var hEx = newRow.querySelector('.experience-sync');
+                if (hEx) hEx.value = '';
+                var empIn = newRow.querySelector('.work-employer-input');
+                if (empIn) empIn.value = '';
+                var intIn = newRow.querySelector('.work-intimation-date');
+                if (intIn) intIn.value = '';
+                var desIn = newRow.querySelector('input[name="designation[]"]');
+                if (desIn) desIn.value = '';
+                var workId = newRow.querySelector('input[name="work_id[]"]');
+                if (workId) workId.value = '';
+                var existingDoc = newRow.querySelector('input[name="existing_work_document[]"]');
+                if (existingDoc) existingDoc.value = '';
+                var removedDoc = newRow.querySelector('input[name="removed_document_work[]"]');
+                if (removedDoc) removedDoc.value = '0';
+                var docContainer = newRow.querySelector('.work-doc-container');
+                if (docContainer) {
+                    docContainer.classList.add('d-none');
+                    docContainer.innerHTML = '';
+                }
+                var docInput = newRow.querySelector('.work-doc-input');
+                if (docInput) docInput.classList.remove('d-none');
+
+                container.appendChild(newRow);
+                initWorkRow($(newRow));
+                refreshWorkSerials();
+                return;
             }
 
-            // Handle removing existing work documents (toggle like education)
-            if ($(e.target).closest('.remove-work-doc').length) {
-                e.preventDefault();
-                const row = $(e.target).closest('tr');
-                row.find('.work-doc-container').addClass('d-none');
-                row.find('.work-doc-input').removeClass('d-none');
-                row.find('input[name="existing_work_document[]"]').val('');
-                row.find('input[name="removed_document_work[]"]').val('1');
-                clearLocalPreview(row.find('.work-doc-input input[type="file"]').first());
+            if (e.target.closest('.remove-work')) {
+                if (workRows.length <= 1) {
+                    $('#work-table').next('.work-error').remove();
+                    $('<div class="text-danger mt-2 work-error">You must have at least one work experience entry.</div>').insertAfter('#work-table');
+                    setTimeout(function() { $('.work-error').fadeOut(); }, 7000);
+                    return;
+                }
+                e.target.closest('tr').remove();
+                refreshWorkSerials();
             }
-
-    });
+        });
+    })();
 
     // Remove work row
     // $(document).on('click', '.remove-work', function() {

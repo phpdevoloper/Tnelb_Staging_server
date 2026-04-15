@@ -265,53 +265,7 @@ use Illuminate\Support\Facades\Auth;
             
           </div>
           <div id="instructionContent" class="show-list-numbers"></div>
-          {{-- <ol class="instruct" style="margin-left: 20px; padding-left: 10px;">
-            <li>
-              <span style="font-weight: 600;">Fees:</span> 
-              <ol type="i" style="margin-left: 20px; margin-top: 5px;">
-                <li>Fees Issue for Supervisor Competency Certificate from <span>01.01.2024</span> onwards is <span id="form_fees" style="color:#1f6920; font-weight:600;"></span>.</li>
-                <li>The fee must be paid by Demand Draft from any <span>Scheduled Bank</span> or <span">Co-operative Bank</span>, in favour of Secretary, Electrical Licensing Board, Chennai – 600 032, payable at Chennai. Other methods of payment will not be accepted.</li>
-              </ol>
-            </li>
-  
-            <li>
-              The <span style="font-weight:600;">applicant’s signature</span> and <span style="font-weight:600;">photo</span> affixed in the application must be attested by a <span>Gazetted Officer</span>. Out of three photos, one should be affixed in the application and attested.
-            </li>
-  
-            <li>
-              <span style="font-weight:600;">With Experience:</span>
-              <ul style="margin-left: 20px; list-style-type: disc;">
-                <li>Two years experience in erection or operation and maintenance in High Voltage installation.</li>
-                    <span class="font-size: 10px;">(OR)</span>
-                <li>The applicant should hold a Supervisor Competency Certificate from the Department of Technical Education, Chennai.</li>
-              </ul>
-            </li>
-  
-            <li>
-              The applicant should possess a <span>Diploma</span> or <span style="font-weight:600;">Degree</span> in Electrical Engineering or an <span style="font-weight:600;">A.M.I.E.</span> Certificate (Part A & B).
-            </li>
-  
-            <li>
-              <span style="font-weight:600;">Photographs:</span> Three passport-size photographs (6cm x 4cm), taken within the last three months, must be provided.
-            </li>
-  
-            <li>
-              <span style="font-weight:600;">Signature:</span> Applicant’s signature in triplicate on a separate sheet of paper must be provided.
-            </li>
-  
-            <li>
-              <span style="font-weight:600;">Proof of Age:</span> Original and photocopy of age proof document must be submitted.
-            </li>
-  
-            <li>
-              <span style="font-weight:600;">Application Form:</span> All columns must be filled clearly in words and figures. No column should be left blank.
-            </li>
-  
-            <li>
-              Application should be in the prescribed form only.
-            </li>
-          </ol> --}}
-  
+            
           <div class="form-check mt-4">
             <input type="checkbox" class="form-check-input" id="declaration-agree-renew">
             <label for="declaration-agree-renew" class="form-check-label" style="font-weight: 600;">
