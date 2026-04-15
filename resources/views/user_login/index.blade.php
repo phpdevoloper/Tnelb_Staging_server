@@ -231,7 +231,25 @@
         letter-spacing: 0.02em;
     }
 
-    
+    /* Contractor pagination/info: align with competency style */
+    #contractorTableInfo {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    #contractorTablePagination {
+        margin-top: 0.6rem;
+    }
+    #contractorTablePagination .pagination {
+        justify-content: flex-end !important;
+        margin-bottom: 0;
+    }
+    #contractorTablePagination .page-link {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.72rem;
+    }
+
+
 </style>
 <section class="dashboard-panel">
     <div class="layout-login">
@@ -366,7 +384,7 @@
                                             @endphp
 
                                             <tr class="text-center">
-                                                <td style="width: 18%;">
+                                           <td>
 
                                                 @php
                                              $licence_name_present = DB::table('mst_licences')
@@ -863,7 +881,25 @@
                                     <li><span class="bg-return"></span> Returned </li>
                                     
                                 </ul>
-                                <table class="table-login" >
+                                <div class="applications-table-toolbar">
+                                    <div class="applications-page-length-toolbar">
+                                        <div class="applications-page-length-inner">
+                                            <label for="contractorApplicationsPerPageSelect" class="applications-page-length-label text-nowrap">Show</label>
+                                            <select id="contractorApplicationsPerPageSelect" class="applications-page-length-select" aria-label="Entries per page">
+                                                @foreach ([5, 10, 20, 50, 100] as $n)
+                                                    <option value="{{ $n }}" @selected($n === 5)>{{ $n }}</option>
+                                                @endforeach
+                                            </select>
+                                            <span class="applications-page-length-hint text-nowrap">entries</span>
+                                        </div>
+                                    </div>
+                                    <div class="applications-search-toolbar">
+                                        <div class="applications-search-inner">
+                                            <input type="search" id="contractorApplicationsSearchInput" class="applications-search-input" placeholder="Search" maxlength="120" autocomplete="off" aria-label="Search contractor applications table">
+                                        </div>
+                                    </div>
+                                </div>
+                                <table id="contractorApplicationsTable" class="table table-login table-login-compact contractor-status-table" width="100%">
                                     <thead>
                                        <tr>
                                            <th>S.No</th>
@@ -872,8 +908,8 @@
                                            <th>Applied On</th>
                                            <th>Application<br> Status</th>
                                            <th>Payment <br> Status</th>
-                                           <th>Payment <br> Receipt</th>
-                                           <th>Application<br> Download</th>
+                                           {{-- <th>Payment <br> Receipt</th> --}}
+                                           <th>Acknowledgement<br> Download</th>
                                            <th>Licence Number</th>
                                            <th>Licence<br> Download</th>
                                        </tr>
@@ -886,12 +922,7 @@
                                        <tr>
                                            <td>{{ $index + 1 }}</td>
                                             <td style="width: 18%;">
-                                           @php
-                                               $licence_name_present = DB::table('mst_licences')
-                                                   ->where('form_code', $workflow->form_name)
-                                                   ->first();
-                                           @endphp
-                                           {{ optional($licence_name_present)->licence_name ?? 'N/A' }} <br>
+                                           {{ $workflow->licence_display_name ?? 'N/A' }} <br>
                                            [Form {{ strtoupper($workflow->form_name ?? 'NA') }}]
                                            </td>
                                            <td>{{ $workflow->application_id ?? 'N/A' }}</td>
@@ -1003,6 +1034,7 @@
                                                @endif
                                            </td>
 
+                                           {{--
                                            <td>
                                                @if ($workflow->payment_status == 'paid')
                                                <a href="{{ route('paymentreceipt.pdf', ['loginId' => $workflow->application_id]) }}"
@@ -1016,6 +1048,7 @@
                                                <p class="text-danger">Pending</p>
                                                @endif
                                            </td>
+                                           --}}
 
                                            <!-- Application Download -->
                                            <td>
@@ -1147,7 +1180,8 @@
                                </table>
 
 
-                                <div class="table-pagination pt-20"></div>
+                                <div id="contractorTableInfo"></div>
+                                <div id="contractorTablePagination" class="table-pagination pt-20"></div>
 
 
                         </div>
@@ -1211,7 +1245,7 @@
     </script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const tables = document.querySelectorAll(".table-login");
+    const tables = document.querySelectorAll(".table-login:not(.contractor-status-table)");
     const rowsPerPage = 5;
 
     tables.forEach((table, tableIndex) => {
@@ -1259,9 +1293,109 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const contractorTable = document.getElementById("contractorApplicationsTable");
+    const searchInput = document.getElementById("contractorApplicationsSearchInput");
+    const perPageSelect = document.getElementById("contractorApplicationsPerPageSelect");
+    const infoContainer = document.getElementById("contractorTableInfo");
+    const paginationContainer = document.getElementById("contractorTablePagination");
+
+    if (!contractorTable || !searchInput || !perPageSelect || !paginationContainer || !infoContainer) {
+        return;
+    }
+
+    const allRows = Array.from(contractorTable.querySelectorAll("tbody tr")).filter((row) => {
+        return !row.querySelector('td[colspan]');
+    });
+    const noRecordsRow = contractorTable.querySelector('tbody tr td[colspan]')?.closest('tr') || null;
+    let currentPage = 1;
+
+    function filteredRows() {
+        const query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+            return allRows;
+        }
+        return allRows.filter((row) => row.textContent.toLowerCase().includes(query));
+    }
+
+    function renderTable() {
+        const visibleRows = filteredRows();
+        const rowsPerPage = Number(perPageSelect.value) || 5;
+        const pageCount = Math.max(1, Math.ceil(visibleRows.length / rowsPerPage));
+        if (currentPage > pageCount) {
+            currentPage = 1;
+        }
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        allRows.forEach((row) => {
+            row.style.display = "none";
+        });
+        visibleRows.slice(start, end).forEach((row) => {
+            row.style.display = "";
+        });
+
+        if (noRecordsRow) {
+            noRecordsRow.style.display = visibleRows.length ? "none" : "";
+        }
+
+        if (!visibleRows.length) {
+            infoContainer.textContent = "Showing 0 to 0 of 0 results";
+        } else {
+            infoContainer.textContent = `Showing ${start + 1} to ${Math.min(end, visibleRows.length)} of ${visibleRows.length} results`;
+        }
+
+        paginationContainer.innerHTML = "";
+        if (pageCount <= 1 || !visibleRows.length) {
+            return;
+        }
+
+        let html = '<nav><ul class="pagination justify-content-center">';
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a href="#" class="page-link" data-page="${currentPage - 1}" aria-label="Previous">&laquo;</a>
+                 </li>`;
+        for (let i = 1; i <= pageCount; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a href="#" class="page-link" data-page="${i}">${i}</a>
+                     </li>`;
+        }
+        html += `<li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a href="#" class="page-link" data-page="${currentPage + 1}" aria-label="Next">&raquo;</a>
+                 </li>`;
+        html += '</ul></nav>';
+        paginationContainer.innerHTML = html;
+
+        paginationContainer.querySelectorAll(".page-link").forEach((btn) => {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                if (this.parentElement.classList.contains("disabled")) {
+                    return;
+                }
+                currentPage = Number(this.dataset.page);
+                renderTable();
+            });
+        });
+    }
+
+    perPageSelect.addEventListener("change", function () {
+        currentPage = 1;
+        renderTable();
+    });
+
+    searchInput.addEventListener("input", function () {
+        currentPage = 1;
+        renderTable();
+    });
+
+    renderTable();
+});
+</script>
+
 
 <script>
-    $(document).on('click', '.pagination a', function (e) {
+    $(document).on('click', '#applicationsTable .pagination a', function (e) {
         e.preventDefault();
 
         var url = $(this).attr('href');
