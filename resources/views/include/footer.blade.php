@@ -653,6 +653,14 @@ $(document).ready(function() {
             const input = $fileInput.get(0);
             const file = input && input.files && input.files[0] ? input.files[0] : null;
 
+            // In preview modal, file inputs are removed; allow opening existing href/blob link directly.
+            if (!file) {
+                if (href) {
+                    window.open(href, target);
+                    return;
+                }
+            }
+
             if (!file) {
                 Swal.fire({
                     icon: 'warning',
@@ -675,6 +683,321 @@ $(document).ready(function() {
 
             window.open(href, target);
         });
+
+        async function saveCompetencyDraftSilently() {
+            const formEl = $('#competency_form_ws')[0];
+            if (!formEl) return null;
+
+            const formData = new FormData(formEl);
+            formData.set('form_action', 'draft');
+
+            const applType = $('#appl_type').val();
+            const applicationId = ($('#application_id').val() || '').trim();
+            let formUrl = '';
+
+            if (applicationId) {
+                if (applType === 'R') {
+                    formUrl = "{{ route('form.draft_renewal_submit', ['appl_id' => '__APPL_ID__']) }}".replace('__APPL_ID__', applicationId);
+                } else {
+                    formUrl = "{{ route('form.update', ['appl_id' => '__APPL_ID__']) }}".replace('__APPL_ID__', applicationId);
+                }
+            } else {
+                formUrl = "{{ route('form.store') }}";
+            }
+
+            try {
+                const saveResponse = await $.ajax({
+                    url: formUrl,
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+
+                if (saveResponse && saveResponse.status === "success" && saveResponse.application_id) {
+                    $('#application_id').val(saveResponse.application_id);
+                }
+
+                return saveResponse;
+            } catch (xhr) {
+                const errors = xhr?.responseJSON?.errors || null;
+                $('.server-error').remove();
+                $('.is-invalid').removeClass('is-invalid');
+
+                if (errors) {
+                    $.each(errors, function (field, messages) {
+                        const input = $('[name="' + field + '"]');
+                        if (input.length) {
+                            input.addClass('is-invalid');
+                            input.after('<span class="text-danger server-error">' + messages[0] + '</span>');
+                        }
+                    });
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Validation Error",
+                        text: "Please correct the highlighted fields."
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Unable to save form data before preview."
+                    });
+                }
+                return null;
+            }
+        }
+
+        async function showCompetencyPreviewModal() {
+            const $sourceForm = $('#competency_form_ws').length ? $('#competency_form_ws') : $('#competency_form_p');
+            if (!$sourceForm.length) {
+                return false;
+            }
+
+            const $clone = $sourceForm.clone();
+            $clone.attr('id', 'competency_form_preview_clone');
+
+            // Remove action blocks and make the clone strictly read-only preview.
+            $clone.find('#submitPaymentBtn, .submit-payment, .save-draft, .add-more, .add-more-education, .add-more-work, .remove-education, .remove-work, .remove_edu, .remove_exp, .remove-doc_edu_confirm, .remove-work-doc-confirm, .remove-aadhaar-doc, .remove-pan-doc, [onclick*="togglePhotoInput"], [onclick*="toggleSignInput"], [onclick*="verify_form"], [onclick*="verify_form_s"]').remove();
+            $clone.find('input, textarea, select, button').prop('disabled', true);
+            $clone.find('input[type="checkbox"], input[type="radio"]').each(function () {
+                this.disabled = true;
+            });
+            // Keep declaration checkbox interactive for user confirmation in preview.
+            $clone.find('#declarationCheckbox').prop('disabled', false).prop('checked', false);
+            if ($clone.find('#previewDeclarationError').length === 0) {
+                const $declHost = $clone.find('#declarationCheckbox').closest('.declaration-container');
+                if ($declHost.length) {
+                    $declHost.after('<div id="previewDeclarationError" class="text-danger mt-1" style="display:none; font-size:0.82rem; line-height:1.25;">Please check the declaration before clicking Pay Now.</div>');
+                } else {
+                    $clone.find('#declarationCheckbox').parent().after('<div id="previewDeclarationError" class="text-danger mt-1" style="display:none; font-size:0.82rem; line-height:1.25;">Please check the declaration before clicking Pay Now.</div>');
+                }
+            }
+            $clone.find('input[type="file"]').closest('.form-s-file-upload-wrap, .file-section, td, .col-12, .col-md-3').addClass('preview-file-block');
+            $clone.find('.error-message, .certificate-error').remove();
+            $clone.find('.text-danger').not('#previewDeclarationError').remove();
+
+            const toDisplayValue = (el) => {
+                const $el = $(el);
+                if (el.tagName === 'SELECT') {
+                    const txt = $el.find('option:selected').text().trim();
+                    return txt || ($el.val() || '-');
+                }
+                if ((el.type || '').toLowerCase() === 'checkbox') {
+                    return el.checked ? 'Yes' : 'No';
+                }
+                if ((el.type || '').toLowerCase() === 'radio') {
+                    return el.checked ? ($el.val() || 'Yes') : '';
+                }
+                const v = ($el.val() || '').toString().trim();
+                return v === '' ? '-' : v;
+            };
+
+            // Convert radio groups (Yes/No etc.) into one clean display value.
+            const handledRadioNames = new Set();
+            $clone.find('input[type="radio"]').each(function () {
+                const name = $(this).attr('name') || '';
+                if (!name || handledRadioNames.has(name)) return;
+                handledRadioNames.add(name);
+
+                const $group = $clone.find(`input[type="radio"][name="${name}"]`);
+                const $checked = $group.filter(':checked').first();
+                let value = '-';
+                if ($checked.length) {
+                    value = ($checked.val() || '').toString().trim();
+                    if (!value || value.toLowerCase() === 'on') {
+                        const id = $checked.attr('id');
+                        const labelText = id ? $clone.find(`label[for="${id}"]`).first().text().trim() : '';
+                        value = labelText || 'Yes';
+                    }
+                    const up = value.toUpperCase();
+                    if (up === 'Y') value = 'Yes';
+                    if (up === 'N') value = 'No';
+                }
+                value = (value || '-').toString().toUpperCase();
+
+                const $container = $group.first().closest('td, .col-12, .col-md-2, .col-md-3, .col-md-4');
+                if ($container.length) {
+                    $container.empty().append($('<div class="preview-value preview-value-inline text-center"></div>').text(value));
+                } else {
+                    $group.remove();
+                }
+            });
+
+            // Replace form controls with plain text values for clean preview.
+            $clone.find('input:not([type="hidden"]):not([type="file"]):not([type="radio"]), select, textarea').each(function () {
+                const el = this;
+                const $el = $(el);
+                if ($el.attr('id') === 'declarationCheckbox') return; // keep declaration checkbox
+                const value = toDisplayValue(el);
+                const cls = $el.attr('class') || '';
+                const display = $('<div class="preview-value"></div>').text(value);
+                if (cls.indexOf('form-control-sm') !== -1) display.addClass('preview-value-sm');
+                $el.replaceWith(display);
+            });
+
+            // Hide helper wrappers/empty blocks after conversion.
+            $clone.find('.form-s-file-upload-wrap, .file-section:empty, .preview-file-block').remove();
+
+            const result = await Swal.fire({
+                title: 'Preview Before Payment',
+                html: `
+                    <style>
+                        .swal2-popup.preview-theme-popup { border-radius: 12px; }
+                        .preview-modal-wrap {
+                            max-height: 72vh;
+                            overflow: auto;
+                            text-align: left;
+                            padding: 8px;
+                            background: #f4f8ff;
+                            border-radius: 10px;
+                        }
+                        .preview-modal-wrap .row {
+                            background: #ffffff;
+                            border: 1px solid #edf2fb;
+                            border-radius: 10px;
+                            margin: 0 0 10px 0 !important;
+                            padding: 8px 8px 2px 8px;
+                            box-shadow: 0 1px 3px rgba(17, 24, 39, 0.05);
+                        }
+                        .preview-modal-wrap .head_label {
+                            background: linear-gradient(90deg, #0d6efd 0%, #198754 100%);
+                            color: #fff;
+                            border-radius: 8px;
+                            margin-bottom: 8px !important;
+                            padding: 8px 10px !important;
+                        }
+                        .preview-modal-wrap .head_label label,
+                        .preview-modal-wrap .head_label .tamil {
+                            color: #fff !important;
+                            margin-bottom: 2px;
+                        }
+                        .preview-modal-wrap label {
+                            font-weight: 600;
+                            color: #1f2d3d;
+                            margin-bottom: 4px;
+                        }
+                        .preview-modal-wrap .tamil {
+                            color: #4d5f75;
+                            font-size: 0.82rem;
+                        }
+                        .preview-modal-wrap .table {
+                            background: #fff;
+                            border-radius: 8px;
+                            overflow: hidden;
+                        }
+                        .preview-modal-wrap .table thead th {
+                            background: #f7faff;
+                            color: #0f3a77;
+                            font-weight: 700;
+                            border-color: #eef3fb;
+                        }
+                        .preview-modal-wrap .table td,
+                        .preview-modal-wrap .table th {
+                            border-color: #eef3fb;
+                            vertical-align: middle;
+                        }
+                        .preview-modal-wrap hr {
+                            border-top: 1px solid #d9e5fb;
+                            margin: 10px 0;
+                        }
+                        .preview-modal-wrap .preview-file-block input[type="file"] { display: none !important; }
+                        .preview-modal-wrap .btn { pointer-events: none; }
+                        .preview-modal-wrap a { pointer-events: auto; text-decoration: none; }
+                        .preview-modal-wrap .add-more,
+                        .preview-modal-wrap .save-draft,
+                        .preview-modal-wrap .submit-payment,
+                        .preview-modal-wrap [id="submitPaymentBtn"] { display: none !important; }
+                        .swal2-actions.preview-actions {
+                            justify-content: center !important;
+                            gap: 10px;
+                            width: 100%;
+                            padding-right: 0;
+                        }
+                        .swal2-confirm.preview-pay-btn {
+                            background: #007bff !important;
+                            color: #fff !important;
+                            border-radius: 4px !important;
+                            border: 1px solid #007bff !important;
+                            padding: 8px 16px !important;
+                        }
+                        .swal2-cancel.preview-edit-btn {
+                            background: #28a745 !important;
+                            color: #fff !important;
+                            border-radius: 4px !important;
+                            border: 1px solid #28a745 !important;
+                            padding: 8px 16px !important;
+                        }
+                        .preview-modal-wrap .preview-value {
+                            min-height: 34px;
+                            padding: 7px 10px;
+                            border-radius: 6px;
+                            background: #f9fbff;
+                            border: 1px solid #eef3fb;
+                            color: #1f2d3d;
+                            font-weight: 500;
+                            line-height: 1.25;
+                            display: flex;
+                            align-items: center;
+                            word-break: break-word;
+                        }
+                        .preview-modal-wrap .preview-value-sm {
+                            min-height: 30px;
+                            padding: 6px 8px;
+                            font-size: 0.86rem;
+                        }
+                        .preview-modal-wrap .preview-value-inline {
+                            max-width: 120px;
+                            margin: 0 auto;
+                            justify-content: center;
+                        }
+                    </style>
+                    <div id="fullFormPreviewMount" class="preview-modal-wrap"></div>
+                `,
+                width: '92%',
+                customClass: {
+                    popup: 'preview-theme-popup',
+                    actions: 'preview-actions',
+                    confirmButton: 'preview-pay-btn',
+                    cancelButton: 'preview-edit-btn'
+                },
+                showCancelButton: true,
+                buttonsStyling: false,
+                confirmButtonText: 'Pay Now',
+                cancelButtonText: 'Edit Details',
+                preConfirm: () => {
+                    const mount = document.getElementById('fullFormPreviewMount');
+                    const declaration = mount ? mount.querySelector('#declarationCheckbox') : null;
+                    const declarationError = mount ? mount.querySelector('#previewDeclarationError') : null;
+                    if (declarationError) declarationError.style.display = 'none';
+                    if (declaration && !declaration.checked) {
+                        if (declarationError) {
+                            declarationError.style.display = 'block';
+                        }
+                        return false;
+                    }
+                    return true;
+                },
+                didOpen: () => {
+                    const mount = document.getElementById('fullFormPreviewMount');
+                    if (mount) {
+                        mount.appendChild($clone.get(0));
+                        // Extra safeguard: remove any residual Save As Draft button in cloned markup.
+                        $(mount).find('button').filter(function () {
+                            return ($(this).text() || '').trim().toLowerCase() === 'save as draft';
+                        }).remove();
+                        $(mount).on('change', '#declarationCheckbox', function () {
+                            const err = mount.querySelector('#previewDeclarationError');
+                            if (err) err.style.display = this.checked ? 'none' : 'block';
+                        });
+                    }
+                }
+            });
+            return result.isConfirmed === true;
+        }
 
         $('#submitPaymentBtn').on('click', async function (e) {
             e.preventDefault();
@@ -1265,8 +1588,19 @@ $(document).ready(function() {
                 return;
             }
 
+            // Persist to DB first, so preview document links are available consistently.
+            const draftSaved = await saveCompetencyDraftSilently();
+            if (!draftSaved || draftSaved.status !== "success") {
+                return;
+            }
+
+            const previewConfirmed = await showCompetencyPreviewModal();
+            if (!previewConfirmed) {
+                return;
+            }
+
             let license_name = $("#license_name").val();
-            showDeclarationPopup(license_name);
+            showDeclarationPopup(license_name, true); // Direct payment flow from preview Pay Now
         });
 
         // Clear row-level upload-required errors immediately on file change
@@ -3076,7 +3410,7 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
     }
 
 
-    async function showDeclarationPopup(licence_code) {   
+    async function showDeclarationPopup(licence_code, directProceed = false) {   
         
         try {
             
@@ -3165,7 +3499,9 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                 backdrop: 'static',
                 keyboard: false
             });
-            modal.show();
+            if (!directProceed) {
+                modal.show();
+            }
             
             // Remove old listeners
             proceedBtn.replaceWith(proceedBtn.cloneNode(true));
@@ -3180,6 +3516,9 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                 modal.hide();
                 
                 let formData = new FormData($('#competency_form_ws')[0]);
+                // Payment flow requirement:
+                // first persist application as draft, then after Pay Now update payment status in payment API.
+                formData.set('form_action', 'draft');
                 let applicationId = $('#application_id').val();
                 let formUrl;
                 
@@ -3428,6 +3767,12 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                 }
                 
             });
+
+            if (directProceed) {
+                agreeCheckbox.checked = true;
+                modalEl.querySelector('#proceedPayment').click();
+                return;
+            }
         } catch (err) {
             // console.error("Error fetching form cost or saving form:", err);
         

@@ -107,8 +107,8 @@
         max-width: 12rem;
     }
     #work-table.work-exp-table .work-exp-col-years {
-        width: 32%;
-        min-width: 17rem;
+        width: 29%;
+        min-width: 15.5rem;
     }
     #work-table.work-table-w thead th:nth-child(3),
     #work-table.work-table-w tbody td:nth-child(3) {
@@ -144,9 +144,9 @@
         gap: 0.35rem 0.5rem;
     }
     #work-table .work-exp-date-group {
-        flex: 1 1 9.5rem;
-        min-width: 9.5rem;
-        max-width: 11rem;
+        flex: 1 1 8.25rem;
+        min-width: 8.25rem;
+        max-width: 9.5rem;
     }
     #work-table .work-exp-total-inline {
         flex: 0 0 auto;
@@ -190,7 +190,7 @@
     #work-table .work-date-to {
         font-size: 0.8125rem;
         color: #212529;
-        min-width: 9.5rem;
+        min-width: 8.25rem;
         width: 100%;
     }
     #work-table .work-year-total-display {
@@ -540,18 +540,18 @@
                                                             <td>
                                                                 <select name="month_of_passing[]" class="form-control">
                                                                     <option value="">Select Month</option>
-                                                                    <option value="01">Jan</option>
-                                                                    <option value="02">Feb</option>
-                                                                    <option value="03">Mar</option>
-                                                                    <option value="04">Apr</option>
-                                                                    <option value="05">May</option>
-                                                                    <option value="06">Jun</option>
-                                                                    <option value="07">Jul</option>
-                                                                    <option value="08">Aug</option>
-                                                                    <option value="09">Sep</option>
-                                                                    <option value="10">Oct</option>
-                                                                    <option value="11">Nov</option>
-                                                                    <option value="12">Dec</option>
+                                                                    <option value="01" {{ ($edu_details->month_passing ?? '') == '01' ? 'selected' : '' }}>Jan</option>
+                                                                    <option value="02" {{ ($edu_details->month_passing ?? '') == '02' ? 'selected' : '' }}>Feb</option>
+                                                                    <option value="03" {{ ($edu_details->month_passing ?? '') == '03' ? 'selected' : '' }}>Mar</option>
+                                                                    <option value="04" {{ ($edu_details->month_passing ?? '') == '04' ? 'selected' : '' }}>Apr</option>
+                                                                    <option value="05" {{ ($edu_details->month_passing ?? '') == '05' ? 'selected' : '' }}>May</option>
+                                                                    <option value="06" {{ ($edu_details->month_passing ?? '') == '06' ? 'selected' : '' }}>Jun</option>
+                                                                    <option value="07" {{ ($edu_details->month_passing ?? '') == '07' ? 'selected' : '' }}>Jul</option>
+                                                                    <option value="08" {{ ($edu_details->month_passing ?? '') == '08' ? 'selected' : '' }}>Aug</option>
+                                                                    <option value="09" {{ ($edu_details->month_passing ?? '') == '09' ? 'selected' : '' }}>Sep</option>
+                                                                    <option value="10" {{ ($edu_details->month_passing ?? '') == '10' ? 'selected' : '' }}>Oct</option>
+                                                                    <option value="11" {{ ($edu_details->month_passing ?? '') == '11' ? 'selected' : '' }}>Nov</option>
+                                                                    <option value="12" {{ ($edu_details->month_passing ?? '') == '12' ? 'selected' : '' }}>Dec</option>
                                                                 </select>
                                                             </td>
                                                             <td>
@@ -577,9 +577,9 @@
                                                                 <span class="error text-danger certificate-error"></span>
                                                             </td>
                                                             <td>
-                                                                <div class="file-section">
+                                                                <div class="file-section text-center">
                                                                     @if (!empty($edu_details->upload_document))
-                                                                        <div class="edu-doc-container">
+                                                                        <div class="edu-doc-container d-flex align-items-center justify-content-center">
                                                                             <a class="text-primary" href="{{ asset($edu_details->upload_document) }}" target="_blank">
                                                                                 <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                             </a>
@@ -784,52 +784,56 @@
                                                             @foreach ($exp_details as $expRow)
                                                                 @if(isset($application_details->form_name) && $application_details->form_name == 'S')
                                                                 <tr class="work-fields">
+                                                                    @php
+                                                                        $workEmpType = $expRow->emp_type ?? 'company';
+                                                                        $workEmployerName = $expRow->emp_cate ?? $expRow->company_name ?? '';
+                                                                        $workTotalExp = $expRow->total_exp ?? $expRow->experience ?? '';
+                                                                    @endphp
                                                                     <td class="work-serial text-center">{{ $loop->iteration }}</td>
                                                                     <td class="work-exp-col-type">
                                                                         <select class="form-control form-control-sm work-employment-type" name="work_employment_type[]" required>
-                                                                            <option value="company" selected>Company</option>
-                                                                            <option value="contractor">Contractor</option>
-                                                                            <option value="apprentice">Apprentice</option>
-                                                                            <option value="electrical_inspector">Electrical Inspector / Assistant Electrical Inspector</option>
-                                                                            <option value="retired_employees">Retired Employees</option>
+                                                                            <option value="company" {{ $workEmpType === 'company' ? 'selected' : '' }}>Company</option>
+                                                                            <option value="contractor" {{ $workEmpType === 'contractor' ? 'selected' : '' }}>Contractor</option>
+                                                                            <option value="apprentice" {{ $workEmpType === 'apprentice' ? 'selected' : '' }}>Apprentice</option>
+                                                                            <option value="electrical_inspector" {{ $workEmpType === 'electrical_inspector' ? 'selected' : '' }}>Electrical Inspector / Assistant Electrical Inspector</option>
+                                                                            <option value="retired_employees" {{ $workEmpType === 'retired_employees' ? 'selected' : '' }}>Retired Employees</option>
                                                                         </select>
                                                                     </td>
                                                                     <td class="work-employer-cell work-exp-col-employer">
                                                                         <label class="small text-muted work-employer-label d-block mb-1">Company name <span class="text-danger">*</span></label>
-                                                                        <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" value="{{ $expRow->company_name ?? '' }}">
+                                                                        <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" value="{{ $workEmployerName }}">
                                                                         <div class="work-block work-block--intimation mt-1" style="display: none;">
                                                                             <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
-                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" disabled>
+                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" value="{{ $expRow->intimation_date ?? '' }}" disabled>
                                                                         </div>
                                                                     </td>
                                                                     <td class="work-exp-col-years">
                                                                         <div class="work-exp-inline">
                                                                             <div class="work-exp-date-group">
-                                                                                <input type="date" class="form-control form-control-sm work-date-from" name="work_date_from[]" title="From date" aria-label="Year of experience from date">
+                                                                                <input type="date" class="form-control form-control-sm work-date-from" name="work_date_from[]" value="{{ $expRow->from_date ?? '' }}" title="From date" aria-label="Year of experience from date">
                                                                             </div>
                                                                             <div class="work-exp-date-group">
-                                                                                <input type="date" class="form-control form-control-sm work-date-to" name="work_date_to[]" title="To date" aria-label="Year of experience to date">
+                                                                                <input type="date" class="form-control form-control-sm work-date-to" name="work_date_to[]" value="{{ $expRow->to_date ?? '' }}" title="To date" aria-label="Year of experience to date">
                                                                             </div>
                                                                             <div class="work-exp-total-inline">
-                                                                                <input type="text" class="form-control form-control-sm work-year-total-display" readonly placeholder="—" tabindex="-1" aria-label="Total years of experience" value="{{ $expRow->experience ?? '' }}">
-                                                                                <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="{{ $expRow->experience ?? '' }}">
+                                                                                <input type="text" class="form-control form-control-sm work-year-total-display" readonly placeholder="—" tabindex="-1" aria-label="Total years of experience" value="{{ $workTotalExp }}">
+                                                                                <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="{{ $workTotalExp }}">
                                                                             </div>
                                                                         </div>
-                                                                        <input type="hidden" name="work_level[]" class="work-level-sync" value="{{ $expRow->company_name ?? '' }}" tabindex="-1" aria-hidden="true">
-                                                                        <input type="hidden" name="experience[]" class="experience-sync" value="{{ $expRow->experience ?? '' }}" tabindex="-1" aria-hidden="true">
+                                                                        <input type="hidden" name="work_level[]" class="work-level-sync" value="{{ $workEmployerName }}" tabindex="-1" aria-hidden="true">
+                                                                        <input type="hidden" name="experience[]" class="experience-sync" value="{{ $workTotalExp }}" tabindex="-1" aria-hidden="true">
                                                                     </td>
                                                                     <td class="work-exp-col-designation">
                                                                         <input autocomplete="off" class="form-control form-control-sm" name="designation[]" type="text" maxlength="80" value="{{ $expRow->designation ?? '' }}">
                                                                     </td>
                                                                     <td class="work-exp-col-upload">
-                                                                        <div class="file-section">
+                                                                        <div class="file-section text-center">
                                                                             @if (!empty($expRow->upload_document))
-                                                                                <div class="work-doc-container">
+                                                                                <div class="work-doc-container d-flex align-items-center justify-content-center">
                                                                                     <a class="text-primary" href="{{ asset($expRow->upload_document) }}" target="_blank">
                                                                                         <i class="fa fa-file-pdf-o" style="color: red"></i> View
                                                                                     </a>
-                                                                                    <a class="btn btn-sm btn-outline-primary ml-2" href="{{ asset($expRow->upload_document) }}" download>Download</a>
-                                                                                    <button type="button" class="btn btn-sm btn-danger ml-2 remove-work-doc">Replace</button>
+                                                                                    <button type="button" class="btn btn-sm btn-danger ml-2 remove-work-doc-confirm">Remove</button>
                                                                                 </div>
                                                                                 <div class="work-doc-input d-none">
                                                                                     <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined mt-1" data-upload-kind="work">
@@ -916,7 +920,7 @@
                                                                         <input autocomplete="off" class="form-control form-control-sm" name="designation[]" type="text" maxlength="80">
                                                                     </td>
                                                                     <td class="work-exp-col-upload">
-                                                                        <div class="file-section">
+                                                                        <div class="file-section text-center">
                                                                             <div class="work-doc-container d-none"></div>
                                                                             <div class="work-doc-input">
                                                                                 <div class="form-s-file-upload-wrap form-s-file-upload-wrap--combined" data-upload-kind="work">
@@ -1215,7 +1219,7 @@
                                                                         <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $application_details->aadhaar_doc]) }}" target="_blank" style="color: #007bff;">
                                                                             <i class="fa fa-file-pdf-o" style="color: red;"></i> View
                                                                         </a>
-                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-aadhaar-doc">Replace</button>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-aadhaar-doc">Remove</button>
                                                                     </div>
                                                                 @endif
                                                                 <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }}">
@@ -1251,7 +1255,7 @@
                                                                         <a href="{{ route('document.show', ['type' => 'pan', 'filename' => $existingPanDoc]) }}" target="_blank" style="color: #007bff;">
                                                                             <i class="fa fa-file-pdf-o" style="color: red;"></i> View
                                                                         </a>
-                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-pan-doc">Replace</button>
+                                                                        <button type="button" class="btn btn-sm btn-danger ml-3 remove-pan-doc">Remove</button>
                                                                     </div>
                                                                 @endif
                                                                 <div class="pan-doc-input {{ !empty($existingPanDoc) ? 'd-none' : '' }}">
@@ -1366,7 +1370,7 @@
                                                                    style="color: #007bff;">
                                                                     <i class="fa fa-file-pdf-o" style="color: red;"></i> View
                                                                 </a>
-                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-aadhaar-doc">Replace</button>
+                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-aadhaar-doc">Remove</button>
                                                             </div>
                                                         @endif
                                                         <div class="aadhaar-doc-input {{ !empty($application_details->aadhaar_doc) ? 'd-none' : '' }} mt-1">
@@ -1417,7 +1421,7 @@
                                                                    style="color: #007bff;">
                                                                     <i class="fa fa-file-pdf-o" style="color: red;"></i> View
                                                                 </a>
-                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-pan-doc">Replace</button>
+                                                                <button type="button" class="btn btn-sm btn-danger ml-3 remove-pan-doc">Remove</button>
                                                             </div>
                                                         @endif
                                                         <div class="pan-doc-input {{ !empty($existingPanDoc) ? 'd-none' : '' }} mt-1">
@@ -1697,18 +1701,56 @@
 
     $(document).on('click', '.remove-aadhaar-doc', function(e) {
         e.preventDefault();
-        $('.aadhaar-doc-container').addClass('d-none');
-        $('.aadhaar-doc-input').removeClass('d-none');
-        $('#aadhaar_doc_removed').val('1');
-        clearLocalPreview($('#aadhaar_doc'));
+        var $button = $(this);
+        Swal.fire({
+            title: 'Do you want to remove the document?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            var $scope = $button.closest('td, .col-12, .col-md-3');
+            var $docContainer = $scope.find('.aadhaar-doc-container').first();
+            var $docInput = $scope.find('.aadhaar-doc-input').first();
+            var $fileInput = $scope.find('#aadhaar_doc').first();
+
+            $docContainer.removeClass('d-flex align-items-center justify-content-center').addClass('d-none').hide();
+            $docInput.removeClass('d-none').show();
+            $scope.find('#aadhaar_doc_removed').val('1');
+            clearLocalPreview($fileInput);
+        });
     });
 
     $(document).on('click', '.remove-pan-doc', function(e) {
         e.preventDefault();
-        $('.pan-doc-container').addClass('d-none');
-        $('.pan-doc-input').removeClass('d-none');
-        $('#pancard_doc').val('');
-        clearLocalPreview($('#pancard_doc'));
+        var $button = $(this);
+        Swal.fire({
+            title: 'Do you want to remove the document?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            var $scope = $button.closest('td, .col-12, .col-md-3');
+            var $docContainer = $scope.find('.pan-doc-container').first();
+            var $docInput = $scope.find('.pan-doc-input').first();
+            var $fileInput = $scope.find('#pancard_doc').first();
+
+            $docContainer.removeClass('d-flex align-items-center justify-content-center').addClass('d-none').hide();
+            $docInput.removeClass('d-none').show();
+            $fileInput.val('');
+            clearLocalPreview($fileInput);
+        });
     });
 
     // Age calculation on DOB change
@@ -2080,14 +2122,33 @@
             syncLegacyHidden($workRow(this));
         });
 
-        $(document).on('click', '.remove-work-doc', function(e) {
+        $(document).on('click', '.remove-work-doc-confirm', function(e) {
             e.preventDefault();
-            var $row = $(this).closest('tr');
-            $row.find('.work-doc-container').addClass('d-none');
-            $row.find('.work-doc-input').removeClass('d-none');
-            $row.find('input[name="existing_work_document[]"]').val('');
-            $row.find('input[name="removed_document_work[]"]').val('1');
-            clearLocalPreview($row.find('.work-doc-input input[type="file"]').first());
+            var $button = $(this);
+            Swal.fire({
+                title: 'Do you want to remove the document?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'No',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                reverseButtons: true
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                var $row = $button.closest('tr');
+                var $docContainer = $row.find('.work-doc-container');
+                var $docInput = $row.find('.work-doc-input');
+
+                $docContainer.removeClass('d-flex align-items-center justify-content-center').addClass('d-none').hide();
+                $docInput.removeClass('d-none').show();
+                $row.find('input[name="existing_work_document[]"]').val('');
+                $row.find('input[name="removed_document_work[]"]').val('1');
+                clearLocalPreview($docInput.find('input[type="file"]').first());
+            });
         });
 
         document.addEventListener('click', function(e) {

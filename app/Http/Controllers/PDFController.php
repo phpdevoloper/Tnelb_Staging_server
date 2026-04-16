@@ -269,18 +269,25 @@ class PDFController extends Controller
         <div class="section-table">
         <table class="tbl-bordered">
         <tr>
-        <th style="font-size:9pt;">S.NO</th>
-        <th style="font-size:9pt;">EDUCATION LEVEL</th>
-        <th style="font-size:9pt;">INSTITUTION</th>
-        <th style="font-size:9pt;">YEAR OF PASSING</th>
-        <th style="font-size:9pt;">CERTIFICATE NO</th>
+        <th style="font-size:9pt;" rowspan="2">S.NO</th>
+        <th style="font-size:9pt;" rowspan="2">EDUCATION LEVEL</th>
+        <th style="font-size:9pt;" rowspan="2">INSTITUTION</th>
+        <th style="font-size:9pt;" colspan="2">MONTH &amp; YEAR OF PASSING</th>
+        <th style="font-size:9pt;" rowspan="2">CERTIFICATE NO</th>
+        </tr>
+        <tr>
+        <th style="font-size:9pt;">MONTH</th>
+        <th style="font-size:9pt;">YEAR</th>
         </tr>';
         foreach ($education as $i => $edu) {
+            $passingMonth = trim((string) ($edu->month_passing ?? ''));
+            $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
                 <td>' . e($edu->educational_level ?? '') . '</td>
                 <td>' . e($edu->institute_name ?? '') . '</td>
-                <td>' . e((string) ($edu->year_of_passing ?? '')) . '</td>
+                <td>' . e($passingMonth !== '' ? $passingMonth : '-') . '</td>
+                <td>' . e($passingYear !== '' ? $passingYear : '-') . '</td>
                 <td>' . e($edu->certificate_no ?? '') . '</td>
             </tr>';
         }
@@ -328,8 +335,8 @@ class PDFController extends Controller
         </tr>';
 
         $hasExpData = $experience->contains(function ($exp) {
-            return trim($exp->company_name ?? '') !== ''
-                || trim($exp->experience ?? '') !== ''
+            return trim($exp->emp_cate ?? $exp->company_name ?? '') !== ''
+                || trim($exp->total_exp ?? $exp->experience ?? '') !== ''
                 || trim($exp->designation ?? '') !== '';
         });
 
@@ -339,8 +346,8 @@ class PDFController extends Controller
             foreach ($experience as $i => $exp) {
                 $html .= '<tr>
                     <td>' . ($i + 1) . '</td>
-                    <td>' . e(mb_strtoupper($exp->company_name ?: 'NIL', 'UTF-8')) . '</td>
-                    <td>' . e($exp->experience !== null && $exp->experience !== '' ? mb_strtoupper($exp->experience . ' YEARS', 'UTF-8') : 'NIL') . '</td>
+                    <td>' . e(mb_strtoupper(($exp->emp_cate ?? $exp->company_name) ?: 'NIL', 'UTF-8')) . '</td>
+                    <td>' . e(($exp->total_exp ?? $exp->experience) !== null && ($exp->total_exp ?? $exp->experience) !== '' ? mb_strtoupper(($exp->total_exp ?? $exp->experience) . ' YEARS', 'UTF-8') : 'NIL') . '</td>
                     <td>' . e(mb_strtoupper($exp->designation ?: 'NIL', 'UTF-8')) . '</td>
                 </tr>';
             }
@@ -534,15 +541,18 @@ class PDFController extends Controller
         (அசல் சான்றிதழ்களை புகைப்பட நகல்களுடன் இணைத்திடுக. அசல் பார்க்கப்பட்ட பின்பு திருப்பி அளிக்கப்படும்)</h4>
         <table class="tbl-bordered">
         <tr>
-        <th class="ta">வரிைச எண</th><th class="ta">கல்வி நிலை</th><th class="ta">கல்வி நிறுவனம்</th><th class="ta">தேர்ச்சி பெற்ற ஆண்டு</th>
+        <th class="ta">வரிைச எண</th><th class="ta">கல்வி நிலை</th><th class="ta">கல்வி நிறுவனம்</th><th class="ta">தேர்ச்சி பெற்ற மாதம் &amp; ஆண்டு</th>
         <th class="ta">சான்றிதழ் எண்</th>
         </tr>';
         foreach ($education as $i => $edu) {
+            $passingMonth = trim((string) ($edu->month_passing ?? ''));
+            $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
                 <td>' . $edu->educational_level . '</td>
                 <td>' . $edu->institute_name . '</td>
-                <td>' . $edu->year_of_passing . '</td>
+                <td>' . ($passingMonth !== '' ? $passingMonth : '-') . '</td>
+                <td>' . ($passingYear !== '' ? $passingYear : '-') . '</td>
                 <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
@@ -574,8 +584,8 @@ class PDFController extends Controller
         </tr>';
 
         $hasExpDataTa = $experience->contains(function ($exp) {
-            return trim($exp->company_name ?? '') !== ''
-                || trim($exp->experience ?? '') !== ''
+            return trim($exp->emp_cate ?? $exp->company_name ?? '') !== ''
+                || trim($exp->total_exp ?? $exp->experience ?? '') !== ''
                 || trim($exp->designation ?? '') !== '';
         });
 
@@ -590,8 +600,8 @@ class PDFController extends Controller
             foreach ($experience as $i => $exp) {
                 $html .= '<tr>
                     <td class="ta">' . ($i + 1) . '</td>
-                    <td class="ta">' . ($exp->company_name ?: 'Nil') . '</td>
-                    <td class="ta">' . (($exp->experience !== null && $exp->experience !== '') ? $exp->experience . ' Years ' : 'Nil') . '</td>
+                    <td class="ta">' . (($exp->emp_cate ?? $exp->company_name) ?: 'Nil') . '</td>
+                    <td class="ta">' . ((($exp->total_exp ?? $exp->experience) !== null && ($exp->total_exp ?? $exp->experience) !== '') ? ($exp->total_exp ?? $exp->experience) . ' Years ' : 'Nil') . '</td>
                     <td class="ta">' . ($exp->designation ?: 'Nil') . '</td>
                 </tr>';
             }
@@ -860,18 +870,25 @@ class PDFController extends Controller
         <div class="section-table">
         <table class="tbl-bordered">
         <tr>
-        <th style="font-size:9pt;">S.NO</th>
-        <th style="font-size:9pt;">EDUCATION LEVEL</th>
-        <th style="font-size:9pt;">INSTITUTION</th>
-        <th style="font-size:9pt;">YEAR OF PASSING</th>
-        <th style="font-size:9pt;">CERTIFICATE NO</th>
+        <th style="font-size:9pt;" rowspan="2">S.NO</th>
+        <th style="font-size:9pt;" rowspan="2">EDUCATION LEVEL</th>
+        <th style="font-size:9pt;" rowspan="2">INSTITUTION</th>
+        <th style="font-size:9pt;" colspan="2">MONTH &amp; YEAR OF PASSING</th>
+        <th style="font-size:9pt;" rowspan="2">CERTIFICATE NO</th>
+        </tr>
+        <tr>
+        <th style="font-size:9pt;">MONTH</th>
+        <th style="font-size:9pt;">YEAR</th>
         </tr>';
         foreach ($education as $i => $edu) {
+            $passingMonth = trim((string) ($edu->month_passing ?? ''));
+            $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
                 <td>' . $edu->educational_level . '</td>
                 <td>' . $edu->institute_name . '</td>
-                <td>' . $edu->year_of_passing . '</td>
+                <td>' . ($passingMonth !== '' ? $passingMonth : '-') . '</td>
+                <td>' . ($passingYear !== '' ? $passingYear : '-') . '</td>
                 <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
@@ -879,6 +896,8 @@ class PDFController extends Controller
     
         // Experience (skip for WH form – this form has no Question 6 for experience)
         if ($form->form_name !== 'WH') {
+            $isFormS = strtoupper((string) $form->form_name) === 'S';
+
             $html .= '<table class="numbered-table" cellpadding="3" cellspacing="0" style="margin-top:4px;">
             <tr>
                 <td class="num-col">6.</td>
@@ -886,17 +905,79 @@ class PDFController extends Controller
             </tr>
             </table>
             <div class="section-table">
-            <table class="tbl-bordered">
-            <tr>
-            <th>S.NO</th><th>COMPANY NAME</th><th>EXPERIENCE (YEARS)</th><th>DESIGNATION</th>
-            </tr>';
-            foreach ($experience as $i => $exp) {
+            <table class="tbl-bordered">';
+
+            if ($isFormS) {
                 $html .= '<tr>
-                    <td>' . ($i + 1) . '</td>
-                    <td>' . $exp->company_name . '</td>
-                    <td>' . $exp->experience . '</td>
-                    <td>' . $exp->designation . '</td>
+                    <th rowspan="2">S.NO</th>
+                    <th rowspan="2">EMPLOYMENT TYPE</th>
+                    <th rowspan="2">EMPLOYER / ORGANIZATION</th>
+                    <th colspan="3">YEAR OF EXPERIENCE</th>
+                    <th rowspan="2">DESIGNATION</th>
+                </tr>
+                <tr>
+                    <th>FROM (DATE)</th>
+                    <th>TO (DATE)</th>
+                    <th>TOTAL YRS</th>
                 </tr>';
+            } else {
+                $html .= '<tr>
+                    <th>S.NO</th>
+                    <th>EMPLOYER NAME</th>
+                    <th>EXPERIENCE (YEARS)</th>
+                    <th>DESIGNATION</th>
+                </tr>';
+            }
+
+            $hasExpData = $experience->contains(function ($exp) use ($isFormS) {
+                if ($isFormS) {
+                    return trim((string) ($exp->emp_type ?? '')) !== ''
+                        || trim((string) ($exp->emp_cate ?? $exp->company_name ?? '')) !== ''
+                        || trim((string) ($exp->from_date ?? '')) !== ''
+                        || trim((string) ($exp->to_date ?? '')) !== ''
+                        || trim((string) ($exp->total_exp ?? $exp->experience ?? '')) !== ''
+                        || trim((string) ($exp->designation ?? '')) !== '';
+                }
+                return trim((string) ($exp->emp_cate ?? $exp->company_name ?? '')) !== ''
+                    || trim((string) ($exp->total_exp ?? $exp->experience ?? '')) !== ''
+                    || trim((string) ($exp->designation ?? '')) !== '';
+            });
+
+            if (!$hasExpData) {
+                if ($isFormS) {
+                    $html .= '<tr><td>1</td><td>NIL</td><td>NIL</td><td>NIL</td><td>NIL</td><td>NIL</td><td>NIL</td></tr>';
+                } else {
+                    $html .= '<tr><td>1</td><td>NIL</td><td>NIL</td><td>NIL</td></tr>';
+                }
+            } else {
+                foreach ($experience as $i => $exp) {
+                    $employerName = $exp->emp_cate ?? $exp->company_name ?? 'NIL';
+                    $experienceYears = $exp->total_exp ?? $exp->experience ?? 'NIL';
+                    $designation = $exp->designation ?: 'NIL';
+
+                    if ($isFormS) {
+                        $employmentType = $exp->emp_type ?: 'NIL';
+                        $fromDate = !empty($exp->from_date) ? format_date($exp->from_date) : 'NIL';
+                        $toDate = !empty($exp->to_date) ? format_date($exp->to_date) : 'NIL';
+
+                        $html .= '<tr>
+                            <td>' . ($i + 1) . '</td>
+                            <td>' . e(ucwords(str_replace('_', ' ', (string) $employmentType))) . '</td>
+                            <td>' . e($employerName) . '</td>
+                            <td>' . e($fromDate) . '</td>
+                            <td>' . e($toDate) . '</td>
+                            <td>' . e($experienceYears) . '</td>
+                            <td>' . e($designation) . '</td>
+                        </tr>';
+                    } else {
+                        $html .= '<tr>
+                            <td>' . ($i + 1) . '</td>
+                            <td>' . e($employerName) . '</td>
+                            <td>' . e($experienceYears) . '</td>
+                            <td>' . e($designation) . '</td>
+                        </tr>';
+                    }
+                }
             }
             $html .= '</table></div>';
         }
@@ -1132,9 +1213,12 @@ class PDFController extends Controller
         $expCount = count($experience);
 
         foreach ($education as $edu) {
+            $passingMonth = trim((string) ($edu->month_passing ?? ''));
+            $passingYear = trim((string) ($edu->year_of_passing ?? ''));
+            $passingLabel = trim($passingMonth . ' ' . $passingYear);
             $pdf->Cell(40, 7, $edu->educational_level, 1, 0, 'C');
             $pdf->Cell(50, 7, $edu->institute_name, 1, 0, 'C');
-            $pdf->Cell(40, 7, $edu->year_of_passing, 1, 0, 'C');
+            $pdf->Cell(40, 7, ($passingLabel !== '' ? $passingLabel : '-'), 1, 0, 'C');
             $pdf->Cell(50, 7, $edu->percentage . '%', 1, 1, 'C');
         }
 
@@ -1157,8 +1241,8 @@ class PDFController extends Controller
 
         // Loop through work experience data and populate the table
         foreach ($experience as $exp) {
-            $pdf->Cell(60, 7, $exp->company_name, 1, 0, 'C');
-            $pdf->Cell(50, 7, $exp->experience . ' years', 1, 0, 'C');
+            $pdf->Cell(60, 7, ($exp->emp_cate ?? $exp->company_name ?? ''), 1, 0, 'C');
+            $pdf->Cell(50, 7, ($exp->total_exp ?? $exp->experience ?? '') . ' years', 1, 0, 'C');
             $pdf->Cell(50, 7, $exp->designation, 1, 1, 'C');
         }
         $pdf->Ln(2); // Add space before the question
@@ -1395,19 +1479,26 @@ class PDFController extends Controller
         <h4 class="mt-10 ">5. விண்ணப்பதாரியின் தொழில்நுட்ப தகுதி மற்றும் தேர்ச்சி பற்றிய விவரங்கள்</h4>
         <table class="text-center">
             <tr>
-                <th>வரிசை எண்</th>
-                <th>கல்வி நிலை</th>
-                <th>கல்லூரி / பள்ளி</th>
-                <th>தேர்ச்சி பெற்ற ஆண்டு</th>
-                <th>சான்றிதழ் எண்</th>
+                <th rowspan="2">வரிசை எண்</th>
+                <th rowspan="2">கல்வி நிலை</th>
+                <th rowspan="2">கல்லூரி / பள்ளி</th>
+                <th colspan="2">தேர்ச்சி பெற்ற மாதம் மற்றும் ஆண்டு</th>
+                <th rowspan="2">சான்றிதழ் எண்</th>
+            </tr>
+            <tr>
+                <th>மாதம்</th>
+                <th>ஆண்டு</th>
             </tr>';
 
         foreach ($education as $i => $edu) {
+            $passingMonth = trim((string) ($edu->month_passing ?? ''));
+            $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
                 <td>' . $edu->educational_level . '</td>
                 <td>' . $edu->institute_name . '</td>
-                <td>' . $edu->year_of_passing . '</td>
+                <td>' . ($passingMonth !== '' ? $passingMonth : '-') . '</td>
+                <td>' . ($passingYear !== '' ? $passingYear : '-') . '</td>
                 <td>' . $edu->certificate_no . '</td>
             </tr>';
         }
@@ -1415,24 +1506,88 @@ class PDFController extends Controller
 
         // Section 6 Experience: skip for Form WH only (same as English PDF)
         if ($form->form_name !== 'WH') {
+            $isFormS = strtoupper((string) $form->form_name) === 'S';
+
             $html .= '
         <h4 class="mt-10">6. பெற்றுள்ள முந்தைய மற்றும் தற்போதைய அனுபவங்களைப் பற்றிய விவரங்கள்</h4>
-        <table  class="text-center">
+        <table class="text-center">';
+
+            if ($isFormS) {
+                // Match Form-S layout (two-row header with From/To/Total)
+                $html .= '
+            <tr>
+                <th rowspan="2">வரிசை எண்</th>
+                <th rowspan="2">வேலைவாய்ப்பு வகை</th>
+                <th rowspan="2">நிறுவனம் / அமைப்பு</th>
+                <th colspan="3">அனுபவ வருடங்கள்</th>
+                <th rowspan="2">பதவி</th>
+            </tr>
+            <tr>
+                <th>தேதி முதல்</th>
+                <th>தேதி வரை</th>
+                <th>மொத்த ஆண்டுகள்</th>
+            </tr>';
+            } else {
+                $html .= '
             <tr>
                 <th>வரிசை எண்</th>
                 <th>நிறுவனம்</th>
                 <th>அனுபவம் (ஆண்டுகள்)</th>
                 <th>பதவி</th>
             </tr>';
-
-            foreach ($experience as $i => $exp) {
-                $html .= '<tr>
-                    <td>' . ($i + 1) . '</td>
-                    <td>' . $exp->company_name . '</td>
-                    <td>' . $exp->experience . '</td>
-                    <td>' . $exp->designation . '</td>
-                </tr>';
             }
+
+            $hasExpDataTa = $experience->contains(function ($exp) use ($isFormS) {
+                if ($isFormS) {
+                    return trim((string) ($exp->emp_type ?? '')) !== ''
+                        || trim((string) ($exp->emp_cate ?? $exp->company_name ?? '')) !== ''
+                        || trim((string) ($exp->from_date ?? '')) !== ''
+                        || trim((string) ($exp->to_date ?? '')) !== ''
+                        || trim((string) ($exp->total_exp ?? $exp->experience ?? '')) !== ''
+                        || trim((string) ($exp->designation ?? '')) !== '';
+                }
+                return trim((string) ($exp->emp_cate ?? $exp->company_name ?? '')) !== ''
+                    || trim((string) ($exp->total_exp ?? $exp->experience ?? '')) !== ''
+                    || trim((string) ($exp->designation ?? '')) !== '';
+            });
+
+            if (!$hasExpDataTa) {
+                if ($isFormS) {
+                    $html .= '<tr><td>1</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td></tr>';
+                } else {
+                    $html .= '<tr><td>1</td><td>Nil</td><td>Nil</td><td>Nil</td></tr>';
+                }
+            } else {
+                foreach ($experience as $i => $exp) {
+                    $employerName = $exp->emp_cate ?? $exp->company_name ?? 'Nil';
+                    $experienceYears = $exp->total_exp ?? $exp->experience ?? 'Nil';
+                    $designation = $exp->designation ?: 'Nil';
+
+                    if ($isFormS) {
+                        $employmentType = $exp->emp_type ?: 'Nil';
+                        $fromDate = !empty($exp->from_date) ? format_date($exp->from_date) : 'Nil';
+                        $toDate = !empty($exp->to_date) ? format_date($exp->to_date) : 'Nil';
+
+                        $html .= '<tr>
+                            <td>' . ($i + 1) . '</td>
+                            <td>' . e(ucwords(str_replace('_', ' ', (string) $employmentType))) . '</td>
+                            <td>' . e($employerName) . '</td>
+                            <td>' . e($fromDate) . '</td>
+                            <td>' . e($toDate) . '</td>
+                            <td>' . e($experienceYears) . '</td>
+                            <td>' . e($designation) . '</td>
+                        </tr>';
+                    } else {
+                        $html .= '<tr>
+                            <td>' . ($i + 1) . '</td>
+                            <td>' . e($employerName) . '</td>
+                            <td>' . e($experienceYears) . '</td>
+                            <td>' . e($designation) . '</td>
+                        </tr>';
+                    }
+                }
+            }
+
             $html .= '</table>';
         }
 

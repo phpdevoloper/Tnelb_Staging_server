@@ -94,13 +94,36 @@ class FormController extends BaseController
             : trim((string) ($request->experience[$key] ?? ''));
 
         $designation = trim((string) ($request->designation[$key] ?? ''));
+        $empType = trim((string) ($request->work_employment_type[$key] ?? ''));
+        $fromDate = trim((string) ($request->work_date_from[$key] ?? ''));
+        $toDate = trim((string) ($request->work_date_to[$key] ?? ''));
+        $intimationDate = trim((string) ($request->work_intimation_date[$key] ?? ''));
 
         return [
             'company_name' => $companyName,
             'experience' => $experience,
             'designation' => $designation,
+            'emp_type' => ($empType !== '' ? $empType : null),
+            'emp_cate' => ($companyName !== '' ? $companyName : null),
+            'from_date' => ($fromDate !== '' ? $fromDate : null),
+            'to_date' => ($toDate !== '' ? $toDate : null),
+            'intimation_date' => ($intimationDate !== '' ? $intimationDate : null),
+            'total_exp' => ($experience !== '' ? $experience : null),
             'is_empty' => ($companyName === '' && $experience === '' && $designation === ''),
         ];
+    }
+
+    private function decryptPanForDisplay($applicationDetails): void
+    {
+        if (!$applicationDetails || !isset($applicationDetails->pancard) || $applicationDetails->pancard === null || $applicationDetails->pancard === '') {
+            return;
+        }
+
+        try {
+            $applicationDetails->pancard = Crypt::decryptString((string) $applicationDetails->pancard);
+        } catch (\Throwable $e) {
+            // Keep legacy/plain values as-is when not encrypted.
+        }
     }
 
 
@@ -119,6 +142,8 @@ class FormController extends BaseController
         ->where('application_id', $appl_id)
         ->select('*')
         ->first();
+
+        $this->decryptPanForDisplay($application_details);
 
         
         $form_details = MstLicence::where('status', 1)
@@ -213,6 +238,8 @@ class FormController extends BaseController
             ->where('application_id', $appl_id)
             ->select('*')
             ->first();
+
+        $this->decryptPanForDisplay($application_details);
 
         if (!$application_details) {
             return redirect()->route('dashboard')->with('error', 'Application not found.');
@@ -365,7 +392,7 @@ class FormController extends BaseController
             'work_level'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
             'work_level.*'         => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             'experience'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'experience.*'         => $isWorkOptional ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
+            'experience.*'         => $isWorkOptional ? 'nullable|numeric|min:0|max:50' : 'required|numeric|min:0|max:50',
             'designation'          => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
             'designation.*'        => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             
@@ -421,7 +448,7 @@ class FormController extends BaseController
             
             'experience.required'           => 'Please add at least one work experience.',
             'experience.*.required'         => 'Experience (in years) is required.',
-            'experience.*.integer'          => 'Experience must be an integer.',
+            'experience.*.numeric'          => 'Experience must be a valid number.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
 
@@ -533,7 +560,8 @@ class FormController extends BaseController
         $validator->validate();
         
         
-        $action = $request->input('form_action');
+        // Safety fallback: if client doesn't send form_action, keep first save as draft.
+        $action = $request->input('form_action', 'draft');
         $loginId = $request->login_id;
         
         
@@ -681,6 +709,7 @@ class FormController extends BaseController
                         'login_id'           => $loginId,
                         'educational_level'  => $level,
                         'institute_name'     => $request->institute_name[$key],
+                        'month_passing'      => $request->month_of_passing[$key] ?? null,
                         'year_of_passing'    => $request->year_of_passing[$key],
                         'certificate_no'     => $request->certificate_no[$key] ?? null,
                         'application_id'     => $newApplicationId,
@@ -725,8 +754,12 @@ class FormController extends BaseController
                     
                     Mst_experience::create([
                         'login_id'        => $loginId,
-                        'company_name'    => $company,
-                        'experience'      => $expYears,
+                        'emp_type'        => $workRow['emp_type'],
+                        'emp_cate'        => $workRow['emp_cate'],
+                        'intimation_date' => $workRow['intimation_date'],
+                        'from_date'       => $workRow['from_date'],
+                        'to_date'         => $workRow['to_date'],
+                        'total_exp'       => $workRow['total_exp'],
                         'designation'     => $designation,
                         'application_id'  => $newApplicationId,
                         'exp_serial'      => $newExpSerial,
@@ -868,7 +901,7 @@ class FormController extends BaseController
             'work_level'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
             'work_level.*'         => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
             'experience'           => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
-            'experience.*'         => $isWorkOptional ? 'nullable|integer|min:0|max:50' : 'required|integer|min:0|max:50',
+            'experience.*'         => $isWorkOptional ? 'nullable|numeric|min:0|max:50' : 'required|numeric|min:0|max:50',
             'designation'          => $isWorkOptional ? 'nullable|array' : 'required|array|min:1',
             'designation.*'        => $isWorkOptional ? 'nullable|string|max:80' : 'required|string|max:80',
 
@@ -1098,6 +1131,7 @@ class FormController extends BaseController
                         $education->update([
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
+                            'month_passing'     => $request->month_of_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key],
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'upload_document'   => $filePath,
@@ -1112,6 +1146,7 @@ class FormController extends BaseController
                             'login_id'          => $loginId,
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
+                            'month_passing'     => $request->month_of_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key],
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
@@ -1167,8 +1202,12 @@ class FormController extends BaseController
                     if ($work) {
                         // 🔹 UPDATE existing record
                         $work->update([
-                            'company_name'    => $company,
-                            'experience'      => $expYears,
+                            'emp_type'        => $workRow['emp_type'],
+                            'emp_cate'        => $workRow['emp_cate'],
+                            'intimation_date' => $workRow['intimation_date'],
+                            'from_date'       => $workRow['from_date'],
+                            'to_date'         => $workRow['to_date'],
+                            'total_exp'       => $workRow['total_exp'],
                             'designation'     => $designation,
                             'upload_document' => $filePath,
                         ]);
@@ -1179,8 +1218,12 @@ class FormController extends BaseController
             
                         Mst_experience::create([
                             'login_id'        => $loginId,
-                            'company_name'    => $company,
-                            'experience'      => $expYears,
+                            'emp_type'        => $workRow['emp_type'],
+                            'emp_cate'        => $workRow['emp_cate'],
+                            'intimation_date' => $workRow['intimation_date'],
+                            'from_date'       => $workRow['from_date'],
+                            'to_date'         => $workRow['to_date'],
+                            'total_exp'       => $workRow['total_exp'],
                             'designation'     => $designation,
                             'application_id'  => $applicationId,
                             'exp_serial'      => $newExpSerial,
@@ -1512,7 +1555,7 @@ class FormController extends BaseController
             'work_level.*.string'           => 'Work level must be a valid string.',
             'work_level.*.max'              => 'Work level may not be greater than 80 characters.',
 
-            'experience.*.integer'          => 'Experience must be an integer.',
+            'experience.*.numeric'          => 'Experience must be a valid number.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
 
@@ -1704,6 +1747,7 @@ class FormController extends BaseController
                         $education->update([
                             'educational_level' => $level ?? null,
                             'institute_name'    => $request->institute_name[$key] ?? null,
+                            'month_passing'     => $request->month_of_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key] ?? null,
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'upload_document'   => $filePath,
@@ -1716,6 +1760,7 @@ class FormController extends BaseController
                             'login_id'          => $loginId,
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
+                            'month_passing'     => $request->month_of_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key],
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
@@ -1770,8 +1815,12 @@ class FormController extends BaseController
                     if ($work) {
                         // 🔹 UPDATE existing record
                         $work->update([
-                            'company_name'    => $company ?? null,
-                            'experience'      => $expYears ?: null,
+                            'emp_type'        => $workRow['emp_type'],
+                            'emp_cate'        => $workRow['emp_cate'],
+                            'intimation_date' => $workRow['intimation_date'],
+                            'from_date'       => $workRow['from_date'],
+                            'to_date'         => $workRow['to_date'],
+                            'total_exp'       => $workRow['total_exp'],
                             'designation'     => $designation ?: null,
                             'upload_document' => $filePath !== null
                                 ? $filePath
@@ -1784,8 +1833,12 @@ class FormController extends BaseController
             
                         Mst_experience::create([
                             'login_id'        => $loginId,
-                            'company_name'    => $company,
-                            'experience'      => $expYears,
+                            'emp_type'        => $workRow['emp_type'],
+                            'emp_cate'        => $workRow['emp_cate'],
+                            'intimation_date' => $workRow['intimation_date'],
+                            'from_date'       => $workRow['from_date'],
+                            'to_date'         => $workRow['to_date'],
+                            'total_exp'       => $workRow['total_exp'],
                             'designation'     => $designation,
                             'application_id'  => $applicationId,
                             'exp_serial'      => $newExpSerial,
@@ -1926,7 +1979,7 @@ class FormController extends BaseController
 
             'work_level.*.string'        => 'Work level must be a valid string.',
             'work_level.*.max'           => 'Work level may not be greater than 80 characters.',
-            'experience.*.integer'       => 'Experience must be an integer.',
+            'experience.*.numeric'       => 'Experience must be a valid number.',
             'experience.*.min'           => 'Experience cannot be negative.',
             'experience.*.max'           => 'Experience may not exceed 50 years.',
             'designation.*.string'       => 'Designation must be a valid string.',
@@ -2145,10 +2198,14 @@ class FormController extends BaseController
                         [
                             'login_id'       => $loginId,
                             'application_id' => $applicationId,
-                            'company_name'   => $companyName,
+                            'emp_cate'       => $companyName,
                         ],
                         [
-                            'experience'      => $expYears,
+                            'emp_type'        => $workRow['emp_type'],
+                            'intimation_date' => $workRow['intimation_date'],
+                            'from_date'       => $workRow['from_date'],
+                            'to_date'         => $workRow['to_date'],
+                            'total_exp'       => $workRow['total_exp'],
                             'designation'     => $designation,
                             'upload_document' => $finalDoc,
                             'exp_serial'      => $newSerial,
@@ -2304,7 +2361,7 @@ class FormController extends BaseController
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
             'work_level.*.max'              => 'Work level may not be greater than 80 characters.',
-            'experience.*.integer'          => 'Experience must be an integer.',
+            'experience.*.numeric'          => 'Experience must be a valid number.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
             'designation.*.string'          => 'Designation must be a valid string.',
@@ -2532,10 +2589,14 @@ class FormController extends BaseController
                         [
                             'login_id'       => $loginId,
                             'application_id' => $applicationId,
-                            'company_name'   => $companyName,
+                            'emp_cate'       => $companyName,
                         ],
                         [
-                            'experience'      => $expYears,
+                            'emp_type'        => $workRow['emp_type'],
+                            'intimation_date' => $workRow['intimation_date'],
+                            'from_date'       => $workRow['from_date'],
+                            'to_date'         => $workRow['to_date'],
+                            'total_exp'       => $workRow['total_exp'],
                             'designation'     => $designation,
                             'upload_document' => $finalDoc,
                             'exp_serial'      => $newSerial,
