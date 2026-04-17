@@ -81,6 +81,12 @@ class PDFController extends Controller
         $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
         $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
         $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
+        $decryptedPan = $this->safeDecryptString($form->pancard);
+        $decryptedPan = $decryptedPan ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPan)) : '';
+        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : 'Invalid PAN';
+        $decryptedPan = $this->safeDecryptString($form->pancard);
+        $decryptedPan = $decryptedPan ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPan)) : '';
+        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : 'Invalid PAN';
         $maskedUpper = mb_strtoupper($masked, 'UTF-8');
 
         // Match generatePDF(): A4, helvetica 10pt, acknowledgement-style layout
@@ -387,8 +393,9 @@ class PDFController extends Controller
 
             $html .= '
             <br><br>
-            <div style="font-family: Arial, sans-serif; font-size:10pt;">
-            <p style="font-size:11pt; font-weight:bold; margin-top:10px; text-align:center;">PAYMENT DETAILS</p>
+            <table class="header-table" style="border:none; margin-bottom:2px;">
+                <tr><td style="font-size:11pt; font-weight:bold;">PAYMENT DETAILS</td></tr>
+            </table>
             <table class="payment-table">
                 <tr>
                     <th>PAYMENT TYPE</th>
@@ -404,8 +411,7 @@ class PDFController extends Controller
                     <td>' . e($amountValue) . '</td>
                     <td>' . e($statusValue) . '</td>
                 </tr>
-            </table>
-            </div>';
+            </table>';
         }
 
         $html .= '<br><br>
@@ -687,6 +693,9 @@ class PDFController extends Controller
         $decryptedaadhar = $this->safeDecryptString($form->aadhaar);
         $decryptedaadhar = $decryptedaadhar ? preg_replace('/\s+/', '', $decryptedaadhar) : '';
         $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
+        $decryptedPan = $this->safeDecryptString($form->pancard);
+        $decryptedPan = $decryptedPan ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPan)) : '';
+        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : 'Invalid PAN';
 
         // $wrap = function ($text, $length = 20) {
         //     return wordwrap($text, $length, '<br>', true);
@@ -701,30 +710,36 @@ class PDFController extends Controller
     
         $mpdf->WriteHTML('
         <style>
-            body { font-family: helvetica, sans-serif; font-size: 10pt; line-height: 1.4; }
+            body { font-family: helvetica, sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; }
             table { border-collapse: collapse; width: 100%; margin-top: 6px; }
-            td, th { padding: 4px; vertical-align: top; }
+            td, th { padding: 5px 6px; vertical-align: top; }
 
             /* Numbered layout: 3-column (No | Label-with-colon | Value) */
-            .numbered-table { width: 100%; border-collapse: collapse; }
-            .numbered-table td.num-col { width: 5%; text-align: right; padding-right: 6px; vertical-align: top; padding: 9px 6px 1px 0; }
-            .numbered-table td.label-col { width: 35%; text-align: left; vertical-align: top; padding: 0 6px 1px 0; }
-            .numbered-table td.value-col { width: 60%; text-align: left; vertical-align: top; padding: 1px 0 1px 4px; }
+            .numbered-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+            .numbered-table td.num-col { width: 5%; text-align: right; padding: 10px 8px 4px 0; vertical-align: top; font-weight: bold; }
+            .numbered-table td.text-col { width: 73%; text-align: left; vertical-align: top; padding-top: 2px; }
+            .numbered-table td.extra-col { width: 22%; text-align: left; vertical-align: top; }
+            .numbered-table td.label-col { width: 35%; text-align: left; vertical-align: top; padding: 0 6px 2px 0; }
+            .numbered-table td.value-col { width: 60%; text-align: left; vertical-align: top; padding: 0 0 2px 4px; }
+            .numbered-table td.colon-col { width: 5%; text-align: center; vertical-align: middle; padding: 0; }
+            .inner-detail { width: 100%; border-collapse: collapse; margin-top: 0; }
+            .inner-detail td { border: none; padding: 2px 0; vertical-align: middle; }
 
-            .header-table { width: 100%; margin-top: 0; }
-            .header-table td { border: none; text-align: center; padding: 2px 4px; }
+            .header-table { width: 100%; margin-top: 0; border-bottom: 1px solid #000; padding-bottom: 4px; }
+            .header-table td { border: none; text-align: center; padding: 2px 4px; line-height: 1.35; }
 
             .label { width: 35%; text-align: left;}
             .value { width: 40%; text-align: left; }
 
             .tbl-bordered td, .tbl-bordered th { border: 1px solid #000; text-align: center; }
+            .tbl-bordered th { background: #f3f3f3; font-weight: bold; }
             .tbl-bordered th:first-child,
             .tbl-bordered td:first-child { width: 8%; text-align: center; }
 
             .tbl-no-border td { border: none; padding-bottom: 8px; }
 
             .photo-cell { text-align:center;}
-            .section-table { width: 95%; margin: 1% 0 0 5%; }
+            .section-table { width: 100%; margin: 6px 0 0 0; }
 
             .question-table { width: 100%; margin-left: 0; }
             .question-table td { vertical-align: top; padding: 2px 4px; }
@@ -740,9 +755,9 @@ class PDFController extends Controller
                 letter-spacing: 0.4px;
             }
 
-            .payment-table { width: 90%; margin: 10px auto 0 auto; }
+            .payment-table { width: 90%; margin: 12px auto 0 auto; }
             .payment-table th,
-            .payment-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+            .payment-table td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
             .payment-table th { text-align: center; font-weight: bold; }
         </style>', HTMLParserMode::HEADER_CSS);
     
@@ -1023,7 +1038,7 @@ class PDFController extends Controller
 
         if ($form->form_name == 'S') {
             // For Form S, after Q6 (experience) we have:
-            // Q7 - previous application, Q8 - certificate, Q9 - Aadhaar
+            // Q7 - previous application, Q8 - certificate, Q9 - Aadhaar, Q10 - PAN
             $no = '8';
             $html .= '<tr>
                 <td class="num-col">' . $no . '.</td>
@@ -1036,12 +1051,15 @@ class PDFController extends Controller
                 <td class="text-col">AADHAAR NUMBER</td>
                 <td class="extra-col">: ' . $masked . '</td>
             </tr>';
-
-            // $html .= '<tr><td><strong>10. PAN Number</strong></td><td>: ' . $maskedPan . '</td></tr>';
+            $html .= '<tr>
+                <td class="num-col">10.</td>
+                <td class="text-col">PAN NUMBER</td>
+                <td class="extra-col">: ' . $maskedPan . '</td>
+            </tr>';
         } else {
             // For other forms:
-            // W / P : Q6 - experience, Q7 - certificate, Q8 - Aadhaar
-            // WH    : (no experience) so Q6 - certificate, Q7 - Aadhaar
+            // W / P : Q6 - experience, Q7 - certificate, Q8 - Aadhaar, Q9 - PAN
+            // WH    : (no experience) so Q6 - certificate, Q7 - Aadhaar, Q8 - PAN
             $no = ($form->form_name == 'WH') ? '6' : '7';
             if ($form->form_name == 'WH') {
                 $html .= '<tr>
@@ -1061,6 +1079,12 @@ class PDFController extends Controller
                 <td class="num-col">' . $aadhaarNo . '.</td>
                 <td class="text-col">AADHAAR NUMBER</td>
                 <td class="extra-col">: ' . $masked . '</td>
+            </tr>';
+            $panNo = ($form->form_name == 'WH') ? '8' : '9';
+            $html .= '<tr>
+                <td class="num-col">' . $panNo . '.</td>
+                <td class="text-col">PAN NUMBER</td>
+                <td class="extra-col">: ' . $maskedPan . '</td>
             </tr>';
         }
 
@@ -1395,25 +1419,41 @@ class PDFController extends Controller
         $html = '
         <style>
             .tam { font-family: marutham !important; font-size: 20px !important; }
-            body { font-family: "marutham", sans-serif; line-height: 1.5; font-size: 14px !important; font-weight:600!important; }
-            h3, h4 { margin: 5px 0; font-weight: 600; }
+            body { font-family: "marutham", sans-serif; line-height: 1.5; font-size: 14px !important; font-weight:600!important; color: #1a1a1a; }
+            .eng {
+                font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+                font-weight: 600;
+                font-size: 14px !important;
+                line-height: 1.5 !important;
+            }
+            h3, h4 { margin: 4px 0; font-weight: 600; line-height: 1.35; }
             .text-center { text-align: center; }
-            p { margin: 5px 0; }
-            table { width: 100%; border-collapse: collapse; }
-            table tr th { font-weight: 600; }
+            p { margin: 4px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+            table tr th { font-weight: 600; background: #f3f3f3; }
             p strong { font-weight: 600; }
-            th, td { border: 1px solid #000; padding: 5px;  }
-            .mt-10 { margin-top: 5px; }
+            th, td { border: 1px solid #000; padding: 5px 6px;  }
+            .mt-10 { margin-top: 6px; }
             .applicant_details tr td { text-align: left; border: none; }
             .license_tbl tr td { text-align: left; border: none; line-height: 25px; }
             .tbl-no-border td { border: none; }
+            .header-table { width: 100%; margin-top: 0; border-bottom: 1px solid #000; padding-bottom: 4px; }
+            .header-table td { border: none; text-align: center; padding: 2px 4px; line-height: 1.35; }
+            .numbered-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+            .numbered-table td { border: none; vertical-align: top; }
+            .numbered-table td.num-col { width: 5%; text-align: right; padding: 8px 8px 4px 0; font-weight: bold; }
+            .numbered-table td.text-col { width: 73%; text-align: left; padding-top: 2px; }
+            .numbered-table td.extra-col { width: 22%; text-align: left; padding-top: 2px; }
+            .section-table { width: 95%; margin: 6px 0 0 5%; }
+            .tbl-bordered td, .tbl-bordered th { border: 1px solid #000; text-align: center; }
+            .tbl-bordered th { background: #f3f3f3; font-weight: 600; }
 
             /* English payment block styling for Tamil PDF only */
-            .payment-table { width: 90%; margin: 10px auto 0 auto; border-collapse: collapse; }
+            .payment-table { width: 90%; margin: 12px auto 0 auto; border-collapse: collapse; }
             .payment-table th,
             .payment-table td {
                 border: 1px solid #000;
-                padding: 4px 6px;
+                padding: 6px 8px;
                 font-family: Arial, sans-serif;
                 font-size: 10pt;
                 text-align: center;
@@ -1423,14 +1463,14 @@ class PDFController extends Controller
             }
         </style>
     
-        <div class="mb-2 text-center">
-            <h3><span class="tam">தமிழ்நாடு அரசு</span></h3>
-            <h4>மின்சார உரிமையாளர்கள் வாரியம்</h4>
-            <p>திரு.வி.கா. தொழிற்சாலை, கிண்டி, சென்னை – 600032.</p>
-            <h4>படிவம் - "' . $form->form_name . ($form->appl_type == 'R' ? '" - புதுப்பிப்பு' : '"').'</h4>
-            <p>'.$certificateText.'</p>
-        </div>
-        <h4 style="text-align:center;">விண்ணப்ப எண்: ' . $form->application_id . '</h4>
+        <table class="header-table">
+            <tr><td style="font-size:12pt; font-weight:bold;"><span class="tam">தமிழ்நாடு அரசு</span></td></tr>
+            <tr><td style="font-size:11pt; font-weight:bold;">மின்சார உரிமையாளர்கள் வாரியம்</td></tr>
+            <tr><td>திரு.வி.கா. தொழிற்சாலை, கிண்டி, சென்னை – 600032.</td></tr>
+            <tr><td style="font-size:11pt; font-weight:bold;">படிவம் - "' . $form->form_name . ($form->appl_type == 'R' ? '" - புதுப்பிப்பு' : '"').'</td></tr>
+            <tr><td>'.$certificateText.'</td></tr>
+            <tr><td style="font-size:11pt; font-weight:bold;">விண்ணப்ப எண்: <span class="eng">' . $form->application_id . '</span></td></tr>
+        </table>
         ';
 
         $wrap = function ($text, $length = 20) {
@@ -1443,7 +1483,7 @@ class PDFController extends Controller
                 <tr>
                     <td style="width:38%; vertical-align:top;"><strong>1. விண்ணப்பதாரரின் பெயர்</strong></td>
                     <td style="width:2%; vertical-align:top; text-align:center;">:</td>
-                    <td style="width:40%; vertical-align:top;">' . $wrap($form->applicant_name) . '</td>
+                    <td style="width:40%; vertical-align:top;"><span class="eng">' . $wrap($form->applicant_name) . '</span></td>
                     <td rowspan="5" style="width:20%; text-align:center; vertical-align:top;">
             ';
 
@@ -1459,25 +1499,32 @@ class PDFController extends Controller
                 <tr>
                     <td style="vertical-align:top;"><strong>2. தகப்பனார் பெயர்</strong></td>
                     <td style="vertical-align:top; text-align:center;">:</td>
-                    <td style="vertical-align:top;">' . $wrap($form->fathers_name) . '</td>
+                    <td style="vertical-align:top;"><span class="eng">' . $wrap($form->fathers_name) . '</span></td>
                 </tr>
                 <tr>
                     <td style="vertical-align:top;"><strong>3. விண்ணப்பதாரர் முகவரி</strong></td>
                     <td style="vertical-align:top; text-align:center;">:</td>
-                    <td style="vertical-align:top;">' . $this->formatAddressToThreeLines($form->applicants_address) . '</td>
+                    <td style="vertical-align:top;"><span class="eng">' . $this->formatAddressToThreeLines($form->applicants_address) . '</span></td>
                 </tr>
                 <tr>
                     <td style="vertical-align:top;"><strong>4. பிறந்த நாள், மாதம், ஆண்டு மற்றும் வயது</strong></td>
                     <td style="vertical-align:top; text-align:center;">:</td>
-                    <td style="vertical-align:top;">' . $form->d_o_b . ' (' . $form->age . ' years)</td>
+                    <td style="vertical-align:top;"><span class="eng">' . $form->d_o_b . ' (' . $form->age . ' years)</span></td>
                 </tr>
             </table>';
 
 
 
         $html .= '
-        <h4 class="mt-10 ">5. விண்ணப்பதாரியின் தொழில்நுட்ப தகுதி மற்றும் தேர்ச்சி பற்றிய விவரங்கள்</h4>
-        <table class="text-center">
+        <table class="numbered-table">
+            <tr>
+                <td class="num-col">5.</td>
+                <td class="text-col" colspan="2"><strong>விண்ணப்பதாரியின் தொழில்நுட்ப தகுதி மற்றும் தேர்ச்சி பற்றிய விவரங்கள்</strong></td>
+            </tr>
+            <tr>
+                <td class="num-col"></td>
+                <td class="text-col" colspan="2">
+        <table class="text-center tbl-bordered" style="width:100%; margin-top:4px;">
             <tr>
                 <th rowspan="2">வரிசை எண்</th>
                 <th rowspan="2">கல்வி நிலை</th>
@@ -1495,22 +1542,32 @@ class PDFController extends Controller
             $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
-                <td>' . $edu->educational_level . '</td>
-                <td>' . $edu->institute_name . '</td>
-                <td>' . ($passingMonth !== '' ? $passingMonth : '-') . '</td>
-                <td>' . ($passingYear !== '' ? $passingYear : '-') . '</td>
-                <td>' . $edu->certificate_no . '</td>
+                <td><span class="eng">' . $edu->educational_level . '</span></td>
+                <td><span class="eng">' . $edu->institute_name . '</span></td>
+                <td><span class="eng">' . ($passingMonth !== '' ? $passingMonth : '-') . '</span></td>
+                <td><span class="eng">' . ($passingYear !== '' ? $passingYear : '-') . '</span></td>
+                <td><span class="eng">' . $edu->certificate_no . '</span></td>
             </tr>';
         }
-        $html .= '</table>';
+        $html .= '</table>
+                </td>
+            </tr>
+        </table>';
 
         // Section 6 Experience: skip for Form WH only (same as English PDF)
         if ($form->form_name !== 'WH') {
             $isFormS = strtoupper((string) $form->form_name) === 'S';
 
             $html .= '
-        <h4 class="mt-10">6. பெற்றுள்ள முந்தைய மற்றும் தற்போதைய அனுபவங்களைப் பற்றிய விவரங்கள்</h4>
-        <table class="text-center">';
+        <table class="numbered-table">
+            <tr>
+                <td class="num-col">6.</td>
+                <td class="text-col" colspan="2"><strong>பெற்றுள்ள முந்தைய மற்றும் தற்போதைய அனுபவங்களைப் பற்றிய விவரங்கள்</strong></td>
+            </tr>
+            <tr>
+                <td class="num-col"></td>
+                <td class="text-col" colspan="2">
+        <table class="text-center tbl-bordered" style="width:100%; margin-top:4px;">';
 
             if ($isFormS) {
                 // Match Form-S layout (two-row header with From/To/Total)
@@ -1519,7 +1576,7 @@ class PDFController extends Controller
                 <th rowspan="2">வரிசை எண்</th>
                 <th rowspan="2">வேலைவாய்ப்பு வகை</th>
                 <th rowspan="2">நிறுவனம் / அமைப்பு</th>
-                <th colspan="3">அனுபவ வருடங்கள்</th>
+                <th colspan="3">அனுபவம்</th>
                 <th rowspan="2">பதவி</th>
             </tr>
             <tr>
@@ -1570,25 +1627,28 @@ class PDFController extends Controller
 
                         $html .= '<tr>
                             <td>' . ($i + 1) . '</td>
-                            <td>' . e(ucwords(str_replace('_', ' ', (string) $employmentType))) . '</td>
-                            <td>' . e($employerName) . '</td>
-                            <td>' . e($fromDate) . '</td>
-                            <td>' . e($toDate) . '</td>
-                            <td>' . e($experienceYears) . '</td>
-                            <td>' . e($designation) . '</td>
+                            <td><span class="eng">' . e(ucwords(str_replace('_', ' ', (string) $employmentType)) ) . '</span></td>
+                            <td><span class="eng">' . e($employerName) . '</span></td>
+                            <td><span class="eng">' . e($fromDate) . '</span></td>
+                            <td><span class="eng">' . e($toDate) . '</span></td>
+                            <td><span class="eng">' . e($experienceYears) . '</span></td>
+                            <td><span class="eng">' . e($designation) . '</span></td>
                         </tr>';
                     } else {
                         $html .= '<tr>
                             <td>' . ($i + 1) . '</td>
-                            <td>' . e($employerName) . '</td>
-                            <td>' . e($experienceYears) . '</td>
-                            <td>' . e($designation) . '</td>
+                            <td><span class="eng">' . e($employerName) . '</span></td>
+                            <td><span class="eng">' . e($experienceYears) . '</span></td>
+                            <td><span class="eng">' . e($designation) . '</span></td>
                         </tr>';
                     }
                 }
             }
 
-            $html .= '</table>';
+            $html .= '</table>
+                </td>
+            </tr>
+        </table>';
         }
 
         // $previously = ($form->previously_number || $form->previously_date) ? $form->previously_number . ', ' . $form->previously_date : 'NO';
@@ -1646,77 +1706,56 @@ class PDFController extends Controller
         }
 
         $aadhaar = $masked ?: 'இல்லை';
+        $decryptedPanTa = $this->safeDecryptString($form->pancard);
+        $decryptedPanTa = $decryptedPanTa ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPanTa)) : '';
+        $maskedPanTa = strlen($decryptedPanTa) === 10 ? str_repeat('X', 6) . substr($decryptedPanTa, -4) : 'Invalid PAN';
 
         $l_date = format_date($form->previously_date);
-        // Start HTML
-        $html .= '
-    <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border" style="border-collapse: collapse; margin-top:10px;">';
-
+        $html .= '<table class="numbered-table" cellpadding="5" cellspacing="0" style="margin-top:10px;">';
 
         if ($form->form_name == 'S') {
-            $html .= '
-            <tr >
-                <td colspan="2">
-                    <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border">
-                        <tr>
-                            <td width="70%" >7.
-                                இதற்கு முன்பு மின் உதவியாளர் தகுதிச்சான்றிதழுக்கு விண்ணப்பித்துள்ளீர்களா? 
-                                ஆம் என்றால் அதன் எண் மற்றும் தேதியை குறிப்பிடவும்.
-                            </td>
-                            <td width="30%" >
-                                ' . e($value) . '
-                            </td>
-                        </tr>
-                    </table>
-                </td>
+            $html .= '<tr>
+                <td class="num-col">7.</td>
+                <td class="text-col">இதற்கு முன்பு மின் உதவியாளர் தகுதிச்சான்றிதழுக்கு விண்ணப்பித்துள்ளீர்களா? ஆம் என்றால் அதன் எண் மற்றும் தேதியை குறிப்பிடவும்.</td>
+                <td class="extra-col">: ' . e($value) . '</td>
             </tr>';
 
-            $no = '8';
-            $certAnswer = $form->form_name == 'S' ? $certno : $value;
-            $html .= '
-            <tr>
-                <td colspan="2">
-                    <table width="100%" cellpadding="5" cellspacing="0" class="tbl-no-border">
-                        <tr>
-                            <td width="70%">' . $no . '.
-                                இந்த வாரியம் வழங்கிய மின்கம்பியாளர் தகுதி சான்றிதழ் / மேற்பார்வையாளர் தகுதி சான்றிதழ் உங்களிடம் உள்ளதா? இருந்தால், அதன் விவரங்களை வழங்கி, அதனை ஒப்படைக்கவும்.
-                            </td>
-                            <td width="30%">' . e($certAnswer) . '</td>
-                        </tr>
-                    </table>
-                </td>
+            $html .= '<tr>
+                <td class="num-col">8.</td>
+                <td class="text-col">இந்த வாரியம் வழங்கிய மின்கம்பியாளர் தகுதி சான்றிதழ் / மேற்பார்வையாளர் தகுதி சான்றிதழ் உங்களிடம் உள்ளதா? இருந்தால், அதன் விவரங்களை வழங்கி, அதனை ஒப்படைக்கவும்.</td>
+                <td class="extra-col">: ' . e($certno) . '</td>
             </tr>';
 
             $aadhaarNo = '9';
-
-        }else{
-            // WH: no experience section, so certificate = 6, Aadhaar = 7. Others: 7 and 8.
+        } else {
             $no = ($form->form_name == 'WH') ? '6' : '7';
-            
             if ($form->form_name == 'WH') {
-                $html .= renderRow(
-                    '<h4>'.$no.'. இதற்கு முன்னாள் விண்ணப்பம் செய்து மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக.</h4>',
-                    $certno
-                );
-            }else{
-                $html .= renderRow(
-                    '<h4>'.$no.'. இதற்கு முன்னாள் விண்ணப்பம் செய்து மின்கம்பியாளர் தகுதி சான்றிதழ் / மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக</h4>',
-                    $certno
-                );
-
+                $html .= '<tr>
+                    <td class="num-col">' . $no . '.</td>
+                    <td class="text-col">இதற்கு முன்னாள் விண்ணப்பம் செய்து மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக.</td>
+                    <td class="extra-col">: ' . e($certno) . '</td>
+                </tr>';
+            } else {
+                $html .= '<tr>
+                    <td class="num-col">' . $no . '.</td>
+                    <td class="text-col">இதற்கு முன்னாள் விண்ணப்பம் செய்து மின்கம்பியாளர் தகுதி சான்றிதழ் / மின் கம்பி உதவியாளர் தகுதி சான்றிதழ் பெறப்பட்டுள்ளதா? ஆம் என்றால் அதன் எண் மற்றும் செல்லத்தக்க காலம் குறிப்பிடுக</td>
+                    <td class="extra-col">: ' . e($certno) . '</td>
+                </tr>';
             }
             $aadhaarNo = ($form->form_name == 'WH') ? '7' : '8';
         }
 
-        
-        
-        $html .= renderRow(
-            '<h4>'.$aadhaarNo.'. ஆதார் எண்</h4>',
-            $aadhaar
-        );
-
-
-        
+        $html .= '<tr>
+            <td class="num-col">' . $aadhaarNo . '.</td>
+            <td class="text-col">ஆதார் எண்</td>
+            <td class="extra-col">: ' . e($aadhaar) . '</td>
+        </tr>';
+        $panNo = ((int) $aadhaarNo) + 1;
+        $html .= '<tr>
+            <td class="num-col">' . $panNo . '.</td>
+            <td class="text-col">நிரந்தர கணக்கு எண்</td>
+            <td class="extra-col">: ' . e($maskedPanTa) . '</td>
+        </tr>';
 
         $html .= '</table>';
 
@@ -1734,8 +1773,9 @@ class PDFController extends Controller
 
             $html .= '
             <br><br>
-            <div>
-            <p style="font-family: Arial, sans-serif; font-size:11pt; font-weight:bold; margin-top:10px; text-align:center;">PAYMENT DETAILS</p>
+            <table class="header-table" style="border:none; margin-bottom:2px;">
+                <tr><td style="font-family: Arial, sans-serif; font-size:11pt; font-weight:bold;">PAYMENT DETAILS</td></tr>
+            </table>
             <table class="payment-table">
                 <tr>
                     <th>PAYMENT TYPE</th>
@@ -1751,15 +1791,18 @@ class PDFController extends Controller
                     <td>' . e($amountValue) . '</td>
                     <td>' . e($statusValue) . '</td>
                 </tr>
-            </table>
-            </div>';
+            </table>';
         }
         
 
         // Place and Date at very bottom
         $html .= '<br><br>
-        <p><strong>இடம் :</strong> சென்னை</p>
-        <p><strong>தேதி :</strong> ' . date('d-m-Y') . '</p>';
+        <table width="100%" style="border-collapse:collapse; margin-top:8px;">
+            <tr>
+                <td style="text-align:left; border:none;"><strong>இடம் :</strong> சென்னை</td>
+                <td style="text-align:right; border:none;"><strong>தேதி :</strong> ' . date('d-m-Y') . '</td>
+            </tr>
+        </table>';
 
         $html = mb_convert_encoding($html, 'UTF-8', 'auto');
         $mpdf->WriteHTML($html);

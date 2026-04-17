@@ -1257,6 +1257,17 @@
                     var first = container.querySelector('.work-fields');
                     var newRow = first.cloneNode(true);
                     newRow.querySelectorAll('input[type="file"]').forEach(function(el) { el.value = ''; });
+                    newRow.querySelectorAll('input[type="file"]').forEach(function(el) {
+                        el.removeAttribute('data-has-local-file');
+                    });
+                    // Remove cloned local preview links from source row.
+                    newRow.querySelectorAll('.local-file-preview').forEach(function(preview) {
+                        var blobUrl = preview.dataset ? preview.dataset.blobUrl : '';
+                        if (blobUrl) {
+                            try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+                        }
+                        preview.remove();
+                    });
                     newRow.querySelectorAll('.work-date-from, .work-date-to').forEach(function(inp) {
                         inp.value = '';
                     });
