@@ -349,30 +349,29 @@
                                                 <label> Ceritificate Number <span style="color: red;">*</span></label>
 
                                             </div>
-                                            <div class="col-12 col-md-3">
-                                                <input autocomplete="off" class="form-control text-box single-line" id="previously_number" name="competency_certificate_no" type="text" placeholder="License Number" maxlength="80" value="{{ $oldCertNo }}">
+                                            <div class="col-12 col-md-2">
+                                                <input autocomplete="off" class="form-control text-box single-line verify-input" id="previously_number" name="competency_certificate_no" type="text" data-type="certificate" data-error="#licenseError" data-msg="#license_message" placeholder="License Number" maxlength="80" value="{{ $oldCertNo }}">
                                                 <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                 <span id="licenseError" class="text-danger"></span>
                                                 <span id="license_message" class="mt-1"></span>
                                             </div>
-                                            <div class="col-12 col-md-1 text-md-right">
-                                                <label> Date <span style="color: red;">*</span></label>
+                                            <div class="col-12 col-md-2 text-md-right">
+                                                <label> Date of Issue <span style="color: red;">*</span></label>
                                             </div>
-                                            <div class="col-12 col-md-6">
-                                                <div class="row">
-                                                    <div class="col-md-4">
-                                                        <input autocomplete="off" class="form-control text-box single-line" id="previously_date" name="certificate_date" type="date" value="{{ $oldExpiry }}">
-                                                        <span id="dateError" class="text-danger"></span>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <button type="button" id="verify_btn" class="btn btn-primary">Verify</button>
-                                                    </div>
-                                                </div>
+                                            <div class="col-12 col-md-2">
+                                                <input autocomplete="off" class="form-control text-box single-line verify-issue-date" id="previously_issue_date" name="certificate_issue_date" type="date" data-error="#previouslyIssueDateError" value="">
+                                                <span id="previouslyIssueDateError" class="text-danger"></span>
+                                            </div>
+                                            <div class="col-12 col-md-1 text-md-right">
+                                                <label> Validity Date <span style="color: red;">*</span></label>
+                                            </div>
+                                            <div class="col-12 col-md-2">
+                                                <input autocomplete="off" class="form-control text-box single-line verify-date" id="previously_date" name="certificate_date" type="date" data-error="#dateError" value="{{ $oldExpiry }}">
                                                 <span id="dateError" class="text-danger"></span>
                                             </div>
-                                            {{-- <div class="col-12 col-md-3">
-                                                
-                                            </div> --}}
+                                            <div class="col-12 col-md-1">
+                                                <button type="button" class="btn btn-primary verify-btn" data-type="certificate" data-url="{{ route('verifylicense') }}">Verify</button>
+                                            </div>
                                         </div>
                                         <hr>
 

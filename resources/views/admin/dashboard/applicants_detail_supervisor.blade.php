@@ -2,47 +2,203 @@
 @include('admin.include.header')
 @include('admin.include.navbar')
 <style>
-    .tab-content {
-        padding: 0px 20px;
+    /* ================================================================
+       Applicant Detail (Supervisor) — refreshed visual styling
+       Scoped to .applicant-supervisor-page so it won't bleed elsewhere.
+       ================================================================ */
+    .applicant-supervisor-page {
+        --asp-primary: #4361ee;
+        --asp-primary-soft: #eef2ff;
+        --asp-success: #10b981;
+        --asp-success-soft: #ecfdf5;
+        --asp-danger: #ef4444;
+        --asp-danger-soft: #fef2f2;
+        --asp-warning: #f59e0b;
+        --asp-ink: #1f2937;
+        --asp-ink-soft: #4b5563;
+        --asp-muted: #6b7280;
+        --asp-border: #e5e7eb;
+        --asp-border-strong: #d1d5db;
+        --asp-bg: #f8fafc;
+        --asp-card-bg: #ffffff;
+        --asp-radius: 12px;
+        --asp-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
     }
 
-    /* Compact education / work tables — fit inside column; avoid horizontal scroll */
-    .applicant-detail-table-wrap {
+    .applicant-supervisor-page .tab-content {
+        padding: 1rem 1.25rem 0.5rem;
+    }
+
+    /* ---------- Applicant summary header ---------- */
+    .applicant-supervisor-page .applicant_details {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0f2fe 100%);
+        border: 1px solid var(--asp-border);
+        border-radius: var(--asp-radius);
+        padding: 1rem 1.25rem;
+        box-shadow: var(--asp-shadow);
+    }
+    .applicant-supervisor-page .applicant_details h4 {
+        margin: 0;
+        color: var(--asp-ink);
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.75rem;
+        align-items: center;
+        line-height: 1.5;
+    }
+    .applicant-supervisor-page .applicant_details h4 > span {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.6rem;
+        font-weight: 600;
+        font-size: 0.82rem;
+        border-radius: 999px;
+        background: #ffffffcc;
+        color: var(--asp-ink) !important;
+        border: 1px solid #ffffff;
+    }
+
+    /* ---------- Widget cards ---------- */
+    .applicant-supervisor-page .statbox.widget {
+        border: 1px solid var(--asp-border);
+        border-radius: var(--asp-radius);
+        background: var(--asp-card-bg);
+        box-shadow: var(--asp-shadow);
+    }
+    .applicant-supervisor-page .widget-content-area {
+        padding: 0.75rem 0.75rem 1rem;
+    }
+
+    /* ---------- Tabs ---------- */
+    .applicant-supervisor-page .simple-tab .nav-tabs {
+        border-bottom: 2px solid var(--asp-border);
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs .nav-link {
+        color: var(--asp-ink-soft);
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        padding: 0.6rem 1rem;
+        transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs .nav-link:hover {
+        color: var(--asp-primary);
+        background: var(--asp-primary-soft);
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs .nav-link.active {
+        color: var(--asp-primary);
+        background: transparent;
+        border-bottom-color: var(--asp-primary);
+    }
+
+    /* ---------- Section headings inside Personal Details ---------- */
+    .applicant-supervisor-page .asp-section-title {
+        position: relative;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--asp-ink);
+        margin: 1.1rem 0 0.6rem;
+        padding-left: 0.65rem;
+    }
+    .applicant-supervisor-page .asp-section-title::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.18rem;
+        bottom: 0.18rem;
+        width: 4px;
+        border-radius: 4px;
+        background: var(--asp-primary);
+    }
+
+    /* ---------- Personal details mini-table ---------- */
+    .applicant-supervisor-page .home-tab-pane .table-sm tbody td {
+        padding: 0.45rem 0.5rem;
+        border-color: var(--asp-border);
+        font-size: 0.86rem;
+    }
+    .applicant-supervisor-page .home-tab-pane .table-sm tbody td.fw-bold {
+        color: var(--asp-ink-soft);
+    }
+
+    /* ---------- Photo + signature frame ---------- */
+    .applicant-supervisor-page .asp-photo-frame {
+        border: 1px dashed var(--asp-border-strong);
+        border-radius: var(--asp-radius);
+        padding: 0.75rem;
+        background: var(--asp-bg);
+        display: inline-block;
+    }
+    .applicant-supervisor-page .asp-photo-frame img {
+        border-radius: 8px;
+    }
+    .applicant-supervisor-page .asp-signature-frame {
+        border: 1px dashed var(--asp-border-strong);
+        border-radius: 8px;
+        padding: 0.35rem 0.5rem;
+        background: #fff;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+
+    /* ---------- Compact tables (education / work) ---------- */
+    .applicant-supervisor-page .applicant-detail-table-wrap {
         width: 100%;
         max-width: 100%;
         overflow-x: hidden;
+        border: 1px solid var(--asp-border);
+        border-radius: 10px;
+        background: #fff;
     }
-    .applicant-detail-compact-table {
+    .applicant-supervisor-page .applicant-detail-compact-table {
         table-layout: fixed;
         width: 100%;
         max-width: 100%;
         font-size: 0.8125rem;
         margin-bottom: 0;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
     }
-    .applicant-detail-compact-table thead th {
-        padding: 0.3rem 0.35rem;
+    .applicant-supervisor-page .applicant-detail-compact-table thead th {
+        padding: 0.55rem 0.6rem;
         vertical-align: middle;
         line-height: 1.2;
+        background: #f1f5f9;
+        color: var(--asp-ink);
+        font-weight: 600;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border-bottom: 1px solid var(--asp-border);
     }
-    .applicant-detail-compact-table tbody td {
-        padding: 0.3rem 0.35rem;
+    .applicant-supervisor-page .applicant-detail-compact-table tbody td {
+        padding: 0.55rem 0.6rem;
         vertical-align: middle;
-        line-height: 1.25;
+        line-height: 1.3;
         overflow: hidden;
+        border-top: 1px solid var(--asp-border);
+        color: var(--asp-ink);
     }
-    .applicant-detail-compact-table .col-wrap {
+    .applicant-supervisor-page .applicant-detail-compact-table tbody tr:first-child td { border-top: none; }
+    .applicant-supervisor-page .applicant-detail-compact-table tbody tr:hover td {
+        background: #f8fafc;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table .col-wrap {
         word-break: break-word;
         overflow-wrap: anywhere;
         hyphens: auto;
     }
-    .applicant-detail-compact-table .col-doc {
+    .applicant-supervisor-page .applicant-detail-compact-table .col-doc {
         text-align: center;
         white-space: normal;
         word-break: break-word;
         overflow-wrap: anywhere;
     }
-    .applicant-detail-compact-table .col-doc .doc-pdf-link {
+    .applicant-supervisor-page .applicant-detail-compact-table .col-doc .doc-pdf-link {
         display: inline-flex;
         flex-direction: column;
         align-items: center;
@@ -53,42 +209,217 @@
         line-height: 1.15;
         text-decoration: none;
     }
-    .applicant-detail-compact-table .col-doc .doc-pdf-link:hover {
+    .applicant-supervisor-page .applicant-detail-compact-table .col-doc .doc-pdf-link:hover {
         text-decoration: underline;
     }
-    .applicant-detail-compact-table .col-doc .doc-thumb {
+    .applicant-supervisor-page .applicant-detail-compact-table .col-doc .doc-thumb {
         max-width: 48px;
         height: auto;
         display: block;
         margin: 0 auto;
+        border-radius: 4px;
     }
-    .applicant-detail-compact-table.edu-qual-table th:nth-child(1) { width: 12%; }
-    .applicant-detail-compact-table.edu-qual-table th:nth-child(2) { width: 38%; }
-    .applicant-detail-compact-table.edu-qual-table th:nth-child(3) { width: 10%; }
-    .applicant-detail-compact-table.edu-qual-table th:nth-child(4) { width: 23%; }
-    .applicant-detail-compact-table.edu-qual-table th:nth-child(5) { width: 17%; }
-    .applicant-detail-compact-table.work-exp-table th:nth-child(1) { width: 36%; }
-    .applicant-detail-compact-table.work-exp-table th:nth-child(2) { width: 40%; }
-    .applicant-detail-compact-table.work-exp-table th:nth-child(3) { width: 24%; }
-    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(1) { width: 30%; }
-    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(2) { width: 26%; }
-    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(3) { width: 20%; }
-    .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(4) { width: 24%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(1) { width: 12%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(2) { width: 38%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(3) { width: 10%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(4) { width: 23%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(5) { width: 17%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table th:nth-child(1) { width: 36%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table th:nth-child(2) { width: 40%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table th:nth-child(3) { width: 24%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(1) { width: 30%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(2) { width: 26%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(3) { width: 20%; }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(4) { width: 24%; }
 
-    /* Document link next to masked fields (outside compact tables) */
-    .applicant-inline-doc-link {
+    /* ---------- Certificate Q/A cards (Q7 / Q8 / WH / W) ---------- */
+    .applicant-supervisor-page .asp-qa-card {
+        border: 1px solid var(--asp-border);
+        background: #fff;
+        border-radius: var(--asp-radius);
+        padding: 0.75rem 1rem;
+        margin: 0.75rem 0;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .applicant-supervisor-page .asp-qa-card:hover {
+        border-color: #c7d2fe;
+        box-shadow: 0 2px 10px rgba(67, 97, 238, 0.08);
+    }
+    .applicant-supervisor-page .asp-qa-card h6 {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--asp-ink);
+        margin: 0;
+        line-height: 1.45;
+    }
+    .applicant-supervisor-page .asp-qa-answer {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0.7rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.82rem;
+        line-height: 1.3;
+    }
+    .applicant-supervisor-page .asp-qa-answer.is-yes {
+        background: var(--asp-success-soft);
+        color: var(--asp-success);
+    }
+    .applicant-supervisor-page .asp-qa-answer.is-no {
+        background: #f3f4f6;
+        color: var(--asp-muted);
+    }
+    .applicant-supervisor-page .asp-qa-detail {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    .applicant-supervisor-page .asp-qa-detail .asp-detail-cell {
+        background: #f8fafc;
+        border: 1px solid var(--asp-border);
+        border-radius: 8px;
+        padding: 0.55rem 0.7rem;
+        text-align: center;
+    }
+    .applicant-supervisor-page .asp-qa-detail .asp-detail-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--asp-muted);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.15rem;
+    }
+    .applicant-supervisor-page .asp-qa-detail .asp-detail-value {
+        font-size: 0.88rem;
+        color: var(--asp-ink);
+        font-weight: 600;
+        word-break: break-word;
+    }
+    .applicant-supervisor-page .asp-qa-detail .asp-verify-row {
+        margin-top: 0.4rem;
+        display: flex;
+        justify-content: center;
+    }
+    .applicant-supervisor-page .admin_verify.badge {
+        background: var(--asp-primary);
+        color: #fff;
+        padding: 0.35em 0.7em;
         font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .applicant-supervisor-page .admin_verify.badge:hover {
+        background: #3b52d8;
+        transform: translateY(-1px);
+    }
+    @media (max-width: 576px) {
+        .applicant-supervisor-page .asp-qa-detail {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ---------- Documents uploaded block ---------- */
+    .applicant-supervisor-page .asp-docs-block {
+        background: var(--asp-bg);
+        border: 1px solid var(--asp-border);
+        border-radius: var(--asp-radius);
+        padding: 0.75rem 1rem;
+        margin-top: 0.5rem;
+    }
+    .applicant-supervisor-page .asp-docs-block h6 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--asp-ink);
+        margin: 0 0 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .applicant-supervisor-page .applicant-inline-doc-link {
+        font-size: 0.75rem;
         line-height: 1.2;
         display: inline-flex;
         align-items: center;
-        gap: 0.25rem;
+        gap: 0.3rem;
+        text-decoration: none;
+        padding: 0.15rem 0.5rem;
+        border-radius: 6px;
+        background: var(--asp-primary-soft);
+        color: var(--asp-primary) !important;
+        transition: background 0.15s ease;
+    }
+    .applicant-supervisor-page .applicant-inline-doc-link:hover {
+        background: #dbe4ff;
         text-decoration: none;
     }
-    .applicant-inline-doc-link:hover {
-        text-decoration: underline;
+
+    /* ---------- Checklist ---------- */
+    .applicant-supervisor-page #profile-tab-pane .form-check {
+        padding: 0.45rem 0.6rem 0.45rem 2rem;
+        border-radius: 8px;
+        margin: 0.25rem 0;
+        transition: background 0.15s ease;
+    }
+    .applicant-supervisor-page #profile-tab-pane .form-check:hover {
+        background: var(--asp-primary-soft);
+    }
+    .applicant-supervisor-page #profile-tab-pane .form-check-label {
+        font-size: 0.85rem;
+        color: var(--asp-ink);
+        cursor: pointer;
+    }
+
+    /* ---------- Payment panel ---------- */
+    .applicant-supervisor-page #contact-tab-pane .text-primary {
+        font-size: 0.95rem;
+    }
+    .applicant-supervisor-page #contact-tab-pane p {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+        color: var(--asp-ink);
+    }
+    .applicant-supervisor-page #contact-tab-pane .badge.badge-success {
+        background: var(--asp-success);
+        color: #fff;
+        padding: 0.3em 0.7em;
+        border-radius: 999px;
+        font-size: 0.75rem;
+    }
+
+    /* ---------- Remarks & action buttons ---------- */
+    .applicant-supervisor-page #remarks {
+        border: 1px solid var(--asp-border-strong);
+        border-radius: 8px;
+        font-size: 0.88rem;
+        resize: vertical;
+    }
+    .applicant-supervisor-page #remarks:focus {
+        border-color: var(--asp-primary);
+        box-shadow: 0 0 0 0.15rem rgba(67, 97, 238, 0.15);
+    }
+    .applicant-supervisor-page .remarks-actions-wrap .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.45rem 1rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    .applicant-supervisor-page .remarks-actions-wrap .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    /* ---------- Query switch card ---------- */
+    .applicant-supervisor-page .switch-label {
+        font-size: 0.88rem;
+        color: var(--asp-ink);
     }
 </style>
-<div id="content" class="main-content">
+<div id="content" class="main-content applicant-supervisor-page">
     <div class="layout-px-spacing">
         <div class="middle-content container-xxl p-0">
             <div class="secondary-nav">
@@ -112,8 +443,12 @@
                         <div class="widget-header applicant_details">
                             <div class="row">
                                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                                    <h4>Applicant Id : <span> {{ $applicant->application_id }}</span> Applicant Name : <span style="color:#098501;">{{ $applicant->applicant_name }} </span> 
-                                        D.O.B : <span style="color:#098501;">{{ format_date($applicant->d_o_b) }} ({{ $applicant->age }} years old) </span> Applied For : <span style="color:#098501;"> FORM {{ $applicant->form_name }} | License {{ $applicant->license_name }}</span> </h4>
+                                    <h4>
+                                        <strong>Applicant Id:</strong> <span>{{ $applicant->application_id }}</span>
+                                        <strong>Name:</strong> <span>{{ $applicant->applicant_name }}</span>
+                                        <strong>D.O.B:</strong> <span>{{ format_date($applicant->d_o_b) }} &middot; {{ $applicant->age }} yrs</span>
+                                        <strong>Applied For:</strong> <span>FORM {{ $applicant->form_name }} &middot; License {{ $applicant->license_name }}</span>
+                                    </h4>
                                 </div>
                             </div>
                         </div>
@@ -193,24 +528,28 @@
                                                         //var_dump($photo->upload_path);die;
                                                     @endphp
                                                     @if($photoPath)
-                                                        <img src="{{ asset($photoPath) }}"
-                                                             alt="Applicant Photo"
-                                                             class="img-fluid rounded border"
-                                                             style="width: 150px; height: 200px; object-fit: cover;"
-                                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                        <p class="text-muted mb-0" style="display: none;">No photo available</p>
+                                                        <div class="asp-photo-frame">
+                                                            <img src="{{ asset($photoPath) }}"
+                                                                 alt="Applicant Photo"
+                                                                 class="img-fluid"
+                                                                 style="width: 140px; height: 180px; object-fit: cover;"
+                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                            <p class="text-muted mb-0" style="display: none;">No photo available</p>
+                                                        </div>
                                                     @else
                                                         <p class="text-muted">No photo available</p>
                                                     @endif
 
                                                     <div class="mt-3">
                                                         @if($signPath)
-                                                            <img src="{{ asset($signPath) }}"
-                                                                 alt="Applicant Signature"
-                                                                 class="img-fluid rounded border"
-                                                                 style="width: 100px; height: 50px; object-fit: contain; background: #fff;"
-                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                            <p class="text-muted mb-0" style="display: none;">No signature available</p>
+                                                            <div class="asp-signature-frame">
+                                                                <img src="{{ asset($signPath) }}"
+                                                                     alt="Applicant Signature"
+                                                                     class="img-fluid"
+                                                                     style="width: 110px; height: 50px; object-fit: contain; background: #fff;"
+                                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                                <p class="text-muted mb-0" style="display: none;">No signature available</p>
+                                                            </div>
                                                         @else
                                                             <p class="text-muted mb-0">No signature available</p>
                                                         @endif
@@ -218,7 +557,7 @@
                                                 </div>
                                             </div>
 
-                                            <h6 class="mt-2 mb-2 fw-bold">Educational Qualifications</h6>
+                                            <h6 class="asp-section-title">Educational Qualifications</h6>
                                             <div class="applicant-detail-table-wrap">
                                                 <table class="table table-sm table-bordered applicant-detail-compact-table edu-qual-table">
                                                     <thead>
@@ -281,7 +620,7 @@
                                             </div>
                                            
                                             @if (in_array(($applicant->form_name ?? ''), ['S', 'W'], true))
-                                                <h6 class="mt-2 mb-2 fw-bold">Work Experience</h6>
+                                                <h6 class="asp-section-title">Work Experience</h6>
                                                 <div class="applicant-detail-table-wrap">
                                                     <table class="table table-sm table-bordered applicant-detail-compact-table work-exp-table {{ (($applicant->form_name ?? '') == 'S') ? 'work-exp-with-doc' : '' }}">
                                                         <thead>
@@ -297,9 +636,9 @@
                                                         <tbody>
                                                             @forelse ($workExperience as $experience)
                                                             <tr>
-                                                                <td class="col-wrap">{{ $experience->company_name }}</td>
+                                                                <td class="col-wrap">{{ $experience->emp_cate ?? $experience->company_name ?? '' }}</td>
                                                                 <td class="col-wrap">{{ $experience->designation }}</td>
-                                                                <td class="col-wrap">{{ $experience->experience }} yrs</td>
+                                                                <td class="col-wrap">{{ $experience->total_exp ?? $experience->experience ?? 0 }} yrs</td>
                                                                 @if (($applicant->form_name ?? '') == 'S')
                                                                     <td class="col-doc">
                                                                         @if (!empty($experience->upload_document))
@@ -335,92 +674,80 @@
                                                 </div>
                                                 @endif
                                                 @if ($applicant->form_name == 'S')
-                                                
-                                                <div class="row">
-                                                    <div class="col-lg-8 col-6">
-                                                        <h6 class="mt-2 mb-2 fw-bold">
-                                                            Have previously applied for Electrical Assistant Qualification Certificate and if yes then mention its number and date  :
+                                                @php
+                                                    $hasPreviousEaQual = !empty($applicant->previously_number) || !empty($applicant->previously_date);
+                                                @endphp
+                                                <div class="asp-qa-card">
+                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                                        <h6 class="flex-grow-1">
+                                                            Have previously applied for Electrical Assistant Qualification Certificate and if yes then mention its number and date:
                                                         </h6>
-                                                    </div>
-                                                    <div class="col-lg-4 col-6">
-                                                        @php
-                                                            $hasPreviousEaQual = !empty($applicant->previously_number) || !empty($applicant->previously_date);
-                                                            
-                                                            if (!$hasPreviousEaQual) {
-                                                                $value = 'No';
-                                                            } else {
-                                                                $value = 'Yes' ;
-                                                            }
-                                                        @endphp
-                                                        <p class="mt-2 mb-1">
-                                                            {{ $value }}
-                                                        </p>
+                                                        <span class="asp-qa-answer {{ $hasPreviousEaQual ? 'is-yes' : 'is-no' }}">
+                                                            {{ $hasPreviousEaQual ? 'Yes' : 'No' }}
+                                                        </span>
                                                     </div>
                                                     @if ($hasPreviousEaQual)
-                                                        <div class="col-12">
-                                                            <div class="row justify-content-center">
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>License Number :</strong> {{ $applicant->previously_number ?: '—' }}
-                                                                    </p>
-                                                                </div>
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>Date :</strong> {{ !empty($applicant->previously_date) ? format_date($applicant->previously_date) : '—' }}
-                                                                        @if ($applicant->admincverify == null)
-                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_date }}" data-license_date="{{ $applicant->previously_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
-                                                                        @elseif($applicant->admincverify == 1)
-                                                                            <span class="text-success ms-2">(Valid Certificate.)</span>
-                                                                        @elseif($applicant->admincverify == 2)
-                                                                            <span class="text-danger ms-2">(Invalid Certificate.)</span>
-                                                                        @endif
-                                                                    </p>
-                                                                </div>
+                                                        <div class="asp-qa-detail">
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">License Number</span>
+                                                                <span class="asp-detail-value">{{ $applicant->previously_number ?: '—' }}</span>
                                                             </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Date of Issue</span>
+                                                                <span class="asp-detail-value">{{ !empty($applicant->previously_issue_date) ? format_date($applicant->previously_issue_date) : '—' }}</span>
+                                                            </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-value">{{ !empty($applicant->previously_date) ? format_date($applicant->previously_date) : '—' }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="asp-verify-row">
+                                                            @if ($applicant->admincverify == null)
+                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->previously_number }}" data-license_date="{{ $applicant->previously_date }}" data-license_issue_date="{{ $applicant->previously_issue_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                            @elseif($applicant->admincverify == 1)
+                                                                <span class="text-success small fw-semibold">(Valid Certificate)</span>
+                                                            @elseif($applicant->admincverify == 2)
+                                                                <span class="text-danger small fw-semibold">(Invalid Certificate)</span>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 </div>
-                                                <div class="row">
-                                                    <div class="col-lg-8 col-6">
-                                                        <h6 class="mt-2 mb-2 fw-bold">
+
+                                                @php
+                                                    $hasWiremanCompCert = !empty($applicant->certificate_no) || !empty($applicant->certificate_date);
+                                                @endphp
+                                                <div class="asp-qa-card">
+                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                                        <h6 class="flex-grow-1">
                                                             Do you possess Wireman Competency Certificate / Supervisor Competency Certificate issued by this Board?
                                                         </h6>
+                                                        <span class="asp-qa-answer {{ $hasWiremanCompCert ? 'is-yes' : 'is-no' }}">
+                                                            {{ $hasWiremanCompCert ? 'Yes' : 'No' }}
+                                                        </span>
                                                     </div>
-                                                    <div class="col-lg-4 col-6">
-                                                        @php
-                                                            $hasPreviousEaQual = !empty($applicant->certificate_no) || !empty($applicant->certificate_date);
-                                                            
-                                                            if (!$hasPreviousEaQual) {
-                                                                $value = 'No';
-                                                            } else {
-                                                                $value = 'Yes' ;
-                                                            }
-                                                        @endphp
-                                                        <p class="mt-2 mb-1">
-                                                            {{ $value }}
-                                                        </p>
-                                                    </div>
-                                                    @if ($hasPreviousEaQual)
-                                                        <div class="col-12">
-                                                            <div class="row justify-content-center">
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>License Number :</strong> {{ $applicant->certificate_no ?: '—' }}
-                                                                    </p>
-                                                                </div>
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>Date :</strong> {{ !empty($applicant->certificate_date) ? format_date($applicant->certificate_date) : '—' }}
-                                                                        @if ($applicant->admincverify == null)
-                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
-                                                                        @elseif($applicant->admincverify == 1)
-                                                                            <span class="text-success ms-2">(Valid License.)</span>
-                                                                        @elseif($applicant->admincverify == 2)
-                                                                            <span class="text-danger ms-2">(Invalid License.)</span>
-                                                                        @endif
-                                                                    </p>
-                                                                </div>
+                                                    @if ($hasWiremanCompCert)
+                                                        <div class="asp-qa-detail">
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">License Number</span>
+                                                                <span class="asp-detail-value">{{ $applicant->certificate_no ?: '—' }}</span>
                                                             </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Date of Issue</span>
+                                                                <span class="asp-detail-value">{{ !empty($applicant->certificate_issue_date) ? format_date($applicant->certificate_issue_date) : '—' }}</span>
+                                                            </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-value">{{ !empty($applicant->certificate_date) ? format_date($applicant->certificate_date) : '—' }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="asp-verify-row">
+                                                            @if ($applicant->admincverify == null)
+                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-license_issue_date="{{ $applicant->certificate_issue_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                            @elseif($applicant->admincverify == 1)
+                                                                <span class="text-success small fw-semibold">(Valid License)</span>
+                                                            @elseif($applicant->admincverify == 2)
+                                                                <span class="text-danger small fw-semibold">(Invalid License)</span>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 </div>
@@ -431,42 +758,38 @@
                                                 @php
                                                     $hasWiremanBoardCert = !empty($applicant->certificate_no) && !empty($applicant->certificate_date);
                                                 @endphp
-                                                <div class="row">
-                                                    <div class="col-lg-8 col-6">
-                                                        <h6 class="mt-2 mb-2 fw-bold">
-                                                            Have you applied for and obtained a Certificate of Qualification for Wireman Helper ? If yes, please state its number and validity
+                                                <div class="asp-qa-card">
+                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                                        <h6 class="flex-grow-1">
+                                                            Have you applied for and obtained a Certificate of Qualification for Wireman Helper? If yes, please state its number and validity.
                                                         </h6>
-                                                    </div>
-                                                    <div class="col-lg-4 col-6">
-                                                        <p class="mt-2 mb-1 mt-lg-2">
-                                                            @if (!$hasWiremanBoardCert)
-                                                                No
-                                                            @else
-                                                                Yes
-                                                                @if ($applicant->admincverify == null)
-                                                                    <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
-                                                                @elseif($applicant->admincverify == 1)
-                                                                    <span class="text-success ms-2">(Valid License.)</span>
-                                                                @elseif($applicant->admincverify == 2)
-                                                                    <span class="text-danger ms-2">(Invalid License.)</span>
-                                                                @endif
-                                                            @endif
-                                                        </p>
+                                                        <span class="asp-qa-answer {{ $hasWiremanBoardCert ? 'is-yes' : 'is-no' }}">
+                                                            {{ $hasWiremanBoardCert ? 'Yes' : 'No' }}
+                                                        </span>
                                                     </div>
                                                     @if ($hasWiremanBoardCert)
-                                                        <div class="col-12">
-                                                            <div class="row justify-content-center">
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>License Number :</strong> {{ $applicant->certificate_no ?: '—' }}
-                                                                    </p>
-                                                                </div>
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>Date :</strong> {{ format_date($applicant->certificate_date) }}
-                                                                    </p>
-                                                                </div>
+                                                        <div class="asp-qa-detail">
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">License Number</span>
+                                                                <span class="asp-detail-value">{{ $applicant->certificate_no ?: '—' }}</span>
                                                             </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Date of Issue</span>
+                                                                <span class="asp-detail-value">{{ !empty($applicant->certificate_issue_date) ? format_date($applicant->certificate_issue_date) : '—' }}</span>
+                                                            </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-value">{{ format_date($applicant->certificate_date) }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="asp-verify-row">
+                                                            @if ($applicant->admincverify == null)
+                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-license_issue_date="{{ $applicant->certificate_issue_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                            @elseif($applicant->admincverify == 1)
+                                                                <span class="text-success small fw-semibold">(Valid License)</span>
+                                                            @elseif($applicant->admincverify == 2)
+                                                                <span class="text-danger small fw-semibold">(Invalid License)</span>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 </div>
@@ -475,42 +798,38 @@
                                                 @php
                                                     $hasWiremanBoardCert = !empty($applicant->certificate_no) && !empty($applicant->certificate_date);
                                                 @endphp
-                                                <div class="row">
-                                                    <div class="col-lg-8 col-6">
-                                                        <h6 class="mt-2 mb-2 fw-bold">
-                                                            Have you applied for and obtained a Certificate of Qualification for Wireman / Wireman Helper ? If yes, please state its number and validity.
+                                                <div class="asp-qa-card">
+                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                                        <h6 class="flex-grow-1">
+                                                            Have you applied for and obtained a Certificate of Qualification for Wireman / Wireman Helper? If yes, please state its number and validity.
                                                         </h6>
-                                                    </div>
-                                                    <div class="col-lg-4 col-6">
-                                                        <p class="mt-2 mb-1 mt-lg-2">
-                                                            @if (!$hasWiremanBoardCert)
-                                                                No
-                                                            @else
-                                                                Yes
-                                                            @endif
-                                                        </p>
+                                                        <span class="asp-qa-answer {{ $hasWiremanBoardCert ? 'is-yes' : 'is-no' }}">
+                                                            {{ $hasWiremanBoardCert ? 'Yes' : 'No' }}
+                                                        </span>
                                                     </div>
                                                     @if ($hasWiremanBoardCert)
-                                                        <div class="col-12">
-                                                            <div class="row justify-content-center">
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>License Number :</strong> {{ $applicant->certificate_no ?: '—' }}
-                                                                    </p>
-                                                                </div>
-                                                                <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                    <p class="mb-1">
-                                                                        <strong>Date :</strong> {{ format_date($applicant->certificate_date) }}&nbsp;&nbsp;
-                                                                        @if ($applicant->admincverify == null)
-                                                                            <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
-                                                                        @elseif($applicant->admincverify == 1)
-                                                                            <span class="text-success ms-2">(Valid License.)</span>
-                                                                        @elseif($applicant->admincverify == 2)
-                                                                            <span class="text-danger ms-2">(Invalid License.)</span>
-                                                                        @endif
-                                                                    </p>
-                                                                </div>
+                                                        <div class="asp-qa-detail">
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">License Number</span>
+                                                                <span class="asp-detail-value">{{ $applicant->certificate_no ?: '—' }}</span>
                                                             </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Date of Issue</span>
+                                                                <span class="asp-detail-value">{{ !empty($applicant->certificate_issue_date) ? format_date($applicant->certificate_issue_date) : '—' }}</span>
+                                                            </div>
+                                                            <div class="asp-detail-cell">
+                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-value">{{ format_date($applicant->certificate_date) }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="asp-verify-row">
+                                                            @if ($applicant->admincverify == null)
+                                                                <span class="badge badge-primary admin_verify" data-license_number="{{ $applicant->certificate_no }}" data-license_date="{{ $applicant->certificate_date }}" data-license_issue_date="{{ $applicant->certificate_issue_date }}" data-type="certificate" style="cursor: pointer;">Verify</span>
+                                                            @elseif($applicant->admincverify == 1)
+                                                                <span class="text-success small fw-semibold">(Valid License)</span>
+                                                            @elseif($applicant->admincverify == 2)
+                                                                <span class="text-danger small fw-semibold">(Invalid License)</span>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 </div>
@@ -532,29 +851,25 @@
 
                                             @endphp
 
-                                            <div class="row mb-2">
-                                                <div class="col-md-12 col-lg-12">
-                                                    <h6 class="fw-bold mt-2">Documents Uploaded:</h6>
-                                                    <div class="row align-items-center mt-1 g-1">
-                                                        <div class="col-lg-6">
-                                                            <p class="fw-bold mb-0" style="color: #000;">Aadhaar:</p>
-                                                        </div>
-                                                        <div class="col-lg-6 text-end">
-                                                            @if (!empty($applicant->aadhaar_doc))
-                                                                <div class="fw-bold mb-0" style="color: #515365">
-                                                                    {{ $masked }}
-                                                                    (<a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
-                                                                        target="_blank"
-                                                                        class="text-primary applicant-inline-doc-link"
-                                                                        title="Open Aadhaar document">
-                                                                        <i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i>
-                                                                        <span>View Document</span>
-                                                                    </a>)
-                                                                </div>
-                                                            @else
-                                                                <div class="mb-0 text-muted small">No document</div>
-                                                            @endif
-                                                        </div>
+                                            <div class="asp-docs-block">
+                                                <h6>Documents Uploaded</h6>
+                                                <div class="row align-items-center g-2">
+                                                    <div class="col-lg-6">
+                                                        <span class="fw-bold" style="color: #111;">Aadhaar</span>
+                                                    </div>
+                                                    <div class="col-lg-6 text-lg-end">
+                                                        @if (!empty($applicant->aadhaar_doc))
+                                                            <span class="fw-bold" style="color: #515365">{{ $masked }}</span>
+                                                            <a href="{{ route('document.show', ['type' => 'aadhaar', 'filename' => $applicant->aadhaar_doc]) }}"
+                                                               target="_blank"
+                                                               class="applicant-inline-doc-link ms-1"
+                                                               title="Open Aadhaar document">
+                                                                <i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i>
+                                                                <span>View Document</span>
+                                                            </a>
+                                                        @else
+                                                            <span class="text-muted small">No document</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -1708,6 +2023,7 @@
             // 🔹 Select only from the correct section
             let licenseNumber = $(this).data("license_number");
             let licenseDate = $(this).data("license_date");
+            let licenseIssueDate = $(this).data("license_issue_date");
 
             let type = $(this).data("type");
 
@@ -1715,7 +2031,7 @@
             
             let url = "{{ route('admin.verifylicense') }}";
             
-            // console.log(licenseNumber, licenseDate, url);
+            // console.log(licenseNumber, licenseDate, licenseIssueDate, url);
             // return false;
             $.ajax({
                 url: url,
@@ -1723,6 +2039,7 @@
                 data: {
                     license_number : licenseNumber,
                     date : licenseDate,
+                    issue_date : licenseIssueDate,
                     type : type,
                     application_id : application_id,
                     _token: $('meta[name="csrf-token"]').attr("content"),

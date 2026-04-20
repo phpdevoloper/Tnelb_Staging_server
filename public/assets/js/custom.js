@@ -47,7 +47,22 @@ $(document).ready(function () {
     $(document).on("change", ".verify-date", function () {
         let value = $(this).val()?.trim() || "";
         let errorBox = $($(this).data("error"));
-        errorBox.text(value === "" ? "Date is Required" : "");
+        errorBox.text(value === "" ? "Validity Date is required" : "");
+    });
+
+    // ✅ Common Date of Issue Validation
+    $(document).on("change", ".verify-issue-date", function () {
+        let value = $(this).val()?.trim() || "";
+        let errorBox = $($(this).data("error"));
+        errorBox.text(value === "" ? "Date of Issue is required" : "");
+    });
+
+    // ✅ When Yes/No toggles hide, clear Date of Issue error too
+    $(document).on("change", ".toggle-details", function () {
+        if ($(this).val() !== "yes") {
+            let target = $(this).data("target");
+            $(target).find(".verify-issue-date").val("");
+        }
     });
 
     // ✅ Common Verify Button AJAX
@@ -56,6 +71,7 @@ $(document).ready(function () {
         let section = $(this).closest("#previously_details, #wireman_details");
         let input = section.find(".verify-input");
         let date = section.find(".verify-date");
+        let issueDate = section.find(".verify-issue-date");
 
         if (input.length === 0 || date.length === 0) {
             console.error("Input or date field not found!");
@@ -64,15 +80,18 @@ $(document).ready(function () {
 
         let value = input.val()?.trim().toUpperCase() || "";
         let dateVal = date.val()?.trim() || "";
+        let issueDateVal = issueDate.length ? (issueDate.val()?.trim() || "") : "";
 
         let type = $(this).data("type");
         let errorBox = $(input.data("error"));
         let dateErrorBox = $(date.data("error"));
+        let issueDateErrorBox = issueDate.length ? $(issueDate.data("error")) : $();
         let msgBox = $(input.data("msg"));
 
 
         errorBox.text("");
         dateErrorBox.text("");
+        if (issueDateErrorBox.length) issueDateErrorBox.text("");
 
         let isValid = true;
 
@@ -84,31 +103,36 @@ $(document).ready(function () {
             isValid = false;
         }
 
-        if (dateVal === "") {
-            dateErrorBox.text("Date is required");
-            isValid = false;
-        } else {
+        const isValidDateString = function (val) {
             const regexDate = /^(\d{4})-(\d{2})-(\d{2})$/;
-            const match = dateVal.match(regexDate);
-        
-            if (!match) {
-                dateErrorBox.text("Invalid Date Format");
+            const match = val.match(regexDate);
+            if (!match) return false;
+            const year = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            const day = parseInt(match[3]);
+            const checkDate = new Date(year, month - 1, day);
+            return (
+                checkDate.getFullYear() === year &&
+                checkDate.getMonth() === month - 1 &&
+                checkDate.getDate() === day
+            );
+        };
+
+        if (dateVal === "") {
+            dateErrorBox.text("Validity Date is required");
+            isValid = false;
+        } else if (!isValidDateString(dateVal)) {
+            dateErrorBox.text("Enter a valid date");
+            isValid = false;
+        }
+
+        if (issueDate.length) {
+            if (issueDateVal === "") {
+                issueDateErrorBox.text("Date of Issue is required");
                 isValid = false;
-            } else {
-                const year = parseInt(match[1]);
-                const month = parseInt(match[2]);
-                const day = parseInt(match[3]);
-        
-                const checkDate = new Date(year, month - 1, day);
-        
-                if (
-                    checkDate.getFullYear() !== year ||
-                    checkDate.getMonth() !== month - 1 ||
-                    checkDate.getDate() !== day 
-                ) {
-                    dateErrorBox.text("Enter a valid date");
-                    isValid = false;
-                }
+            } else if (!isValidDateString(issueDateVal)) {
+                issueDateErrorBox.text("Enter a valid date");
+                isValid = false;
             }
         }
 
@@ -124,6 +148,7 @@ $(document).ready(function () {
             data: {
                 license_number: value,
                 date: dateVal,
+                issue_date: issueDateVal,
                 _token: $('meta[name="csrf-token"]').attr("content"),
             },
             success: function (response) {
@@ -622,10 +647,12 @@ $(document).ready(function () {
 
         if (type == 'superviser') {
 
-            $('#previously_number').prop('readonly', false).val('').attr('value', '');;
-            $('#previously_date').prop('readonly', false).val('').attr('value', '');;
+            $('#previously_number').prop('readonly', false).val('').attr('value', '');
+            $('#previously_date').prop('readonly', false).val('').attr('value', '');
+            $('#previously_issue_date').prop('readonly', false).val('').attr('value', '');
 
             $('.verify_status').text('');
+            $('#previouslyIssueDateError').text('');
 
             $(this).remove();
 
@@ -633,24 +660,26 @@ $(document).ready(function () {
 
         }else if (type == 'superviser_two') {
 
-            $('#certificate_no').prop('readonly', false).val('').attr('value', '');;
-            $('#certificate_date').prop('readonly', false).val('').attr('value', '');;
+            $('#certificate_no').prop('readonly', false).val('').attr('value', '');
+            $('#certificate_date').prop('readonly', false).val('').attr('value', '');
+            $('#certificate_issue_date').prop('readonly', false).val('').attr('value', '');
             $('#verify_status').text('');
+            $('#certIssueDateError').text('');
 
             $(this).remove(); 
 
             $('.verify-btn').length && $('.verify-btn').removeClass('d-none');
         }
         else{
-            // Remove readonly attribute
-            $('#certificate_no').prop('readonly', false).val('').attr('value', '');;
-            $('#certificate_date').prop('readonly', false).val('').attr('value', '');;
-    
+            $('#certificate_no').prop('readonly', false).val('').attr('value', '');
+            $('#certificate_date').prop('readonly', false).val('').attr('value', '');
+            $('#certificate_issue_date').prop('readonly', false).val('').attr('value', '');
+
             $('#verify_status').text('');
-        
-            $(this).remove(); // Remove the delete button
-    
-    
+            $('#certIssueDateError').text('');
+
+            $(this).remove();
+
             $('.verify-btn').length && $('.verify-btn').removeClass('d-none');
         }
     });

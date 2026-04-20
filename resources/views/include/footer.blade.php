@@ -760,8 +760,31 @@ $(document).ready(function() {
             const $clone = $sourceForm.clone();
             $clone.attr('id', 'competency_form_preview_clone');
 
+            // jQuery .clone() does NOT carry over dynamic form state
+            // (selects picked via JS, textareas typed into, checkboxes/radios toggled).
+            // Sync the live runtime values from the source into the clone by element index.
+            const syncByIndex = (selector, applyFn) => {
+                const $src = $sourceForm.find(selector);
+                const $dst = $clone.find(selector);
+                $src.each(function (i) {
+                    const target = $dst.get(i);
+                    if (target) applyFn(this, target);
+                });
+            };
+            syncByIndex('select', (src, dst) => {
+                $(dst).val($(src).val());
+            });
+            syncByIndex('textarea', (src, dst) => {
+                $(dst).val(src.value || '');
+            });
+            syncByIndex('input[type="checkbox"], input[type="radio"]', (src, dst) => {
+                dst.checked = src.checked;
+            });
+
             // Remove action blocks and make the clone strictly read-only preview.
-            $clone.find('#submitPaymentBtn, .submit-payment, .save-draft, .add-more, .add-more-education, .add-more-work, .remove-education, .remove-work, .remove_edu, .remove_exp, .remove-doc_edu_confirm, .remove-work-doc-confirm, .remove-aadhaar-doc, .remove-pan-doc, [onclick*="togglePhotoInput"], [onclick*="toggleSignInput"], [onclick*="verify_form"], [onclick*="verify_form_s"]').remove();
+            // `.verify-btn` strips the frontend license/certificate Verify buttons (Q7/Q8 on Form S, Q7 on Form W, Q6 on Form WH) from the preview popup.
+            // `.remove_verify` strips the "Delete" button that appears next to an already-verified license (Q7/Q8) so the preview stays read-only.
+            $clone.find('#submitPaymentBtn, .submit-payment, .save-draft, .add-more, .add-more-education, .add-more-work, .remove-education, .remove-work, .remove_edu, .remove_exp, .remove-doc_edu_confirm, .remove-work-doc-confirm, .remove-aadhaar-doc, .remove-pan-doc, .verify-btn, .remove_verify, [onclick*="togglePhotoInput"], [onclick*="toggleSignInput"], [onclick*="verify_form"], [onclick*="verify_form_s"]').remove();
             $clone.find('input, textarea, select, button').prop('disabled', true);
             $clone.find('input[type="checkbox"], input[type="radio"]').each(function () {
                 this.disabled = true;

@@ -603,7 +603,7 @@
                                                             <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" disabled>
                                                             <div class="work-block work-block--intimation mt-1" style="display: none;">
                                                                 <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
-                                                                <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" disabled>
+                                                                <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]">
                                                             </div>
                                                         </td>
                                                         <td class="work-exp-col-years">
@@ -677,21 +677,24 @@
                                                         <span id="verify_result"></span>
                                                         <span id="license_messagdfde" class="mt-1"></span>
                                                     </div>
+                                                    <div class="col-12 col-md-2 text-md-right">
+                                                        <label> Date of Issue <span style="color: red;">*</span></label>
+                                                    </div>
+                                                    <div class="col-12 col-md-2">
+                                                        <input autocomplete="off" class="form-control text-box single-line verify-issue-date" id="previously_issue_date" name="previously_issue_date" type="date" data-error="#previouslyIssueDateError" value="">
+                                                        <span id="previouslyIssueDateError" class="text-danger"></span>
+                                                    </div>
                                                     <div class="col-12 col-md-1 text-md-right">
-                                                        <label> Date <span style="color: red;">*</span></label>
+                                                        <label> Validity Date <span style="color: red;">*</span></label>
 
                                                     </div>
-                                                    <div class="col-12 col-md-7 d-flex">
-                                                        <div class="row">
-                                                            <div class="col-12 col-md-7">
-                                                                <input autocomplete="off" class="form-control text-box single-line verify-date" id="previously_date" name="previously_date" type="date" data-error="#dateError" value="">
-                                                                <span id="dateError" class="text-danger"></span>
-                                                            </div>
-                                                            <div class="col-12 col-md-1 d-flex">
-                                                                <button type="button" class="btn btn-primary verify-btn" data-type="license" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;"> Verify
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                                    <div class="col-12 col-md-2">
+                                                        <input autocomplete="off" class="form-control text-box single-line verify-date" id="previously_date" name="previously_date" type="date" data-error="#dateError" value="">
+                                                        <span id="dateError" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="col-12 col-md-1">
+                                                        <button type="button" class="btn btn-primary verify-btn" data-type="license" data-url="{{ route('verifylicense') }}"> Verify
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -742,26 +745,33 @@
 
                                                 </div>
                                                 <div class="row mt-3" id="wireman_details" style="display: {{ $hasOldPrefill ? 'flex' : 'none' }};">
-                                                    <div class="col-12 col-md-4 text-md-right">
+                                                    <div class="col-12 col-md-2 text-md-right">
                                                         <label>Certificate No <span style="color: red;">*</span></label>
 
                                                     </div>
-                                                    <div class="col-12 col-md-3">
+                                                    <div class="col-12 col-md-2">
                                                         <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="supervisor" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="80" value="{{ $oldCertNo }}">
                                                         <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                                         <span id="licenseError" class="text-danger"></span>
                                                         <span id="license_message" class="mt-1"></span>
                                                         <span id="certError" class="text-danger"></span>
                                                     </div>
-                                                    <div class="col-12 col-md-1 text-md-right">
-                                                        <label>Date <span style="color: red;">*</span></label>
+                                                    <div class="col-12 col-md-2 text-md-right">
+                                                        <label>Date of Issue <span style="color: red;">*</span></label>
                                                     </div>
-                                                    <div class="col-12 col-md-3">
+                                                    <div class="col-12 col-md-2">
+                                                        <input class="form-control text-box single-line verify-issue-date" id="certificate_issue_date" name="certificate_issue_date" data-error="#certIssueDateError" type="date" value="">
+                                                        <span id="certIssueDateError" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="col-12 col-md-1 text-md-right">
+                                                        <label>Validity Date <span style="color: red;">*</span></label>
+                                                    </div>
+                                                    <div class="col-12 col-md-2">
                                                         <input class="form-control text-box single-line verify-date" id="certificate_date" name="certificate_date" data-error="#certDateError" type="date" value="{{ $oldExpiry }}">
                                                         <span id="certDateError" class="text-danger"></span>
                                                     </div>
-                                                    <div>
-                                                        <button type="button" class="btn btn-primary verify-btn" data-type="certificate" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
+                                                    <div class="col-12 col-md-1">
+                                                        <button type="button" class="btn btn-primary verify-btn" data-type="certificate" data-url="{{ route('verifylicense') }}">Verify</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1191,7 +1201,10 @@
                     $yFrom.prop('disabled', true).prop('required', false);
                     $yTo.prop('disabled', true).prop('required', false);
                     $blockInt.hide();
-                    $intDate.prop('disabled', true).prop('required', false);
+                    // Keep the intimation input enabled (just hidden/cleared) so its POST array
+                    // index stays aligned with the other work_* arrays. Disabled inputs are not
+                    // submitted, which causes off-by-one row mismatches on save.
+                    $intDate.prop('disabled', false).prop('required', false).val('');
                     syncLegacyHidden($tr);
                     return;
                 }
@@ -1205,7 +1218,7 @@
                     $intDate.prop('disabled', false).prop('required', true);
                 } else {
                     $blockInt.hide();
-                    $intDate.prop('disabled', true).prop('required', false).val('');
+                    $intDate.prop('disabled', false).prop('required', false).val('');
                 }
 
                 updateTotalYears($tr);

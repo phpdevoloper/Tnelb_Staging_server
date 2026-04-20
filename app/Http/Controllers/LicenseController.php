@@ -28,8 +28,10 @@ class LicenseController extends Controller
         $request->validate([
             'license_number' => 'required|string',
             'date' => 'required|date',
+            'issue_date' => 'required|date',
         ], [
-            'date' => 'Enter the valid date'
+            'date' => 'Enter the valid date',
+            'issue_date' => 'Enter the valid date of issue',
         ]);
 
         $licenseNumber = $request->license_number;
@@ -57,14 +59,20 @@ class LicenseController extends Controller
 
 
         // ✅ Correct column names for each table
-        $query = DB::table($table)
-        ->selectRaw($table === 'tnelb_license'
-            ? "CAST(license_number AS VARCHAR) AS license_number, expires_at"
-            : "CAST(certno AS VARCHAR) AS license_number, vdate AS expires_at"
-        )
-        ->where($column_name ?? 'certno', $licenseNum) // or license_number for tnelb_license
-        ->whereDate($table === 'tnelb_license' ? 'expires_at' : 'vdate', $request->date)
-        ->exists();
+        $baseQuery = DB::table($table)
+            ->selectRaw($table === 'tnelb_license'
+                ? "CAST(license_number AS VARCHAR) AS license_number, expires_at"
+                : "CAST(certno AS VARCHAR) AS license_number, vdate AS expires_at"
+            )
+            ->where($column_name ?? 'certno', $licenseNum) // or license_number for tnelb_license
+            ->whereDate($table === 'tnelb_license' ? 'expires_at' : 'vdate', $request->date);
+
+        // ✅ Also validate Date of Issue (issuedt column in legacy cert tables)
+        if ($table !== 'tnelb_license') {
+            $baseQuery->whereDate('issuedt', $request->issue_date);
+        }
+
+        $query = $baseQuery->exists();
 
         if ($query == true) {
             if(!empty($request->type)){

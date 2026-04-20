@@ -180,9 +180,9 @@
                                                     <tbody>
                                                         @forelse ($workExperience as $experience)
                                                         <tr>
-                                                            <td>{{ $experience->company_name }}</td>
+                                                            <td>{{ $experience->emp_cate ?? $experience->company_name ?? '' }}</td>
                                                             <td>{{ $experience->designation }}</td>
-                                                            <td>{{ $experience->experience }} years</td>
+                                                            <td>{{ $experience->total_exp ?? $experience->experience ?? 0 }} years</td>
                                                             <td style="text-align:center;">
 
                                                                 @if($experience->upload_document)

@@ -804,7 +804,7 @@
                                                                         <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" value="{{ $workEmployerName }}">
                                                                         <div class="work-block work-block--intimation mt-1" style="display: none;">
                                                                             <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
-                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" value="{{ $expRow->intimation_date ?? '' }}" disabled>
+                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" value="{{ $expRow->intimation_date ?? '' }}">
                                                                         </div>
                                                                     </td>
                                                                     <td class="work-exp-col-years">
@@ -897,7 +897,7 @@
                                                                         <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" disabled>
                                                                         <div class="work-block work-block--intimation mt-1" style="display: none;">
                                                                             <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
-                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" disabled>
+                                                                            <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]">
                                                                         </div>
                                                                     </td>
                                                                     <td class="work-exp-col-years">
@@ -986,18 +986,18 @@
                                                         </div>
                                                     </div>
                                                     <div class="row align-items-center" id="previously_details" style="display: {{ !empty($application_details->previously_number) ? 'flex' : 'none' }}; flex-wrap: wrap;">
-    
+
                                                         <!-- License Number Label -->
                                                         <div class="col-12 col-md-2 text-md-right">
                                                             <label>License Number <span style="color: red;">*</span></label>
                                                         </div>
-                                                    
+
                                                         <!-- License Number Input -->
-                                                        <div class="col-12 col-md-3">
+                                                        <div class="col-12 col-md-2">
                                                             <input autocomplete="off" class="form-control text-box single-line verify-input"
                                                                    id="previously_number" name="previously_number" type="text"
                                                                    data-type="license" data-error="#licenseError" data-msg="#license_messagdfde"
-                                                                   placeholder="License Number" {{ !empty($application_details->previously_number) ? 'readonly':'' }} value="{{ $application_details->previously_number }}">
+                                                                   placeholder="License Number" {{ !empty($application_details->previously_number) ? 'readonly':'' }} value="{{ $application_details->previously_number }}" maxlength="80">
                                                             <input type="hidden" id="l_verify" name="l_verify" value="{{ $application_details->license_verify }}">
                                                             <span id="licenseError" class="text-danger"></span>
                                                             <span id="verify_result"></span>
@@ -1008,34 +1008,48 @@
                                                                 @endif
                                                             </span>
                                                         </div>
-                                                    
-                                                        <!-- Date Label -->
-                                                        <div class="col-12 col-md-1 text-md-right">
-                                                            <label>Date <span style="color: red;">*</span></label>
+
+                                                        <!-- Date of Issue Label -->
+                                                        <div class="col-12 col-md-2 text-md-right">
+                                                            <label>Date of Issue <span style="color: red;">*</span></label>
                                                         </div>
-                                                    
-                                                        <!-- Date Input + Verify Button -->
-                                                        <div class="col-12 col-md-6">
-                                                            <div class="row g-2">
-                                                                <div class="col-12 col-md-7">
-                                                                    <input autocomplete="off" class="form-control text-box single-line verify-date"
-                                                                           id="previously_date" name="previously_date" type="date"
-                                                                           data-error="#dateError" {{ !empty($application_details->previously_number) ? 'readonly':'' }}  value="{{ $application_details->previously_date }}">
-                                                                    <span id="dateError" class="text-danger"></span>
-                                                                </div>
-                                                                <div class="col-12 col-md-5">
-                                                                    @if (!empty($application_details->previously_number))
-                                                                        <button type="button" class="btn btn-danger remove_verify" data-type="superviser" style="margin-left: 10px;">Delete</button>
-                                                                        <button type="button" class="btn btn-primary verify-btn btn-forms d-none" data-type="license" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
-                                                                    @else
-                                                                        <button type="button" class="btn btn-primary verify-btn"
-                                                                                data-type="license" data-url="{{ route('verifylicense') }}">
-                                                                            Verify
-                                                                        </button>
-                                                                    @endif
-                                                                    
-                                                                </div>
-                                                            </div>
+
+                                                        <!-- Date of Issue Input -->
+                                                        <div class="col-12 col-md-2">
+                                                            <input autocomplete="off" class="form-control text-box single-line verify-issue-date"
+                                                                   id="previously_issue_date" name="previously_issue_date" type="date"
+                                                                   data-error="#previouslyIssueDateError"
+                                                                   {{ !empty($application_details->previously_number) ? 'readonly':'' }}
+                                                                   value="{{ $application_details->previously_issue_date }}">
+                                                            <span id="previouslyIssueDateError" class="text-danger"></span>
+                                                        </div>
+
+                                                        <!-- Validity Date Label -->
+                                                        <div class="col-12 col-md-1 text-md-right">
+                                                            <label>Validity Date <span style="color: red;">*</span></label>
+                                                        </div>
+
+                                                        <!-- Validity Date Input -->
+                                                        <div class="col-12 col-md-2">
+                                                            <input autocomplete="off" class="form-control text-box single-line verify-date"
+                                                                   id="previously_date" name="previously_date" type="date"
+                                                                   data-error="#dateError"
+                                                                   {{ !empty($application_details->previously_number) ? 'readonly':'' }}
+                                                                   value="{{ $application_details->previously_date }}">
+                                                            <span id="dateError" class="text-danger"></span>
+                                                        </div>
+
+                                                        <!-- Verify / Delete Button -->
+                                                        <div class="col-12 col-md-1">
+                                                            @if (!empty($application_details->previously_number))
+                                                                <button type="button" class="btn btn-danger remove_verify" data-type="superviser">Delete</button>
+                                                                <button type="button" class="btn btn-primary verify-btn btn-forms d-none" data-type="license" data-url="{{ route('verifylicense') }}">Verify</button>
+                                                            @else
+                                                                <button type="button" class="btn btn-primary verify-btn"
+                                                                        data-type="license" data-url="{{ route('verifylicense') }}">
+                                                                    Verify
+                                                                </button>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1103,23 +1117,28 @@
                                                         </div>
                                                     </div>
                                                     <div class="row mt-3" id="wireman_details" style="display: {{ !empty($application_details->certificate_no) ? 'flex' : 'none' }}; flex-wrap: wrap;">
-                                                        <div class="col-12 col-md-4 text-md-right">
+                                                        @php
+                                                            if($application_details->form_name == 'S'){
+                                                                $cert_type = 'supervisor';
+                                                            }else if($application_details->form_name == 'WH'){
+                                                                $cert_type = 'helper';
+                                                            }else{
+                                                                $cert_type = 'certificate';
+                                                            }
+                                                        @endphp
+                                                        <!-- Certificate Number Label -->
+                                                        <div class="col-12 col-md-2 text-md-right">
                                                             <label>Certificate Number <span style="color: red;">*</span></label>
-    
                                                         </div>
-                                                        <div class="col-12 col-md-3">
-                                                            @php
-                                                                if($application_details->form_name == 'S'){
-                                                                    $cert_type = 'supervisor';
-                                                                }else if($application_details->form_name == 'WH'){
-                                                                    $cert_type = 'helper';
-                                                                }else{
-                                                                    $cert_type = 'certificate';
-                                                                }
-                                                                
-                                                            @endphp
-                                                            <input class="form-control text-box single-line verify-input" id="certificate_no" name="competency_certificate_no" type="text" data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message" placeholder="Certificate No" maxlength="12" value="{{ $application_details->certificate_no }}" 
-                                                            {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
+
+                                                        <!-- Certificate Number Input -->
+                                                        <div class="col-12 col-md-2">
+                                                            <input class="form-control text-box single-line verify-input"
+                                                                   id="certificate_no" name="competency_certificate_no" type="text"
+                                                                   data-type="{{ $cert_type }}" data-error="#certError" data-msg="#license_message"
+                                                                   placeholder="Certificate No" maxlength="80"
+                                                                   value="{{ $application_details->certificate_no }}"
+                                                                   {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
                                                             <input type="hidden" id="cert_verify" name="cert_verify" value="{{ $application_details->cert_verify }}">
                                                             <span id="licenseError" class="text-danger"></span>
                                                             <span id="license_message" class="mt-1"></span>
@@ -1130,21 +1149,45 @@
                                                             </span>
                                                             <span id="certError" class="text-danger"></span>
                                                         </div>
-                                                        <div class="col-12 col-md-1 text-md-right">
-                                                            <label>Date <span style="color: red;">*</span></label>
+
+                                                        <!-- Date of Issue Label -->
+                                                        <div class="col-12 col-md-2 text-md-right">
+                                                            <label>Date of Issue <span style="color: red;">*</span></label>
                                                         </div>
-                                                        <div class="col-12 col-md-3">
-                                                            <input class="form-control text-box single-line verify-date" id="certificate_date" name="certificate_date" data-error="#certDateError" type="date" value="{{ $application_details->certificate_date }}" {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
+
+                                                        <!-- Date of Issue Input -->
+                                                        <div class="col-12 col-md-2">
+                                                            <input class="form-control text-box single-line verify-issue-date"
+                                                                   id="certificate_issue_date" name="certificate_issue_date"
+                                                                   data-error="#certIssueDateError" type="date"
+                                                                   value="{{ $application_details->certificate_issue_date }}"
+                                                                   {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
+                                                            <span id="certIssueDateError" class="text-danger"></span>
+                                                        </div>
+
+                                                        <!-- Validity Date Label -->
+                                                        <div class="col-12 col-md-1 text-md-right">
+                                                            <label>Validity Date <span style="color: red;">*</span></label>
+                                                        </div>
+
+                                                        <!-- Validity Date Input -->
+                                                        <div class="col-12 col-md-2">
+                                                            <input class="form-control text-box single-line verify-date"
+                                                                   id="certificate_date" name="certificate_date"
+                                                                   data-error="#certDateError" type="date"
+                                                                   value="{{ $application_details->certificate_date }}"
+                                                                   {{ !empty($application_details->certificate_no) ? 'readonly':'' }}>
                                                             <span id="certDateError" class="text-danger"></span>
                                                         </div>
-                                                        <div>
+
+                                                        <!-- Verify / Delete Button -->
+                                                        <div class="col-12 col-md-1">
                                                             @if (!empty($application_details->certificate_no))
-                                                                <button type="button" class="btn btn-danger remove_verify" data-type="superviser_two" style="margin-left: 10px;">Delete</button>
-                                                                <button type="button" class="btn btn-primary verify-btn d-none" data-type="certificate" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
+                                                                <button type="button" class="btn btn-danger remove_verify" data-type="superviser_two">Delete</button>
+                                                                <button type="button" class="btn btn-primary verify-btn d-none" data-type="{{ $cert_type }}" data-url="{{ route('verifylicense') }}">Verify</button>
                                                             @else
-                                                                <button type="button" class="btn btn-primary verify-btn" data-type="{{ $cert_type }}" data-url="{{ route('verifylicense') }}" style="margin-left: 10px;">Verify</button>
+                                                                <button type="button" class="btn btn-primary verify-btn" data-type="{{ $cert_type }}" data-url="{{ route('verifylicense') }}">Verify</button>
                                                             @endif
-                                                                
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2074,7 +2117,10 @@
                 $yFrom.prop('disabled', true).prop('required', false);
                 $yTo.prop('disabled', true).prop('required', false);
                 $blockInt.hide();
-                $intDate.prop('disabled', true).prop('required', false);
+                // Keep the intimation input enabled (just hidden/cleared) so its POST array
+                // index stays aligned with the other work_* arrays. Disabled inputs are not
+                // submitted, which causes off-by-one row mismatches on save.
+                $intDate.prop('disabled', false).prop('required', false).val('');
                 syncLegacyHidden($tr);
                 return;
             }
@@ -2088,7 +2134,7 @@
                 $intDate.prop('disabled', false).prop('required', true);
             } else {
                 $blockInt.hide();
-                $intDate.prop('disabled', true).prop('required', false).val('');
+                $intDate.prop('disabled', false).prop('required', false).val('');
             }
 
             updateTotalYears($tr);
