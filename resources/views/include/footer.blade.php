@@ -461,7 +461,7 @@ $(document).ready(function() {
 
 
 
-        $("#add-more-education").click(function() {
+        $("#add-more-education").off('click.dynamicRows').on('click.dynamicRows', function() {
             // Clone the last set of education fields
             let newFields = $(".education-fields").last().clone();
 
@@ -473,7 +473,7 @@ $(document).ready(function() {
             $("#education-container").append(newFields);
         });
 
-        $("#add-more-work").click(function() {
+        $("#add-more-work").off('click.dynamicRows').on('click.dynamicRows', function() {
             // Clone the last work fields section
             let newFields = $(".work-fields").last().clone();
 
@@ -751,6 +751,74 @@ $(document).ready(function() {
             }
         }
 
+        function normalizeMirroredDynamicRows($container, rowSelector, fields) {
+            if (!$container.length) return;
+            const $rows = $container.find(rowSelector);
+            const count = $rows.length;
+            if (count < 2 || count % 2 !== 0) return;
+
+            const signatures = $rows.map(function () {
+                const $row = $(this);
+                return fields.map(function (selector) {
+                    const $el = $row.find(selector).first();
+                    if (!$el.length) return '';
+                    if ($el.is(':file')) {
+                        const input = $el.get(0);
+                        const hasFile = !!(input && input.files && input.files.length);
+                        const existing = ($row.find('input[name="existing_document[]"], input[name="existing_work_document[]"]').first().val() || '').trim();
+                        return hasFile ? `file:${input.files[0].name}` : `existing:${existing}`;
+                    }
+                    return ($el.val() || '').toString().trim();
+                }).join('||');
+            }).get();
+
+            const half = count / 2;
+            let mirrored = true;
+            for (let i = 0; i < half; i++) {
+                if (signatures[i] !== signatures[i + half]) {
+                    mirrored = false;
+                    break;
+                }
+            }
+            if (!mirrored) return;
+
+            for (let i = count - 1; i >= half; i--) {
+                $rows.eq(i).remove();
+            }
+        }
+
+        function normalizeCompetencyDynamicSections() {
+            normalizeMirroredDynamicRows(
+                $('#education-container'),
+                '.education-fields',
+                [
+                    'select[name="educational_level[]"]',
+                    'input[name="institute_name[]"]',
+                    'select[name="month_of_passing[]"]',
+                    'select[name="year_of_passing[]"]',
+                    'input[name="certificate_no[]"]',
+                    'input[name="existing_document[]"]',
+                    'input[name="education_document[]"]'
+                ]
+            );
+            normalizeMirroredDynamicRows(
+                $('#work-container'),
+                '.work-fields',
+                [
+                    '.work-employment-type',
+                    '.work-employer-input',
+                    '.work-date-from',
+                    '.work-date-to',
+                    '.work-experience-total-hidden',
+                    'input[name="designation[]"]',
+                    'input[name="existing_work_document[]"]',
+                    'input[name="work_document[]"]'
+                ]
+            );
+        }
+
+        normalizeCompetencyDynamicSections();
+
         async function showCompetencyPreviewModal() {
             const $sourceForm = $('#competency_form_ws').length ? $('#competency_form_ws') : $('#competency_form_p');
             if (!$sourceForm.length) {
@@ -1022,8 +1090,9 @@ $(document).ready(function() {
             return result.isConfirmed === true;
         }
 
-        $('#submitPaymentBtn').on('click', async function (e) {
+        $(document).off('click.competencyPay', '#submitPaymentBtn').on('click.competencyPay', '#submitPaymentBtn', async function (e) {
             e.preventDefault();
+            normalizeCompetencyDynamicSections();
 
             const readableFiles = await validateReadableSelectedFiles();
             if (!readableFiles) {

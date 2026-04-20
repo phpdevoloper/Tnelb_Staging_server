@@ -361,28 +361,40 @@
                         <a class="nav-link d-flex align-items-start {{ $activeFormA ? 'is-active' : '' }}"
                             href="{{ route('apply-form-a') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
-                            <span>Electrical Contractor's Licence-Grade 'A' [Form A]</span>
+                            <span>
+                                <span>Electrical Contractor's Licence-Grade 'A'</span>
+                                <span class="sidebar-login-v2__item-form">[Form A]</span>
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-start {{ $activeFormSa ? 'is-active' : '' }}"
                             href="{{ route('apply-form-sa') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
-                            <span>Electrical Contractors Licence Grade Super 'A' [Form SA]</span>
+                            <span>
+                                <span>Electrical Contractors Licence Grade Super 'A'</span>
+                                <span class="sidebar-login-v2__item-form">[Form SA]</span>
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-start {{ $activeFormSb ? 'is-active' : '' }}"
                             href="{{ route('apply-form-sb') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
-                            <span>Electrical Contractor's Licence-Grade `SB' [Form SB]</span>
+                            <span>
+                                <span>Electrical Contractor's Licence-Grade `SB'</span>
+                                <span class="sidebar-login-v2__item-form">[Form SB]</span>
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-start {{ $activeFormB ? 'is-active' : '' }}"
                             href="{{ route('apply-form-b') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
-                            <span>Electrical Contractor License 'EB' [Form B]</span>
+                            <span>
+                                <span>Electrical Contractor License 'EB'</span>
+                                <span class="sidebar-login-v2__item-form">[Form B]</span>
+                            </span>
                         </a>
                     </li>
                 </ul>

@@ -149,19 +149,38 @@
     .applicant-supervisor-page .applicant-detail-table-wrap {
         width: 100%;
         max-width: 100%;
-        overflow-x: hidden;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         border: 1px solid var(--asp-border);
         border-radius: 10px;
         background: #fff;
     }
+    .applicant-supervisor-page .applicant-detail-table-wrap::-webkit-scrollbar {
+        height: 8px;
+    }
+    .applicant-supervisor-page .applicant-detail-table-wrap::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .applicant-supervisor-page .applicant-detail-table-wrap::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
     .applicant-supervisor-page .applicant-detail-compact-table {
-        table-layout: fixed;
+        table-layout: auto;
         width: 100%;
-        max-width: 100%;
         font-size: 0.8125rem;
         margin-bottom: 0;
         border-collapse: separate;
         border-spacing: 0;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table {
+        min-width: 720px;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table {
+        min-width: 720px;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc {
+        min-width: 1080px;
     }
     .applicant-supervisor-page .applicant-detail-compact-table thead th {
         padding: 0.55rem 0.6rem;
@@ -174,29 +193,28 @@
         text-transform: uppercase;
         letter-spacing: 0.03em;
         border-bottom: 1px solid var(--asp-border);
+        white-space: nowrap;
     }
     .applicant-supervisor-page .applicant-detail-compact-table tbody td {
         padding: 0.55rem 0.6rem;
         vertical-align: middle;
         line-height: 1.3;
-        overflow: hidden;
         border-top: 1px solid var(--asp-border);
         color: var(--asp-ink);
+        white-space: nowrap;
     }
     .applicant-supervisor-page .applicant-detail-compact-table tbody tr:first-child td { border-top: none; }
     .applicant-supervisor-page .applicant-detail-compact-table tbody tr:hover td {
         background: #f8fafc;
     }
     .applicant-supervisor-page .applicant-detail-compact-table .col-wrap {
-        word-break: break-word;
-        overflow-wrap: anywhere;
-        hyphens: auto;
+        word-break: normal;
+        overflow-wrap: normal;
+        white-space: nowrap;
     }
     .applicant-supervisor-page .applicant-detail-compact-table .col-doc {
         text-align: center;
-        white-space: normal;
-        word-break: break-word;
-        overflow-wrap: anywhere;
+        white-space: nowrap;
     }
     .applicant-supervisor-page .applicant-detail-compact-table .col-doc .doc-pdf-link {
         display: inline-flex;
@@ -219,18 +237,6 @@
         margin: 0 auto;
         border-radius: 4px;
     }
-    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(1) { width: 12%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(2) { width: 38%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(3) { width: 10%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(4) { width: 23%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.edu-qual-table th:nth-child(5) { width: 17%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table th:nth-child(1) { width: 36%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table th:nth-child(2) { width: 40%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table th:nth-child(3) { width: 24%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(1) { width: 30%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(2) { width: 26%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(3) { width: 20%; }
-    .applicant-supervisor-page .applicant-detail-compact-table.work-exp-table.work-exp-with-doc th:nth-child(4) { width: 24%; }
 
     /* ---------- Certificate Q/A cards (Q7 / Q8 / WH / W) ---------- */
     .applicant-supervisor-page .asp-qa-card {
@@ -562,11 +568,15 @@
                                                 <table class="table table-sm table-bordered applicant-detail-compact-table edu-qual-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Degree</th>
-                                                            <th>Institution</th>
+                                                            <th rowspan="2">Degree</th>
+                                                            <th rowspan="2">Institution</th>
+                                                            <th colspan="2">Month &amp; Year of Passing</th>
+                                                            <th rowspan="2">Cert. No</th>
+                                                            <th rowspan="2">Doc</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Month</th>
                                                             <th>Year</th>
-                                                            <th>Cert. No</th>
-                                                            <th>Doc</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -574,7 +584,8 @@
                                                         <tr>
                                                             <td class="col-wrap">{{ $education->educational_level }}</td>
                                                             <td class="col-wrap">{{ $education->institute_name }}</td>
-                                                            <td class="col-wrap">{{ $education->year_of_passing }}</td>
+                                                            <td class="col-wrap">{{ !empty($education->month_passing) ? $education->month_passing : '-' }}</td>
+                                                            <td class="col-wrap">{{ !empty($education->year_of_passing) ? $education->year_of_passing : '-' }}</td>
                                                             @php
                                                                 $certificateNo = data_get($education, 'certificate_no');
                                                                 $percentage = data_get($education, 'percentage');
@@ -612,7 +623,7 @@
                                                         </tr>
                                                         @empty
                                                         <tr>
-                                                            <td colspan="5" class="text-center">No educational details available.</td>
+                                                            <td colspan="6" class="text-center">No educational details available.</td>
                                                         </tr>
                                                         @endforelse
                                                     </tbody>
@@ -620,26 +631,72 @@
                                             </div>
                                            
                                             @if (in_array(($applicant->form_name ?? ''), ['S', 'W'], true))
+                                                @php
+                                                    $isFormS = (($applicant->form_name ?? '') === 'S');
+                                                    $hasContractorRow = false;
+                                                    if ($isFormS && !empty($workExperience)) {
+                                                        foreach ($workExperience as $__exp) {
+                                                            if (strtolower(trim((string) ($__exp->emp_type ?? ''))) === 'contractor') {
+                                                                $hasContractorRow = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    $expColspan = $isFormS
+                                                        ? (7 + ($hasContractorRow ? 1 : 0))
+                                                        : 3;
+                                                @endphp
                                                 <h6 class="asp-section-title">Work Experience</h6>
                                                 <div class="applicant-detail-table-wrap">
-                                                    <table class="table table-sm table-bordered applicant-detail-compact-table work-exp-table {{ (($applicant->form_name ?? '') == 'S') ? 'work-exp-with-doc' : '' }}">
+                                                    <table class="table table-sm table-bordered applicant-detail-compact-table work-exp-table {{ $isFormS ? 'work-exp-with-doc' : '' }}">
                                                         <thead>
-                                                            <tr>
-                                                                <th>Company</th>
-                                                                <th>Designation</th>
-                                                                <th>Exp.</th>
-                                                                @if (($applicant->form_name ?? '') == 'S')
-                                                                    <th>Doc</th>
-                                                                @endif
-                                                            </tr>
+                                                            @if ($isFormS)
+                                                                <tr>
+                                                                    <th rowspan="2">S.No</th>
+                                                                    <th rowspan="2">Employment Type</th>
+                                                                    <th rowspan="2">Employer / Organization</th>
+                                                                    <th colspan="3">Year of Experience</th>
+                                                                    <th rowspan="2">Designation</th>
+                                                                    @if ($hasContractorRow)
+                                                                        <th rowspan="2">Intimation Date</th>
+                                                                    @endif
+                                                                    <th rowspan="2">Doc</th>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>From (Date)</th>
+                                                                    <th>To (Date)</th>
+                                                                    <th>Total Yrs</th>
+                                                                </tr>
+                                                            @else
+                                                                <tr>
+                                                                    <th>Company</th>
+                                                                    <th>Designation</th>
+                                                                    <th>Exp.</th>
+                                                                </tr>
+                                                            @endif
                                                         </thead>
                                                         <tbody>
-                                                            @forelse ($workExperience as $experience)
+                                                            @forelse ($workExperience as $index => $experience)
                                                             <tr>
-                                                                <td class="col-wrap">{{ $experience->emp_cate ?? $experience->company_name ?? '' }}</td>
-                                                                <td class="col-wrap">{{ $experience->designation }}</td>
-                                                                <td class="col-wrap">{{ $experience->total_exp ?? $experience->experience ?? 0 }} yrs</td>
-                                                                @if (($applicant->form_name ?? '') == 'S')
+                                                                @if ($isFormS)
+                                                                    @php
+                                                                        $empType = $experience->emp_type ?? '';
+                                                                        $empTypeLabel = $empType !== '' ? ucwords(str_replace('_', ' ', $empType)) : '-';
+                                                                        $isContractor = strtolower(trim((string) $empType)) === 'contractor';
+                                                                        $fromDate = !empty($experience->from_date) ? \Carbon\Carbon::parse($experience->from_date)->format('d-m-Y') : '-';
+                                                                        $toDate = !empty($experience->to_date) ? \Carbon\Carbon::parse($experience->to_date)->format('d-m-Y') : '-';
+                                                                        $intimationDate = !empty($experience->intimation_date) ? \Carbon\Carbon::parse($experience->intimation_date)->format('d-m-Y') : '-';
+                                                                    @endphp
+                                                                    <td class="col-wrap">{{ $index + 1 }}</td>
+                                                                    <td class="col-wrap">{{ $empTypeLabel }}</td>
+                                                                    <td class="col-wrap">{{ $experience->emp_cate ?? $experience->company_name ?? '-' }}</td>
+                                                                    <td class="col-wrap">{{ $fromDate }}</td>
+                                                                    <td class="col-wrap">{{ $toDate }}</td>
+                                                                    <td class="col-wrap">{{ $experience->total_exp ?? $experience->experience ?? 0 }}</td>
+                                                                    <td class="col-wrap">{{ $experience->designation ?? '-' }}</td>
+                                                                    @if ($hasContractorRow)
+                                                                        <td class="col-wrap">{{ $isContractor ? $intimationDate : '-' }}</td>
+                                                                    @endif
                                                                     <td class="col-doc">
                                                                         @if (!empty($experience->upload_document))
                                                                             @php
@@ -661,12 +718,15 @@
                                                                             <span class="text-muted small">—</span>
                                                                         @endif
                                                                     </td>
+                                                                @else
+                                                                    <td class="col-wrap">{{ $experience->emp_cate ?? $experience->company_name ?? '' }}</td>
+                                                                    <td class="col-wrap">{{ $experience->designation }}</td>
+                                                                    <td class="col-wrap">{{ $experience->total_exp ?? $experience->experience ?? 0 }} yrs</td>
                                                                 @endif
-
                                                             </tr>
                                                             @empty
                                                             <tr>
-                                                                <td colspan="{{ (($applicant->form_name ?? '') == 'S') ? 4 : 3 }}" class="text-center">No work experience available.</td>
+                                                                <td colspan="{{ $expColspan }}" class="text-center">No work experience available.</td>
                                                             </tr>
                                                             @endforelse
                                                         </tbody>
