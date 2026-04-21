@@ -392,6 +392,8 @@ class FormController extends BaseController
             'educational_level.*'  => $educationLevelRule,
             'institute_name'       => 'required|array|min:1',
             'institute_name.*'     => 'required|string|max:80',
+            'month_of_passing'     => 'required|array|min:1',
+            'month_of_passing.*'   => 'required|in:01,02,03,04,05,06,07,08,09,10,11,12',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
             'certificate_no'       => 'required|array|min:1',
@@ -440,6 +442,10 @@ class FormController extends BaseController
             'institute_name.*.string'       => 'Institute name must be a valid string.',
             'institute_name.*.max'          => 'Institute name may not be greater than 80 characters.',
             
+            'month_of_passing.required'     => 'Please add at least one educational qualification.',
+            'month_of_passing.*.required'   => 'Month of passing is required.',
+            'month_of_passing.*.in'         => 'Month of passing must be a valid month.',
+
             'year_of_passing.required'      => 'Please add at least one educational qualification.',
             'year_of_passing.*.required'    => 'Year of passing is required.',
             'year_of_passing.*.digits'      => 'Year of passing must be a 4-digit year.',
@@ -524,6 +530,7 @@ class FormController extends BaseController
                 if (
                     empty($level)
                     || empty($request->institute_name[$key] ?? null)
+                    || empty($request->month_of_passing[$key] ?? null)
                     || empty($request->year_of_passing[$key] ?? null)
                 ) {
                     continue;
@@ -572,6 +579,13 @@ class FormController extends BaseController
         // Safety fallback: if client doesn't send form_action, keep first save as draft.
         $action = $request->input('form_action', 'draft');
         $loginId = $request->login_id;
+
+        // Idempotency guard: if the client already has an application_id, do not insert
+        // a new application row. Route through draft_update so the same record is updated.
+        $existingApplicationId = trim((string) $request->input('application_id', ''));
+        if ($existingApplicationId !== '' && Mst_Form_s_w::where('application_id', $existingApplicationId)->exists()) {
+            return $this->draft_update($request, $existingApplicationId);
+        }
         
         
         DB::beginTransaction();
@@ -692,8 +706,15 @@ class FormController extends BaseController
             // process education
             if ($request->has('educational_level')) {
                 foreach ($request->educational_level as $key => $level) {
-                    // skip empty rows
-                    if (empty($level) || empty($request->institute_name[$key])) continue;
+                    // skip empty/incomplete rows
+                    if (
+                        empty($level)
+                        || empty($request->institute_name[$key] ?? null)
+                        || empty($request->month_of_passing[$key] ?? null)
+                        || empty($request->year_of_passing[$key] ?? null)
+                    ) {
+                        continue;
+                    }
                     
                     // compute edu_serial safely
                     $lastEdu = Mst_education::whereNotNull('edu_serial')->latest('id')->value('edu_serial');
@@ -906,6 +927,8 @@ class FormController extends BaseController
             'educational_level.*'  => $educationLevelRule,
             'institute_name'       => 'required|array|min:1',
             'institute_name.*'     => 'required|string|max:80',
+            'month_of_passing'     => 'required|array|min:1',
+            'month_of_passing.*'   => 'required|in:01,02,03,04,05,06,07,08,09,10,11,12',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
             'certificate_no'       => 'required|array|min:1',
@@ -937,6 +960,9 @@ class FormController extends BaseController
         $messages = [
             'education_document.*.max'    => 'Educational document size permitted only 5 KB to 200 KB.',
             'work_document.*.max'    => 'Experience document size permitted only 5 KB to 200 KB.',
+            'month_of_passing.required'     => 'Please add at least one educational qualification.',
+            'month_of_passing.*.required'   => 'Month of passing is required.',
+            'month_of_passing.*.in'         => 'Month of passing must be a valid month.',
             'd_o_b.after_or_equal' => 'Date of Birth must not be more than 100 years ago.',
             'd_o_b.before_or_equal' => 'Age must be at least 18 years.',
             'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
@@ -985,6 +1011,7 @@ class FormController extends BaseController
                 if (
                     empty($level)
                     || empty($request->institute_name[$key] ?? null)
+                    || empty($request->month_of_passing[$key] ?? null)
                     || empty($request->year_of_passing[$key] ?? null)
                 ) {
                     continue;
@@ -1114,6 +1141,7 @@ class FormController extends BaseController
                     if (
                         empty($level) ||
                         empty($request->institute_name[$key] ?? null) ||
+                        empty($request->month_of_passing[$key] ?? null) ||
                         empty($request->year_of_passing[$key] ?? null)
                     ) {
                         continue;

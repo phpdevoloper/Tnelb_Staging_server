@@ -198,18 +198,22 @@
                                                 <table class="table table-bordered" id="education-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Education Level</th>
-                                                            <th>Institution/School Name</th>
-                                                            <th>Year of Passing</th>
-                                                            <th>Certificate No</th>
-                                                            <th class="text-center">Upload Document
+                                                            <th rowspan="2">Education Level</th>
+                                                            <th rowspan="2">Institution/School Name</th>
+                                                            <th colspan="2" class="text-center">Year of Passing</th>
+                                                            <th rowspan="2">Certificate No</th>
+                                                            <th class="text-center" rowspan="2">Upload Document
                                                                 <br><span class="file-limit"> File type: PDF ( Min 5 KB Max 200 KB)</span>
                                                             </th>
-                                                            <th>
+                                                            <th rowspan="2">
                                                                 <button type="button" class="btn btn-primary add-more">
                                                                     <i class="fa fa-plus"></i>
                                                                 </button>
                                                             </th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Month</th>
+                                                            <th>Year</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="education-container">
@@ -223,6 +227,23 @@
                                                                 </select>
                                                             </td>
                                                             <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" value="Dept of Employment & Training"></td>
+                                                            <td>
+                                                                <select name="month_of_passing[]" class="form-control">
+                                                                    <option value="">Select Month</option>
+                                                                    <option value="01">Jan</option>
+                                                                    <option value="02">Feb</option>
+                                                                    <option value="03">Mar</option>
+                                                                    <option value="04">Apr</option>
+                                                                    <option value="05">May</option>
+                                                                    <option value="06">Jun</option>
+                                                                    <option value="07">Jul</option>
+                                                                    <option value="08">Aug</option>
+                                                                    <option value="09">Sep</option>
+                                                                    <option value="10">Oct</option>
+                                                                    <option value="11">Nov</option>
+                                                                    <option value="12">Dec</option>
+                                                                </select>
+                                                            </td>
                                                             <td>
                                                                 <select name="year_of_passing[]" class="form-control">
                                                                     <option value="0">Select Year</option>
@@ -451,6 +472,7 @@
                                     <input type="hidden" id="amount" name="amount" value="">
                                     <input type="hidden" id="form_id" name="form_id" value="3">
                                     <input type="hidden" id="appl_type" name="appl_type" value="N">
+                                    <input type="hidden" id="application_id" name="application_id" value="{{ $application_details->application_id ?? $application->application_id ?? '' }}">
                                     @csrf
                                     <input type="hidden" id="form_action" name="form_action" value="draft">
                                 </div>
@@ -657,6 +679,23 @@
                 <option value="ITI Certificate">ITI Certificate</option>
                 </select></td>
                 <td><input type="text" class="form-control" name="institute_name[]" maxlength="80" value="Dept of Employment &amp; Training" required></td>
+                <td>
+                <select name="month_of_passing[]" class="form-control" required>
+                <option value="">Select Month</option>
+                <option value="01">Jan</option>
+                <option value="02">Feb</option>
+                <option value="03">Mar</option>
+                <option value="04">Apr</option>
+                <option value="05">May</option>
+                <option value="06">Jun</option>
+                <option value="07">Jul</option>
+                <option value="08">Aug</option>
+                <option value="09">Sep</option>
+                <option value="10">Oct</option>
+                <option value="11">Nov</option>
+                <option value="12">Dec</option>
+                </select>
+                </td>
                 <td>
                 <select name="year_of_passing[]" class="form-control" required>
                 <option value="0">Select Year</option>

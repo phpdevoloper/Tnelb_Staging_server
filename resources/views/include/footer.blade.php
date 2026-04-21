@@ -62,6 +62,36 @@
         max-width: 95vw !important;
         overflow-x: hidden !important;
     }
+
+    .local-file-preview {
+        margin-top: 2px;
+        margin-bottom: 3px;
+        margin-left: 2px;
+        font-size: 0.78rem;
+        line-height: 1.15;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: fit-content;
+    }
+
+    .local-file-preview .fa-file-pdf-o {
+        font-size: 0.72rem;
+        color: #d61f26 !important;
+    }
+
+    .local-file-preview .preview-link {
+        color: #1f4f8a;
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    .local-file-preview .preview-link:hover,
+    .local-file-preview .preview-link:focus {
+        color: #163b6a;
+        text-decoration: underline;
+    }
 </style>
 
 <div id="pdfPopup" class="popup-overlay_pdf">
@@ -649,7 +679,8 @@ $(document).ready(function() {
             const href = $link.attr('href');
             const target = $link.attr('target') || '_blank';
             const $preview = $link.closest('.local-file-preview');
-            const $fileInput = $preview.prevAll('.form-s-file-upload-wrap').first().find('input[type="file"]').first();
+            const $scope = $preview.closest('td, .file-section, .form-group, .education-fields, .work-fields, .col-12, .col-md-7');
+            const $fileInput = $scope.find('input[type="file"]').first();
             const input = $fileInput.get(0);
             const file = input && input.files && input.files[0] ? input.files[0] : null;
 
@@ -682,6 +713,71 @@ $(document).ready(function() {
             }
 
             window.open(href, target);
+        });
+
+        function isWiremanOrWiremanHelperForm() {
+            const formName = ($('#form_name').val() || '').toString().trim().toUpperCase();
+            return formName === 'W' || formName === 'WH';
+        }
+
+        function clearLocalFilePreviewForInput($input) {
+            if (!$input || !$input.length) return;
+            const $scope = $input.closest('td, .file-section, .form-group, .education-fields, .work-fields');
+            const $preview = $scope.find('.local-file-preview').first();
+            const blobUrl = $preview.data('blobUrl');
+            if (blobUrl) {
+                try { URL.revokeObjectURL(blobUrl); } catch (e) {}
+            }
+            $preview.remove();
+            $input.removeAttr('data-has-local-file');
+        }
+
+        function renderLocalFilePreviewForInput($input) {
+            if (!isWiremanOrWiremanHelperForm()) return;
+            if (!$input || !$input.length) return;
+
+            clearLocalFilePreviewForInput($input);
+
+            const input = $input.get(0);
+            const file = input && input.files && input.files[0] ? input.files[0] : null;
+            if (!file) return;
+
+            const blobUrl = URL.createObjectURL(file);
+            $input.attr('data-has-local-file', '1');
+
+            const $preview = $('<div class="local-file-preview"></div>').data('blobUrl', blobUrl);
+            const $link = $('<a></a>', {
+                href: blobUrl,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                class: 'preview-link'
+            }).text('View Document');
+
+            $preview.append('<i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i> ');
+            $preview.append($link);
+
+            const $wrap = $input.closest('.form-s-file-upload-wrap');
+            if ($wrap.length) {
+                const $limitText = $wrap.parent().find('.file-limit').first();
+                if ($limitText.length) {
+                    $preview.insertBefore($limitText);
+                } else {
+                    $wrap.after($preview);
+                }
+            } else {
+                const $limitText = $input.parent().find('.file-limit').first();
+                if ($limitText.length) {
+                    $preview.insertBefore($limitText);
+                } else {
+                    $input.after($preview);
+                }
+            }
+        }
+
+        // W / WH forms: show "View Document" for all selected uploads
+        // (education, work, Aadhaar, PAN, photo, signature, etc.).
+        $(document).on('change', '#competency_form_ws input[type="file"]', function () {
+            renderLocalFilePreviewForInput($(this));
         });
 
         async function saveCompetencyDraftSilently() {
@@ -1092,10 +1188,18 @@ $(document).ready(function() {
 
         $(document).off('click.competencyPay', '#submitPaymentBtn').on('click.competencyPay', '#submitPaymentBtn', async function (e) {
             e.preventDefault();
+            const $submitBtn = $(this);
+            if ($submitBtn.data('isProcessing') === true) {
+                return;
+            }
+            $submitBtn.data('isProcessing', true).prop('disabled', true);
+            const originalSubmitLabel = $submitBtn.html();
+            $submitBtn.html('Processing...');
             normalizeCompetencyDynamicSections();
 
             const readableFiles = await validateReadableSelectedFiles();
             if (!readableFiles) {
+                $submitBtn.data('isProcessing', false).prop('disabled', false).html(originalSubmitLabel);
                 return;
             }
 
@@ -1677,22 +1781,26 @@ $(document).ready(function() {
 
             if (!isValid && firstErrorField) {
                 $('html, body').animate({ scrollTop: firstErrorField.offset().top - 100 }, 500);
+                $submitBtn.data('isProcessing', false).prop('disabled', false).html(originalSubmitLabel);
                 return;
             }
 
             // Persist to DB first, so preview document links are available consistently.
             const draftSaved = await saveCompetencyDraftSilently();
             if (!draftSaved || draftSaved.status !== "success") {
+                $submitBtn.data('isProcessing', false).prop('disabled', false).html(originalSubmitLabel);
                 return;
             }
 
             const previewConfirmed = await showCompetencyPreviewModal();
             if (!previewConfirmed) {
+                $submitBtn.data('isProcessing', false).prop('disabled', false).html(originalSubmitLabel);
                 return;
             }
 
             let license_name = $("#license_name").val();
             showDeclarationPopup(license_name, true); // Direct payment flow from preview Pay Now
+            $submitBtn.data('isProcessing', false).prop('disabled', false).html(originalSubmitLabel);
         });
 
         // Clear row-level upload-required errors immediately on file change
