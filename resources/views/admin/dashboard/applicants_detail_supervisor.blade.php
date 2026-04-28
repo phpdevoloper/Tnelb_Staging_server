@@ -258,6 +258,18 @@
         margin: 0;
         line-height: 1.45;
     }
+    .applicant-supervisor-page .asp-qa-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: nowrap;
+    }
+    .applicant-supervisor-page .asp-qa-head h6 {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin-bottom: 0;
+    }
     .applicant-supervisor-page .asp-qa-answer {
         display: inline-flex;
         align-items: center;
@@ -267,6 +279,8 @@
         font-weight: 600;
         font-size: 0.82rem;
         line-height: 1.3;
+        white-space: nowrap;
+        flex: 0 0 auto;
     }
     .applicant-supervisor-page .asp-qa-answer.is-yes {
         background: var(--asp-success-soft);
@@ -365,10 +379,31 @@
     }
 
     /* ---------- Checklist ---------- */
+    .applicant-supervisor-page #profile-tab-pane .checklist-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2.5rem;
+        margin: 0.25rem 0 0.5rem;
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid var(--asp-border, #e5e7eb);
+    }
+    .applicant-supervisor-page #profile-tab-pane .checklist-header-row .form-check {
+        margin: 0;
+        padding: 0.15rem 0.25rem 0.15rem 1.6rem;
+    }
+    .applicant-supervisor-page #profile-tab-pane #specific-class {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 0.75rem;
+        row-gap: 0.1rem;
+        padding: 0.25rem 0.25rem 0.5rem;
+    }
     .applicant-supervisor-page #profile-tab-pane .form-check {
-        padding: 0.45rem 0.6rem 0.45rem 2rem;
-        border-radius: 8px;
-        margin: 0.25rem 0;
+        padding: 0.2rem 0.4rem 0.2rem 1.6rem;
+        border-radius: 6px;
+        margin: 0;
+        min-height: auto;
         transition: background 0.15s ease;
     }
     .applicant-supervisor-page #profile-tab-pane .form-check:hover {
@@ -378,6 +413,15 @@
         font-size: 0.85rem;
         color: var(--asp-ink);
         cursor: pointer;
+        line-height: 1.35;
+    }
+    @media (max-width: 575.98px) {
+        .applicant-supervisor-page #profile-tab-pane #specific-class {
+            grid-template-columns: 1fr;
+        }
+        .applicant-supervisor-page #profile-tab-pane .checklist-header-row {
+            gap: 1.25rem;
+        }
     }
 
     /* ---------- Payment panel ---------- */
@@ -571,8 +615,8 @@
                                                             <th rowspan="2">Degree</th>
                                                             <th rowspan="2">Institution</th>
                                                             <th colspan="2">Month &amp; Year of Passing</th>
-                                                            <th rowspan="2">Cert. No</th>
-                                                            <th rowspan="2">Doc</th>
+                                                            <th rowspan="2">Certificate No</th>
+                                                            <th rowspan="2">Document Upload</th>
                                                         </tr>
                                                         <tr>
                                                             <th>Month</th>
@@ -580,11 +624,23 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
+                                                        @php
+                                                            $monthLabels = [
+                                                                '01' => 'Jan', '02' => 'Feb', '03' => 'Mar', '04' => 'Apr',
+                                                                '05' => 'May', '06' => 'Jun', '07' => 'Jul', '08' => 'Aug',
+                                                                '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Dec',
+                                                            ];
+                                                        @endphp
                                                         @forelse ($educationalQualifications as $education)
+                                                        @php
+                                                            $rawMonth = trim((string) ($education->month_passing ?? ''));
+                                                            $monthKey = $rawMonth !== '' ? str_pad($rawMonth, 2, '0', STR_PAD_LEFT) : '';
+                                                            $monthDisplay = $monthLabels[$monthKey] ?? ($rawMonth !== '' ? $rawMonth : '-');
+                                                        @endphp
                                                         <tr>
                                                             <td class="col-wrap">{{ $education->educational_level }}</td>
                                                             <td class="col-wrap">{{ $education->institute_name }}</td>
-                                                            <td class="col-wrap">{{ !empty($education->month_passing) ? $education->month_passing : '-' }}</td>
+                                                            <td class="col-wrap">{{ $monthDisplay }}</td>
                                                             <td class="col-wrap">{{ !empty($education->year_of_passing) ? $education->year_of_passing : '-' }}</td>
                                                             @php
                                                                 $certificateNo = data_get($education, 'certificate_no');
@@ -655,12 +711,12 @@
                                                                     <th rowspan="2">S.No</th>
                                                                     <th rowspan="2">Employment Type</th>
                                                                     <th rowspan="2">Employer / Organization</th>
-                                                                    <th colspan="3">Year of Experience</th>
-                                                                    <th rowspan="2">Designation</th>
                                                                     @if ($hasContractorRow)
                                                                         <th rowspan="2">Intimation Date</th>
                                                                     @endif
-                                                                    <th rowspan="2">Doc</th>
+                                                                    <th colspan="3">Year of Experience</th>
+                                                                    <th rowspan="2">Designation</th>
+                                                                    <th rowspan="2">Document Upload</th>
                                                                 </tr>
                                                                 <tr>
                                                                     <th>From (Date)</th>
@@ -690,13 +746,13 @@
                                                                     <td class="col-wrap">{{ $index + 1 }}</td>
                                                                     <td class="col-wrap">{{ $empTypeLabel }}</td>
                                                                     <td class="col-wrap">{{ $experience->emp_cate ?? $experience->company_name ?? '-' }}</td>
+                                                                    @if ($hasContractorRow)
+                                                                        <td class="col-wrap">{{ $isContractor ? $intimationDate : '-' }}</td>
+                                                                    @endif
                                                                     <td class="col-wrap">{{ $fromDate }}</td>
                                                                     <td class="col-wrap">{{ $toDate }}</td>
                                                                     <td class="col-wrap">{{ $experience->total_exp ?? $experience->experience ?? 0 }}</td>
                                                                     <td class="col-wrap">{{ $experience->designation ?? '-' }}</td>
-                                                                    @if ($hasContractorRow)
-                                                                        <td class="col-wrap">{{ $isContractor ? $intimationDate : '-' }}</td>
-                                                                    @endif
                                                                     <td class="col-doc">
                                                                         @if (!empty($experience->upload_document))
                                                                             @php
@@ -738,8 +794,8 @@
                                                     $hasPreviousEaQual = !empty($applicant->previously_number) || !empty($applicant->previously_date);
                                                 @endphp
                                                 <div class="asp-qa-card">
-                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                                        <h6 class="flex-grow-1">
+                                                    <div class="asp-qa-head">
+                                                        <h6>
                                                             Have previously applied for Electrical Assistant Qualification Certificate and if yes then mention its number and date:
                                                         </h6>
                                                         <span class="asp-qa-answer {{ $hasPreviousEaQual ? 'is-yes' : 'is-no' }}">
@@ -757,7 +813,7 @@
                                                                 <span class="asp-detail-value">{{ !empty($applicant->previously_issue_date) ? format_date($applicant->previously_issue_date) : '—' }}</span>
                                                             </div>
                                                             <div class="asp-detail-cell">
-                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-label">Date of Expiry</span>
                                                                 <span class="asp-detail-value">{{ !empty($applicant->previously_date) ? format_date($applicant->previously_date) : '—' }}</span>
                                                             </div>
                                                         </div>
@@ -777,8 +833,8 @@
                                                     $hasWiremanCompCert = !empty($applicant->certificate_no) || !empty($applicant->certificate_date);
                                                 @endphp
                                                 <div class="asp-qa-card">
-                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                                        <h6 class="flex-grow-1">
+                                                    <div class="asp-qa-head">
+                                                        <h6>
                                                             Do you possess Wireman Competency Certificate / Supervisor Competency Certificate issued by this Board?
                                                         </h6>
                                                         <span class="asp-qa-answer {{ $hasWiremanCompCert ? 'is-yes' : 'is-no' }}">
@@ -796,7 +852,7 @@
                                                                 <span class="asp-detail-value">{{ !empty($applicant->certificate_issue_date) ? format_date($applicant->certificate_issue_date) : '—' }}</span>
                                                             </div>
                                                             <div class="asp-detail-cell">
-                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-label">Date of Expiry</span>
                                                                 <span class="asp-detail-value">{{ !empty($applicant->certificate_date) ? format_date($applicant->certificate_date) : '—' }}</span>
                                                             </div>
                                                         </div>
@@ -819,8 +875,8 @@
                                                     $hasWiremanBoardCert = !empty($applicant->certificate_no) && !empty($applicant->certificate_date);
                                                 @endphp
                                                 <div class="asp-qa-card">
-                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                                        <h6 class="flex-grow-1">
+                                                    <div class="asp-qa-head">
+                                                        <h6>
                                                             Have you applied for and obtained a Certificate of Qualification for Wireman Helper? If yes, please state its number and validity.
                                                         </h6>
                                                         <span class="asp-qa-answer {{ $hasWiremanBoardCert ? 'is-yes' : 'is-no' }}">
@@ -838,7 +894,7 @@
                                                                 <span class="asp-detail-value">{{ !empty($applicant->certificate_issue_date) ? format_date($applicant->certificate_issue_date) : '—' }}</span>
                                                             </div>
                                                             <div class="asp-detail-cell">
-                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-label">Date of Expiry</span>
                                                                 <span class="asp-detail-value">{{ format_date($applicant->certificate_date) }}</span>
                                                             </div>
                                                         </div>
@@ -859,8 +915,8 @@
                                                     $hasWiremanBoardCert = !empty($applicant->certificate_no) && !empty($applicant->certificate_date);
                                                 @endphp
                                                 <div class="asp-qa-card">
-                                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                                        <h6 class="flex-grow-1">
+                                                    <div class="asp-qa-head">
+                                                        <h6>
                                                             Have you applied for and obtained a Certificate of Qualification for Wireman / Wireman Helper? If yes, please state its number and validity.
                                                         </h6>
                                                         <span class="asp-qa-answer {{ $hasWiremanBoardCert ? 'is-yes' : 'is-no' }}">
@@ -878,7 +934,7 @@
                                                                 <span class="asp-detail-value">{{ !empty($applicant->certificate_issue_date) ? format_date($applicant->certificate_issue_date) : '—' }}</span>
                                                             </div>
                                                             <div class="asp-detail-cell">
-                                                                <span class="asp-detail-label">Validity Date</span>
+                                                                <span class="asp-detail-label">Date of Expiry</span>
                                                                 <span class="asp-detail-value">{{ format_date($applicant->certificate_date) }}</span>
                                                             </div>
                                                         </div>
@@ -905,9 +961,22 @@
                                                     $decryptedaadhar = null;
                                                 }
 
+                                                $decryptedPan = null;
+                                                try {
+                                                    $decryptedPan = !empty($applicant->pancard) ? Crypt::decryptString($applicant->pancard) : null;
+                                                } catch (\Throwable $e) {
+                                                    $decryptedPan = null;
+                                                }
+
                                                 $masked = (is_string($decryptedaadhar) && strlen($decryptedaadhar) === 12)
                                                     ? str_repeat('X', 8) . substr($decryptedaadhar, -4)
                                                     : 'N/A';
+
+                                                $maskedPan = (is_string($decryptedPan) && strlen($decryptedPan) === 10)
+                                                    ? str_repeat('X', 6) . substr($decryptedPan, -4)
+                                                    : 'N/A';
+
+                                                $panDocument = $applicant->pan_doc ?? $applicant->pancard_doc ?? null;
 
                                             @endphp
 
@@ -932,6 +1001,25 @@
                                                         @endif
                                                     </div>
                                                 </div>
+                                                <div class="row align-items-center g-2 mt-1">
+                                                    <div class="col-lg-6">
+                                                        <span class="fw-bold" style="color: #111;">PAN</span>
+                                                    </div>
+                                                    <div class="col-lg-6 text-lg-end">
+                                                        <span class="fw-bold" style="color: #515365">{{ $maskedPan }}</span>
+                                                        @if (!empty($panDocument))
+                                                            <a href="{{ route('document.show', ['type' => 'pan', 'filename' => $panDocument]) }}"
+                                                               target="_blank"
+                                                               class="applicant-inline-doc-link ms-1"
+                                                               title="Open PAN document">
+                                                                <i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i>
+                                                                <span>View Document</span>
+                                                            </a>
+                                                        @else
+                                                            <span class="text-muted small ms-1">No document</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             </div>
 
                                         </div>
@@ -944,19 +1032,15 @@
                                         @endphp
 
 
-                                        <div class="row mt-3">
-                                            <div class="row mt-3">
-                                                <div class="col-lg-6 d-flex align-items-center justify-content-center">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" id="check_all" name="check_all" class="form-check-input" @if($isVerified) checked disabled @endif>
-                                                        <label class="form-check-label" for="check_all">Check All</label>
-                                                    </div>
+                                        <div class="row mt-2">
+                                            <div class="checklist-header-row">
+                                                <div class="form-check">
+                                                    <input type="checkbox" id="check_all" name="check_all" class="form-check-input" @if($isVerified) checked disabled @endif>
+                                                    <label class="form-check-label" for="check_all">Check All</label>
                                                 </div>
-                                                <div class="col-lg-6 d-flex align-items-center justify-content-center">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" id="reset_all" name="reset_all" class="form-check-input">
-                                                        <label class="form-check-label" for="reset_all">Reset All</label>
-                                                    </div>
+                                                <div class="form-check">
+                                                    <input type="checkbox" id="reset_all" name="reset_all" class="form-check-input">
+                                                    <label class="form-check-label" for="reset_all">Reset All</label>
                                                 </div>
                                             </div>
                                             <div id="specific-class" class="col-lg-12">
@@ -1133,20 +1217,19 @@
                             @php
                             $role = Auth::user()->name; // Current role name
                             $workflow = [
-                                'Supervisor' => $applicant->status == 'RE'? 'Secretary' : 'Accountant',
-                                'Supervisor2' => $applicant->status == 'RE'? 'Secretary' : 'Accountant',
-                                'Accountant' => 'Secretary',
-                                'Secretary'  => 'President',
-                                'President'  => null, // last step
+                                'Supervisor'          => $applicant->status == 'RE'? 'Secretary' : 'Assistant Secretary',
+                                'Assistant Secretary' => 'Secretary',
+                                'Secretary'           => 'President',
+                                'President'           => null, // last step
                             ];
 
                             @endphp
 
-                            @if ($role == 'Supervisor' || $role == 'Supervisor2')
+                            @if ($role == 'Supervisor')
                                 <div class="row justify-content-center">
                                     <div class="col-12">
                                         <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
-                                            {{-- Forward to Accountant --}}
+                                            {{-- Forward to Assistant Secretary --}}
                                             <button class="btn btn-success" id="forwardbtn" {{ $isVerified == 'Yes'? '' : 'disabled' }} >
                                                 Forward to {{ $workflow[$role] }}
                                             </button>
@@ -1155,7 +1238,7 @@
                                     </div>
                                 </div>
 
-                            @elseif ($role == 'Accountant')
+                            @elseif ($role == 'Assistant Secretary')
                                 <div class="row justify-content-center">
                                     <div class="col-12">
                                         <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
@@ -1276,7 +1359,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmForward">Forward to {{ $applicant->status == 'RE' ? 'Secretary': 'Accountant'}}</button>
+                <button type="button" class="btn btn-success" id="confirmForward">Forward to {{ $applicant->status == 'RE' ? 'Secretary': 'Assistant Secretary'}}</button>
             </div>
         </div>
     </div>
@@ -1786,7 +1869,7 @@
                 title: "Declaration",
                 text: 'I confirm that all documents have been verified by me as a supervisor.',
                 showCancelButton: true,
-                confirmButtonText: "Forward to {{ $applicant->status == 'RE' ? 'Secretary' : 'Accountant' }}",
+                confirmButtonText: "Forward to {{ $applicant->status == 'RE' ? 'Secretary' : 'Assistant Secretary' }}",
                 cancelButtonText: "Cancel",
                 focusConfirm: false,
             }).then((result) => {

@@ -27,19 +27,19 @@ class FormbModel extends Model
     public static function getcompleteCountFormb()
     {
        return self::whereIn('application_status', ['F', 'A','RF'])
-            ->whereIn('processed_by', ['A', 'SE', 'PR', 'S', 'SPRE'])
+            ->whereIn('processed_by', ['AS', 'SE', 'PR', 'S', 'SPRE'])
             ->count();
     }
 
       /**
-     * Get pending and completed counts for auditors.
+     * Get pending and completed counts for assistant secretary.
      */
     public static function getAuditorFormbPendingCounts()
     {
         return DB::table('tnelb_eb_applications as ta')
         ->select(
-            DB::raw("COUNT(CASE WHEN ta.application_status = 'F' AND ta.processed_by = 'S' OR ta.processed_by='S2' THEN 1 END) as pending_count"),
-            DB::raw("COUNT(CASE WHEN ta.application_status IN ('F', 'A', 'RF', 'RE', 'SPRE') AND ta.processed_by IN ('A', 'PR', 'SE','SPRE' ) THEN 1 END) as completed_count"),
+            DB::raw("COUNT(CASE WHEN ta.application_status = 'F' AND ta.processed_by = 'S' THEN 1 END) as pending_count"),
+            DB::raw("COUNT(CASE WHEN ta.application_status IN ('F', 'A', 'RF', 'RE', 'SPRE') AND ta.processed_by IN ('AS', 'PR', 'SE','SPRE' ) THEN 1 END) as completed_count"),
             DB::raw("COUNT(CASE WHEN ta.application_status = 'RJ' THEN 1 END) as rejected_count")
         )
         ->first();
@@ -49,9 +49,9 @@ class FormbModel extends Model
     {
         return DB::table('tnelb_eb_applications as ta')
         ->select(
-            DB::raw("COUNT(CASE WHEN ta.application_status = 'F' AND ta.processed_by = 'RE' or ta.processed_by = 'A'
+            DB::raw("COUNT(CASE WHEN ta.application_status = 'F' AND ta.processed_by = 'RE' or ta.processed_by = 'AS'
              or ta.processed_by = 'SPRE' THEN 1 END) as pending_count"),
-            DB::raw("COUNT(CASE WHEN ta.application_status IN ('F', 'A', 'RF', 'RE') AND ta.processed_by IN ('A', 'PR', 'SE') THEN 1 END) as completed_count"),
+            DB::raw("COUNT(CASE WHEN ta.application_status IN ('F', 'A', 'RF', 'RE') AND ta.processed_by IN ('AS', 'PR', 'SE') THEN 1 END) as completed_count"),
             DB::raw("COUNT(CASE WHEN ta.application_status = 'RJ' THEN 1 END) as rejected_count")
         )
         ->first();

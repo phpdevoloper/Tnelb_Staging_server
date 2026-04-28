@@ -111,10 +111,10 @@ class CompletedApplsController extends Controller
             if ($applicant->status == 'RE') {
 
                 $processed_by = match ($applicant->processed_by) {
-                    'PR'  => 'President',
-                    'SE'  => 'Secretary',
+                    'PR' => 'President',
+                    'SE' => 'Secretary',
                     'S'  => 'Supervisor',
-                    'A'  => 'Auditor'
+                    'AS' => 'Assistant Secretary',
                 };
                 
                 $nextForwardUser = DB::table('mst__staffs__tbls')
@@ -124,22 +124,14 @@ class CompletedApplsController extends Controller
 
             } else {
                 $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Auditor')
+                    ->where('name', 'Assistant Secretary')
                     ->select('name', 'roles_id')
                     ->first();
             }
         }
 
 
-        if ($staff->name === "Supervisor2") {
-            $nextForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'Auditor')
-                ->select('name', 'roles_id')
-                ->first();
-        }
-
-
-        if ($staff->name === "Auditor") {
+        if ($staff->name === "Assistant Secretary") {
             $nextForwardUser = DB::table('mst__staffs__tbls')
                 ->where('name', 'Secretary')
                 ->select('name', 'roles_id')
@@ -224,13 +216,12 @@ class CompletedApplsController extends Controller
 
         // Determine view based on user role
         $view = match ($staff->name) {
-            'President'  => 'admin.completedappls.index',
-            'Secretary'  => 'admin.completedappls.index',
-            'Supervisor' => 'admin.completedappls.index',
-            'Supervisor2' => 'admin.completedappls.index',
-            'Auditor'    => 'admin.completedappls.index',
+            'President'           => 'admin.completedappls.index',
+            'Secretary'           => 'admin.completedappls.index',
+            'Supervisor'          => 'admin.completedappls.index',
+            'Assistant Secretary' => 'admin.completedappls.index',
 
-            default      => abort(403, 'Unauthorized'),
+            default               => abort(403, 'Unauthorized'),
         };
 
         return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry'));

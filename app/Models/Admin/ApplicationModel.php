@@ -61,12 +61,12 @@ class ApplicationModel extends Model
     {
         return self::where('form_id', $formId)
             ->whereIn('status', ['F', 'A','RF'])
-            ->whereIn('processed_by', [$processedBy,'A', 'SE', 'PR'])
+            ->whereIn('processed_by', [$processedBy,'AS', 'SE', 'PR'])
             ->count();
     }
 
     /**
-     * Get pending and completed counts for auditors.
+     * Get pending and completed counts for assistant secretary.
      */
     public static function getAuditorPendingCounts()
     {
@@ -81,8 +81,8 @@ class ApplicationModel extends Model
             'f.licence_name',
              'f.cert_licence_code as color_code',
                 'f.category_id',
-            DB::raw("COUNT(CASE WHEN ta.status = 'F' AND ta.processed_by = 'S' OR ta.processed_by='S2' THEN 1 END) as pending_count"),
-            DB::raw("COUNT(CASE WHEN ta.status IN ('F', 'A', 'RF') AND ta.processed_by IN ('A', 'PR', 'SE') THEN 1 END) as completed_count"),
+            DB::raw("COUNT(CASE WHEN ta.status = 'F' AND ta.processed_by = 'S' THEN 1 END) as pending_count"),
+            DB::raw("COUNT(CASE WHEN ta.status IN ('F', 'A', 'RF') AND ta.processed_by IN ('AS', 'PR', 'SE') THEN 1 END) as completed_count"),
             DB::raw("COUNT(CASE WHEN ta.status = 'RJ' THEN 1 END) as rejected_count")
         )
         ->groupBy('f.id', 'f.form_name','f.licence_name')
@@ -124,7 +124,7 @@ class ApplicationModel extends Model
                 'f.licence_name',
                 'f.cert_licence_code as color_code',
                 'f.category_id',
-                DB::raw("COUNT(CASE WHEN ta.status = 'F' AND ta.processed_by = 'A' OR ta.status = 'RF' AND ta.processed_by = 'S' OR ta.processed_by = 'S2'  THEN 1 END) as pending_count"),
+                DB::raw("COUNT(CASE WHEN ta.status = 'F' AND ta.processed_by = 'AS' OR ta.status = 'RF' AND ta.processed_by = 'S' THEN 1 END) as pending_count"),
                 DB::raw("COUNT(CASE WHEN ta.status IN ('A','F','RF') AND ta.processed_by IN ('SE', 'PR') THEN 1 END) as completed_count"),
                 DB::raw("COUNT(CASE WHEN ta.status = 'RJ' THEN 1 END) as rejected_count")
             )

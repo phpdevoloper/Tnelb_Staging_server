@@ -115,7 +115,7 @@
                                                             <th>Institution</th>
                                                             <th>Year of Passing</th>
                                                             <th>Percentage</th>
-                                                            <th>Documents</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -174,7 +174,7 @@
                                                             <th>Company Name</th>
                                                             <th>Designation</th>
                                                             <th>Years of Experience</th>
-                                                            <th>Documents</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -535,7 +535,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmForward">Forward to {{ $applicant->status == 'RE' ? 'Secretary': 'Accountant'}}</button>
+                <button type="button" class="btn btn-success" id="confirmForward">Forward to {{ $applicant->status == 'RE' ? 'Secretary': 'Assistant Secretary'}}</button>
             </div>
         </div>
     </div>

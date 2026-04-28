@@ -39,10 +39,9 @@
                                     $roleLabel = match ($processedBy) {
                                         'SE' => 'Secretary',
                                         'PR' => 'President',
-                                        'S', 'S2' => 'Supervisor',
-                                        'A', 'AC' => 'Accountant',
+                                        'S' => 'Supervisor',
+                                        'AS' => 'Assistant Secretary',
                                         'AP' => 'Applicant',
-                                        'Accountant' => 'Accountant',
                                         default => $processedBy,
                                     };
                                     $isApplicantResubmission = $applStatus === 'RE' && $processedBy === 'AP';
@@ -54,8 +53,8 @@
                                         $queryRaisedByLabel = match ($raisedByRaw) {
                                             'SE' => 'Secretary',
                                             'PR' => 'President',
-                                            'S', 'S2' => 'Supervisor',
-                                            'A', 'AC' => 'Accountant',
+                                            'S' => 'Supervisor',
+                                            'AS' => 'Assistant Secretary',
                                             default => $raisedByRaw,
                                         };
                                     } else {
@@ -133,16 +132,16 @@
                                 {{-- Case 1: Secretary/President → return to applicant (purple) --}}
                                 @if ($isExternalApplicantReturn)
                                     <p class="t-meta-time">Application returned to Applicant</p>
-                                    <p class="t-meta-time mb-0">
-                                        <span class="fw-semibold">Remark :</span>
-                                        {{ $returnLogInternalRemark !== null && $returnLogInternalRemark !== '' ? $returnLogInternalRemark : '—' }}
-                                    </p>
                                     @if ($queries !== [] && $queries != $applicantFacingQueries)
                                         <p class="t-meta-internal mb-1">
                                             <span class="fw-semibold">Note: Query</span>
                                             ({{ implode(', ', $queries) }})
                                         </p>
                                     @endif
+                                    <p class="t-meta-time mb-0">
+                                        <span class="fw-semibold">Remark :</span>
+                                        {{ $returnLogInternalRemark !== null && $returnLogInternalRemark !== '' ? $returnLogInternalRemark : '—' }}
+                                    </p>
                                     @if ($applicantFacingQueries !== [])
                                         <p class="t-meta-applicant-return mb-1">
                                             <span class="fw-semibold">Note: Query</span>
@@ -155,7 +154,7 @@
                                     </p>
                                 @endif
 
-                                {{-- Case 2: Supervisor / Accountant / internal — query raised (red) --}}
+                                {{-- Case 2: Supervisor / Assistant Secretary / internal — query raised (red) --}}
                                 @if ($hasPendingQuery && !$isExternalApplicantReturn && !$isApplicantResubmission)
                                     <p class="t-meta-internal mb-1">
                                         <span class="fw-semibold">Query raised by {{ $queryRaisedByLabel }}</span>

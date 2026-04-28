@@ -27,7 +27,7 @@ class SecretaryController extends Controller
         ->where('ta.form_id', $formId)
         ->where(function($q) {
             $q->where(function($q2) {
-                $q2->where('ta.processed_by', 'A');
+                $q2->where('ta.processed_by', 'AS');
             })
             ->orWhereIn('ta.status', ['RF', 'F']);
         })
@@ -41,7 +41,7 @@ class SecretaryController extends Controller
         ->where('ta.form_id', $formId)
         ->where(function($q) {
             $q->where(function($q2) {
-                $q2->where('ta.processed_by', 'A');
+                $q2->where('ta.processed_by', 'AS');
             })
             ->orWhereIn('ta.status', ['RF', 'F']);
         })
@@ -144,7 +144,7 @@ class SecretaryController extends Controller
  
         // $formId = $request->query('form_id');
      $workflows = DB::table('tnelb_ea_applications as ta')
-            ->whereIn('ta.processed_by', ['A', 'SPRE']) 
+            ->whereIn('ta.processed_by', ['AS', 'SPRE']) 
             ->Where('ta.application_status', 'F')
             ->orderByDesc('updated_at')
             // ->where('ta.form_id', $formId)
@@ -232,7 +232,7 @@ class SecretaryController extends Controller
         if($formId == 2){
 
             $workflows = DB::table('tnelb_application_tbl as ta')
-            ->whereIn('ta.processed_by', ['S2','SE'])
+            ->whereIn('ta.processed_by', ['AS','SE'])
             ->where('ta.form_id', $formId)
             ->where(function ($query) {
                 $query->where('ta.status', 'A')

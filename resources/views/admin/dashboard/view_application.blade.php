@@ -120,7 +120,7 @@
                                                             <th>Institution</th>
                                                             <th>Year of Passing</th>
                                                             <th>Percentage</th>
-                                                            <th>Documents</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -179,7 +179,7 @@
                                                             <th>Company Name</th>
                                                             <th>Designation</th>
                                                             <th>Years of Experience</th>
-                                                            <th>Documents</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -481,7 +481,7 @@
                                                     </p>
                                                 @endif
 
-                                                @if ($processedBy !== 'Accountant' && !$isApplicantResubmission)
+                                                @if ($processedBy !== 'Assistant Secretary' && !$isApplicantResubmission)
                                                     @if ($row->query_status == "P")
                                                         <p class="text-danger">
                                                             Note: Query raised by {{ $roleLabel }} (

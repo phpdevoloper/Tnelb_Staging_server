@@ -164,7 +164,7 @@
                                             @endif
                                         </p>
 
-                                        @if ($row->processed_by !== 'Accountant')
+                                        @if ($row->processed_by !== 'Assistant Secretary')
                                             @if ($row->query_status == "P")
                                                 <p class="text-danger">Note: Query raised by {{ $row->processed_by }} (
                                                     @php

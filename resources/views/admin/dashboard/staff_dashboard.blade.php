@@ -172,10 +172,10 @@
                                                         $isFormAContractor = str_contains(mb_strtolower($summary['licence_name'] ?? ''), 'contractor')
                                                             && strtoupper($summary['form_name'] ?? '') === 'FORM A';
                                                         $roleName = $staff->name ?? '';
-                                                        if ($isFormAContractor && in_array($roleName, ['Supervisor', 'Supervisor2'], true)) {
+                                                        if ($isFormAContractor && $roleName === 'Supervisor') {
                                                             $newHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'N']);
                                                             $renewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'R']);
-                                                        } elseif ($isFormAContractor && $roleName === 'Accountant') {
+                                                        } elseif ($isFormAContractor && $roleName === 'Assistant Secretary') {
                                                             $newHref = route('admin.view_forma_pending', ['type' => 'A', 'form_type' => 'N']);
                                                             $renewHref = route('admin.view_forma_pending', ['type' => 'A', 'form_type' => 'R']);
                                                         } elseif ($isFormAContractor && $roleName === 'Secretary') {
@@ -234,16 +234,16 @@
                                                 <div class="d-flex flex-wrap gap-1 gap-sm-2 justify-content-center">
                                                     @php
                                                         // For contractor Form A cards, route based on staff role:
-                                                        // - Supervisor -> /admin/view_form/A  (SupervisorController@view_forma)
-                                                        // - Accountant -> /admin/view_forma_pending/A (AuditorController@view_forma_pending)
-                                                        // - Secretary  -> /admin/view_sec_forma_pending/A (SecretaryController@view_sec_forma_pending)
+                                                        // - Supervisor          -> /admin/view_form/A  (SupervisorController@view_forma)
+                                                        // - Assistant Secretary -> /admin/view_forma_pending/A (AuditorController@view_forma_pending)
+                                                        // - Secretary           -> /admin/view_sec_forma_pending/A (SecretaryController@view_sec_forma_pending)
                                                         $isFormAContractor = str_contains(mb_strtolower($summary['licence_name'] ?? ''), 'contractor')
                                                             && strtoupper($summary['form_name'] ?? '') === 'FORM A';
                                                         $roleName = $staff->name ?? '';
                                                         if ($isFormAContractor && in_array($roleName, ['Supervisor'], true)) {
                                                             $contractorNewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'N']);
                                                             $contractorRenewHref = route('admin.view_form', ['type' => 'A', 'form_type' => 'R']);
-                                                        } elseif ($isFormAContractor && $roleName === 'Accountant') {
+                                                        } elseif ($isFormAContractor && $roleName === 'Assistant Secretary') {
                                                             $contractorNewHref = route('admin.view_forma_pending', ['type' => 'A']);
                                                             $contractorRenewHref = route('admin.view_forma_pending', ['type' => 'A']);
                                                         } elseif ($isFormAContractor && $roleName === 'Secretary') {
@@ -357,10 +357,10 @@
                                                     elseif (in_array($fn, ['B', 'EB', 'SB'])) $badge_class = 'badge-primary';
                                                     // Received from: last processor on application row
                                                     $received_from = '';
-                                                    if (($row->processed_by ?? '') === 'S' || ($row->processed_by ?? '') === 'S2') {
+                                                    if (($row->processed_by ?? '') === 'S') {
                                                         $received_from = 'Supervisor';
-                                                    } elseif (($row->processed_by ?? '') === 'A') {
-                                                        $received_from = 'Accountant';
+                                                    } elseif (($row->processed_by ?? '') === 'AS') {
+                                                        $received_from = 'Assistant Secretary';
                                                     } elseif (($row->processed_by ?? '') === 'SE') {
                                                         $received_from = 'Secretary';
                                                     } elseif (($row->processed_by ?? '') === 'PR') {
@@ -374,12 +374,12 @@
                                                     if ($row_status === 'QU') {
                                                         $pending_with = 'Applicant';
                                                     } elseif ($forwardRoleRaw !== '') {
-                                                        if (str_contains($forwardNorm, 'secretary')) {
+                                                        if (str_contains($forwardNorm, 'assistant secretary')) {
+                                                            $pending_with = 'Assistant Secretary';
+                                                        } elseif (str_contains($forwardNorm, 'secretary')) {
                                                             $pending_with = 'Secretary';
                                                         } elseif (str_contains($forwardNorm, 'president')) {
                                                             $pending_with = 'President';
-                                                        } elseif (str_contains($forwardNorm, 'accountant')) {
-                                                            $pending_with = 'Accountant';
                                                         } elseif (str_contains($forwardNorm, 'supervisor')) {
                                                             $pending_with = 'Supervisor';
                                                         } else {
@@ -387,9 +387,9 @@
                                                         }
                                                     } elseif (empty($row->processed_by)) {
                                                         $pending_with = 'Supervisor';
-                                                    } elseif (($row->processed_by ?? '') === 'S' || ($row->processed_by ?? '') === 'S2') {
-                                                        $pending_with = 'Accountant';
-                                                    } elseif (($row->processed_by ?? '') === 'A') {
+                                                    } elseif (($row->processed_by ?? '') === 'S') {
+                                                        $pending_with = 'Assistant Secretary';
+                                                    } elseif (($row->processed_by ?? '') === 'AS') {
                                                         $pending_with = 'Secretary';
                                                     } elseif (($row->processed_by ?? '') === 'SE') {
                                                         $pending_with = 'President';

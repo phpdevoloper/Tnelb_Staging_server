@@ -382,8 +382,8 @@
                                                 <td>    @if ($row->processed_by == null)
                                                           {{ 'Supervisor' }}
                                                         @elseif ($row->processed_by == "S")
-                                                            {{ 'Accountant' }}
-                                                        @elseif ($row->processed_by == "A")
+                                                            {{ 'Assistant Secretary' }}
+                                                        @elseif ($row->processed_by == "AS")
                                                             {{ 'Secretary' }}
                                                         @elseif ($row->processed_by == "SE")
                                                             {{ 'President' }}
@@ -436,8 +436,8 @@
 
                                                     <td>    @if ($row->processed_by == "S")
                                                         {{ 'Supervisor' }}
-                                                      @elseif ($row->processed_by == "A")
-                                                          {{ 'Accountant' }}
+                                                      @elseif ($row->processed_by == "AS")
+                                                          {{ 'Assistant Secretary' }}
                                                       @elseif ($row->processed_by == "SE")
                                                           {{ 'Secretary' }}
                                                       @elseif ($row->processed_by == "PR")
@@ -451,8 +451,8 @@
                                                     <td>    @if ($row->processed_by == null)
                                                         {{ 'Supervisor' }}
                                                       @elseif ($row->processed_by == "S")
-                                                          {{ 'Accountant' }}
-                                                      @elseif ($row->processed_by == "A")
+                                                          {{ 'Assistant Secretary' }}
+                                                      @elseif ($row->processed_by == "AS")
                                                           {{ 'Secretary' }}
                                                       @elseif ($row->processed_by == "SE")
                                                           {{ 'President' }}
@@ -485,7 +485,7 @@
                                             <tr>
                                                 <th rowspan="2">Form Types</th>
                                                 <th colspan="3">Supervisor</th>
-                                                <th colspan="3">Accountant</th>
+                                                <th colspan="3">Assistant Secretary</th>
                                                 <th colspan="3">Secretary</th>
                                             </tr>
                                             <tr>

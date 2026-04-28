@@ -121,7 +121,7 @@
                                                         <th>Institution</th>
                                                         <th>Year of Passing</th>
                                                         <th>Certificate No</th>
-                                                        <th>Documents</th>
+                                                        <th>Document Upload</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -175,7 +175,7 @@
                                                         <th>Company Name</th>
                                                         <th>Designation</th>
                                                         <th>Years of Experience</th>
-                                                        <th>Documents</th>
+                                                        <th>Document Upload</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>

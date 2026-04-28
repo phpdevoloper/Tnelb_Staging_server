@@ -121,7 +121,7 @@
                                                         <th>Institution</th>
                                                         <th>Year of Passing</th>
                                                         <th>Percentage</th>
-                                                        <th>Documents</th>
+                                                        <th>Document Upload</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -163,7 +163,7 @@
                                                         <th>Company Name</th>
                                                         <th>Designation</th>
                                                         <th>Years of Experience</th>
-                                                        <th>Documents</th>
+                                                        <th>Document Upload</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>

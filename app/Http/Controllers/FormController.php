@@ -361,7 +361,7 @@ class FormController extends BaseController
         
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
         $educationLevelRule = ($request->form_name === 'S')
-            ? 'required|string|in:DEE,BEE,MEE|max:50'
+            ? 'required|string|in:DEE,BEE,MEE,AMIE|max:50'
             : 'required|string|max:50';
 
         $rules = [
@@ -477,7 +477,7 @@ class FormController extends BaseController
             'fathers_name.max' => 'Father\'s name may not be greater than 80 characters.',
             'applicants_address.max' => 'Address may not be greater than 255 characters.',
             'competency_certificate_no.max' => 'Certificate number may not be greater than 80 characters.',
-            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), M.E (EE), or A pass in AMIE options are allowed.',
             'pancard.required' => 'PAN card number is required.',
             'pancard.regex' => 'Enter a valid 10-character PAN (e.g. ABCDE1234F).',
             'pancard_doc.required' => 'PAN card document upload is required.',
@@ -544,7 +544,16 @@ class FormController extends BaseController
                     );
                 }
                 if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'education')) {
-                    $validator->errors()->add('existing_document.'.$key, 'Invalid uploaded document reference.');
+                    if ($this->hasValidCompetencyAjaxDocFormat($existing, 'education')) {
+                        if (! $hasFile) {
+                            $validator->errors()->add(
+                                'education_document.'.$key,
+                                'The previously uploaded certificate is missing on the server. Please upload the document again.'
+                            );
+                        }
+                    } else {
+                        $validator->errors()->add('existing_document.'.$key, 'Invalid uploaded document reference.');
+                    }
                 }
             }
 
@@ -569,7 +578,16 @@ class FormController extends BaseController
                     );
                 }
                 if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'work')) {
-                    $validator->errors()->add('existing_work_document.'.$key, 'Invalid uploaded document reference.');
+                    if ($this->hasValidCompetencyAjaxDocFormat($existing, 'work')) {
+                        if (! $hasFile) {
+                            $validator->errors()->add(
+                                'work_document.'.$key,
+                                'The previously uploaded experience document is missing on the server. Please upload the document again.'
+                            );
+                        }
+                    } else {
+                        $validator->errors()->add('existing_work_document.'.$key, 'Invalid uploaded document reference.');
+                    }
                 }
             }
         });
@@ -894,7 +912,7 @@ class FormController extends BaseController
 
         $isWorkOptional = in_array($request->form_name, ['W', 'WH'], true);
         $educationLevelRule = ($request->form_name === 'S')
-            ? 'required|string|in:DEE,BEE,MEE|max:50'
+            ? 'required|string|in:DEE,BEE,MEE,AMIE|max:50'
             : 'required|string|max:50';
 
         $pancardRule = $this->isCompetencyForm($request->form_name)
@@ -965,7 +983,7 @@ class FormController extends BaseController
             'month_of_passing.*.in'         => 'Month of passing must be a valid month.',
             'd_o_b.after_or_equal' => 'Date of Birth must not be more than 100 years ago.',
             'd_o_b.before_or_equal' => 'Age must be at least 18 years.',
-            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), M.E (EE), or A pass in AMIE options are allowed.',
             'pancard.regex' => 'Enter a valid 10-character PAN (e.g. ABCDE1234F).',
 
         ];
@@ -1025,7 +1043,16 @@ class FormController extends BaseController
                     );
                 }
                 if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'education')) {
-                    $validator->errors()->add('existing_document.'.$key, 'Invalid uploaded document reference.');
+                    if ($this->hasValidCompetencyAjaxDocFormat($existing, 'education')) {
+                        if (! $hasFile) {
+                            $validator->errors()->add(
+                                'education_document.'.$key,
+                                'The previously uploaded certificate is missing on the server. Please upload the document again.'
+                            );
+                        }
+                } else {
+                        $validator->errors()->add('existing_document.'.$key, 'Invalid uploaded document reference.');
+                    }
                 }
             }
 
@@ -1050,7 +1077,16 @@ class FormController extends BaseController
                     );
                 }
                 if ($existing !== null && $existing !== '' && ! $this->isValidCompetencyAjaxDocPath($existing, 'work')) {
-                    $validator->errors()->add('existing_work_document.'.$key, 'Invalid uploaded document reference.');
+                    if ($this->hasValidCompetencyAjaxDocFormat($existing, 'work')) {
+                        if (! $hasFile) {
+                            $validator->errors()->add(
+                                'work_document.'.$key,
+                                'The previously uploaded experience document is missing on the server. Please upload the document again.'
+                            );
+                        }
+                    } else {
+                        $validator->errors()->add('existing_work_document.'.$key, 'Invalid uploaded document reference.');
+                    }
                 }
             }
         });
@@ -1510,6 +1546,7 @@ class FormController extends BaseController
 
     public function draft_submit(Request $request, $id = null)
     {
+        
         $request->merge([
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
@@ -1541,7 +1578,7 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
             $educationLevelRuleDraft = ($request->form_name === 'S')
-                ? 'nullable|string|in:DEE,BEE,MEE|max:50'
+                ? 'nullable|string|in:DEE,BEE,MEE,AMIE|max:50'
                 : 'nullable|string|max:50';
 
             $request->validate([
@@ -1608,7 +1645,7 @@ class FormController extends BaseController
             'designation.*.max'             => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), M.E (EE), or A pass in AMIE options are allowed.',
 
         ]);
 
@@ -1789,14 +1826,35 @@ class FormController extends BaseController
                         $filePath = $request->existing_document[$key];
                     }
             
+                    // Normalize month_of_passing: trim, accept "01"-"12" or "1"-"12",
+                    // map to int 1-12, otherwise treat as missing.
+                    $monthRaw = $request->month_of_passing[$key] ?? null;
+                    $monthVal = null;
+                    if ($monthRaw !== null && $monthRaw !== '') {
+                        $m = (int) ltrim((string) $monthRaw, '0');
+                        if ($m >= 1 && $m <= 12) {
+                            $monthVal = $m;
+                        }
+                    }
+
                     // ✅ Update or Create record
                     if ($education) {
+                        // Defensive: keep existing values if request-side index is missing
+                        // (avoids silently nulling previously-saved data on partial drafts).
                         $education->update([
-                            'educational_level' => $level ?? null,
-                            'institute_name'    => $request->institute_name[$key] ?? null,
-                            'month_passing'     => $request->month_of_passing[$key] ?? null,
-                            'year_of_passing'   => $request->year_of_passing[$key] ?? null,
-                            'certificate_no'    => $request->certificate_no[$key] ?? null,
+                            'educational_level' => $level ?? $education->educational_level,
+                            'institute_name'    => ($request->institute_name[$key] ?? null) !== null && $request->institute_name[$key] !== ''
+                                ? $request->institute_name[$key]
+                                : $education->institute_name,
+                            'month_passing'     => $monthVal !== null ? $monthVal : $education->month_passing,
+                            'year_of_passing'   => ($request->year_of_passing[$key] ?? null) !== null
+                                && $request->year_of_passing[$key] !== ''
+                                && $request->year_of_passing[$key] !== '0'
+                                ? $request->year_of_passing[$key]
+                                : $education->year_of_passing,
+                            'certificate_no'    => ($request->certificate_no[$key] ?? null) !== null && $request->certificate_no[$key] !== ''
+                                ? $request->certificate_no[$key]
+                                : $education->certificate_no,
                             'upload_document'   => $filePath,
                         ]);
                     } else {
@@ -1807,7 +1865,7 @@ class FormController extends BaseController
                             'login_id'          => $loginId,
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
-                            'month_passing'     => $request->month_of_passing[$key] ?? null,
+                            'month_passing'     => $monthVal,
                             'year_of_passing'   => $request->year_of_passing[$key],
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
@@ -1976,7 +2034,7 @@ class FormController extends BaseController
             : 'nullable|mimes:pdf|max:250';
 
         $educationLevelRuleDraft = ($request->form_name === 'S')
-            ? 'nullable|string|in:DEE,BEE,MEE|max:50'
+            ? 'nullable|string|in:DEE,BEE,MEE,AMIE|max:50'
             : 'nullable|string|max:50';
       
 
@@ -2035,7 +2093,7 @@ class FormController extends BaseController
             'designation.*.max'          => 'Designation may not be greater than 80 characters.',
 
             'aadhaar.digits' => 'Aadhaar number should be 12 digits.',
-            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.',
+            'educational_level.*.in' => 'For FORM S, only Diploma (EE), B.E (EE), M.E (EE), or A pass in AMIE options are allowed.',
         ]);
 
         $action    = $request->form_action; // "draft" or "submit"
@@ -2869,6 +2927,20 @@ class FormController extends BaseController
      */
     private function isValidCompetencyAjaxDocPath(?string $path, string $kind): bool
     {
+        if (! $this->hasValidCompetencyAjaxDocFormat($path, $kind)) {
+            return false;
+        }
+
+        return is_file(public_path($path));
+    }
+
+    /**
+     * Validate just the format of a pre-uploaded relative path (folder prefix + filename
+     * shape) WITHOUT checking that the file physically exists on disk. Used to tell apart
+     * a malformed/forged reference from a previously valid path whose file was lost.
+     */
+    private function hasValidCompetencyAjaxDocFormat(?string $path, string $kind): bool
+    {
         if ($path === null || $path === '') {
             return false;
         }
@@ -2884,7 +2956,7 @@ class FormController extends BaseController
             return false;
         }
 
-        return is_file(public_path($path));
+        return true;
     }
 
       public function getFormCost(Request $request)

@@ -162,11 +162,11 @@ class ApplicationController extends Controller
 
                         
         $processed_by = match ($staff->name) {
-            'President'  => 'PR',
-            'Secretary'  => 'SE',
-            'Supervisor' => 'S',
-            'Accountant'    => 'A',
-            default      => abort(403, 'Unauthorized'),
+            'President'           => 'PR',
+            'Secretary'           => 'SE',
+            'Supervisor'          => 'S',
+            'Assistant Secretary' => 'AS',
+            default               => abort(403, 'Unauthorized'),
         };
 
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
@@ -352,11 +352,11 @@ class ApplicationController extends Controller
     
                           
             $processed_by = match ($staff->name) {
-                'President'  => 'PR',
-                'Secretary'  => 'SE',
-                'Supervisor' => 'S',
-                'Accountant'    => 'A',
-                default      => abort(403, 'Unauthorized'),
+                'President'           => 'PR',
+                'Secretary'           => 'SE',
+                'Supervisor'          => 'S',
+                'Assistant Secretary' => 'AS',
+                default               => abort(403, 'Unauthorized'),
             };
     
             $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
@@ -444,7 +444,6 @@ class ApplicationController extends Controller
                 $application_details = DB::table('tnelb_application_tbl as ta')
                 ->where('ta.status',['F','RF'])
                 ->where('ta.processed_by','S')
-                ->orWhere('ta.processed_by','S2')
                 ->where('ta.form_id', $assignedFormID)
                 ->where('appl_type', '2')
                 ->select('ta.*')
@@ -453,7 +452,7 @@ class ApplicationController extends Controller
 
             case $userRole == '3':
                 $application_details = DB::table('tnelb_application_tbl as ta')
-                ->where('ta.processed_by', 'A')
+                ->where('ta.processed_by', 'AS')
                 ->orWhere('ta.status', 'RF')
                 ->where('ta.form_id', $assignedFormID)
                 ->where('appl_type', '2')
@@ -529,11 +528,11 @@ class ApplicationController extends Controller
         // };
                       
         $processed_by = match ($staff->name) {
-            'President'  => 'PR',
-            'Secretary'  => 'SE',
-            'Supervisor' => 'S',
-            'Accountant'    => 'A',
-            default      => abort(403, 'Unauthorized'),
+            'President'           => 'PR',
+            'Secretary'           => 'SE',
+            'Supervisor'          => 'S',
+            'Assistant Secretary' => 'AS',
+            default               => abort(403, 'Unauthorized'),
         };
 
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;

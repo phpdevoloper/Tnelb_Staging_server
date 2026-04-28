@@ -215,7 +215,7 @@
 {{-- <script src="{{ url('assets/admin/src/plugins/src/flatpickr/custom-flatpickr.js') }}"></script> --}}
 
 <script src="{{ url('assets/js/script.js') }}"></script>
-<script src="{{ url('assets/js/custom.js') }}"></script>
+<script src="{{ url('assets/js/custom.js') }}?v={{ filemtime(public_path('assets/js/custom.js')) }}"></script>
 <script src="{{ url('assets/js/form_p_script.js') }}"></script>
 
 <script src="{{ url('assets/js/forma.js') }}"></script>
@@ -945,6 +945,57 @@ $(document).ready(function() {
                 dst.checked = src.checked;
             });
 
+            const ensureImagePreviewInClone = (inputId, previewId, placeholderId) => new Promise((resolve) => {
+                const srcPreview = document.getElementById(previewId);
+                const srcInput = document.getElementById(inputId);
+                const clonePreview = $clone.find(`#${previewId}`).get(0);
+                const clonePlaceholder = $clone.find(`#${placeholderId}`).get(0);
+                if (!clonePreview) {
+                    resolve();
+                    return;
+                }
+
+                const applyPreview = (srcVal) => {
+                    if (!srcVal) {
+                        clonePreview.removeAttribute('src');
+                        clonePreview.style.display = 'none';
+                        if (clonePlaceholder) clonePlaceholder.style.display = 'block';
+                        resolve();
+                        return;
+                    }
+                    clonePreview.src = srcVal;
+                    clonePreview.style.display = 'block';
+                    if (clonePlaceholder) clonePlaceholder.style.display = 'none';
+                    resolve();
+                };
+
+                const currentSrc = srcPreview ? (srcPreview.getAttribute('src') || '') : '';
+                if (currentSrc) {
+                    applyPreview(currentSrc);
+                    return;
+                }
+
+                const hasFile = srcInput && srcInput.files && srcInput.files[0];
+                if (!hasFile) {
+                    applyPreview('');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    applyPreview((e && e.target && e.target.result) ? e.target.result : '');
+                };
+                reader.onerror = function () {
+                    applyPreview('');
+                };
+                reader.readAsDataURL(srcInput.files[0]);
+            });
+
+            await Promise.all([
+                ensureImagePreviewInClone('upload_photo', 'photo_preview', 'photo_placeholder'),
+                ensureImagePreviewInClone('upload_sign', 'sign_preview', 'sign_placeholder')
+            ]);
+
             // Remove action blocks and make the clone strictly read-only preview.
             // `.verify-btn` strips the frontend license/certificate Verify buttons (Q7/Q8 on Form S, Q7 on Form W, Q6 on Form WH) from the preview popup.
             // `.remove_verify` strips the "Delete" button that appears next to an already-verified license (Q7/Q8) so the preview stays read-only.
@@ -963,12 +1014,21 @@ $(document).ready(function() {
                     $clone.find('#declarationCheckbox').parent().after('<div id="previewDeclarationError" class="text-danger mt-1" style="display:none; font-size:0.82rem; line-height:1.25;">Please check the declaration before clicking Pay Now.</div>');
                 }
             }
-            $clone.find('input[type="file"]').closest('.form-s-file-upload-wrap, .file-section, td, .col-12, .col-md-3').addClass('preview-file-block');
+            $clone.find('input[type="file"]').closest('.form-s-file-upload-wrap, .file-section').addClass('preview-file-block');
             $clone.find('.error-message, .certificate-error').remove();
             $clone.find('.text-danger').not('#previewDeclarationError').remove();
 
             const toDisplayValue = (el) => {
                 const $el = $(el);
+                const formatDateForPreview = (value) => {
+                    const raw = (value || '').toString().trim();
+                    if (!raw) return '-';
+                    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+                    const m2 = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                    if (m2) return raw;
+                    return raw;
+                };
                 if (el.tagName === 'SELECT') {
                     const txt = $el.find('option:selected').text().trim();
                     return txt || ($el.val() || '-');
@@ -978,6 +1038,9 @@ $(document).ready(function() {
                 }
                 if ((el.type || '').toLowerCase() === 'radio') {
                     return el.checked ? ($el.val() || 'Yes') : '';
+                }
+                if ((el.type || '').toLowerCase() === 'date') {
+                    return formatDateForPreview($el.val());
                 }
                 const v = ($el.val() || '').toString().trim();
                 return v === '' ? '-' : v;
@@ -1027,49 +1090,104 @@ $(document).ready(function() {
             });
 
             // Hide helper wrappers/empty blocks after conversion.
-            $clone.find('.form-s-file-upload-wrap, .file-section:empty, .preview-file-block').remove();
+            $clone.find('.form-s-file-upload-wrap').remove();
+            $clone.find('.file-section:empty').remove();
+            const formTypeCode = (
+                $sourceForm.find('input[name="form_name"]').val() ||
+                $sourceForm.find('#form_name').val() ||
+                ''
+            ).toString().trim().toUpperCase();
+            const formTypeTitleMap = {
+                S: 'Supervisor Competency Form',
+                W: 'Wireman Competency Form',
+                P: 'Contractor Competency Form',
+                A: 'Form A Application',
+                B: 'Form B Application'
+            };
+            const previewFormTitle = (
+                formTypeTitleMap[formTypeCode] ||
+                (formTypeCode ? `Form ${formTypeCode}` : '') ||
+                $('.fs-card-header .header-titles h5').first().text() ||
+                $('.header-titles h5').first().text() ||
+                ''
+            ).trim();
 
             const result = await Swal.fire({
-                title: 'Preview Before Payment',
+                title: 'Preview Form',
                 html: `
                     <style>
-                        .swal2-popup.preview-theme-popup { border-radius: 12px; }
+                        .swal2-popup.preview-theme-popup {
+                            border-radius: 14px;
+                            padding-top: 1.05rem;
+                        }
                         .preview-modal-wrap {
                             max-height: 72vh;
                             overflow: auto;
                             text-align: left;
-                            padding: 8px;
-                            background: #f4f8ff;
-                            border-radius: 10px;
+                            padding: 12px 12px 8px;
+                            background: #f8fbff;
+                            border-radius: 12px;
+                            border: 1px solid #e7eef8;
                         }
                         .preview-modal-wrap .row {
-                            background: #ffffff;
-                            border: 1px solid #edf2fb;
-                            border-radius: 10px;
-                            margin: 0 0 10px 0 !important;
-                            padding: 8px 8px 2px 8px;
-                            box-shadow: 0 1px 3px rgba(17, 24, 39, 0.05);
+                            background: transparent;
+                            border: 0;
+                            border-radius: 0;
+                            margin: 0 !important;
+                            padding: 10px 0 6px;
+                            box-shadow: none;
+                        }
+                        .preview-modal-wrap .fs-section {
+                            border: 0 !important;
+                            box-shadow: none !important;
+                            margin-bottom: 0 !important;
+                            background: transparent !important;
+                        }
+                        .preview-modal-wrap .fs-section + .fs-section {
+                            border-top: 1px solid #e2eaf6 !important;
+                            margin-top: 4px !important;
+                            padding-top: 8px;
+                        }
+                        .preview-modal-wrap .fs-section-header,
+                        .preview-modal-wrap .fs-section-body {
+                            border-bottom: 0 !important;
+                        }
+                        .preview-modal-wrap .fs-section-body > .row:last-child {
+                            margin-bottom: 0 !important;
+                            padding-bottom: 0;
                         }
                         .preview-modal-wrap .head_label {
                             background: linear-gradient(90deg, #0d6efd 0%, #198754 100%);
                             color: #fff;
                             border-radius: 8px;
-                            margin-bottom: 8px !important;
-                            padding: 8px 10px !important;
+                            margin: 0 0 8px !important;
+                            padding: 7px 10px !important;
                         }
                         .preview-modal-wrap .head_label label,
                         .preview-modal-wrap .head_label .tamil {
                             color: #fff !important;
                             margin-bottom: 2px;
                         }
-                        .preview-modal-wrap label {
+                        .preview-modal-wrap label,
+                        .preview-modal-wrap .fs-field-label {
                             font-weight: 600;
-                            color: #1f2d3d;
+                            color: #23344d;
                             margin-bottom: 4px;
+                            font-size: 0.84rem;
+                            letter-spacing: .1px;
+                            font-family: inherit !important;
                         }
                         .preview-modal-wrap .tamil {
                             color: #4d5f75;
-                            font-size: 0.82rem;
+                            font-size: 0.78rem;
+                            font-family: inherit !important;
+                        }
+                        .preview-modal-wrap .file-limit {
+                            color: #5b7092 !important;
+                            font-size: 0.78rem !important;
+                            font-weight: 500;
+                            line-height: 1.35;
+                            font-family: inherit !important;
                         }
                         .preview-modal-wrap .table {
                             background: #fff;
@@ -1086,10 +1204,12 @@ $(document).ready(function() {
                         .preview-modal-wrap .table th {
                             border-color: #eef3fb;
                             vertical-align: middle;
+                            font-family: inherit !important;
+                            font-size: 0.84rem;
+                            color: #23344d;
                         }
                         .preview-modal-wrap hr {
-                            border-top: 1px solid #d9e5fb;
-                            margin: 10px 0;
+                            display: none !important;
                         }
                         .preview-modal-wrap .preview-file-block input[type="file"] { display: none !important; }
                         .preview-modal-wrap .btn { pointer-events: none; }
@@ -1122,14 +1242,16 @@ $(document).ready(function() {
                             min-height: 34px;
                             padding: 7px 10px;
                             border-radius: 6px;
-                            background: #f9fbff;
-                            border: 1px solid #eef3fb;
+                            background: #ffffff;
+                            border: 1px solid #dfe8f6;
                             color: #1f2d3d;
                             font-weight: 500;
                             line-height: 1.25;
                             display: flex;
                             align-items: center;
                             word-break: break-word;
+                            font-family: inherit !important;
+                            font-size: 0.84rem;
                         }
                         .preview-modal-wrap .preview-value-sm {
                             min-height: 30px;
@@ -1141,7 +1263,36 @@ $(document).ready(function() {
                             margin: 0 auto;
                             justify-content: center;
                         }
+                        .preview-modal-wrap a,
+                        .preview-modal-wrap .preview-link {
+                            font-family: inherit !important;
+                            font-size: 0.84rem !important;
+                        }
+                        .preview-modal-wrap .col-12,
+                        .preview-modal-wrap .col-md-2,
+                        .preview-modal-wrap .col-md-3,
+                        .preview-modal-wrap .col-md-4,
+                        .preview-modal-wrap .col-md-5,
+                        .preview-modal-wrap .col-md-6,
+                        .preview-modal-wrap .col-md-7,
+                        .preview-modal-wrap .col-md-8,
+                        .preview-modal-wrap .col-md-9,
+                        .preview-modal-wrap .col-md-10,
+                        .preview-modal-wrap .col-md-11,
+                        .preview-modal-wrap .col-md-12,
+                        .preview-modal-wrap [class*="col-sm-"] {
+                            margin-bottom: 6px;
+                        }
+                        .preview-form-subtitle {
+                            text-align: center;
+                            font-size: 1.08rem;
+                            font-weight: 700;
+                            color: #2a3f5f;
+                            margin: 0 0 10px;
+                            line-height: 1.35;
+                        }
                     </style>
+                    ${previewFormTitle ? `<div class="preview-form-subtitle">${$('<div>').text(previewFormTitle).html()}</div>` : ''}
                     <div id="fullFormPreviewMount" class="preview-modal-wrap"></div>
                 `,
                 width: '92%',
@@ -1314,10 +1465,10 @@ $(document).ready(function() {
                 } else if (eduLevel.length) {
                     let formName = ($('#form_name').val() || '').toString().toUpperCase();
                     if (formName === 'S') {
-                        const allowed = ['DEE', 'BEE', 'MEE'];
+                        const allowed = ['DEE', 'BEE', 'MEE', 'AMIE'];
                         const val = (eduLevel.val() || '').toString().toUpperCase();
                         if (val !== '' && !allowed.includes(val)) {
-                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only Diploma (EE), B.E (EE), or M.E (EE) options are allowed.</span>');
+                            eduLevel.after('<span class="error-message text-danger d-block mt-1">For FORM S, only Diploma (EE), B.E (EE), M.E (EE), or A pass in AMIE options are allowed.</span>');
                             if (!firstErrorField) firstErrorField = eduLevel;
                             isValid = false;
                         }
@@ -3715,9 +3866,10 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                 
                 modal.hide();
                 
+                if (typeof window.normalizeIsoDateInputs === 'function') {
+                    window.normalizeIsoDateInputs('#competency_form_ws');
+                }
                 let formData = new FormData($('#competency_form_ws')[0]);
-                // Payment flow requirement:
-                // first persist application as draft, then after Pay Now update payment status in payment API.
                 formData.set('form_action', 'draft');
                 let applicationId = $('#application_id').val();
                 let formUrl;

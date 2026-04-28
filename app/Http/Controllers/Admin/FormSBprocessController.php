@@ -58,7 +58,7 @@ class FormSBprocessController extends Controller
         $userRole = Auth::user()->roles_id;
 
         $workflows = ESB_Application_model::whereIn('application_status', ['F', 'A', 'RE'])
-            ->whereIn('processed_by', ['A', 'SE', 'PR'])
+            ->whereIn('processed_by', ['AS', 'SE', 'PR'])
             ->orderby('updated_at', 'DESC')
             ->select('*')
             
@@ -139,64 +139,19 @@ class FormSBprocessController extends Controller
         if ($staff->name === "Supervisor") {
 
             if ($applicant->application_status == 'RE') {
-
-                // $processed_by = match ($applicant->processed_by) {
-                //     'PR'  => 'President',
-                //     'SE'  => 'Secretary',
-                //     'S'  => 'Supervisor',
-                //     'A'  => 'Accountant'
-                // };
-
-                // $nextForwardUser = DB::table('mst__staffs__tbls')
-                //     ->where('name', $processed_by)
-                //     ->select('name', 'roles_id')
-                //     ->first(); 
-
                 $nextForwardUser = DB::table('mst__staffs__tbls')
                     ->where('name', 'Secretary')
                     ->select('name', 'roles_id')
                     ->first();
             } else {
                 $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Accountant')
+                    ->where('name', 'Assistant Secretary')
                     ->select('name', 'roles_id')
                     ->first();
             }
-
-            // if ($applicant->application_status == 'RE') {
-
-            //     $processed_by = match ($applicant->processed_by) {
-            //         'PR'  => 'President',
-            //         'SE'  => 'Secretary',
-            //         'S'  => 'Supervisor',
-            //         'A'  => 'Accountant'
-            //     };
-
-            //     $nextForwardUser = DB::table('mst__staffs__tbls')
-            //         ->where('name', $processed_by)
-            //         ->select('name', 'roles_id')
-            //         ->first();
-
-            //         // dd($nextForwardUser);
-            //         // exit;
-            // } else {
-            //     $nextForwardUser = DB::table('mst__staffs__tbls')
-            //         ->where('name', 'Accountant')
-            //         ->select('name', 'roles_id')
-            //         ->first();
-
-            // }
         }
 
-        if ($staff->name === "Supervisor2") {
-            $nextForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'Accountant')
-                ->select('name', 'roles_id')
-                ->first();
-        }
-
-
-        if ($staff->name === "Accountant") {
+        if ($staff->name === "Assistant Secretary") {
             $nextForwardUser = DB::table('mst__staffs__tbls')
                 ->where('name', 'Secretary')
                 ->select('name', 'roles_id')
@@ -310,13 +265,12 @@ class FormSBprocessController extends Controller
 
 
                     $view = match ($staff->name) {
-                    'President'  => 'admin.dashboard.formsb.applicants_detail_formsb',
-                    'Secretary'  => 'admin.dashboard.formsb.applicants_detail_formsb',
-                    'Supervisor' => 'admin.dashboard.formsb.applicants_detail_formsb',
-                    // 'Supervisor2' => 'admin.dashboard.applicants_detail_supervisor',
-                    'Accountant'    => 'admin.dashboard.formsb.applicants_detail_auditor_formsb',
+                    'President'           => 'admin.dashboard.formsb.applicants_detail_formsb',
+                    'Secretary'           => 'admin.dashboard.formsb.applicants_detail_formsb',
+                    'Supervisor'          => 'admin.dashboard.formsb.applicants_detail_formsb',
+                    'Assistant Secretary' => 'admin.dashboard.formsb.applicants_detail_auditor_formsb',
 
-                    default      => abort(403, 'Unauthorized'),
+                    default               => abort(403, 'Unauthorized'),
                 };
             
 
@@ -367,21 +321,19 @@ class FormSBprocessController extends Controller
 
         if ($request->application_status === 'RE') {
             $processed_by = match ($staff->name) {
-                'President'   => 'PR',
-                'Secretary'   => 'SE',
-                'Supervisor'  => 'SPRE',
-                'Supervisor2' => 'S2',
-                'Accountant'     => 'A',
-                default       => abort(403, 'Unauthorized'),
+                'President'           => 'PR',
+                'Secretary'           => 'SE',
+                'Supervisor'          => 'SPRE',
+                'Assistant Secretary' => 'AS',
+                default               => abort(403, 'Unauthorized'),
             };
         } else {
             $processed_by = match ($staff->name) {
-                'President'   => 'PR',
-                'Secretary'   => 'SE',
-                'Supervisor'  => 'S',
-                'Supervisor2' => 'S2',
-                'Accountant'     => 'A',
-                default       => abort(403, 'Unauthorized'),
+                'President'           => 'PR',
+                'Secretary'           => 'SE',
+                'Supervisor'          => 'S',
+                'Assistant Secretary' => 'AS',
+                default               => abort(403, 'Unauthorized'),
             };
         }
 
@@ -390,7 +342,7 @@ class FormSBprocessController extends Controller
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
 
 
-        if ($processed_by == 'A') {
+        if ($processed_by == 'AS') {
             $last_workflow = WorkflowA::where('application_id', $request->application_id)
                 ->orderBy('id', 'desc')   // latest entry first
                 ->first();
@@ -422,13 +374,12 @@ class FormSBprocessController extends Controller
 
 
         $status = match ($staff->name) {
-            'President' => 'A',
+            'President'           => 'A',
             // 'Secretary'  => $formType->form_id == 1 ? 'F' : 'A',
-            'Secretary' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Supervisor2' => $applicant->status == 'RE' ? 'RF' : 'F',
-            'Accountant'    => 'F',
-            default      => abort(403, 'Unauthorized'),
+            'Secretary'           => $applicant->status == 'RE' ? 'RF' : 'F',
+            'Supervisor'          => $applicant->status == 'RE' ? 'RF' : 'F',
+            'Assistant Secretary' => 'F',
+            default               => abort(403, 'Unauthorized'),
         };
 
         // dd($request->queryswitch);
@@ -804,11 +755,11 @@ class FormSBprocessController extends Controller
         // };
                       
         $processed_by = match ($staff->name) {
-            'President'  => 'PR',
-            'Secretary'  => 'SE',
-            'Supervisor' => 'S',
-            'Accountant'    => 'A',
-            default      => abort(403, 'Unauthorized'),
+            'President'           => 'PR',
+            'Secretary'           => 'SE',
+            'Supervisor'          => 'S',
+            'Assistant Secretary' => 'AS',
+            default               => abort(403, 'Unauthorized'),
         };
 
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
@@ -982,7 +933,7 @@ class FormSBprocessController extends Controller
   
 
     $workflows_esa = DB::table('tnelb_esb_applications as ta')
-            ->whereIn('ta.processed_by', ['A', 'SPRE']) 
+            ->whereIn('ta.processed_by', ['AS', 'SPRE']) 
             ->orWhere('ta.application_status', 'F')
             ->orderByDesc('updated_at')
             // ->where('ta.form_id', $formId)
@@ -1127,64 +1078,19 @@ class FormSBprocessController extends Controller
         if ($staff->name === "Supervisor") {
 
             if ($applicant->application_status == 'RE') {
-
-                // $processed_by = match ($applicant->processed_by) {
-                //     'PR'  => 'President',
-                //     'SE'  => 'Secretary',
-                //     'S'  => 'Supervisor',
-                //     'A'  => 'Accountant'
-                // };
-
-                // $nextForwardUser = DB::table('mst__staffs__tbls')
-                //     ->where('name', $processed_by)
-                //     ->select('name', 'roles_id')
-                //     ->first(); 
-
                 $nextForwardUser = DB::table('mst__staffs__tbls')
                     ->where('name', 'Secretary')
                     ->select('name', 'roles_id')
                     ->first();
             } else {
                 $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Accountant')
+                    ->where('name', 'Assistant Secretary')
                     ->select('name', 'roles_id')
                     ->first();
             }
-
-            // if ($applicant->application_status == 'RE') {
-
-            //     $processed_by = match ($applicant->processed_by) {
-            //         'PR'  => 'President',
-            //         'SE'  => 'Secretary',
-            //         'S'  => 'Supervisor',
-            //         'A'  => 'Accountant'
-            //     };
-
-            //     $nextForwardUser = DB::table('mst__staffs__tbls')
-            //         ->where('name', $processed_by)
-            //         ->select('name', 'roles_id')
-            //         ->first();
-
-            //         // dd($nextForwardUser);
-            //         // exit;
-            // } else {
-            //     $nextForwardUser = DB::table('mst__staffs__tbls')
-            //         ->where('name', 'Accountant')
-            //         ->select('name', 'roles_id')
-            //         ->first();
-
-            // }
         }
 
-        if ($staff->name === "Supervisor2") {
-            $nextForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'Accountant')
-                ->select('name', 'roles_id')
-                ->first();
-        }
-
-
-        if ($staff->name === "Accountant") {
+        if ($staff->name === "Assistant Secretary") {
             $nextForwardUser = DB::table('mst__staffs__tbls')
                 ->where('name', 'Secretary')
                 ->select('name', 'roles_id')
@@ -1297,13 +1203,12 @@ class FormSBprocessController extends Controller
 // exit;
 
                     $view = match ($staff->name) {
-                     'President'  => 'admin.completedappls.formsb.applicants_formsb_completed',
-            'Secretary'  => 'admin.completedappls.formsb.applicants_formsb_completed',
-            'Supervisor' => 'admin.completedappls.formsb.applicants_formsb_completed',
-            // 'Supervisor2' => 'admin.dashboard.applicants_detail_supervisor',
-            'Accountant'    => 'admin.completedappls.formsb.applicants_detail_auditor_formsb_completed',
+                    'President'           => 'admin.completedappls.formsb.applicants_formsb_completed',
+                    'Secretary'           => 'admin.completedappls.formsb.applicants_formsb_completed',
+                    'Supervisor'          => 'admin.completedappls.formsb.applicants_formsb_completed',
+                    'Assistant Secretary' => 'admin.completedappls.formsb.applicants_detail_auditor_formsb_completed',
 
-                    default      => abort(403, 'Unauthorized'),
+                    default               => abort(403, 'Unauthorized'),
                 };
             
 

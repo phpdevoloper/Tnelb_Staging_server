@@ -1,7 +1,7 @@
 <?php
 /*
     |--------------------------------------------------------------------------
-    | Admin Routes for (Supervisor, Accountant, Secretary, and President)
+    | Admin Routes for (Supervisor, Assistant Secretary, Secretary, and President)
     |--------------------------------------------------------------------------
     | 
 */

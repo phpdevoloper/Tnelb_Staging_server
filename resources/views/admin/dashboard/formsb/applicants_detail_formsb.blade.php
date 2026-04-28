@@ -1146,23 +1146,22 @@
                                 @php
                                 $role = Auth::user()->name; // Current role name
                                 $workflow = [
-                                    'Supervisor' => $applicant->application_status == 'RE'? 'Secretary' : 'Accountant',
-                                    'Supervisor2' => $applicant->application_status == 'RE'? 'Secretary' : 'Accountant',
-                                    'Accountant' => 'Secretary',
-                                    'Secretary'  => 'President',
-                                    'President'  => null, // last step
+                                    'Supervisor'          => $applicant->application_status == 'RE'? 'Secretary' : 'Assistant Secretary',
+                                    'Assistant Secretary' => 'Secretary',
+                                    'Secretary'           => 'President',
+                                    'President'           => null, // last step
                                 ];
 
                                 @endphp
 
-                                @if ($role == 'Supervisor' || $role == 'Supervisor2')
-                                    {{-- Forward to Accountant --}}
+                                @if ($role == 'Supervisor')
+                                    {{-- Forward to Assistant Secretary --}}
                                     <button class="btn btn-success" id="forwardbtn" {{ $isVerified == 'Yes'? '' : 'disabled' }} >
                                         Forward to {{ $workflow[$role] }}
                                     </button>
                                     <button class="btn btn-warning">On Hold</button>
 
-                                @elseif ($role == 'Accountant')
+                                @elseif ($role == 'Assistant Secretary')
                                     {{-- Forward to Secretary --}}
                                     <button class="btn btn-success" id="forwardbtn" data-bs-toggle="modal" data-bs-target="#declarationModal">
                                         Forward to {{ $workflow[$role] }}
@@ -1197,7 +1196,7 @@
 
                             </div>
                         <!-- <div class="modal-footer mt-2" style="justify-content: center;">
-                            <button class="btn btn-success" id="forwardbtn" style="margin-right: 20px;" data-bs-toggle="modal" data-bs-target="#declarationModal" disabled>Forward To {{ $applicant->application_status == 'RE' ? 'Secretary': 'Accountant'}}</button>
+                            <button class="btn btn-success" id="forwardbtn" style="margin-right: 20px;" data-bs-toggle="modal" data-bs-target="#declarationModal" disabled>Forward To {{ $applicant->application_status == 'RE' ? 'Secretary': 'Assistant Secretary'}}</button>
                             <button class="btn btn-warning " style="margin-right: 20px;" data-bs-dismiss="modal">On Hold</button>
                             {{-- <button type="button" class="btn btn-danger">Reject</button> --}}
                         </div> -->
@@ -1252,7 +1251,7 @@
                                             @endif
                                         </p>
 
-                                        @if ($row->processed_by !== 'Accountant')
+                                        @if ($row->processed_by !== 'Assistant Secretary')
                                             @if ($row->query_status == "P")
                                                 <p class="text-danger">Note: Query raised by {{ $row->processed_by }} (
                                                     @php
@@ -1309,7 +1308,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmForward">Forward to Accountant</button>
+                <button type="button" class="btn btn-success" id="confirmForward">Forward to Assistant Secretary</button>
             </div>
         </div>
     </div>
@@ -1800,7 +1799,7 @@
     html: 'You want to return this!',
     icon: "warning",
     showCancelButton: true,
-     confirmButtonText: "Return to @if($role == 'Secretary' || $role == 'President') Supervisor @elseif($role == 'Accountant') Supervisor @elseif($role == 'Supervisor' || $role == 'Supervisor2') Secretary @endif",
+     confirmButtonText: "Return to @if($role == 'Secretary' || $role == 'President') Supervisor @elseif($role == 'Assistant Secretary') Supervisor @elseif($role == 'Supervisor') Secretary @endif",
     cancelButtonText: "Cancel",
     focusConfirm: false,
             }).then((result) => {
@@ -1867,7 +1866,7 @@
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: "Forward to {{ $applicant->application_status == 'RE' ? 'Secretary' : 'Accountant' }}",
+                confirmButtonText: "Forward to {{ $applicant->application_status == 'RE' ? 'Secretary' : 'Assistant Secretary' }}",
                 cancelButtonText: "Cancel",
                 focusConfirm: false,
             }).then((result) => {

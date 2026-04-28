@@ -1122,7 +1122,7 @@
                                             @endif
                                         </p>
 
-                                        @if ($row->processed_by !== 'Accountant')
+                                        @if ($row->processed_by !== 'Assistant Secretary')
                                         @if ($row->query_status == "P")
                                         <p class="text-danger">Note: Query raised by {{ $row->processed_by }} (
                                             @php
@@ -1179,7 +1179,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmForward">Forward to Accountant</button>
+                <button type="button" class="btn btn-success" id="confirmForward">Forward to Assistant Secretary</button>
             </div>
         </div>
     </div>

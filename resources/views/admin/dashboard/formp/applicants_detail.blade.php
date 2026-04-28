@@ -202,7 +202,7 @@
                                                             <th>Institution/School Name</th>
                                                             <th>Year of Passing</th>
                                                             <th>Certificate No</th>
-                                                            <th>Documents</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -249,7 +249,7 @@
                                                             <th>Duration(Years)</th>
                                                             <th>From Date</th>
                                                             <th>To Date</th>
-                                                            <th>Document</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -290,7 +290,7 @@
                                                             <th>Company / Power Station</th>
                                                             <th>Designation</th>
                                                             <th>Years of Experience</th>
-                                                            <th>Document</th>
+                                                            <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -601,23 +601,22 @@
                                 @php
                                 $role = Auth::user()->name; // Current role name
                                 $workflow = [
-                                    'Supervisor' => $applicant->app_status == 'RE'? 'Secretary' : 'Accountant',
-                                    'Supervisor2' => $applicant->app_status == 'RE'? 'Secretary' : 'Accountant',
-                                    'Accountant' => 'Secretary',
-                                    'Secretary'  => 'President',
-                                    'President'  => null, // last step
+                                    'Supervisor'          => $applicant->app_status == 'RE'? 'Secretary' : 'Assistant Secretary',
+                                    'Assistant Secretary' => 'Secretary',
+                                    'Secretary'           => 'President',
+                                    'President'           => null, // last step
                                 ];
 
                                 @endphp
 
-                                @if ($role == 'Supervisor' || $role == 'Supervisor2')
-                                    {{-- Forward to Accountant --}}
+                                @if ($role == 'Supervisor')
+                                    {{-- Forward to Assistant Secretary --}}
                                     <button class="btn btn-success" id="forwardbtn" {{ $isVerified == 'Yes'? '' : 'disabled' }} >
                                         Forward to {{ $workflow[$role] }}
                                     </button>
                                     <button class="btn btn-warning">On Hold</button>
 
-                                @elseif ($role == 'Accountant')
+                                @elseif ($role == 'Assistant Secretary')
                                     {{-- Forward to Secretary --}}
                                     <button class="btn btn-success" id="forwardbtn" data-bs-toggle="modal" data-bs-target="#declarationModal">
                                         Forward to {{ $workflow[$role] }}
@@ -682,8 +681,7 @@
                                                     'PR' => 'President',
                                                     'SE' => 'Secretary',
                                                     'S'  => 'Supervisor',
-                                                    'S2' => 'Supervisor 2',
-                                                    'A'  => 'Accountant',
+                                                    'AS' => 'Assistant Secretary',
                                                     'AP' => 'Applicant',
                                                 ];
                                                 $processedLabel = $roleLabels[$row->processed_by] ?? $row->processed_by;
@@ -718,7 +716,7 @@
                                                         @endif
                                                         
                                                     </p>
-                                                    @if ($row->processed_by !== 'Accountant')
+                                                    @if ($row->processed_by !== 'Assistant Secretary')
                                                         @if ($row->query_status == "P")
                                                             <p class="text-danger">Note: Query raised by {{ $processedLabel }} (
                                                                 @php
@@ -811,7 +809,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmForward">Forward to {{ $applicant->app_status == 'RE' ? 'Secretary': 'Accountant'}}</button>
+                <button type="button" class="btn btn-success" id="confirmForward">Forward to {{ $applicant->app_status == 'RE' ? 'Secretary': 'Assistant Secretary'}}</button>
             </div>
         </div>
     </div>
@@ -1327,7 +1325,7 @@
                 title: "Declaration",
                 text: 'I confirm that all documents have been verified by me as a supervisor.',
                 showCancelButton: true,
-                confirmButtonText: "Forward to {{ $applicant->app_status == 'RE' ? 'Secretary' : 'Accountant' }}",
+                confirmButtonText: "Forward to {{ $applicant->app_status == 'RE' ? 'Secretary' : 'Assistant Secretary' }}",
                 cancelButtonText: "Cancel",
                 focusConfirm: false,
             }).then((result) => {

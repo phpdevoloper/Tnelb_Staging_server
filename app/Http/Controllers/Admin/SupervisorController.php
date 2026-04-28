@@ -136,7 +136,7 @@ class SupervisorController extends Controller
 
         $roleLevel = (int) (optional($staff->role)->role_level ?? 0); // mst_roles.role_level
         $roleId = (int) ($staff->roles_id ?? 0);
-        $isSupervisorRole = ($roleLevel === 1) || in_array($staff->name ?? '', ['Supervisor', 'Supervisor2'], true);
+        $isSupervisorRole = ($roleLevel === 1) || ($staff->name ?? '') === 'Supervisor';
 
         // Supervisor: show (1) apps with no workflow, OR (2) latest workflow RE and forwarded_to Supervisor (resubmitted).
         // Other roles: show apps currently forwarded to them (latest workflow row).
@@ -236,9 +236,9 @@ class SupervisorController extends Controller
                 ->get();
         } else {
             $previousProcessedBy = match ($roleLevel) {
-                2 => ['S', 'S2'], // Accountant handles after Supervisor/Supervisor2
-                3 => ['A'],       // Secretary handles after Accountant
-                4 => ['SE'],      // President handles after Secretary
+                2 => ['S'],   // Assistant Secretary handles after Supervisor
+                3 => ['AS'],  // Secretary handles after Assistant Secretary
+                4 => ['SE'],  // President handles after Secretary
                 default => [],
             };
 
@@ -466,7 +466,7 @@ class SupervisorController extends Controller
         $workflows = DB::table('tnelb_application_tbl')
             ->where('form_id', $assignedFormID) // Filter by Form S
             ->whereIn('status', ['F', 'A', 'RF']) // Only show new applications
-            ->whereIn('processed_by', ['S', 'A', 'SE', 'PR']) // Only show new applications
+            ->whereIn('processed_by', ['S', 'AS', 'SE', 'PR']) // Only show new applications
             ->select('*')
             ->orderBy('id', 'desc')
             ->get();
@@ -483,7 +483,7 @@ class SupervisorController extends Controller
         $workflows = DB::table('tnelb_application_tbl')
             ->where('form_id', $assignedFormID) // Filter by Form S
             ->whereIn('status', ['F', 'A', 'RF']) // Only show new applications
-            ->whereIn('processed_by', ['S2', 'A', 'SE', 'PR']) // Only show new applications
+            ->whereIn('processed_by', ['S', 'AS', 'SE', 'PR']) // Only show new applications
             ->select('*')
             ->orderBy('id', 'desc')
             ->get();
@@ -522,9 +522,9 @@ class SupervisorController extends Controller
                   
         }
 
-        // Accountant should see only applications that have been forwarded
-        // by Supervisor to Accountant (processed_by = 'A', usually status F/RF)
-        elseif ($roleName === 'Accountant') {
+        // Assistant Secretary should see only applications that have been forwarded
+        // by Supervisor (processed_by = 'S', usually status F/RF)
+        elseif ($roleName === 'Assistant Secretary') {
             $query->whereIn('ta.application_status', ['F', 'RF'])
                   ->where('ta.processed_by', 'S');
         } elseif ($roleName === 'President') {
@@ -625,19 +625,18 @@ class SupervisorController extends Controller
             ? json_encode($request->queryType) : null;
 
         $processed_by = match ($staff->name) {
-            'President'   => 'PR',
-            'Secretary'   => 'SE',
-            'Supervisor'  => 'S',
-            'Supervisor2' => 'S2',
-            'Accountant'     => 'A',
-            default       => abort(403, 'Unauthorized'),
+            'President'           => 'PR',
+            'Secretary'           => 'SE',
+            'Supervisor'          => 'S',
+            'Assistant Secretary' => 'AS',
+            default               => abort(403, 'Unauthorized'),
         };
 
         $query_status = ($request->queryswitch === 'Yes') ? 'P' : null;
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
 
 
-        // if ($processed_by == 'A') {
+        // if ($processed_by == 'AS') {
         //     $last_workflow = SupervisorModel::where('application_id', $request->application_id)
         //         ->orderBy('id', 'desc')   // latest entry first
         //         ->first();
@@ -669,12 +668,11 @@ class SupervisorController extends Controller
 
 
         $status = match ($staff->name) {
-            'President'   => 'A',
-            'Secretary'   => $formType->form_id == 1 ? 'F' : 'A',
-            'Supervisor'  => $isReturnedApplication ? 'RF' : 'F',
-            'Supervisor2' => $isReturnedApplication ? 'RF' : 'F',
-            'Accountant'  => 'F',
-            default       => abort(403, 'Unauthorized'),
+            'President'           => 'A',
+            'Secretary'           => $formType->form_id == 1 ? 'F' : 'A',
+            'Supervisor'          => $isReturnedApplication ? 'RF' : 'F',
+            'Assistant Secretary' => 'F',
+            default               => abort(403, 'Unauthorized'),
         };
 
 
@@ -747,21 +745,19 @@ class SupervisorController extends Controller
 
         if ($request->application_status === 'RE') {
             $processed_by = match ($staff->name) {
-                'President'   => 'PR',
-                'Secretary'   => 'SE',
-                'Supervisor'  => 'SPRE',
-                'Supervisor2' => 'S2',
-                'Accountant'     => 'A',
-                default       => abort(403, 'Unauthorized'),
+                'President'           => 'PR',
+                'Secretary'           => 'SE',
+                'Supervisor'          => 'SPRE',
+                'Assistant Secretary' => 'AS',
+                default               => abort(403, 'Unauthorized'),
             };
         } else {
             $processed_by = match ($staff->name) {
-                'President'   => 'PR',
-                'Secretary'   => 'SE',
-                'Supervisor'  => 'S',
-                'Supervisor2' => 'S2',
-                'Accountant'     => 'A',
-                default       => abort(403, 'Unauthorized'),
+                'President'           => 'PR',
+                'Secretary'           => 'SE',
+                'Supervisor'          => 'S',
+                'Assistant Secretary' => 'AS',
+                default               => abort(403, 'Unauthorized'),
             };
         }
 
@@ -770,7 +766,7 @@ class SupervisorController extends Controller
         $raised_by    = ($request->queryswitch === 'Yes') ? $processed_by : $staffID;
 
 
-        if ($processed_by == 'A') {
+        if ($processed_by == 'AS') {
             $last_workflow = WorkflowA::where('application_id', $request->application_id)
                 ->orderBy('id', 'desc')   // latest entry first
                 ->first();
@@ -802,13 +798,12 @@ class SupervisorController extends Controller
 
 
         $status = match ($staff->name) {
-            'President'   => 'A',
+            'President'           => 'A',
             // 'Secretary'  => $formType->form_id == 1 ? 'F' : 'A',
-            'Secretary'   => $isReturnedApplication ? 'RF' : 'F',
-            'Supervisor'  => $isReturnedApplication ? 'RF' : 'F',
-            'Supervisor2' => $isReturnedApplication ? 'RF' : 'F',
-            'Accountant'  => 'F',
-            default       => abort(403, 'Unauthorized'),
+            'Secretary'           => $isReturnedApplication ? 'RF' : 'F',
+            'Supervisor'          => $isReturnedApplication ? 'RF' : 'F',
+            'Assistant Secretary' => 'F',
+            default               => abort(403, 'Unauthorized'),
         };
 
         // dd($request->queryswitch);

@@ -34,12 +34,12 @@ $(document).ready(function () {
         msgBox.text("");
 
         if (value === "") {
-            errorBox.text("License Number is Required");
+            errorBox.text("Certificate Number is Required");
             return;
         }
 
         if (!regexRules[type].test(value)) {
-            errorBox.text("Invalid License Number");
+            errorBox.text("Invalid Certificate Number");
         }
     });
 
@@ -47,7 +47,7 @@ $(document).ready(function () {
     $(document).on("change", ".verify-date", function () {
         let value = $(this).val()?.trim() || "";
         let errorBox = $($(this).data("error"));
-        errorBox.text(value === "" ? "Validity Date is required" : "");
+        errorBox.text(value === "" ? "Date of Expiry is required" : "");
     });
 
     // ✅ Common Date of Issue Validation
@@ -96,10 +96,10 @@ $(document).ready(function () {
         let isValid = true;
 
         if (value === "") {
-            errorBox.text("License Number is required");
+            errorBox.text("Certificate Number is required");
             isValid = false;
         } else if (!regexRules[type].test(value)) {
-            errorBox.text("Invalid License Number");
+            errorBox.text("Invalid Certificate Number");
             isValid = false;
         }
 
@@ -119,7 +119,7 @@ $(document).ready(function () {
         };
 
         if (dateVal === "") {
-            dateErrorBox.text("Validity Date is required");
+            dateErrorBox.text("Date of Expiry is required");
             isValid = false;
         } else if (!isValidDateString(dateVal)) {
             dateErrorBox.text("Enter a valid date");
@@ -222,6 +222,26 @@ $(document).ready(function () {
         });
         return false;
     }
+
+    function normalizeIsoDateInputs(scopeSelector) {
+        var $scope = scopeSelector ? $(scopeSelector) : $(document);
+        $scope.find('input[data-raw]').each(function () {
+            var raw = (this.getAttribute('data-raw') || '').trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                this.type = 'date';
+                this.value = raw;
+                return;
+            }
+            var v = (this.value || '').trim();
+            var m = v.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            if (m) {
+                this.type = 'date';
+                this.value = m[3] + '-' + m[2] + '-' + m[1];
+                this.setAttribute('data-raw', this.value);
+            }
+        });
+    }
+    window.normalizeIsoDateInputs = normalizeIsoDateInputs;
 
     $('#saveDraftBtn').on('click', async function(e) {
         e.preventDefault(); 
@@ -410,6 +430,8 @@ $(document).ready(function () {
             let applicationId = $('#application_id').val();
 
             let applType = $('#appl_type').val();
+
+            normalizeIsoDateInputs('#competency_form_ws');
             let formData = new FormData($('#competency_form_ws')[0]);
 
             formData.append('form_action', 'draft');
@@ -637,50 +659,64 @@ $(document).ready(function () {
 
     // Button toggle option for verify license
 
+    function unlockVerifyField(el) {
+        if (!el) return;
+        const oldNode = el.jquery ? el.get(0) : el;
+        if (!oldNode || !oldNode.parentNode) return;
+
+        const newNode = oldNode.cloneNode(false);
+        newNode.removeAttribute('readonly');
+        newNode.removeAttribute('disabled');
+        newNode.readOnly     = false;
+        newNode.disabled     = false;
+        newNode.value        = '';
+        newNode.defaultValue = '';
+
+        oldNode.parentNode.replaceChild(newNode, oldNode);
+        return newNode;
+    }
+
+    function unlockVerifySection($section) {
+        if (!$section || !$section.length) return;
+        $section.find('.verify-input, .verify-issue-date, .verify-date').each(function () {
+            unlockVerifyField(this);
+        });
+        $section.find('.text-danger, .text-success, #verify_status, .verify_status').text('');
+    }
+
     $(document).on('click', '.remove_verify', function () {
 
-        let type = $(this).data("type");
+        const $btn  = $(this);
+        const type  = $btn.data('type');
 
+        const $section = $btn.closest('#previously_details, #wireman_details');
 
-        console.log(type);
-
-
-        if (type == 'superviser') {
-
-            $('#previously_number').prop('readonly', false).val('').attr('value', '');
-            $('#previously_date').prop('readonly', false).val('').attr('value', '');
-            $('#previously_issue_date').prop('readonly', false).val('').attr('value', '');
-
+        if ($section.length) {
+            unlockVerifySection($section);
+        } else if (type == 'superviser') {
+            unlockVerifyField(document.getElementById('previously_number'));
+            unlockVerifyField(document.getElementById('previously_date'));
+            unlockVerifyField(document.getElementById('previously_issue_date'));
             $('.verify_status').text('');
             $('#previouslyIssueDateError').text('');
-
-            $(this).remove();
-
-            $('.btn-forms').length && $('.btn-forms').removeClass('d-none');
-
-        }else if (type == 'superviser_two') {
-
-            $('#certificate_no').prop('readonly', false).val('').attr('value', '');
-            $('#certificate_date').prop('readonly', false).val('').attr('value', '');
-            $('#certificate_issue_date').prop('readonly', false).val('').attr('value', '');
+        } else {
+            unlockVerifyField(document.getElementById('certificate_no'));
+            unlockVerifyField(document.getElementById('certificate_date'));
+            unlockVerifyField(document.getElementById('certificate_issue_date'));
             $('#verify_status').text('');
             $('#certIssueDateError').text('');
-
-            $(this).remove(); 
-
-            $('.verify-btn').length && $('.verify-btn').removeClass('d-none');
         }
-        else{
-            $('#certificate_no').prop('readonly', false).val('').attr('value', '');
-            $('#certificate_date').prop('readonly', false).val('').attr('value', '');
-            $('#certificate_issue_date').prop('readonly', false).val('').attr('value', '');
 
-            $('#verify_status').text('');
-            $('#certIssueDateError').text('');
+        $btn.remove();
 
-            $(this).remove();
+        if (type == 'superviser') {
+            $('.btn-forms').length && $('.btn-forms').removeClass('d-none');
+        }
 
-            $('.verify-btn').length && $('.verify-btn').removeClass('d-none');
+        if ($section.length) {
+            $section.find('.verify-btn').removeClass('d-none');
+        } else {
+            $('.verify-btn').removeClass('d-none');
         }
     });
 

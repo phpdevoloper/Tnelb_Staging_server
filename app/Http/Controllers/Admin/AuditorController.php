@@ -21,42 +21,26 @@ class AuditorController extends Controller
 
     public function view(Request $request)
     {
-// dd('111');
-// exit;
         $formId = $request->query('form_id');
 
+        // Assistant Secretary view: applications forwarded by Supervisor (processed_by='S') with status 'F'.
         $new_applications = DB::table('tnelb_application_tbl as ta')
             ->where('ta.appl_type', 'N')
             ->where('ta.form_id', $formId)
-            ->where(function ($q) {
-                $q->where(function ($sub) {
-                    $sub->whereIn('ta.status', ['F'])
-                        ->where('ta.processed_by', 'S');
-                })
-                    ->orWhere('ta.processed_by', 'S2');
-            })
+            ->whereIn('ta.status', ['F'])
+            ->where('ta.processed_by', 'S')
             ->select('ta.*')
             ->orderByDesc('ta.id')
             ->get();
-
-
-        // var_dump($new_applications);die;
 
         $renewal_applications = DB::table('tnelb_application_tbl as ta')
             ->where('ta.appl_type', 'R')
             ->where('ta.form_id', $formId)
-            ->where(function ($q) {
-                $q->where(function ($sub) {
-                    $sub->whereIn('ta.status', ['F'])
-                        ->where('ta.processed_by', 'S');
-                })
-                    ->orWhere('ta.processed_by', 'S2');
-            })
+            ->whereIn('ta.status', ['F'])
+            ->where('ta.processed_by', 'S')
             ->select('ta.*')
             ->orderByDesc('ta.id')
             ->get();
-
-
 
         return view('admin.auditor.view', compact('new_applications', 'renewal_applications'));
     }
@@ -65,62 +49,30 @@ class AuditorController extends Controller
 
         $formId = $request->query('form_id');
 
-        if ($formId == 2) {
-
-            $workflows = DB::table('tnelb_application_tbl as ta')
-                ->whereIn('ta.processed_by', ['S2', 'A', 'SE', 'PR'])
-                ->where('ta.form_id', $formId)
-                ->where(function ($query) {
-                    $query->where('ta.status', 'A')
-                        ->orWhere('ta.status', 'F');
-                })
-                ->select('ta.*')
-                ->orderByDesc('ta.id')
-                ->get();
-        } else {
-            $workflows = DB::table('tnelb_application_tbl as ta')
-                ->whereIn('ta.processed_by', ['SE', 'PR', 'A'])
-                ->where('ta.form_id', $formId)
-                ->where(function ($query) {
-                    $query->where('ta.status', 'A')
-                        ->orWhere('ta.status', 'F');
-                })
-                ->select('ta.*')
-                ->orderByDesc('ta.id')
-                ->get();
-
-
-            // $workflows = DB::table('tnelb_application_tbl as ta')
-            // ->where('ta.status',['F','A'])
-            // ->where('ta.processed_by',['A'])
-            // ->where('ta.status', '!=', 'RF')
-            // ->where('ta.appl_type','N')
-            // ->orWhere('ta.processed_by','S2')
-            // ->where('ta.form_id', $formId)
-            // ->select('ta.*')
-            // ->orderByDesc('ta.id')
-            // ->get();
-
-            // dd($workflows);die;
-
-        }
-
+        $workflows = DB::table('tnelb_application_tbl as ta')
+            ->whereIn('ta.processed_by', ['AS', 'SE', 'PR'])
+            ->where('ta.form_id', $formId)
+            ->where(function ($query) {
+                $query->where('ta.status', 'A')
+                    ->orWhere('ta.status', 'F');
+            })
+            ->select('ta.*')
+            ->orderByDesc('ta.id')
+            ->get();
 
         return view('admin.supervisor.completed', compact('workflows'));
     }
 
     public function view_forma_pending($type)
     {
-        // Accountant should see Form A contractor applications that have been
-        // forwarded by Supervisor to Accountant: processed_by = 'A', status F/RF.
+        // Assistant Secretary should see Form A contractor applications that have been
+        // forwarded by Supervisor (processed_by='S', status F/RF).
         $workflows_ea = DB::table('tnelb_ea_applications')
             ->where('form_name', 'A')
             ->whereIn('application_status', ['F', 'RF'])
             ->where('processed_by', 'S')
             ->orderBy('dt_submit', 'DESC')
             ->get();
-
-        
 
         return view('admin.auditor.view_forma', compact('workflows_ea'));
     }
@@ -131,34 +83,32 @@ class AuditorController extends Controller
     {
         $userRole = Auth::user()->roles_id;
 
-// , 'RE'
-   $workflows = EA_Application_model::whereIn('application_status', ['F', 'A', 'RE', 'SPRE'])
-            ->whereIn('processed_by', ['A', 'SE', 'PR', 'SPRE'])
+        $workflows = EA_Application_model::whereIn('application_status', ['F', 'A', 'RE', 'SPRE'])
+            ->whereIn('processed_by', ['AS', 'SE', 'PR', 'SPRE'])
             ->orderby('updated_at', 'DESC')
             ->select('*')
-            
             ->get();
-            
-            $applicationIds = $workflows->pluck('application_id');
 
-    
-            $licenses = DB::table('tnelb_license')
-                ->whereIn('application_id', $applicationIds)
-                ->select('application_id', 'license_number')
-                ->get()
-                ->keyBy('application_id');
+        $applicationIds = $workflows->pluck('application_id');
 
-            $renewalLicenses = DB::table('tnelb_renewal_license')
-                ->whereIn('application_id', $applicationIds)
-                ->select('application_id', 'license_number')
-                ->get()
-                ->keyBy('application_id');
+        $licenses = DB::table('tnelb_license')
+            ->whereIn('application_id', $applicationIds)
+            ->select('application_id', 'license_number')
+            ->get()
+            ->keyBy('application_id');
+
+        $renewalLicenses = DB::table('tnelb_renewal_license')
+            ->whereIn('application_id', $applicationIds)
+            ->select('application_id', 'license_number')
+            ->get()
+            ->keyBy('application_id');
 
 
-           
-        return view('admin.auditor.completed_forma', compact( 'workflows',
-        'licenses',
-        'renewalLicenses'));
+        return view('admin.auditor.completed_forma', compact(
+            'workflows',
+            'licenses',
+            'renewalLicenses'
+        ));
     }
 
     public function view_rejected(Request $request)
@@ -167,25 +117,11 @@ class AuditorController extends Controller
         $page_title = 'Rejected';
         $formId = $request->query('form_id');
 
-
-
-        if ($formId == 2) {
-
-            $workflows = DB::table('tnelb_application_tbl as ta')
-                // ->whereIn('ta.processed_by', ['S2','A','SE'])
-                ->where('ta.form_id', $formId)
-                ->where('ta.status', 'RJ')
-                ->select('ta.*')
-                ->get();
-        } else {
-            $workflows = DB::table('tnelb_application_tbl as ta')
-                // ->whereIn('ta.processed_by', ['SE','PR','A'])
-                ->where('ta.form_id', $formId)
-                ->where('ta.status', 'RJ')
-                ->select('ta.*')
-                ->get();
-        }
-
+        $workflows = DB::table('tnelb_application_tbl as ta')
+            ->where('ta.form_id', $formId)
+            ->where('ta.status', 'RJ')
+            ->select('ta.*')
+            ->get();
 
         return view('admin.supervisor.rejected', compact('workflows', 'page_title'));
     }
