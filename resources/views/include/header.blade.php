@@ -494,12 +494,12 @@ use Illuminate\Support\Facades\Auth;
 
   <!-- --------------------------------------------- -->
     <div class="page-wrapper">
-       <div class="loader-wrap">
+       {{-- <div class="loader-wrap">
             <div class="preloader"></div>
             <div class="layer layer-one"><span class="overlay"></span></div>
             <div class="layer layer-two"><span class="overlay"></span></div>
             <div class="layer layer-three"><span class="overlay"></span></div>
-        </div>
+        </div> --}}
         <div class="content ">
 
             <!-- Main Header -->

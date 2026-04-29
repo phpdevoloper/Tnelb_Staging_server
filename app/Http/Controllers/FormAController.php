@@ -3697,7 +3697,7 @@ class FormAController extends BaseController
             ->select('id', 'application_id', 'license_number', 'expires_at')
             ->unionAll(
                 DB::table('tnelb_renewal_license')
-                    ->select('id', 'application_id', 'license_number', 'expires_at')
+                    ->select('ren_id as id', 'application_id', 'license_number', 'expires_at')
             )
             ->orderBy('id', 'ASC')
             ->get();
@@ -3709,8 +3709,6 @@ class FormAController extends BaseController
     public function storevaliditycheck_cl(Request $request)
     {
 
-        // dd('1111');
-        // exit;
         DB::table('tnelb_cl_validitychecks')->insert([
             'login_id'      => auth()->id(),
             'application_id' => $request->application_id,

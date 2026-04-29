@@ -774,9 +774,11 @@ $(document).ready(function() {
             }
         }
 
-        // W / WH forms: show "View Document" for all selected uploads
-        // (education, work, Aadhaar, PAN, photo, signature, etc.).
+        // W / WH forms: show "View Document" for all selected uploads except
+        // photo/signature (they already have an inline image preview).
         $(document).on('change', '#competency_form_ws input[type="file"]', function () {
+            var inputName = this.name || '';
+            if (inputName === 'upload_photo' || inputName === 'upload_sign') return;
             renderLocalFilePreviewForInput($(this));
         });
 
@@ -4614,7 +4616,8 @@ function getPaymentsService(licence_code,issued_licence,appl_type, options){
                 console.error(xhr.responseText);
             }
         });
-    });
+    });    
+    
 </script>
 
 </body>

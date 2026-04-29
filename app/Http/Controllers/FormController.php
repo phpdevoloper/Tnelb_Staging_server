@@ -2445,6 +2445,8 @@ class FormController extends BaseController
                 'educational_level.*'  => 'nullable|string|max:50',
                 'institute_name'       => 'nullable|array|min:1',
                 'institute_name.*'     => 'nullable|string|max:80',
+                'month_of_passing'     => 'nullable|array',
+                'month_of_passing.*'   => 'nullable|in:01,02,03,04,05,06,07,08,09,10,11,12,1,2,3,4,5,6,7,8,9,10,11,12',
                 'year_of_passing'      => 'nullable|array|min:1',
                 'year_of_passing.*'    => 'nullable',
                 'certificate_no'       => 'nullable|array|min:1',
@@ -2467,6 +2469,7 @@ class FormController extends BaseController
             'educational_level.*.max'       => 'Educational level may not be greater than 50 characters.',
             'institute_name.*.string'       => 'Institute name must be a valid string.',
             'institute_name.*.max'          => 'Institute name may not be greater than 80 characters.',
+            'month_of_passing.*.in'         => 'Month of passing must be a valid month.',
             'certificate_no.*.string'       => 'Certificate No must be a valid text value.',
             'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
             // work experience arrays
@@ -2625,6 +2628,17 @@ class FormController extends BaseController
                     $year       = $request->year_of_passing[$key] ?? null;
                     $certificateNo = $request->certificate_no[$key] ?? null;
 
+                    // Normalize month_of_passing: trim, accept "01"-"12" or "1"-"12",
+                    // map to int 1-12, otherwise treat as missing.
+                    $monthRaw = $request->month_of_passing[$key] ?? null;
+                    $monthVal = null;
+                    if ($monthRaw !== null && $monthRaw !== '') {
+                        $m = (int) ltrim((string) $monthRaw, '0');
+                        if ($m >= 1 && $m <= 12) {
+                            $monthVal = $m;
+                        }
+                    }
+
                     $removed    = isset($request->removed_document[$key]) && $request->removed_document[$key] == '1';
                     $newDoc     = (isset($request->file('education_document')[$key]) && $request->file('education_document')[$key]->isValid())
                                     ? $request->file('education_document')[$key]
@@ -2643,11 +2657,24 @@ class FormController extends BaseController
                     }
 
                     // skip only if EVERYTHING is empty (avoid junk rows)
-                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($certificateNo) || !empty($finalDoc);
+                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year)
+                        || !empty($certificateNo) || !empty($finalDoc) || $monthVal !== null;
                     if (!$hasAnyData) continue;
 
                     $lastNum++;
                     $newSerial = 'edu_' . $lastNum;
+
+                    // Look up the existing row so we can preserve its month_passing
+                    // when the request does not supply a (valid) value.
+                    $existingEdu = Mst_education::where([
+                        'login_id'          => $loginId,
+                        'application_id'    => $applicationId,
+                        'educational_level' => $levelName,
+                    ])->first();
+
+                    $monthToSave = $monthVal !== null
+                        ? $monthVal
+                        : ($existingEdu ? $existingEdu->month_passing : null);
 
                     Mst_education::updateOrCreate(
                         [
@@ -2657,6 +2684,7 @@ class FormController extends BaseController
                         ],
                         [
                             'institute_name'    => $institute,
+                            'month_passing'     => $monthToSave,
                             'year_of_passing'   => $year,
                             'certificate_no'    => $certificateNo,
                             'upload_document'   => $finalDoc,

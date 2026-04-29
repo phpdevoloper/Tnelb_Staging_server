@@ -83,10 +83,10 @@ class PDFController extends Controller
         $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
         $decryptedPan = $this->safeDecryptString($form->pancard);
         $decryptedPan = $decryptedPan ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPan)) : '';
-        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : 'Invalid PAN';
+        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : '';
         $decryptedPan = $this->safeDecryptString($form->pancard);
         $decryptedPan = $decryptedPan ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPan)) : '';
-        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : 'Invalid PAN';
+        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : '';
         $maskedUpper = mb_strtoupper($masked, 'UTF-8');
 
         // Match generatePDF(): A4, helvetica 10pt, acknowledgement-style layout
@@ -695,7 +695,7 @@ class PDFController extends Controller
         $masked = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : 'Invalid Aadhaar';
         $decryptedPan = $this->safeDecryptString($form->pancard);
         $decryptedPan = $decryptedPan ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPan)) : '';
-        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : 'Invalid PAN';
+        $maskedPan = strlen($decryptedPan) === 10 ? str_repeat('X', 6) . substr($decryptedPan, -4) : '';
 
         // $wrap = function ($text, $length = 20) {
         //     return wordwrap($text, $length, '<br>', true);
@@ -862,7 +862,7 @@ class PDFController extends Controller
         $html .= '
         <table style="width:100%; border-collapse:collapse; margin-top:10px;">
           <tr>
-            <td style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">5.</td>
+            <td style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">5.</td>
             <td style="vertical-align:top; padding:4px 0; color:#1a1a1a;">DETAILS OF TECHNICAL QUALIFICATION AND EXAMINATION, IF ANY PASSED BY THE APPLICANT</td>
           </tr>
         </table>
@@ -899,7 +899,7 @@ class PDFController extends Controller
             $html .= '
             <table style="width:100%; border-collapse:collapse; margin-top:8px;">
               <tr>
-                <td style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">6.</td>
+                <td style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">6.</td>
                 <td style="vertical-align:top; padding:4px 0; color:#1a1a1a;">DETAILS OF PAST AND PRESENT EXPERIENCE</td>
               </tr>
             </table>
@@ -925,10 +925,15 @@ class PDFController extends Controller
                 </tr>';
             } else {
                 $html .= '<tr>
-                    <th style="width:5%;">S.NO</th>
-                    <th>EMPLOYER NAME</th>
-                    <th>EXPERIENCE (YEARS)</th>
-                    <th>DESIGNATION</th>
+                    <th rowspan="2" style="width:5%;">S.NO</th>
+                    <th rowspan="2">EMPLOYER NAME</th>
+                    <th colspan="3">YEAR OF EXPERIENCE</th>
+                    <th rowspan="2">DESIGNATION</th>
+                </tr>
+                <tr>
+                    <th>FROM (DATE)</th>
+                    <th>TO (DATE)</th>
+                    <th style="width:10%;">TOTAL YRS</th>
                 </tr>';
             }
 
@@ -951,7 +956,7 @@ class PDFController extends Controller
                     $extraNilCell = $hasContractorRow ? '<td>-</td>' : '';
                     $html .= '<tr><td>1</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>' . $extraNilCell . '</tr>';
                 } else {
-                    $html .= '<tr><td>1</td><td>-</td><td>-</td><td>-</td></tr>';
+                    $html .= '<tr><td>1</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>';
                 }
             } else {
                 foreach ($experience as $i => $exp) {
@@ -981,11 +986,16 @@ class PDFController extends Controller
                             . $intimationCell . '
                         </tr>';
                     } else {
+                        $fromDate = !empty($exp->from_date) ? format_date($exp->from_date) : '-';
+                        $toDate   = !empty($exp->to_date)   ? format_date($exp->to_date)   : '-';
+
                         $html .= '<tr>
                             <td>' . ($i + 1) . '</td>
-                            <td class="td-left">' . e($employerName) . '</td>
+                            <td>' . e($employerName) . '</td>
+                            <td>' . e($fromDate) . '</td>
+                            <td>' . e($toDate) . '</td>
                             <td>' . e($experienceYears) . '</td>
-                            <td class="td-left">' . e($designation) . '</td>
+                            <td>' . e($designation) . '</td>
                         </tr>';
                     }
                 }
@@ -1440,25 +1450,25 @@ class PDFController extends Controller
             <td style="vertical-align:top; padding:0;">
               <table style="width:100%; border-collapse:collapse;">
                 <tr>
-                  <td style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">1.</td>
+                  <td style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">1.</td>
                   <td style="width:38%; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a;">விண்ணப்பதாரரின் பெயர்</td>
                   <td style="width:4%;  vertical-align:top; padding:4px 2px; text-align:center; color:#1a1a1a;">:</td>
                   <td style="vertical-align:top; padding:4px 0; color:#1a1a1a;"><span class="eng">' . e($form->applicant_name) . '</span></td>
                 </tr>
                 <tr>
-                  <td style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">2.</td>
+                  <td style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">2.</td>
                   <td style="vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a;">தகப்பனார் பெயர்</td>
                   <td style="vertical-align:top; padding:4px 2px; text-align:center; color:#1a1a1a;">:</td>
                   <td style="vertical-align:top; padding:4px 0; color:#1a1a1a;"><span class="eng">' . e($form->fathers_name) . '</span></td>
                 </tr>
                 <tr>
-                  <td style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">3.</td>
+                  <td style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">3.</td>
                   <td style="vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a;">விண்ணப்பதாரர் முகவரி</td>
                   <td style="vertical-align:top; padding:4px 2px; text-align:center; color:#1a1a1a;">:</td>
                   <td style="vertical-align:top; padding:4px 0; color:#1a1a1a;"><span class="eng">' . $this->formatAddressToThreeLines($form->applicants_address) . '</span></td>
                 </tr>
                 <tr>
-                  <td style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">4.</td>
+                  <td style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;">4.</td>
                   <td style="vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a;">பிறந்த நாள், மாதம், ஆண்டு மற்றும் வயது</td>
                   <td style="vertical-align:top; padding:4px 2px; text-align:center; color:#1a1a1a;">:</td>
                   <td style="vertical-align:top; padding:4px 0; color:#1a1a1a;"><span class="eng">' . e($form->d_o_b) . ' (' . e($form->age) . ' years)</span></td>
@@ -1543,10 +1553,15 @@ class PDFController extends Controller
             } else {
                 $html .= '
             <tr>
-                <th>வரிசை எண்</th>
-                <th>நிறுவனம்</th>
-                <th>அனுபவம் (ஆண்டுகள்)</th>
-                <th>பதவி</th>
+                <th rowspan="2" style="width:5%;">வரிசை எண்</th>
+                <th rowspan="2">நிறுவனம்</th>
+                <th colspan="3">அனுபவம் (ஆண்டுகள்)</th>
+                <th rowspan="2">பதவி</th>
+            </tr>
+            <tr>
+                <th>தேதி முதல்</th>
+                <th>தேதி வரை</th>
+                <th style="width:10%;">மொத்த ஆண்டுகள்</th>
             </tr>';
             }
 
@@ -1569,7 +1584,7 @@ class PDFController extends Controller
                     $extraNilCellTa = $hasContractorRowTa ? '<td>Nil</td>' : '';
                     $html .= '<tr><td>1</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td>' . $extraNilCellTa . '</tr>';
                 } else {
-                    $html .= '<tr><td>1</td><td>Nil</td><td>Nil</td><td>Nil</td></tr>';
+                    $html .= '<tr><td>1</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td><td>Nil</td></tr>';
                 }
             } else {
                 foreach ($experience as $i => $exp) {
@@ -1604,9 +1619,14 @@ class PDFController extends Controller
                             . $intimationCellTa . '
                         </tr>';
                     } else {
+                        $fromDate = !empty($exp->from_date) ? format_date($exp->from_date) : 'Nil';
+                        $toDate = !empty($exp->to_date) ? format_date($exp->to_date) : 'Nil';
+
                         $html .= '<tr>
                             <td>' . ($i + 1) . '</td>
                             <td><span class="eng">' . e($employerName) . '</span></td>
+                            <td><span class="eng">' . e($fromDate) . '</span></td>
+                            <td><span class="eng">' . e($toDate) . '</span></td>
                             <td><span class="eng">' . e($experienceYears) . '</span></td>
                             <td><span class="eng">' . e($designation) . '</span></td>
                         </tr>';
@@ -1635,10 +1655,10 @@ class PDFController extends Controller
 
         $decryptedPanTa = $this->safeDecryptString($form->pancard);
         $decryptedPanTa = $decryptedPanTa ? strtoupper(preg_replace('/[^A-Z0-9]/i', '', $decryptedPanTa)) : '';
-        $maskedPanTa = strlen($decryptedPanTa) === 10 ? str_repeat('X', 6) . substr($decryptedPanTa, -4) : 'Invalid PAN';
+        $maskedPanTa = strlen($decryptedPanTa) === 10 ? str_repeat('X', 6) . substr($decryptedPanTa, -4) : '';
 
         // ── Q rows — same 28pt num col alignment ────────────────────────────
-        $numStyleTa  = 'style="width:28pt; font-weight:bold; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;"';
+        $numStyleTa  = 'style="width:28pt; font-weight:normal; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a; white-space:nowrap;"';
         $textStyleTa = 'style="width:58%; vertical-align:top; padding:4px 4px 4px 0; color:#1a1a1a;"';
         $colStyleTa  = 'style="width:3%;  vertical-align:top; padding:4px 2px; text-align:center; color:#1a1a1a;"';
         $ansStyleTa  = 'style="vertical-align:top; padding:4px 0; color:#1a1a1a;"';
@@ -1707,24 +1727,35 @@ class PDFController extends Controller
 
             $html .= '
             <br><br>
-            <table class="header-table" style="border:none; margin-bottom:2px;">
-                <tr><td style="font-family: Arial, sans-serif; font-size:11pt; font-weight:bold;">PAYMENT DETAILS</td></tr>
+            <table class="header-table" style="border:none; margin-bottom:2px; width:100%;">
+                <tr><td style="font-family: Arial, sans-serif; font-size:11pt; font-weight:bold; text-align:center;">PAYMENT DETAILS</td></tr>
             </table>
-            <table class="payment-table">
-                <tr>
-                    <th>PAYMENT TYPE</th>
-                    <th>TRANSACTION NUMBER</th>
-                    <th>PAYMENT DATE</th>
-                    <th>AMOUNT</th>
-                    <th>PAYMENT STATUS</th>
-                </tr>
-                <tr>
-                    <td>' . e($paymentType) . '</td>
-                    <td>' . e($transactionNo) . '</td>
-                    <td>' . e($paymentDate) . '</td>
-                    <td>' . e($amountValue) . '</td>
-                    <td>' . e($statusValue) . '</td>
-                </tr>
+            <table class="payment-table" border="1" cellspacing="0" cellpadding="0" style="width:100%; border:1px solid #000; border-collapse:collapse; table-layout:fixed; font-family: Arial, sans-serif; font-size:10pt;">
+                <colgroup>
+                    <col style="width:14%;" />
+                    <col style="width:28%;" />
+                    <col style="width:18%;" />
+                    <col style="width:18%;" />
+                    <col style="width:22%;" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #000; padding:6px 4px; text-align:center; background:#efefef; white-space:nowrap;">PAYMENT TYPE</th>
+                        <th style="border:1px solid #000; padding:6px 4px; text-align:center; background:#efefef; white-space:nowrap;">TRANSACTION NUMBER</th>
+                        <th style="border:1px solid #000; padding:6px 4px; text-align:center; background:#efefef; white-space:nowrap;">PAYMENT DATE</th>
+                        <th style="border:1px solid #000; padding:6px 4px; text-align:center; background:#efefef; white-space:nowrap;">AMOUNT</th>
+                        <th style="border:1px solid #000; padding:6px 4px; text-align:center; background:#efefef; white-space:nowrap;">PAYMENT STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border:1px solid #000; padding:6px 4px; text-align:center;">' . e($paymentType) . '</td>
+                        <td style="border:1px solid #000; padding:6px 4px; text-align:center;">' . e($transactionNo) . '</td>
+                        <td style="border:1px solid #000; padding:6px 4px; text-align:center;">' . e($paymentDate) . '</td>
+                        <td style="border:1px solid #000; padding:6px 4px; text-align:center;">' . e($amountValue) . '</td>
+                        <td style="border:1px solid #000; padding:6px 4px; text-align:center;">' . e($statusValue) . '</td>
+                    </tr>
+                </tbody>
             </table>';
         }
         

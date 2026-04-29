@@ -345,8 +345,8 @@ $(document).ready(function () {
         let licenseError = document.getElementById("licenseError");
         let dateError = document.getElementById("dateError");
 
-        licenseError.textContent = '';
-        dateError.textContent = '';
+        if (licenseError) licenseError.textContent = '';
+        if (dateError) dateError.textContent = '';
 
         $("#checkboxError").text("");
 
