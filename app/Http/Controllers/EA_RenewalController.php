@@ -17,6 +17,7 @@ use App\Models\Tnelb_Equimentsuser_cl;
 use App\Models\TnelbApplicantStaffDetail;
 // use Illuminate\Contracts\Validation\Rule;
 use App\Models\TnelbApplicantPhoto;
+use App\Models\TnelbApplicantsSign;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -72,6 +73,7 @@ class EA_RenewalController extends BaseController
             ->first();
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
+        $proof_doc = TnelbApplicantsSign::where('application_id', $appl_id)->first();
 
 
 
@@ -85,7 +87,7 @@ class EA_RenewalController extends BaseController
 
 
         $applicationid = $appl_id;
-        return view('user_login.renew-form', compact('applicationid', 'application_details', 'edu_details', 'exp_details', 'apps_doc', 'license_details', 'uploadedPhotos', 'applicant_photo', 'licence_name'));
+        return view('user_login.renew-form', compact('applicationid', 'application_details', 'edu_details', 'exp_details', 'apps_doc', 'license_details', 'uploadedPhotos', 'applicant_photo', 'proof_doc', 'licence_name'));
     }
 
 

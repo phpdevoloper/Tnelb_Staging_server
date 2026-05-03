@@ -1100,11 +1100,10 @@ $(document).ready(function() {
                 ''
             ).toString().trim().toUpperCase();
             const formTypeTitleMap = {
-                S: 'Supervisor Competency Form',
-                W: 'Wireman Competency Form',
-                P: 'Contractor Competency Form',
-                A: 'Form A Application',
-                B: 'Form B Application'
+                S: 'Supervisor Competency Certificate',
+                W: 'Wireman Competency Certificate',
+                WH: 'Wireman Helper Competency Certificate',
+                P: 'Power Generating Station Operation & Maintenance Competency Certificate',
             };
             const previewFormTitle = (
                 formTypeTitleMap[formTypeCode] ||

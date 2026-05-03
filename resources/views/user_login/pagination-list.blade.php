@@ -179,7 +179,7 @@
                     @elseif ($sts == 'A' && !empty($workflow->license_number))
                         <span class="btn btn-sm btn-success">Completed</span>
                     @elseif ($sts == 'A')
-                        <span class="btn btn-sm btn-success">Approved</span>
+                        <span class="btn btn-sm btn-success">Completed</span>
                     @else
                         <span class="btn btn-warning btn-sm">In Progress</span>
                     @endif

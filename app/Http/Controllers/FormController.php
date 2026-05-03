@@ -2059,6 +2059,8 @@ class FormController extends BaseController
             'educational_level.*'  => $educationLevelRuleDraft,
             'institute_name'       => 'nullable|array|min:1',
             'institute_name.*'     => 'nullable|string|max:80',
+            'month_of_passing'     => 'nullable|array',
+            'month_of_passing.*'   => 'nullable|in:01,02,03,04,05,06,07,08,09,10,11,12,1,2,3,4,5,6,7,8,9,10,11,12',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
             'certificate_no'       => 'nullable|array|min:1',
@@ -2099,6 +2101,7 @@ class FormController extends BaseController
         $action    = $request->form_action; // "draft" or "submit"
         $loginId   = $request->login_id;
         $appl_type = $request->appl_type ?? 'R'; // ensure renewal
+        $nowTs     = $this->dbNow;
 
         DB::beginTransaction();
 
@@ -2195,12 +2198,15 @@ class FormController extends BaseController
                 'cert_verify'        => $request->cert_verify ?? '0',
                 'license_verify'     => $request->l_verify ?? '0',
                 'old_application'    => $form ? $form->old_application : $id,
+                'submitted_date'     => $nowTs,
+                'updated_at'         => $nowTs,
             ];
 
             // insert or update master application
             if ($form) {
                 $form->update($data);      // editing same renewal draft
             } else {
+                $data['created_at'] = $nowTs;
                 $form = Mst_Form_s_w::create($data); // brand-new renewal application entry ✅
             }
 
@@ -2223,6 +2229,12 @@ class FormController extends BaseController
                 foreach ($request->educational_level as $key => $level) {
                     $levelName  = $level ?? null;
                     $institute  = $request->institute_name[$key] ?? null;
+                    $monthRaw   = $request->month_of_passing[$key] ?? null;
+                    $month      = null;
+                    if ($monthRaw !== null && $monthRaw !== '') {
+                        $monthInt = (int) trim((string) $monthRaw);
+                        $month = ($monthInt >= 1 && $monthInt <= 12) ? $monthInt : null;
+                    }
                     $year       = $request->year_of_passing[$key] ?? null;
                     $certificateNo = $request->certificate_no[$key] ?? null;
 
@@ -2244,7 +2256,7 @@ class FormController extends BaseController
                     }
 
                     // skip only if EVERYTHING is empty (avoid junk rows)
-                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($year) || !empty($certificateNo) || !empty($finalDoc);
+                    $hasAnyData = !empty($levelName) || !empty($institute) || !empty($month) || !empty($year) || !empty($certificateNo) || !empty($finalDoc);
                     if (!$hasAnyData) continue;
 
                     $lastNum++;
@@ -2259,6 +2271,7 @@ class FormController extends BaseController
                         ],
                         [
                             'institute_name'    => $institute,
+                            'month_passing'     => $month,
                             'year_of_passing'   => $year,
                             'certificate_no'    => $certificateNo,
                             'upload_document'   => $finalDoc,

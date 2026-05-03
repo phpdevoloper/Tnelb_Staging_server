@@ -1259,7 +1259,7 @@ class LoginController extends Controller
 
 
 
-    public function showApplicantDetails($applicant_id)
+    public function showApplicantDetails_bkk($applicant_id)
     {
 
         $returnForwardUser = null;
@@ -1269,8 +1269,6 @@ class LoginController extends Controller
             ->where('tnelb_application_tbl.application_id', $applicant_id)
             ->select('tnelb_application_tbl.*', 'payments.*')
             ->first();
-
-
 
 
         if (!$applicant) {
@@ -1448,6 +1446,219 @@ class LoginController extends Controller
 
 
         return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'uploadedSign', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff'));
+    }
+
+
+
+    public function showApplicantDetails($applicant_id)
+    {
+
+    
+        $returnForwardUser = null;
+        // Fetch applicant details
+        $applicant = DB::table('tnelb_application_tbl')
+            ->join('payments', 'tnelb_application_tbl.application_id', '=', 'payments.application_id')
+            ->where('tnelb_application_tbl.application_id', $applicant_id)
+            ->select('tnelb_application_tbl.*', 'payments.*')
+            ->first();
+
+
+
+
+        if (!$applicant) {
+            return abort(403, 'Applicant not found');
+        }
+
+
+        // var_dump($applicant->form_id);die;
+
+        if ($applicant->appl_type == "R") {
+
+            // $ids = [$applicant->old_application, $applicant_id];
+
+            // Fetch educational qualifications
+            $educationalQualifications = DB::table('tnelb_applicants_edu')
+                ->where('application_id', $applicant_id)
+                ->get();
+
+            // Fetch work experience
+            $workExperience = DB::table('tnelb_applicants_exp')
+                ->where('application_id', $applicant_id)
+                ->get();
+
+            // Fetch documents
+            // $documents = Schema::hasTable('mst_documents')
+            //     ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+            //     : collect([]);
+
+            // Get the last uploaded photo (if available)
+            $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
+                ->whereNotNull('upload_path')
+                ->orderByDesc('id')
+                ->first();
+
+            // var_dump($workExperience);die;
+
+        } else {
+
+            // Fetch educational qualifications
+            $educationalQualifications = DB::table('tnelb_applicants_edu')
+                ->where('application_id', $applicant_id)
+                ->orderBy('year_of_passing', 'desc')
+                ->get();
+
+            // Fetch work experience
+            $workExperience = DB::table('tnelb_applicants_exp')
+                ->where('application_id', $applicant_id)
+                ->get();
+
+            // Fetch documents
+            // $documents = Schema::hasTable('mst_documents')
+            //     ? DB::table('mst_documents')->where('application_id', $applicant_id)->get()
+            //     : collect([]);
+
+            // Get the last uploaded photo (if available)
+            $uploadedPhoto = TnelbApplicantPhoto::where('application_id', $applicant_id)
+                ->whereNotNull('upload_path')
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        // Get the last uploaded signature (common for all forms)
+        $uploadedSign = TnelbApplicantsSign::where('application_id', $applicant_id)
+            ->whereNotNull('uploaded_doc')
+            ->orderByDesc('id')
+            ->first();
+
+        // Get the current user's role ID
+        $staff = Auth::user();
+
+        // dd($staff->name);exit;    
+
+        if (!$staff || !$staff->roles_id) {
+            return abort(403, 'Unauthorized');
+        }
+
+        
+
+        // Fetch next role dynamically from the roles table
+        if (in_array($staff->name, ["Supervisor", "Supervisor2"])) {
+
+            // if ($applicant->status == 'RE') {
+
+
+            //     $nextForwardUser = DB::table('mst__staffs__tbls')
+            //         ->where('name', 'Secretary')
+            //         ->select('name', 'roles_id')
+            //         ->first();
+            // } else {
+                $nextForwardUser = DB::table('mst_login_users')
+                    ->where('user_name', 'assistantsecretary')
+                    ->select('user_name as name', 'role_id as roles_id')
+                    ->first();
+            // }
+        }
+       
+
+
+// dd($applicant->status);exit;
+        if ($staff->name === "Assistant Secretary") {
+
+         
+            $nextForwardUser = DB::table('mst__staffs__tbls')
+                ->where('name', 'Secretary')
+                ->select('name', 'roles_id')
+                ->first();
+             $returnForwardUser = DB::table('mst__staffs__tbls')
+                ->where('name', 'Supervisor')
+                ->select('name', 'roles_id')
+                ->first();
+            
+        }
+        if ($staff->name === "Secretary") {
+
+            if ($applicant->form_id == 1) {
+
+                $nextForwardUser = DB::table('mst__staffs__tbls')
+                    ->where('name', 'President')
+                    ->select('name', 'roles_id')
+                    ->first();
+
+                $returnForwardUser = DB::table('mst__staffs__tbls')
+                    ->where('name', 'Supervisor')
+                    ->select('name', 'roles_id')
+                    ->first();
+            } else {
+
+                $nextForwardUser = DB::table('mst__staffs__tbls')
+                    ->where('name', 'Secretary')
+                    ->select('name', 'roles_id')
+                    ->first();
+
+                $returnForwardUser = DB::table('mst__staffs__tbls')
+                    ->where('name', 'Supervisor')
+                    ->select('name', 'roles_id')
+                    ->first();
+            }
+        }
+
+        if ($staff->name === "President") {
+
+            $nextForwardUser = DB::table('mst__staffs__tbls')
+                ->where('name', 'President')
+                ->select('roles_id', 'name')
+                ->first();
+
+            $returnForwardUser = DB::table('mst__staffs__tbls')
+                ->where('name', 'Supervisor')
+                ->select('name', 'roles_id')
+                ->first();
+        }
+// dd($staff->name);exit;
+
+// dd($returnForwardUser);exit;
+//  dd($nextForwardUser->roles_id);exit;
+        $user_entry = DB::table('tnelb_application_tbl')
+            ->where('application_id', $applicant_id) // Filter by specific application
+            ->select('*')
+            ->first();
+
+        $workflows = $this->queryCompetencyWorkflowsWithReturnApplicantLog(
+            $applicant_id,
+            ['mst_roles.role_name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name'],
+            true,
+            true
+        );
+
+        $workflows1 = DB::table('mst__roles')
+            ->select('*')
+            ->get();
+
+
+        $queries = DB::table('tnelb_query_applicable as qa')
+            ->leftJoin('tnelb_application_tbl as ta', 'qa.application_id', '=', 'ta.application_id')
+            ->where('qa.application_id', $applicant_id)
+            ->where('qa.query_status', 'P')
+            ->select('qa.*')
+            ->orderByDesc('qa.id')
+            ->get();
+
+        // Determine view based on user role
+        $view = match ($staff->name) {
+            'President'  => 'admin.dashboard.applicants_detail_supervisor',
+            // 'President'  => 'admin.dashboard.applicants_detail_president',
+            // 'Secretary'  => 'admin.dashboard.applicants_detail',
+            'Secretary'  => 'admin.dashboard.applicants_detail_supervisor',
+            'Supervisor' => 'admin.dashboard.applicants_detail_supervisor',
+            'Supervisor2' => 'admin.dashboard.applicants_detail_supervisor',
+            'Assistant Secretary' => 'admin.dashboard.applicants_detail_supervisor',
+            // 'Assistant Secretary'    => 'admin.dashboard.applicants_detail_auditor',
+
+            default      => abort(403, 'Unauthorized'),
+        };
+
+        // var_dump($nextForwardUser);exit;
+        return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'uploadedSign', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff'));
     }
 
     public function presidentDashboard()
