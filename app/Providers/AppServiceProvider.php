@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
+use App\Models\Admin\Tnelb_Footercopyright;
 use App\Models\Admin\Tnelb_submenus;
 use App\Models\Admin\TnelbMenu;
+use App\Models\SiteStatistic;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View as FacadesView;
@@ -55,6 +58,31 @@ class AppServiceProvider extends ServiceProvider
                 'memberlist' => $memberlist,
             ]);
         });
+
+        FacadesView::composer('include.footer', function (View $view) {
+            $configured = config('tnelb.footer_last_updated');
+            if ($configured) {
+                try {
+                    $siteFooterLastUpdated = Carbon::parse($configured)->format('d M Y');
+                } catch (\Throwable $e) {
+                    $siteFooterLastUpdated = (string) $configured;
+                }
+            } else {
+                $copyright = Tnelb_Footercopyright::first();
+                if ($copyright?->updated_at) {
+                    $siteFooterLastUpdated = $copyright->updated_at->format('d M Y');
+                } else {
+                    $siteFooterLastUpdated = now()->format('d M Y');
+                }
+            }
+
+            $siteVisitorCount = (int) (SiteStatistic::query()->find(1)?->visitor_count ?? 0);
+
+            $view->with([
+                'siteFooterLastUpdated' => $siteFooterLastUpdated,
+                'siteVisitorCount' => $siteVisitorCount,
+            ]);
+        });
     }
 
-    }
+}

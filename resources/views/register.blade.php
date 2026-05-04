@@ -1,47 +1,673 @@
 @include('include.header')
 
-
 <style>
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
+    /*
+     * Register layout: viewport @media removed here in favour of
+     * — CSS container queries on .reg-card .card-body (name: regcard)
+     * — clamp(), min(), flex-wrap, and CSS Grid auto behaviour
+     */
+    /* Scoped modern register styling — does not alter site-wide Bootstrap */
+    .register-page {
+        --reg-bg: #f4f6f9;
+        --reg-card: #ffffff;
+        /* Match site theme (color-2.css / theme-color-two) */
+        --reg-accent: #035ab3;
+        --reg-accent-soft: rgba(3, 90, 179, 0.14);
+        --reg-border: #e2e8f0;
+        --reg-text: #1e293b;
+        --reg-muted: #64748b;
+        --reg-danger: #dc2626;
+        --reg-radius: 16px;
+        --reg-shadow: 0 1px 2px rgba(3, 90, 179, 0.04), 0 14px 40px rgba(15, 23, 42, 0.08);
+        --reg-touch-min: 2.75rem; /* ~44px: comfortable tap targets on phones */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(2.75rem + env(safe-area-inset-bottom, 0px));
+        overflow-x: clip;
+        background: linear-gradient(165deg, #edf2fa 0%, #f6f8fc 42%, #f0f3f9 100%);
+        min-height: 65vh;
+    }
+
+    .register-page .wrapper-box {
         width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        max-width: min(1380px, 100%);
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    .modal-content {
-        background-color: white;
-        width: 300px;
-        padding: 20px;
-        text-align: center;
-        border-radius: 10px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    /* Full-bleed card on narrow screens: strip Bootstrap row/col side gutters */
+    .register-page .wrapper-box .row {
+        margin-left: 0;
+        margin-right: 0;
     }
 
-    .modal button {
-        padding: 10px 20px;
-        background-color: #28a745;
-        color: white;
+    .register-page .wrapper-box .row > [class*="col-"] {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* Tighter page gutters on phones; safe-area still wins when notched */
+    .register-page > .auto-container {
+        max-width: 1420px;
+        padding-left: max(8px, env(safe-area-inset-left, 0px));
+        padding-right: max(8px, env(safe-area-inset-right, 0px));
+    }
+
+    .register-page .reg-card {
+        border: 1px solid var(--reg-border);
+        border-radius: var(--reg-radius);
+        box-shadow: var(--reg-shadow);
+        overflow: hidden;
+        background: var(--reg-card);
+    }
+
+    .register-page .reg-card .card-body {
+        padding-block: clamp(1.15rem, 3.5vw, 2.35rem);
+        padding-inline: clamp(0.65rem, 2.8vw, 1.85rem);
+        /* Component queries: layout follows card width, not only viewport */
+        container-type: inline-size;
+        container-name: regcard;
+    }
+
+    .register-page .reg-card-head {
+        background: linear-gradient(135deg, #023873 0%, #035ab3 50%, #1468c4 100%);
         border: none;
+        padding-block: clamp(1.1rem, 3.2vw, 2rem);
+        padding-inline: clamp(0.85rem, 3.2vw, 2rem);
+        box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    .register-page .reg-card-head .card-title_apply {
+        margin: 0;
+        font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .register-page .reg-card-head .reg-head-subtitle {
+        margin: 0.5rem 0 0;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.45;
+        opacity: 0.93;
+        max-width: 36rem;
+        overflow-wrap: anywhere;
+    }
+
+    .register-page .reg-required-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.5rem 0.85rem;
+        border-radius: 999px;
+        background: rgba(220, 38, 38, 0.08);
+        color: var(--reg-text);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .register-page .reg-required-note .dot {
+        color: var(--reg-danger);
+        font-weight: 700;
+    }
+
+    .register-page .reg-intro {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .register-page .reg-lead {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--reg-muted);
+        line-height: 1.55;
+        max-width: 32rem;
+    }
+
+    .register-page .reg-fields-row .reg-pane {
+        padding-bottom: 0;
+        min-width: 0;
+    }
+
+    /* Fluid two-column form: splits when the *card* is wide enough */
+    .register-page .reg-fields-row {
+        display: grid;
+        gap: 1rem;
+        gap: clamp(0.85rem, 3cqi, 1.35rem);
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    @container regcard (inline-size >= 40rem) {
+        .register-page .reg-fields-row {
+            grid-template-columns: 1fr 1fr;
+            column-gap: 1.25rem;
+            column-gap: clamp(1rem, 3.5cqi, 1.75rem);
+        }
+
+        .register-page .reg-fields-row > .reg-pane:last-child {
+            border-inline-start: 1px solid #e8edf3;
+            padding-inline-start: 1rem;
+            padding-inline-start: clamp(0.65rem, 2cqi, 1.1rem);
+        }
+
+        .register-page.register-page--alt .reg-fields-row > .reg-pane:last-child {
+            border-inline-start: 2px dashed #b8cade;
+        }
+    }
+
+    /* Phone-width card: trim side padding so fields use almost full screen */
+    @container regcard (inline-size < 26rem) {
+        .register-page .reg-card .card-body {
+            padding-inline: clamp(0.45rem, calc(0.2rem + 2.2cqi), 1rem);
+            padding-block: clamp(1rem, calc(0.35rem + 2.8cqi), 1.35rem);
+        }
+
+        .register-page .reg-card-head {
+            padding-inline: clamp(0.6rem, calc(0.35rem + 2.5cqi), 1.15rem);
+            padding-block: clamp(1rem, 2.5cqi, 1.35rem);
+        }
+
+        .register-page.register-page--alt .reg-fields-list > .reg-stack {
+            padding-left: clamp(0.65rem, 2.4cqi, 0.95rem);
+            padding-right: clamp(0.65rem, 2.4cqi, 0.95rem);
+        }
+
+        .register-page.register-page--alt .reg-section-title {
+            padding-inline: clamp(0.7rem, 2.6cqi, 1.05rem);
+        }
+
+        .register-page .reg-submit-strip {
+            padding-inline: clamp(0.7rem, 2.5cqi, 1.15rem);
+        }
+    }
+
+    .register-page .reg-panel {
+        background: linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+        border: 1px solid #e8eef3;
+        border-radius: 14px;
+        padding: 1.35rem 1.35rem 1.15rem;
+        margin-bottom: 0;
+        height: 100%;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .register-page .reg-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--reg-muted);
+        margin: 0 0 1.15rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 1px solid #dde5ee;
+        position: relative;
+    }
+
+    .register-page .reg-section-title::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -1px;
+        width: 3rem;
+        height: 2px;
+        background: var(--reg-accent);
+        border-radius: 2px;
+    }
+
+    .register-page .reg-stack {
+        margin-bottom: 1.25rem;
+    }
+
+    .register-page .reg-stack:last-of-type {
+        margin-bottom: 0;
+    }
+
+    .register-page .reg-label {
+        display: block;
+        margin-bottom: 0.45rem;
+    }
+
+    .register-page .req {
+        color: var(--reg-danger);
+        font-weight: 700;
+        margin-left: 0.0625rem;
+    }
+
+    .register-page .reg-name-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        align-items: stretch;
+    }
+
+    .register-page .reg-name-prefix {
+        flex: 0 0 5.75rem;
+    }
+
+    .register-page .reg-name-prefix .form-control {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .register-page .reg-name-input {
+        flex: 1 1 12rem;
+        min-width: 0;
+    }
+
+    .register-page .reg-label-group {
+        margin-bottom: 0.75rem;
+    }
+
+    .register-page .reg-label-group > .reg-label {
+        margin-bottom: 0.3rem;
+    }
+
+    .register-page .reg-field-hint {
+        margin: 0;
+        font-size: 0.8125rem;
+        color: var(--reg-muted);
+        line-height: 1.45;
+        font-weight: 400;
+    }
+
+    .register-page label.reg-sublabel,
+    .register-page .reg-sublabel {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--reg-text);
+        margin-bottom: 0.35rem;
+    }
+
+    /* Name row: intrinsic flex — wraps instead of viewport breakpoints */
+    .register-page .reg-name-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        gap: clamp(0.65rem, 2.5cqi, 1rem);
+        align-items: flex-start;
+    }
+
+    .register-page .reg-name-cell--title {
+        flex: 0 1 6.75rem;
+        min-width: 5.5rem;
+    }
+
+    .register-page .reg-name-cell--first,
+    .register-page .reg-name-cell--last {
+        flex: 1 1 min(100%, 14rem);
+        min-width: min(100%, 11rem);
+    }
+
+    .register-page .reg-stack--fullname .text-danger {
+        margin-top: 0.25rem;
+    }
+
+    .register-page select.form-control {
         cursor: pointer;
-        border-radius: 5px;
-        margin-top: 10px;
     }
 
-    .modal button:hover {
-        background-color: #218838;
+    .register-page .reg-radio-chip:has(input:checked) {
+        border-color: var(--reg-accent);
+        background: rgba(3, 90, 179, 0.08);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
     }
-</style>
 
-<style>
+    .register-page .reg-submit-strip {
+        background: linear-gradient(180deg, #fafbfd 0%, #f4f6f9 100%);
+        border: 1px solid #e8edf3;
+        border-radius: 14px;
+        padding: 1.35rem 1.35rem 1.4rem;
+        margin-top: 0.75rem;
+    }
+
+    .register-page .reg-label.font-weight-normal,
+    .register-page .reg-label .font-weight-normal {
+        font-weight: 400 !important;
+        font-size: 0.8125rem;
+    }
+
+    .register-page .reg-divider {
+        border: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--reg-border), transparent);
+        margin: 1rem 0 1.5rem;
+    }
+
+    .register-page label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--reg-text);
+        margin-bottom: 0.35rem;
+    }
+
+    .register-page .form-control {
+        border-radius: 10px;
+        border: 1px solid var(--reg-border);
+        padding: 0.55rem 0.85rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        /* 16px avoids iPhone Safari zooming inputs on focus */
+        font-size: 16px;
+    }
+
+    .register-page select.form-control,
+    .register-page input.form-control:not([type]),
+    .register-page input[type="text"].form-control,
+    .register-page input[type="email"].form-control,
+    .register-page input[type="tel"].form-control,
+    .register-page input[type="number"].form-control {
+        min-height: var(--reg-touch-min);
+        line-height: 1.35;
+    }
+
+    .register-page .form-control:focus {
+        border-color: var(--reg-accent);
+        box-shadow: 0 0 0 3px var(--reg-accent-soft);
+        outline: none;
+    }
+
+    .register-page textarea.form-control {
+        min-height: max(88px, 5.75rem);
+        resize: vertical;
+        line-height: 1.45;
+    }
+
+    .register-page .reg-field-group {
+        margin-bottom: 0.35rem;
+    }
+
+    .register-page .reg-radio-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.45rem 0.55rem;
+        align-items: stretch;
+        margin-top: 0.35rem;
+        width: 100%;
+    }
+
+    .register-page .reg-radio-chip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-height: var(--reg-touch-min);
+        width: 100%;
+        min-width: 0;
+        padding: 0.4rem 0.5rem;
+        border: 1px solid var(--reg-border);
+        border-radius: 999px;
+        background: #f8fafc;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 15px;
+        color: var(--reg-text);
+        margin: 0;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        text-align: center;
+        line-height: 1.25;
+    }
+
+    .register-page .reg-radio-chip:hover {
+        border-color: #cbd5e1;
+        background: #fff;
+    }
+
+    .register-page .reg-radio-chip input[type="radio"] {
+        flex-shrink: 0;
+        width: 1.05rem;
+        height: 1.05rem;
+        margin: 0;
+        margin-top: 0.05rem; /* optical align with caption text across browsers */
+        accent-color: var(--reg-accent);
+    }
+
+    .register-page .reg-radio-chip > span {
+        min-width: 0;
+        text-align: center;
+        text-wrap: balance;
+    }
+
+    /* Two columns on tight cards — third option spans full row */
+    @container regcard (inline-size < 24rem) {
+        .register-page .reg-radio-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .register-page .reg-radio-chip:nth-child(3) {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .register-page .reg-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.75rem;
+        padding-top: 0;
+    }
+
+    .register-page .reg-actions-hint {
+        font-size: 0.8125rem;
+        color: var(--reg-muted);
+        margin: 0;
+        margin-right: auto;
+        padding-right: 0.75rem;
+        flex: 1 1 min(100%, 18rem);
+        min-width: min(100%, 12rem);
+    }
+
+    .register-page .btn-reg-submit {
+        min-width: min(100%, 12rem);
+        flex: 0 1 auto;
+        min-height: var(--reg-touch-min);
+        padding: 0.65rem 1.75rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        background: linear-gradient(135deg, #1468c4 0%, #035ab3 100%);
+        box-shadow: 0 8px 20px rgba(3, 90, 179, 0.28);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    @container regcard (inline-size < 26rem) {
+        .register-page .reg-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .register-page .reg-actions-hint {
+            width: 100%;
+            padding-right: 0;
+            margin-bottom: 0.25rem;
+        }
+
+        .register-page .btn-reg-submit {
+            width: 100%;
+        }
+    }
+    .register-page .btn-reg-submit:hover,
+    .register-page .btn-reg-submit:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 28px rgba(3, 90, 179, 0.32);
+        background: linear-gradient(135deg, #1f77d4 0%, #035ab3 100%);
+        color: #fff;
+    }
+
+    .register-page .text-danger[id$="Error"] {
+        font-size: 0.8125rem;
+        display: block;
+        margin-top: 0.25rem;
+    }
+
+    /* -------------------------------------------------------------------------
+       Alternate presentation (register-page--alt): zebra rows, step badges,
+       flat white panels, dashed separators. Theme color unchanged.
+       ------------------------------------------------------------------------- */
+    .register-page.register-page--alt {
+        background: #f3f6fb;
+        background-image:
+            radial-gradient(ellipse 90% 55% at 12% -15%, rgba(3, 90, 179, 0.085), transparent 58%),
+            radial-gradient(ellipse 70% 45% at 98% 105%, rgba(3, 90, 179, 0.055), transparent 48%);
+    }
+
+    .register-page.register-page--alt .reg-card {
+        border-radius: 20px;
+        box-shadow:
+            0 4px 28px rgba(15, 23, 42, 0.065),
+            0 0 0 1px rgba(3, 90, 179, 0.07);
+        border-color: #d4dde8;
+    }
+
+    .register-page.register-page--alt .reg-panel {
+        background: #fff;
+        border: 1px solid #cdd8e6;
+        border-radius: 18px;
+        padding: 0;
+        margin-bottom: 0;
+        height: 100%;
+        overflow: hidden;
+        box-shadow: 0 4px 22px rgba(3, 90, 179, 0.045);
+    }
+
+    .register-page.register-page--alt .reg-section-title {
+        margin: 0;
+        padding: 0.95rem 1.2rem;
+        background: linear-gradient(90deg, rgba(3, 90, 179, 0.1) 0%, rgba(3, 90, 179, 0.02) 100%);
+        border-bottom: 1px solid #dfe8f2;
+        font-size: 0.72rem;
+        letter-spacing: 0.07em;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        text-transform: uppercase;
+    }
+
+    .register-page.register-page--alt .reg-section-title::after {
+        display: none;
+    }
+
+    .register-page.register-page--alt .reg-step-badge {
+        flex-shrink: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: var(--reg-accent);
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        box-shadow: 0 2px 8px rgba(3, 90, 179, 0.25);
+    }
+
+    .register-page.register-page--alt .reg-section-label {
+        font-weight: 800;
+        color: #334155;
+    }
+
+    .register-page.register-page--alt .reg-fields-list {
+        padding: 0;
+    }
+
+    .register-page.register-page--alt .reg-fields-list > .reg-stack {
+        margin: 0;
+        padding: 0.95rem 1.15rem 1.05rem;
+    }
+
+    .register-page.register-page--alt .reg-fields-list > .reg-stack:nth-child(odd) {
+        background: #fff;
+    }
+
+    .register-page.register-page--alt .reg-fields-list > .reg-stack:nth-child(even) {
+        background: #eef3fa;
+    }
+
+    .register-page.register-page--alt .reg-fields-list > .reg-stack + .reg-stack {
+        border-top: 1px solid #e2e9f2;
+    }
+
+    .register-page.register-page--alt .reg-radio-chip {
+        background: rgba(255, 255, 255, 0.85);
+        border-color: #bac8d8;
+    }
+
+    .register-page.register-page--alt .reg-fields-list > .reg-stack:nth-child(even) .reg-radio-chip {
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .register-page.register-page--alt .reg-submit-strip {
+        background: linear-gradient(180deg, #fff 0%, #f6f9fd 100%);
+        border: 2px dashed rgba(3, 90, 179, 0.45);
+        border-radius: 18px;
+        box-shadow: 0 10px 36px rgba(3, 90, 179, 0.07);
+    }
+
+    .register-page.register-page--alt .reg-head-subtitle {
+        opacity: 0.9;
+    }
+
+    /* Success modal (#overlay / #success-popup) */
+    .register-page #overlay.overlay {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        background: rgba(15, 23, 42, 0.55);
+    }
+
+    .register-page #success-popup.popup {
+        border-radius: 16px;
+        padding: 2rem 1.75rem;
+        border: 1px solid var(--reg-border);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+        max-width: 420px;
+        width: calc(100% - 2rem);
+    }
+
+    .register-page #success-popup.popup h2 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--reg-accent);
+        margin-bottom: 0.65rem;
+    }
+
+    .register-page #success-popup.popup h6 {
+        color: var(--reg-muted);
+        font-weight: 500;
+        line-height: 1.45;
+    }
+
+    .register-page #success-popup.popup .log_in.btn {
+        display: inline-block;
+        margin-top: 1.25rem;
+        padding: 0.65rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #1468c4 0%, #035ab3 100%);
+        border: none;
+        transition: opacity 0.15s ease, transform 0.12s ease;
+    }
+
+    .register-page #success-popup.popup .log_in.btn:hover {
+        opacity: 0.94;
+        transform: translateY(-1px);
+        color: #fff;
+    }
+
+    /* Base overlay/popup positioning (scoped IDs keep behavior for success dialog) */
     .overlay {
         display: none;
         position: fixed;
@@ -49,7 +675,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(15, 23, 42, 0.55);
         z-index: 999;
     }
 
@@ -60,37 +686,50 @@
         left: 50%;
         transform: translate(-50%, -50%);
         background: #fff;
-        padding: 30px;
-        border-radius: 8px;
         text-align: center;
         z-index: 1000;
-        max-width: 400px;
+    }
+
+    /* Legacy modal (kept if JS still toggles #successModal) */
+    #successModal.modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
         width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(3px);
     }
 
-    .popup h2 {
-        font-size: 24px;
-        color: #28a745;
+    #successModal .modal-content {
+        background-color: #fff;
+        width: min(340px, 92vw);
+        padding: 1.75rem;
+        text-align: center;
+        border-radius: 16px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+        border: 1px solid var(--reg-border, #e2e8f0);
     }
 
-    .popup p {
-        font-size: 16px;
-        margin-bottom: 20px;
-        color: #333;
-    }
-
-    .popup .btn {
-        background-color: #28a745;
+    #successModal.modal button {
+        padding: 0.65rem 1.5rem;
+        background: linear-gradient(135deg, #1468c4 0%, #035ab3 100%);
         color: white;
-        padding: 10px 20px;
-        text-decoration: none;
-        font-size: 16px;
-        border-radius: 5px;
+        border: none;
         cursor: pointer;
+        border-radius: 10px;
+        margin-top: 1rem;
+        font-weight: 600;
     }
 
-    .popup .btn:hover {
-        background-color: #218838;
+    #successModal.modal button:hover {
+        opacity: 0.92;
     }
 </style>
 <!-- <section class="page-title" style="background-image: url(assets/images/slider/slider3.jpg);">
@@ -112,154 +751,97 @@
 
 <!-- About section -->
 
-<section class="register-form ">
+<section class="register-form register-page register-page--alt">
     <div class="auto-container">
         <div class="wrapper-box">
             <div class="row">
                 <div class="col-lg-12 col-12">
-                    <div class="card card-info" data-select2-id="14">
-                        <div class="card-header" style="background-color: #877e85 !important;">
-                            <h4 class="card-title_apply text-white text-center">Applicant Registration / Sign up Form</h4>
+                    <div class="card card-info reg-card" data-select2-id="14">
+                        <div class="card-header reg-card-head">
+                            <h4 class="card-title_apply text-white text-center text-lg-left">Applicant registration</h4>
+                            <p class="reg-head-subtitle text-white text-center text-lg-left">Use the same names and contact details as on your identity documents wherever applicable.</p>
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                                <div class="d-none d-sm-block col-md-12 col-12 text-md-right">
-                                    <span class="text-primary"><strong><span style="color: red;">*</span> Fields are Mandatory</strong></span>
-                                </div>
-
+                            <div class="reg-intro">
+                                <p class="reg-lead d-none d-sm-block">Completing every required field avoids delays during verification.</p>
+                                <span class="reg-required-note"><span class="dot" aria-hidden="true">*</span> Mandatory fields</span>
                             </div>
-                            <div class="row">
-                                <div class="col">
-                                    <hr>
-                                </div>
-                            </div>
+                            <hr class="reg-divider">
                             <!-- autocomplete="off" -->
                             <form id="registerform" autocomplete="off">
                                 @csrf
-                                <div class="row">
+                                <div class="reg-fields-row">
+                                    <div class="reg-pane">
+                                        <div class="reg-panel">
+                                            <div class="reg-section-title"><span class="reg-step-badge" aria-hidden="true">1</span><span class="reg-section-label">Personal information</span></div>
 
-                                    <div class="col-12 col-md-6">
-                                        <div class="row">
-                                            <div class="col-12 col-md-3">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12" for="Name">First Name <span style="color: red;">*</span></label>
-
+                                            <div class="reg-fields-list">
+                                            <div class="reg-stack reg-stack--fullname">
+                                                <div class="reg-label-group">
+                                                    <span class="reg-label d-block" id="reg-fullname-label">Your name <span class="req" aria-hidden="true">*</span></span>
+                                                    <p class="reg-field-hint">Enter title, given name and surname exactly as they appear on your ID or passport.</p>
+                                                </div>
+                                                <div class="reg-name-grid" role="group" aria-labelledby="reg-fullname-label">
+                                                    <div class="reg-name-cell reg-name-cell--title">
+                                                        <label class="reg-sublabel" for="salutation">Title</label>
+                                                        <select id="salutation" name="salutation" class="form-control">
+                                                            <option value="Mr">Mr</option>
+                                                            <option value="Ms">Ms</option>
+                                                            <option value="Mrs">Mrs</option>
+                                                        </select>
+                                                        <span id="salutationError" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="reg-name-cell reg-name-cell--first">
+                                                        <label class="reg-sublabel" for="first_name">First name</label>
+                                                        <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First name" autocomplete="given-name">
+                                                        <span id="FirstNameError" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="reg-name-cell reg-name-cell--last">
+                                                        <label class="reg-sublabel" for="lastname">Last name</label>
+                                                        <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Surname / Last name" autocomplete="family-name">
+                                                        <span id="lastnameError" class="text-danger"></span>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                             <div class="col-12 col-md-2">
-                                                <div class="form-group">
-                                                    <select id="salutation" name ="salutation" class="form-control">
-                                                        <option value="Mr"> Mr</option>
-                                                        <option value="Ms">Ms </option>
-                                                         <option value="Mrs">Mrs </option>
-                                                    </select>
-                                                    <span id="salutationError" class="text-danger"></span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-7">
-                                                <input type="text" id="first_name" name="first_name" class="form-control">
-                                                <span id="FirstNameError" class="text-danger"></span>
-                                            </div>
-                                        </div>
-
-                                        
-
-                                        <div class="row pt-4">
-                                            <div class="col-12 col-md-5">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12 " for="Name">Gender <span style="color: red;">*</span></label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-7">
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <input type="radio" name="gender" value="Male">
-                                                        <label for="Male">Male</label>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <input type="radio" name="gender" value="Female">
-                                                        <label for="Female">Female</label>
-                                                    </div>
-                                                    <div class="col-md-5">
-                                                        <input type="radio" name="gender" value="Transgender">
-                                                        <label for="Transgender">Transgender</label>
-                                                    </div>
+                                            <div class="reg-stack reg-stack--gender">
+                                                <span class="reg-label" id="reg-gender-label">Gender <span class="req" aria-hidden="true">*</span></span>
+                                                <div class="reg-radio-row" role="radiogroup" aria-labelledby="reg-gender-label">
+                                                    <label class="reg-radio-chip"><input type="radio" name="gender" value="Male"><span>Male</span></label>
+                                                    <label class="reg-radio-chip"><input type="radio" name="gender" value="Female"><span>Female</span></label>
+                                                    <label class="reg-radio-chip"><input type="radio" name="gender" value="Transgender"><span>Transgender</span></label>
                                                 </div>
                                                 <span id="GenderError" class="text-danger"></span>
-
                                             </div>
-                                        </div>
 
-
-                                        <div class="row pt-3">
-                                            <div class="col-12 col-md-5">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12" for="PhoneNo">Mobile number <span style="color: red;">*</span></label>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-7">
-                                                <input type="text" id="PhoneNo" name="PhoneNo" class="form-control">
+                                            <div class="reg-stack">
+                                                <label class="reg-label" for="PhoneNo">Mobile number <span class="req" aria-hidden="true">*</span></label>
+                                                <input type="text" id="PhoneNo" name="PhoneNo" class="form-control" placeholder="10-digit number (used as login ID)" inputmode="numeric" autocomplete="off">
                                                 <span id="PhoneNoError" class="text-danger"></span>
                                             </div>
-                                        </div>
 
-
-                                        <div class="row pt-4">
-                                            <div class="col-12 col-md-5">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12" for="PhoneNo">E-mail address </label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-7">
-                                                <input type="email" id="EmailAddress" name="EmailAddress" class="form-control">
+                                            <div class="reg-stack">
+                                                <label class="reg-label" for="EmailAddress">Email address</label>
+                                                <input type="email" id="EmailAddress" name="EmailAddress" class="form-control" placeholder="Optional">
                                                 <span id="EmailError" class="text-danger"></span>
-
+                                            </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="col-12 col-md-6">
+                                    <div class="reg-pane">
+                                        <div class="reg-panel">
+                                            <div class="reg-section-title"><span class="reg-step-badge" aria-hidden="true">2</span><span class="reg-section-label">Address &amp; location</span></div>
 
-                                         <div class="row">
-                                            <div class="col-12 col-md-3">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12" for="Name">Last Name <span style="color: red;">*</span></label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-8">
-                                                <input type="text" id="lastname" name="lastname" class="form-control">
-                                                <span id="lastnameError" class="text-danger"></span>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mt-2">
-                                            <div class="col-12 col-md-3">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12" for="Address">Address <span style="color: red;">*</span></label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-8">
-
-                                                <textarea rows='3' id="Address" name="Address" class="form-control" autocomplete="on"></textarea>
+                                            <div class="reg-fields-list">
+                                            <div class="reg-stack">
+                                                <label class="reg-label" for="Address">Address <span class="req" aria-hidden="true">*</span></label>
+                                                <textarea rows="3" id="Address" name="Address" class="form-control" autocomplete="street-address" placeholder="Door / street, area, landmark"></textarea>
                                                 <span id="AddressError" class="text-danger"></span>
-
                                             </div>
-                                        </div>
 
-
-                                        <div class="row pt-4">
-                                            <div class="col-12 col-md-3">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12 " for="Address1">Select State<span style="color: red;">*</span></label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-8">
+                                            <div class="reg-stack">
+                                                <label class="reg-label" for="state">State / UT <span class="req" aria-hidden="true">*</span></label>
                                                 <select id="state" name="state" class="form-control">
                                                     <option value="">--- Select State ---</option>
                                                     <option value="Andhra Pradesh">Andhra Pradesh</option>
@@ -302,18 +884,10 @@
                                                     <option value="Ladakh">Ladakh</option>
                                                 </select>
                                                 <span id="StateError" class="text-danger"></span>
-
                                             </div>
-                                        </div>
 
-                                        <div class="row pt-4" id="districtRow" style="display:none;">
-                                            <div class="col-12 col-md-3">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12 " for="Address1">Select District</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-8">
+                                            <div class="reg-stack" id="districtRow" style="display:none;">
+                                                <label class="reg-label" for="district">District <span class="text-muted font-weight-normal">(Tamil Nadu)</span></label>
                                                 <select id="district" name="district" class="form-control">
                                                     <option value="" data-select2-id="2">---Select District ---</option>
 
@@ -352,22 +926,14 @@
                                                 </select>
                                                 <span id="DistrictError" class="text-danger"></span>
                                             </div>
-                                        </div>
 
-                                        <div class="row pt-4">
-                                            <div class="col-12 col-md-3">
-                                                <div class="form-group">
-                                                    <label class="col-12 col-md-12 " for="Pincode">Pincode <span style="color: red;">*</span></label>
-
-                                                </div>
-                                            </div>
-                                            <div class="col-12 col-md-8">
-                                               <input type="text" id="pincode" name="pincode" maxlength="6" class="form-control">
+                                            <div class="reg-stack">
+                                                <label class="reg-label" for="pincode">PIN code <span class="req" aria-hidden="true">*</span></label>
+                                                <input type="text" id="pincode" name="pincode" maxlength="6" class="form-control" placeholder="6 digits" inputmode="numeric" autocomplete="postal-code">
                                                 <span id="PincodeError" class="text-danger"></span>
                                             </div>
+                                            </div>
                                         </div>
-
-
                                     </div>
 
 
@@ -379,24 +945,12 @@
 
 
                                 <div class="row">
-
-                                    <!-- <div class="col-12 col-md-6">
-                                        <div class="form-group">
-                                            <div>&nbsp;</div>
-                                            <div class="col-12 col-md-12">
-                                                <img alt="Captcha" id="CaptchaImage" src="/Captcha/GetCaptcha" width="150" height="30">
-                                                <a id="RefreshCaptcha" class="btn btn-default btn-social-icon"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                                    <div class="col-12">
+                                        <div class="reg-submit-strip">
+                                            <div class="reg-actions">
+                                                <p class="reg-actions-hint">By submitting, you confirm the information entered is correct to the best of your knowledge.</p>
+                                                <button type="submit" class="btn btn-primary btn-reg-submit">Submit registration</button>
                                             </div>
-                                        </div>
-                                    </div> -->
-                                </div>
-                                <hr>
-                                <div class="row">
-                                    <div class="offset-md-6 col-12 col-md-6">
-                                        <div class="form-group">
-                                            <button type="submit" class="btn btn-primary btn-social">
-                                                Submit
-                                            </button>
                                         </div>
                                     </div>
                                 </div>

@@ -2,27 +2,28 @@
     .popup-overlay_pdf {
         display: none;
         position: fixed;
-        top: 0;
-        left: 0;
+        inset: 0;
         width: 100%;
         height: 100%;
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+            max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        box-sizing: border-box;
         background: rgba(0, 0, 0, 0.5);
         z-index: 1000;
-        justify-content: center;
-        align-items: center;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    .popup_pdf-content {
+    .popup-overlay_pdf .popup_pdf-content {
         background: #fff;
-        padding: 20px;
+        padding: clamp(14px, 3vw, 22px);
         border-radius: 10px;
         text-align: center;
-        max-width: 400px;
-        width: 90%;
-        margin-left: 600px;
-        margin-top: 200px;
-        /* Responsive width */
+        width: min(400px, 100%);
+        max-width: 100%;
+        margin: 10vh auto 2rem;
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        box-sizing: border-box;
     }
 
     #pdfButtons button {
@@ -41,7 +42,10 @@
 
     .info-row {
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
+        align-items: baseline;
+        gap: 4px 12px;
         padding: 6px 0;
         font-size: 14px;
     }
@@ -49,13 +53,89 @@
     .info-row .label {
         font-weight: 600;
         color: #333;
+        flex: 1 1 8rem;
+        min-width: 0;
     }
 
     .info-row .value {
         text-align: right;
         color: #555;
-        flex-shrink: 0;
-        margin-left: 10px;
+        flex: 1 1 10rem;
+        min-width: 0;
+        margin-left: 0;
+        word-break: break-word;
+    }
+
+    /* --- Site footer (.footer-bottom): phones / notches --- */
+    .footer-bottom.tnelb-footer {
+        container-type: inline-size;
+        container-name: tnelbFoot;
+    }
+
+    .footer-bottom.tnelb-footer .auto-container {
+        padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    }
+
+    /* responsive.css hides all br below 767px — restore line breaks in legal strip */
+    .footer-bottom.tnelb-footer .middleContent br {
+        display: block !important;
+    }
+
+    .footer-bottom.tnelb-footer .wrapper-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem 0;
+        padding-inline: clamp(6px, 2cqi, 14px);
+        padding-block: clamp(10px, 2cqi, 14px);
+    }
+
+    .footer-bottom.tnelb-footer .wrapper-box .footer-links-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.35rem 0.65rem;
+        row-gap: 0.45rem;
+        font-size: clamp(0.8rem, 0.72rem + 0.65cqi, 0.95rem);
+        line-height: 1.35;
+        text-align: center;
+    }
+
+    .footer-bottom.tnelb-footer .wrapper-box .footer-links-inner a {
+        word-break: break-word;
+        padding: 0.35rem 0.25rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .footer-bottom.tnelb-footer .middleContent {
+        font-size: clamp(0.72rem, 0.62rem + 0.85cqi, 0.875rem);
+        line-height: 1.55;
+        padding-inline: 0 !important;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+
+    .footer-bottom.tnelb-footer .middleContent .external_link {
+        display: inline;
+        word-break: break-word;
+    }
+
+    .footer-bottom.tnelb-footer .copyright .text {
+        font-size: clamp(0.75rem, 0.68rem + 0.5cqi, 0.875rem);
+    }
+
+    .footer-bottom.tnelb-footer .footer-meta-stats {
+        color: rgb(204, 204, 204);
+        font-size: clamp(0.72rem, 0.65rem + 0.55cqi, 0.82rem);
+        line-height: 1.55;
+        margin-top: 0.5rem;
+        padding-bottom: 0.25rem;
+    }
+
+    .footer-bottom.tnelb-footer .footer-meta-stats span {
+        display: block;
+        margin: 0.15rem 0;
     }
 
     .swal2-popup {
@@ -103,15 +183,13 @@
 </div>
 
 
-<div class="footer-bottom">
+<div class="footer-bottom tnelb-footer">
     <div class="auto-container">
 
         <div class="wrapper-box">
-          <div class="row text-center">
-                <div class="col-lg-12  text-center">
-
-                    <!-- <div class="col-lg-2 col-md-2 col-12"></div> -->
-                    <div class="col-lg-12 col-md-8 col-12  ">
+            <div class="row justify-content-center text-center">
+                <div class="col-12 p-0">
+                    <nav class="footer-links-inner" aria-label="Footer links">
                         @foreach($footerbottom as $footerbottommenu)
                                  @php
                                     $link = '#';
@@ -159,25 +237,31 @@
                         <i class="fa fa-id-badge"></i> <a rel="noopener" href="#"
                             onclick="set_session_home_menu('','','niot_contactus.php')"> Contact Us</a> -->
 
-                    </div>
-                    <!-- <div class="col-lg-2 col-md-2 col-12"></div> -->
+                    </nav>
                 </div>
             </div>
 
-            <div class="col-lg-12 pt-2">
-                <div class="  text-center middleContent text-white"> © Content Owned and Maintained by Tamilnadu
+            <div class="row justify-content-center">
+                <div class="col-12 pt-2 px-0">
+                    <div class="text-center middleContent text-white"> © Content Owned and Maintained by Tamilnadu
                     Electrical Licensing Board (TNELB), <br> Website Designed and Developed By<a rel="noopener"
                         href="http://www.nic.in/" target="blank" class="external_link pt-2"> National Informatics Centre
                         (NIC) </a>,
                     <a rel="noopener" href="http://meity.gov.in/" target="blank" class="external_link pt-2"> Ministry of
                         Electronics &amp; Information Technology</a>, Government of India
+                    </div>
                 </div>
             </div>
-            <div class="copyright">
+
+            <div class="copyright w-100 text-center px-2">
                 <div class="text">©
                     <script>
                         document.write(new Date().getFullYear());
                     </script> <a href="#">TNELB</a> - All rights reserved.
+                </div>
+                <div class="footer-meta-stats" aria-label="Site update and visitor statistics">
+                    <span>Last Updated : {{ $siteFooterLastUpdated ?? '—' }}</span>
+                    <span>Visitors : {{ isset($siteVisitorCount) ? number_format($siteVisitorCount) : '—' }}</span>
                 </div>
             </div>
         </div>

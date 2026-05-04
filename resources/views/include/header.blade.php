@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Auth;
     <title>@yield('title', 'TNELB - Home')</title>
     {{-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> --}}
     {{-- <meta http-equiv="X-UA-Compatible" content="IE=edge"> --}}
-    {{-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> --}}
+    {{-- Proper mobile scaling (required for responsive phones). Keeps pinch-zoom accessible. --}}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
     
     
     <!-- Stylesheets -->
@@ -160,6 +162,368 @@ use Illuminate\Support\Facades\Auth;
 
         .swal2-timer-progress-bar {
             background-color: #035ab3 !important; /* Red */
+        }
+
+        /*
+         | Header-style-two: responsive layout without viewport @media in this block.
+         | Uses container queries + clamp/flex/grid. Theme responsive.css may still ship @media.
+         */
+        .main-header.header-style-two {
+            container-type: inline-size;
+            container-name: hdrSite;
+        }
+
+        .main-header.header-style-two .header-top-two > .container {
+            container-type: inline-size;
+            container-name: hdrTop;
+            padding-inline: max(12px, env(safe-area-inset-left))
+                max(12px, env(safe-area-inset-right));
+        }
+
+        .main-header.header-style-two .logo-fun > .container {
+            container-type: inline-size;
+            container-name: hdrLogo;
+            padding-inline: max(12px, env(safe-area-inset-left))
+                max(12px, env(safe-area-inset-right));
+        }
+
+        /* Top bar: flat strip, no nested “pills” — keeps utility row readable */
+        .main-header.header-style-two .header-top-two.bg-gray {
+            background: #eef1f5;
+            border-bottom: 1px solid #d5dde6;
+            padding-block: 0.45rem 0.5rem;
+        }
+
+        .main-header.header-style-two .header-top-two .row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+            align-items: center;
+            column-gap: 1rem;
+            row-gap: 0.5rem;
+            margin-inline: 0;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social {
+            justify-self: end;
+            min-width: 0;
+        }
+
+        .main-header.header-style-two .header-top-two [class*="col-"] {
+            width: auto;
+            max-width: none;
+            padding-inline: calc(var(--bs-gutter-x, 0.75rem) / 2);
+        }
+
+        .main-header.header-style-two .header-top-two .top-info.text-center.text-md-left,
+        .main-header.header-style-two .header-top-two .top-social {
+            margin-inline: 0;
+        }
+
+        /* page_top.css forces line-height: 10px on these */
+        .main-header.header-style-two .header-top-two ul.top-info li {
+            line-height: 1.45;
+            padding-right: 0;
+            text-align: inherit;
+        }
+
+        .main-header.header-style-two .header-top-two .info-text.color-dark {
+            color: #2c3b4d !important;
+        }
+
+        .main-header.header-style-two .header-top-two .info-text {
+            overflow-wrap: break-word;
+            margin: 0;
+            font-weight: 500;
+            font-size: clamp(0.78rem, 0.6rem + 0.95cqi, 0.9375rem);
+            line-height: 1.45;
+            max-width: 72ch;
+        }
+
+        .main-header.header-style-two .header-top-two .toolbarline {
+            display: none !important;
+        }
+
+        /* Legacy markup: separator list items only held .toolbarline */
+        .main-header.header-style-two .header-top-two .top-social ul li:has(> span.toolbarline:only-child) {
+            display: none !important;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social ul {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.15rem;
+            margin: 0;
+            padding: 0 !important;
+            list-style: none;
+            margin-right: 0 !important;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social ul li {
+            display: flex;
+            align-items: center;
+            line-height: 0;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social ul li:not(.topbar-search-li) {
+            order: 1;
+        }
+
+        .main-header.header-style-two .header-top-two .topbar-search-li {
+            order: 99;
+            margin-left: 0.35rem;
+            padding-left: 0.65rem;
+            border-left: 1px solid #cbd5df;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social ul li a:not(.searchBox) {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            min-height: 2rem;
+            padding: 0.2rem !important;
+            margin: 0;
+            border: none !important;
+            border-radius: 4px;
+            color: #4a5b6f !important;
+            font-size: 15px;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social ul li a:not(.searchBox):hover {
+            background: transparent;
+            color: #035ab3 !important;
+        }
+
+        .main-header.header-style-two .header-top-two .top-social ul li a:not(.searchBox):focus-visible {
+            outline: 2px solid #035ab3;
+            outline-offset: 1px;
+        }
+
+        .main-header.header-style-two .header-top-two li a.searchBox {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 2px;
+            flex-direction: row !important;
+            min-height: 2rem;
+            padding: 0 0.35rem 0 0.5rem !important;
+            border: 1px solid #c5cdd8 !important;
+            border-radius: 6px;
+            background: #fff !important;
+            color: #2c3b4d !important;
+            box-shadow: none;
+        }
+
+        .main-header.header-style-two .header-top-two li a.searchBox:hover {
+            border-color: #a8b4c4 !important;
+        }
+
+        .main-header.header-style-two .header-top-two .searchInput {
+            width: clamp(5.5rem, 18cqi + 3rem, 9.5rem) !important;
+            max-width: 10rem;
+            padding: 0.2rem 0 !important;
+            font-size: 0.8125rem !important;
+            line-height: 1.3;
+            border: none !important;
+            background: transparent !important;
+        }
+
+        .main-header.header-style-two .header-top-two .searchButton {
+            color: #5a6b7d !important;
+            min-width: 1.75rem;
+            padding: 0 0.15rem;
+        }
+
+        .main-header.header-style-two .header-top-two .searchButton:hover {
+            color: #035ab3 !important;
+        }
+
+        /* Do not override Bootstrap flex on .col-* here — flex: 1 1 14rem squeezed two skinny columns on phones */
+        .main-header.header-style-two .logo-fun .logo-fun-row {
+            align-items: center;
+        }
+
+        .main-header.header-style-two .logo-fun .logo-fun-brand {
+            min-width: 0;
+        }
+
+        /* page_top.css floats this list and breaks header flow + overlaps */
+        .main-header.header-style-two .logo-fun .logo-fun-actions ul.top-info-box {
+            float: none !important;
+            justify-content: center;
+            width: 100%;
+        }
+
+        @container hdrLogo (inline-size >= 36rem) {
+            .main-header.header-style-two .logo-fun .logo-fun-actions ul.top-info-box {
+                justify-content: flex-end;
+            }
+        }
+
+        .main-header.header-style-two .logo-fun .logo-fun-actions .top-info-box li {
+            padding-right: 0;
+            margin-right: 0;
+        }
+
+        .main-header.header-style-two .logo-fun .logo-fun-actions .header-get-a-quote .btn {
+            max-width: 100%;
+            white-space: normal;
+            font-size: clamp(0.8rem, 0.72rem + 0.35cqi, 1rem);
+            line-height: 1.25;
+            padding-inline: clamp(12px, 3cqi, 20px);
+        }
+
+        .main-header.header-style-two .logo-fun .top-info-box {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        /* Crest + titles stay one horizontal band (official layout); text stacks only inside .logo-text */
+        .main-header.header-style-two .logo-fun .logo {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .main-header.header-style-two .logo a {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 0.5rem 0.75rem;
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            text-decoration: none;
+        }
+
+        .main-header.header-style-two .logo .logo-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.08em;
+            min-width: 0;
+            flex: 1 1 0%;
+            vertical-align: unset;
+            margin: 0;
+        }
+
+        .main-header.header-style-two .logo .logo-text h3 {
+            font-size: clamp(0.78rem, 0.5rem + 1.55cqi, 1.35rem);
+            line-height: 1.22;
+            margin: 0;
+            overflow-wrap: normal;
+            word-break: normal;
+            hyphens: manual;
+            font-weight: 700;
+        }
+
+        .main-header.header-style-two .logo .logo-text h5 {
+            font-size: clamp(0.68rem, 0.46rem + 1cqi, 1rem);
+            line-height: 1.22;
+            margin: 0;
+            overflow-wrap: normal;
+            word-break: normal;
+            font-weight: 600;
+            opacity: 0.92;
+        }
+
+        .main-header.header-style-two .logo .site_logo {
+            max-width: clamp(44px, 7cqi + 38px, 120px);
+            width: auto;
+            height: auto;
+            flex-shrink: 0;
+            object-fit: contain;
+            align-self: center;
+        }
+
+        .main-header.header-style-two .header-upper .inner-container {
+            column-gap: clamp(0.35rem, 1.5cqi, 1rem);
+            row-gap: 0.35rem;
+        }
+
+        .main-header.header-style-two .header-upper .nav-outer {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        /* Single search: top bar only (#txt_search). Theme also renders search in .navbar-right — drop it. */
+        .main-header.header-style-two .header-upper .navbar-right,
+        .main-header.header-style-two .sticky-header .navbar-right {
+            display: none !important;
+        }
+
+        .main-header.header-style-two .main-menu .navigation {
+            row-gap: 0.15rem;
+        }
+
+        .main-header.header-style-two .main-menu .navigation > li {
+            margin-right: clamp(0.35rem, 1.2cqi + 0.2rem, 2.1rem);
+        }
+
+        @container hdrTop (inline-size < 26rem) {
+            .main-header.header-style-two .header-top-two .row {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                text-align: center;
+            }
+
+            .main-header.header-style-two .header-top-two .info-text {
+                max-width: 100%;
+            }
+
+            .main-header.header-style-two .header-top-two .top-social {
+                justify-self: center;
+            }
+
+            .main-header.header-style-two .header-top-two .top-social ul {
+                justify-content: center;
+            }
+
+            .main-header.header-style-two .header-top-two .topbar-search-li {
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+            }
+        }
+
+        /* ~1139px theme breakpoint, keyed to header width (full-bleed ≈ viewport). */
+        @container hdrSite (inline-size < 71.25rem) {
+            .main-header.header-style-two .sticky-header {
+                display: none !important;
+            }
+
+            .main-header.header-style-two .header-upper .inner-container {
+                justify-content: flex-end;
+            }
+
+            .main-header.header-style-two .nav-outer {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: flex-end;
+                width: 100%;
+            }
+
+            .main-header.header-style-two .nav-outer .main-menu {
+                display: none !important;
+            }
+
+            .main-header.header-style-two .nav-outer .mobile-nav-toggler {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                float: none;
+                margin: 0;
+                margin-left: auto;
+                order: 4;
+                flex-shrink: 0;
+            }
         }
 
     </style>
@@ -513,7 +877,7 @@ use Illuminate\Support\Facades\Auth;
                                 <ul class="top-info text-center text-md-left">
                                     <li>
                                         <!-- <i class="fas fa-map-marker-alt"></i> -->
-                                        <p class="info-text color-dark">Government of TamilNadu | TamilNadu Electricity
+                                        <p class="info-text color-dark">Government of Tamil Nadu | Tamil Nadu Electrical
                                             Licencing Board</p>
                                     </li>
                                 </ul>
@@ -525,7 +889,7 @@ use Illuminate\Support\Facades\Auth;
                                     <li><a rel="noopener" href="#mainsection" title="Skip to main content"> <i
                                                 class="fa fa-share-square"></i></a></li>
                                     <li><span class="toolbarline"></span></li>
-                                    <li><a href="#" class="searchBox">
+                                    <li class="topbar-search-li"><a href="#" class="searchBox">
                                             <input class="searchInput" type="text" name="" placeholder="Search"
                                                 id="txt_search" required="">
                                             <button class="searchButton" onclick="google_search();" href="#">
@@ -561,8 +925,8 @@ use Illuminate\Support\Facades\Auth;
 
                 <div class="logo-fun">
                     <div class="container header-container">
-                        <div class="row">
-                            <div class="col-lg-8 col-md-12">
+                        <div class="row logo-fun-row">
+                            <div class="col-12 col-lg-8 logo-fun-brand">
                                 <div class="logo">
                                     <a href="{{ url('/') }}">
                                         <img src="{{ asset('assets/images/logo/logo_tr.png') }}" class="site_logo" alt="Logo of Government of Tamil Nadu" />
@@ -584,7 +948,7 @@ use Illuminate\Support\Facades\Auth;
                                     </a>
                                 </div> --}}
                             </div>
-                            <div class="col-lg-4 col-md-12 text-center">
+                            <div class="col-12 col-lg-4 text-center logo-fun-actions">
                                 <ul class="top-info-box">
                                     @if(Auth::check())
                                     <li class="header-get-a-quote">
@@ -633,12 +997,6 @@ use Illuminate\Support\Facades\Auth;
                             <div class="nav-outer">
                                 <!--Mobile Navigation Toggler-->
                                 <div class="mobile-nav-toggler"><img src="{{ asset('assets/images/icons/icon-bar-2.png') }}" alt=""></div>
-                                <div class="search-form-two text-md-right display_desk">
-                                    <form>
-                                        <input type="search" placeholder="Search ...">
-                                        <button type="submit"><i class="icon-search"></i></button>
-                                    </form>
-                                </div>
                                 <!-- Main Menu -->
                                 <nav class="main-menu navbar-expand-md navbar-light">
                                     <div class="collapse navbar-collapse show clearfix" id="navbarSupportedContent">
