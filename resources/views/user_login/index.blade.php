@@ -910,7 +910,7 @@
                         </div>
 
                         <!-- ----------------- -->
-                        <div class="tasks-section-login d-none d-sm-block">
+                        <div class="tasks-section-login d-block">
                             <h5 class="mb-2">
                                 <strong>Status of Applications ( Competency Certificate )</strong>
                             </h5>
@@ -946,8 +946,6 @@
                                 <div id="applicationsTable">
                                     @include('user_login.pagination-list')
                                 </div>
-
-                                <div id="tablePagination" class="mt-3"></div>
                             </fieldset>
                         </div>
                         @endif
@@ -1414,6 +1412,9 @@ document.addEventListener("DOMContentLoaded", function () {
     tables.forEach((table, tableIndex) => {
         const rows = table.querySelectorAll("tbody tr");
         const paginationContainer = table.nextElementSibling; // .table-pagination div
+        if (!paginationContainer || !paginationContainer.classList.contains("table-pagination")) {
+            return;
+        }
         let currentPage = 1;
 
         function displayRows(page) {

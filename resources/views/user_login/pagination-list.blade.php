@@ -268,11 +268,31 @@
                             {{ $workflow->renewal_application_id }}
                         </a>
                     @else
-                        @if ($workflow->is_under_validity_period)
+                        @php
+                            $isFormW = strtoupper((string) ($workflow->form_name ?? '')) === 'W';
+                            $hasCertificateC = false;
+
+                            if ($isFormW && !empty($workflow->login_id)) {
+                                $hasCertificateC = DB::table('tnelb_application_tbl as ta')
+                                    ->leftJoin('tnelb_license as l', 'l.application_id', '=', 'ta.application_id')
+                                    ->leftJoin('tnelb_renewal_license as rl', 'rl.application_id', '=', 'ta.application_id')
+                                    ->where('ta.login_id', $workflow->login_id)
+                                    ->where('ta.form_name', 'S')
+                                    ->where('ta.status', 'A')
+                                    ->where(function ($query) {
+                                        $query->whereNotNull('l.license_number')
+                                            ->orWhereNotNull('rl.license_number');
+                                    })
+                                    ->exists();
+                            }
+                        @endphp
+                        @if ($workflow->is_under_validity_period && !($isFormW && $hasCertificateC))
                             <a href="{{ route('renew_form', ['application_id' => $workflow->application_id]) }}"
                                 class="text-primary">
                                 (Apply for renewal)
                             </a>
+                        @elseif ($workflow->is_under_validity_period && $isFormW && $hasCertificateC)
+                            <span class="text-danger" style="font-size: 12px;">(Renewal not allowed: Certificate C already issued)</span>
                         @endif
                     @endif
                 @elseif (!empty($workflow->renewal_application_id))

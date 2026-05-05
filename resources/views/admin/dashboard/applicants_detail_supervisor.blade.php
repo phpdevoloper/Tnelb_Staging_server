@@ -1033,7 +1033,7 @@
 
 
                                         <div class="row mt-2">
-                                            <div class="checklist-header-row">
+                                            {{-- <div class="checklist-header-row">
                                                 <div class="form-check">
                                                     <input type="checkbox" id="check_all" name="check_all" class="form-check-input" @if($isVerified) checked disabled @endif>
                                                     <label class="form-check-label" for="check_all">Check All</label>
@@ -1042,7 +1042,7 @@
                                                     <input type="checkbox" id="reset_all" name="reset_all" class="form-check-input">
                                                     <label class="form-check-label" for="reset_all">Reset All</label>
                                                 </div>
-                                            </div>
+                                            </div> --}}
                                             <div id="specific-class" class="col-lg-12">
                                                 @php
                                                     $checkboxes = [
@@ -1592,41 +1592,14 @@
     // Run on change
     switch_status.addEventListener('change', toggleQueryOptions);
 
-    // var switch_status = document.getElementById('Queryswitch');
-    // var queryDropdown = document.getElementById('queryType');
-
-    // if (switch_status.checked) {
-    //     document.getElementById('queryOptions').style.display = 'block';
-    // } else {
-    //     document.getElementById('queryOptions').style.display = 'none';
-    //     queryDropdown.selectedIndex = 0; // reset dropdown
-    // }
-
-
-
-    // var switch_status = document.getElementById('Queryswitch');
-    // var queryDropdown = $('#queryType');
-
-    // if (switch_status.checked) {
-    //     $('#queryOptions').show();
-    // } else {
-    //     $('#queryOptions').hide();
-    //     queryDropdown.val([]).trigger('change'); // clear all selected options
-    // }
-
-    // document.getElementById('Queryswitch').addEventListener('change', function() {
-    //     document.getElementById('queryOptions').style.display = this.checked ? 'block' : 'none';
-    // });
-
-
     $('#remarks').maxlength({
         placement: "top"
     });
 
     $(document).ready(function() {
 
-        var checkAllBox = $('#check_all');
-        var resetAllBox = $('#reset_all');
+        // var checkAllBox = $('#check_all');
+        // var resetAllBox = $('#reset_all');
         var forwardbtn = $("#forwardbtn");
         var confirmForward = $("#confirmForward");
         var confirmVerification = $('#confirmVerification');
@@ -1650,47 +1623,15 @@
         });
 
 
-
-        // forwardbtn.prop('disabled', $('.form-check-input:not(#check_all):checked').length === 0);
-
-        // Initially disable Reset All
-        resetAllBox.prop('disabled', true);
-
-        checkAllBox.change(function() {
-            if ($(this).prop('checked')) {
-                individualCheckboxes.prop('checked', true);
-                resetAllBox.prop('disabled', false).prop('checked', false); // Enable Reset All
-                forwardbtn.prop('disabled', false);
-            } else {
-                individualCheckboxes.prop('checked', false);
-                resetAllBox.prop('disabled', true).prop('checked', false); // Disable Reset All
-                forwardbtn.prop('disabled', true);
-            }
-        });
-
-        // "Reset All" functionality
-        resetAllBox.change(function() {
-            if ($(this).prop('checked')) {
-                individualCheckboxes.prop('checked', false);
-                checkAllBox.prop('checked', false); // Uncheck Check All
-                checkAllBox.prop('disabled', false); // Enable Check All
-                resetAllBox.prop('disabled', true); // Disable Reset All after use
-                forwardbtn.prop('disabled', true);
-            }
-        });
-
         // If any individual checkbox is manually unchecked, uncheck "Check All"
         individualCheckboxes.change(function() {
-            if ($('.form-check-input:not(#check_all):not(#reset_all):checked').length === individualCheckboxes.length) {
-                checkAllBox.prop('checked', true);
+            if ($('#specific-class input[type="checkbox"].form-check-input:checked').length === individualCheckboxes.length) {
+                forwardbtn.prop('disabled', false);
             } else {
-                checkAllBox.prop('checked', false);
+                forwardbtn.prop('disabled', true);
             }
         });
         
-
-        
-
 
         approveButton.click(function () {
             var applicationId = @json($applicant->application_id);

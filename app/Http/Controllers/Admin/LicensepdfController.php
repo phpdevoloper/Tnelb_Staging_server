@@ -2056,6 +2056,38 @@ class LicensepdfController extends Controller
         if (!$applicant) {
             return back()->with('error', 'Application not found.');
         }
+        $issuedFromFresh = DB::table('tnelb_license as l')
+            ->join('tnelb_application_tbl as ta', 'ta.application_id', '=', 'l.application_id')
+            ->where('ta.login_id', $application->login_id)
+            ->where('ta.status', 'A')
+            ->select('l.license_number', 'l.issued_at', 'l.expires_at');
+
+        $issuedFromRenewal = DB::table('tnelb_renewal_license as rl')
+            ->join('tnelb_application_tbl as ta', 'ta.application_id', '=', 'rl.application_id')
+            ->where('ta.login_id', $application->login_id)
+            ->where('ta.status', 'A')
+            ->select('rl.license_number', 'rl.issued_at', 'rl.expires_at');
+        
+        $certificateList = $issuedFromFresh->union($issuedFromRenewal)->get()->sortByDesc('issued_at')->values();
+        $certificateRowsHtml = '';
+        foreach ($certificateList as $index => $certificate) {
+            $isExpired = !empty($certificate->expires_at) && strtotime((string) $certificate->expires_at) < strtotime(date('Y-m-d'));
+            $statusText = $isExpired ? 'Expired' : 'Active';
+            $statusClass = $isExpired ? 'status-expired' : 'status-active';
+            $certificateRowsHtml .= '
+                        <tr>
+                            <td width="6%" align="center">'.($index + 1).'</td>
+                            <td width="28%">'.$certificate->license_number.'</td>
+                            <td width="20%">'.date('d M Y', strtotime($certificate->issued_at)).'</td>
+                            <td width="20%">'.format_date($certificate->expires_at).'</td>
+                            <td width="16%"><span class="status-pill '.$statusClass.'">'.$statusText.'</span></td>
+                        </tr>';
+        }
+        if ($certificateRowsHtml === '') {
+            $certificateRowsHtml = '<tr><td colspan="5" align="center" style="padding:3mm;">No certificate history available.</td></tr>';
+        }
+
+
         $payment = DB::table('payments')->where('application_id', $application_id)->first();
         // A4 output (required): previously CR100 card size
         $mpdf = new \Mpdf\Mpdf([
@@ -2125,6 +2157,15 @@ class LicensepdfController extends Controller
                 width: 2mm;
                 text-align: center;
             }
+            .summary-card { border: 0.4mm solid #cfd8e3; margin-top: 2mm; }
+            .summary-heading { font-size: 11.5pt; font-weight: bold; color: #0b3b6e; padding: 2mm 2.2mm 1.2mm 2.2mm; border-bottom: 0.3mm solid #d8e2ef; text-align: center; }
+            .summary-table { border-collapse: collapse; font-size: 10.2pt; width: 100%; }
+            .summary-table th { background: #edf3fa; color: #123c66; font-weight: bold; padding: 1.6mm 1.4mm; border-bottom: 0.3mm solid #d7e1ee; text-transform: uppercase; font-size: 9.2pt; letter-spacing: 0.2px; text-align: center; vertical-align: middle; }
+            .summary-table td { padding: 1.6mm 1.4mm; border-bottom: 0.25mm solid #e7edf5; text-align: center; vertical-align: middle; }
+            .summary-table tr:nth-child(even) td { background: #fafcff; }
+            .status-pill { display: inline-block; padding: 0.6mm 1.6mm; border-radius: 2mm; font-size: 8.6pt; font-weight: bold; }
+            .status-active { background: #e8f7ed; color: #196b33; border: 0.25mm solid #b7dfc2; }
+            .status-expired { background: #fdeaea; color: #9b1c1c; border: 0.25mm solid #efb8b8; }
             .footer { margin-top: 16px; text-align: center; font-size: 12pt; }
             </style>', \Mpdf\HTMLParserMode::HEADER_CSS);
                 
@@ -2256,6 +2297,23 @@ class LicensepdfController extends Controller
                         </td>
                     </tr>
                 </table>
+                <div class="summary-card">
+                    <div class="summary-heading">Issued Certificate History</div>
+                    <table class="summary-table" width="100%" cellspacing="0" cellpadding="0">
+                    <thead>
+                        <tr>
+                            <th width="6%">#</th>
+                            <th width="28%">Certificate Number</th>
+                            <th width="20%">Issued At</th>
+                            <th width="20%">Expired At</th>
+                            <th width="16%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    '.$certificateRowsHtml.'
+                    </tbody>
+                    </table>
+                </div>
 
             </div>
 
