@@ -405,7 +405,11 @@
     /* ── Work-table specific ──────────────────────────── */
     #work-table.work-exp-table { font-size: .8125rem; width: 100%; max-width: 100%; }
     #work-table.work-exp-table thead th { font-size: .78rem; font-weight: 600; padding: .35rem .4rem; vertical-align: middle; line-height: 1.25; }
-    #work-table.work-exp-table tbody td { padding: .4rem .45rem; vertical-align: top; }
+    #work-table.work-exp-table tbody td { padding: .4rem .45rem; vertical-align: middle; }
+    #work-table .work-employer-cell { vertical-align: top; }
+    #work-table .work-employer-label-row { display: flex; align-items: baseline; margin-bottom: .15rem; min-width: 0; }
+    #work-table .work-employer-label { font-size: .7rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 0; min-width: 0; }
+    #work-table .work-employer-req { font-size: .7rem; flex: 0 0 auto; }
     #work-table .work-exp-col-type { width: 12%; max-width: 10.5rem; }
     #work-table .work-exp-col-employer { width: 16%; max-width: 12rem; }
     #work-table .work-exp-col-years { width: 32%; min-width: 17rem; }
@@ -430,7 +434,6 @@
     #work-table .work-date-from,
     #work-table .work-date-to { font-size: .8125rem; color: #212529; min-width: 9.5rem; width: 100%; }
     #work-table .work-year-total-display { max-width: 4.5rem; font-size: .7rem; padding: .22rem .3rem; line-height: 1.3; text-align: center; }
-    #work-table .work-employer-label { font-size: .7rem !important; margin-bottom: .15rem !important; }
 
     /* ── Documents upload table ───────────────────────── */
     .fs-docs-table { width: 100%; }
@@ -945,10 +948,12 @@
                                                 </select>
                                             </td>
                                             <td class="work-employer-cell work-exp-col-employer">
-                                                <label class="small text-muted work-employer-label d-block mb-1">—</label>
+                                                <div class="work-employer-label-row">
+                                                    <span class="work-employer-label">—</span><span class="text-danger work-employer-req" style="display:none;"> *</span>
+                                                </div>
                                                 <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" disabled>
                                                 <div class="work-block work-block--intimation mt-1" style="display:none;">
-                                                    <label class="small d-block mb-0" style="font-size:.7rem;white-space:nowrap;">Intimation letter <span class="text-danger">*</span></label>
+                                                    <label class="small mb-0" style="font-size:.7rem;display:flex;align-items:center;gap:2px;flex-wrap:nowrap;"><span style="white-space:nowrap;">Intimation letter</span><span class="text-danger flex-shrink-0">*</span></label>
                                                     <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]">
                                                 </div>
                                             </td>
@@ -1013,7 +1018,7 @@
                             <div id="previously_details" class="fs-toggle-panel" style="display:none;">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-12 col-md-4">
-                                        <div class="fs-field-label">Certificate Number <span class="req">*</span></div>
+                                        <div class="fs-field-label">Certificate Number <span class="req">*</span> <span class="text-muted" style="font-size:.75rem;font-weight:400;">(eg. C1234)</span></div>
                                         <input autocomplete="off" class="form-control verify-input" id="previously_number" name="previously_number" type="text"
                                             data-type="license" data-error="#licenseError" data-msg="#license_messagdfde"
                                             placeholder="Certificate Number" value="" maxlength="80">
@@ -1075,7 +1080,7 @@
                             <div id="wireman_details" class="fs-toggle-panel" style="display:{{ $hasOldPrefill ? 'block' : 'none' }};">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-12 col-md-4">
-                                        <div class="fs-field-label">Certificate Number <span class="req">*</span></div>
+                                        <div class="fs-field-label">Certificate Number <span class="req">*</span> <span class="text-muted" style="font-size:.75rem;font-weight:400;">(eg. W1234)</span></div>
                                         <input class="form-control verify-input" id="certificate_no" name="competency_certificate_no" type="text"
                                             data-type="supervisor" data-error="#certError" data-msg="#license_message"
                                             placeholder="Certificate Number" maxlength="80" value="{{ $oldCertNo }}">
@@ -1671,11 +1676,11 @@
         (function() {
             var EMP_LABELS = {
                 '': '—',
-                company: 'Company name <span class="text-danger">*</span>',
-                contractor: 'Contractor / firm name <span class="text-danger">*</span>',
-                apprentice: 'Establishment / training organization <span class="text-danger">*</span>',
-                electrical_inspector: 'Office / department <span class="text-danger">*</span>',
-                retired_employees: 'Name of PSU (State / Central / Corporation) <span class="text-danger">*</span>'
+                company: 'Company name',
+                contractor: 'Contractor / firm name',
+                apprentice: 'Establishment / training organization',
+                electrical_inspector: 'Office / department',
+                retired_employees: 'Name of PSU (State / Central / Corporation)'
             };
 
             function $workRow(el) { return $(el).closest('tr.work-fields'); }
@@ -1703,7 +1708,8 @@
 
             function applyEmploymentType($tr) {
                 var t = $tr.find('.work-employment-type').val() || '';
-                $tr.find('.work-employer-label').html(EMP_LABELS[t] || EMP_LABELS['']);
+                $tr.find('.work-employer-label').text(EMP_LABELS[t] || EMP_LABELS['']);
+                $tr.find('.work-employer-req').toggle(!!t);
                 var $emp = $tr.find('.work-employer-input');
                 var $yFrom = $tr.find('.work-date-from'), $yTo = $tr.find('.work-date-to');
                 var $blockInt = $tr.find('.work-block--intimation'), $intDate = $tr.find('.work-intimation-date');
