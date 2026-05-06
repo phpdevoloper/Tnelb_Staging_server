@@ -108,6 +108,10 @@ async function showInstructPopup(licence_code,login_id) {
             }
             modal.hide();
             let formData = new FormData($('#competency_form_p')[0]);
+            formData.delete('month_passing[]');
+            $('#competency_form_p select[name="month_of_passing[]"]').each(function () {
+                formData.append('month_passing[]', $(this).val() || '');
+            });
             let applicationId = $('#application_id').val();
             let formUrl;
 
@@ -1124,6 +1128,10 @@ $(document).ready(function () {
 
             let applType = $('#appl_type').val();
             let formData = new FormData($('#competency_form_p')[0]);
+            formData.delete('month_passing[]');
+            $('#competency_form_p select[name="month_of_passing[]"]').each(function () {
+                formData.append('month_passing[]', $(this).val() || '');
+            });
 
             // For normal applications, this button saves as draft.
             // For returned Form P (app_status = QU), it submits corrections.

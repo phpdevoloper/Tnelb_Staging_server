@@ -812,7 +812,7 @@
                                             <th rowspan="2">S.No</th>
                                             <th rowspan="2">Education Level</th>
                                             <th rowspan="2">Institution/School Name</th>
-                                            <th colspan="2" class="text-center">Year of Passing</th>
+                                            <th colspan="2" class="text-center">Month & Year of Passing</th>
                                             <th rowspan="2">Certificate No</th>
                                             <th class="text-center" rowspan="2">Upload Document
                                                 <br><span class="file-limit">File type: PDF(Min 5 KB To Max 200 KB)</span>
@@ -825,10 +825,10 @@
                                                 </div>
                                             </th>
                                         </tr>
-                                        <tr>
+                                        {{-- <tr>
                                             <th class="text-center">Month</th>
                                             <th class="text-center">Year</th>
-                                        </tr>
+                                        </tr> --}}
                                     </thead>
                                     <tbody id="education-container">
                                         <tr class="education-fields">

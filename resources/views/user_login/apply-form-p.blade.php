@@ -74,8 +74,8 @@
     /* ── Tables ───────────────────────────────────────── */
     .fs-table-wrap { overflow-x: auto; border-radius: 6px; border: 1px solid #dde5f3; }
     .fs-form table.table { margin-bottom: 0; font-size: .83rem; }
-    .fs-form table.table thead th { background: #eef3fb; color: #1a2a4a; font-weight: 600; font-size: .78rem; padding: .45rem .5rem; vertical-align: middle; border-bottom: 2px solid #d0ddf5; border-color: #d0ddf5; line-height: 1.25; }
-    .fs-form table.table tbody td { padding: .45rem .5rem; vertical-align: middle; border-color: #e8edf6; }
+    .fs-form table.table thead th { background: #eef3fb; color: #1a2a4a; font-weight: 600; font-size: .78rem; padding: .45rem .5rem; vertical-align: middle; border-bottom: 2px solid #d0ddf5; border-color: #d0ddf5; line-height: 1.25; text-align: center; }
+    .fs-form table.table tbody td { padding: .45rem .5rem; vertical-align: middle; border-color: #e8edf6; text-align: center; }
     .fs-form table.table tbody tr:nth-child(even) td { background: #f8fafd; }
     .fs-form table.table tbody tr:hover td { background: #eef3fb; }
     .fs-form table.table .form-control { font-size: .82rem; padding: 5px 8px; }
@@ -91,8 +91,8 @@
     .btn-tbl-remove:hover { background: #b52a37; }
 
     /* ── Education / institute / work table ──────────── */
-    #education-table thead th, #institute-table thead th, #work-table thead th { font-size: .72rem; font-weight: 600; padding: .3rem .35rem; vertical-align: middle; line-height: 1.2; }
-    #education-table tbody td, #institute-table tbody td, #work-table tbody td { vertical-align: middle; }
+    #education-table thead th, #institute-table thead th, #work-table thead th { font-size: .72rem; font-weight: 600; padding: .3rem .35rem; vertical-align: middle; line-height: 1.2; text-align: center; }
+    #education-table tbody td, #institute-table tbody td, #work-table tbody td { vertical-align: middle; text-align: center; }
 
     /* ── Documents upload table ───────────────────────── */
     .fs-docs-table { width: 100%; }
@@ -305,7 +305,7 @@
                                             <th>Institution/School Name</th>
                                             <th>Month &amp; Year of Passing</th>
                                             <th>Certificate No</th>
-                                            <th class="text-center">Upload Document (Consolidated MarkSheet)<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
+                                            <th class="text-center">Upload Document<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
                                             <th class="text-center p-1">
                                                 <div class="form-s-actions-stack">
                                                     <button type="button" class="btn-tbl-add add-more py-1 px-2" title="Add row"><i class="fa fa-plus"></i></button>
@@ -365,10 +365,10 @@
                                     <thead>
                                         <tr>
                                             <th style="width:22%">Institute Name &amp; Address</th>
-                                            <th>Duration</th>
                                             <th>From date</th>
                                             <th>To date</th>
-                                            <th class="text-center">Upload Document (Experience Certificate)<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
+                                            <th>Duration</th>
+                                            <th class="text-center">Upload Document<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
                                             <th class="text-center p-1">
                                                 <div class="form-s-actions-stack">
                                                     <button type="button" class="btn-tbl-add add-more-institute py-1 px-2" title="Add row"><i class="fa fa-plus"></i></button>
@@ -379,9 +379,9 @@
                                     <tbody id="institute-container">
                                         <tr class="institute-fields">
                                             <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
-                                            <td><input autocomplete="off" class="form-control" name="duration[]" type="number" min="0" max="50" placeholder="0-50"></td>
                                             <td><input autocomplete="off" class="form-control" name="from_date[]" type="date"></td>
                                             <td><input autocomplete="off" class="form-control" name="to_date[]" type="date"></td>
+                                            <td><input autocomplete="off" class="form-control" name="duration[]" type="number" min="0" max="50" placeholder="Auto" readonly></td>
                                             <td><input class="form-control" name="institute_document[]" type="file" accept=".pdf,application/pdf"></td>
                                             <td class="text-center p-1">
                                                 <div class="form-s-actions-stack">
@@ -403,7 +403,7 @@
                                             <th>Power Station</th>
                                             <th>Years of Experience</th>
                                             <th>Designation</th>
-                                            <th class="text-center">Upload Document (Experience Certificate)<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
+                                            <th class="text-center">Upload Document<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
                                             <th class="text-center p-1">
                                                 <div class="form-s-actions-stack">
                                                     <button type="button" class="btn-tbl-add add-more-work py-1 px-2" title="Add row"><i class="fa fa-plus"></i></button>
@@ -687,7 +687,7 @@
                     <div class="prv-sub-label">(ii) Training Institute</div>
                     <div style="overflow-x:auto;margin-bottom:12px;">
                         <table class="prv-table">
-                            <thead><tr><th>Institute Name &amp; Address</th><th>Duration</th><th>From Date</th><th>To Date</th><th>Document</th></tr></thead>
+                            <thead><tr><th>Institute Name &amp; Address</th><th>From Date</th><th>To Date</th><th>Duration</th><th>Document</th></tr></thead>
                             <tbody id="prv_inst_body"><tr><td colspan="5" class="text-center text-muted py-3">—</td></tr></tbody>
                         </table>
                     </div>
@@ -905,14 +905,14 @@
                 let newRow = document.createElement("tr");
                 newRow.classList.add("institute-fields");
                 newRow.innerHTML = `
-<td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
-<td><input type="number" class="form-control" name="duration[]" min="0" max="50" placeholder="0-50"></td>
-<td><input type="date" class="form-control" name="from_date[]"></td>
-<td><input type="date" class="form-control" name="to_date[]"></td>
-<td><input type="file" class="form-control" name="institute_document[]" accept=".pdf,.png,.jpg,.jpeg"></td>
-<td class="text-center p-1"><div class="form-s-actions-stack"><button type="button" class="btn-tbl-remove remove-institute py-1 px-2" title="Remove row"><i class="fa fa-trash-o"></i></button></div></td>`;
-                container.appendChild(newRow);
-            }
+                <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
+                <td><input type="date" class="form-control" name="from_date[]"></td>
+                <td><input type="date" class="form-control" name="to_date[]"></td>
+                <td><input type="number" class="form-control" name="duration[]" min="0" max="50" placeholder="Auto" readonly></td>
+                <td><input type="file" class="form-control" name="institute_document[]" accept=".pdf,.png,.jpg,.jpeg"></td>
+                <td class="text-center p-1"><div class="form-s-actions-stack"><button type="button" class="btn-tbl-remove remove-institute py-1 px-2" title="Remove row"><i class="fa fa-trash-o"></i></button></div></td>`;
+                    container.appendChild(newRow);
+                }
 
             if (e.target.closest(".remove-institute")) {
                 if (instituteEntry.length <= 1) {
@@ -924,6 +924,34 @@
                 e.target.closest("tr").remove();
             }
         });
+
+        function calculateInstituteDurationYears(fromDate, toDate) {
+            if (!fromDate || !toDate) return '';
+            const from = new Date(fromDate + 'T00:00:00');
+            const to = new Date(toDate + 'T00:00:00');
+            if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to < from) return '';
+            let years = to.getFullYear() - from.getFullYear();
+            const monthDiff = to.getMonth() - from.getMonth();
+            const dayDiff = to.getDate() - from.getDate();
+            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) years -= 1;
+            return years < 0 ? '' : String(years);
+        }
+
+        function updateInstituteDuration(row) {
+            if (!row) return;
+            const fromInput = row.querySelector('input[name="from_date[]"]');
+            const toInput = row.querySelector('input[name="to_date[]"]');
+            const durationInput = row.querySelector('input[name="duration[]"]');
+            if (!fromInput || !toInput || !durationInput) return;
+            durationInput.value = calculateInstituteDurationYears(fromInput.value, toInput.value);
+        }
+
+        document.addEventListener('change', function (e) {
+            if (!e.target.matches('input[name="from_date[]"], input[name="to_date[]"]')) return;
+            updateInstituteDuration(e.target.closest('.institute-fields'));
+        });
+
+        document.querySelectorAll('#institute-container .institute-fields').forEach(updateInstituteDuration);
     </script>
     <script>
     // ── Preview Modal ──────────────────────────────────────────────────────
@@ -959,7 +987,7 @@
             var fr=row.querySelector('[name="from_date[]"]'),to=row.querySelector('[name="to_date[]"]');
             var doc=row.querySelector('[name="institute_document[]"]');
             var docLink=(doc&&doc.files&&doc.files[0])?'<a href="'+URL.createObjectURL(doc.files[0])+'" target="_blank" style="color:#035ab3;font-size:.75rem;"><i class="fa fa-file-pdf-o"></i> View</a>':'<span class="text-muted">—</span>';
-            instBody.innerHTML+='<tr><td style="white-space:pre-line;">'+(nm?nm.value||'—':'—')+'</td><td class="text-center">'+(dur?dur.value||'—':'—')+'</td><td>'+fmtDateP((fr||{}).value||'')+'</td><td>'+fmtDateP((to||{}).value||'')+'</td><td class="text-center">'+docLink+'</td></tr>';
+            instBody.innerHTML+='<tr><td style="white-space:pre-line;">'+(nm?nm.value||'—':'—')+'</td><td>'+fmtDateP((fr||{}).value||'')+'</td><td>'+fmtDateP((to||{}).value||'')+'</td><td class="text-center">'+(dur?dur.value||'—':'—')+'</td><td class="text-center">'+docLink+'</td></tr>';
         });}
         // Power Station
         var wBody=document.getElementById('prv_work_body');wBody.innerHTML='';

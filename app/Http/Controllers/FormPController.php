@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\Schema;
 
 class FormPController extends BaseController
 {
-    protected $today, $dbNow;
+    protected string $today;
+    protected string $dbNow;
     public function __construct()
     {
         parent::__construct();
@@ -50,7 +51,10 @@ class FormPController extends BaseController
     // New Form Submit
     public function store(Request $request)
     {
-        
+        if ($request->input('month_passing') === null && $request->exists('month_of_passing')) {
+            $request->merge(['month_passing' => (array) $request->input('month_of_passing', [])]);
+        }
+
         $request->merge([
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
@@ -83,6 +87,8 @@ class FormPController extends BaseController
             'institute_name.*'     => 'required|string|max:255',
             'year_of_passing'      => 'required|array|min:1',
             'year_of_passing.*'    => 'required|digits:4',
+            'month_passing'        => 'nullable|array',
+            'month_passing.*'      => 'nullable|string|max:20',
             'certificate_no'       => 'nullable|array',
             'certificate_no.*'     => 'nullable|string|max:20',
 
@@ -135,6 +141,8 @@ class FormPController extends BaseController
             'year_of_passing.required'      => 'Please add at least one educational qualification.',
             'year_of_passing.*.required'    => 'Year of passing is required.',
             'year_of_passing.*.digits'      => 'Year of passing must be a 4-digit year.',
+            'month_passing.*.string'        => 'Month of passing must be valid text.',
+            'month_passing.*.max'           => 'Month of passing may not be greater than 20 characters.',
 
             'certificate_no.*.string'       => 'Certificate No must be valid text.',
             'certificate_no.*.max'          => 'Certificate No may not be greater than 20 characters.',
@@ -204,6 +212,11 @@ class FormPController extends BaseController
         $encrypted_aadhaar = Crypt::encryptString($request->aadhaar);
 
         try {
+            $hasCompanyNameColumn = Schema::hasColumn('tnelb_applicants_exp', 'company_name');
+            $hasEmpCateColumn = Schema::hasColumn('tnelb_applicants_exp', 'emp_cate');
+            $hasExperienceColumn = Schema::hasColumn('tnelb_applicants_exp', 'experience');
+            $hasTotalExpColumn = Schema::hasColumn('tnelb_applicants_exp', 'total_exp');
+
             // Generate New Application ID
             $appl_type = $request->appl_type ?? '';
             if ($appl_type == 'R') {
@@ -320,6 +333,7 @@ class FormPController extends BaseController
                         'login_id'           => $loginId,
                         'educational_level'  => $level,
                         'institute_name'     => $request->institute_name[$key],
+                        'month_passing'      => $request->month_passing[$key] ?? null,
                         'year_of_passing'    => $request->year_of_passing[$key],
                         'certificate_no'     => $request->certificate_no[$key] ?? null,
                         'application_id'     => $newApplicationId,
@@ -354,15 +368,24 @@ class FormPController extends BaseController
                         $filePath = 'work_experience/' . $filename;
                     }
 
-                    Mst_experience::create([
+                    $expData = [
                         'login_id'        => $loginId,
-                        'company_name'    => $company,
-                        'experience'      => $request->experience[$key],
                         'designation'     => $request->designation[$key],
                         'application_id'  => $newApplicationId,
                         'exp_serial'      => $newExpSerial,
                         'upload_document' => $filePath,
-                    ]);
+                    ];
+                    if ($hasCompanyNameColumn) {
+                        $expData['company_name'] = $company;
+                    } elseif ($hasEmpCateColumn) {
+                        $expData['emp_cate'] = $company;
+                    }
+                    if ($hasExperienceColumn) {
+                        $expData['experience'] = $request->experience[$key];
+                    } elseif ($hasTotalExpColumn) {
+                        $expData['total_exp'] = $request->experience[$key];
+                    }
+                    Mst_experience::create($expData);
                 }
             }
 
@@ -445,6 +468,10 @@ class FormPController extends BaseController
 
     public function update(Request $request)
     {
+        if ($request->input('month_passing') === null && $request->exists('month_of_passing')) {
+            $request->merge(['month_passing' => (array) $request->input('month_of_passing', [])]);
+        }
+
         $request->merge([
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
@@ -483,6 +510,8 @@ class FormPController extends BaseController
             'institute_name.*'     => 'nullable|string|max:255',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
+            'month_passing'        => 'nullable|array',
+            'month_passing.*'      => 'nullable|string|max:20',
             'certificate_no'      => 'nullable|array',
             'certificate_no.*'    => 'nullable|string|max:20',
             'upload_photo'   => $uploadPhotoRule,
@@ -519,6 +548,10 @@ class FormPController extends BaseController
         DB::beginTransaction();
 
         try {
+            $hasCompanyNameColumn = Schema::hasColumn('tnelb_applicants_exp', 'company_name');
+            $hasEmpCateColumn = Schema::hasColumn('tnelb_applicants_exp', 'emp_cate');
+            $hasExperienceColumn = Schema::hasColumn('tnelb_applicants_exp', 'experience');
+            $hasTotalExpColumn = Schema::hasColumn('tnelb_applicants_exp', 'total_exp');
 
 
             $appl_type = $request->appl_type ?? '';
@@ -633,6 +666,7 @@ class FormPController extends BaseController
                     $levelName  = $level ?? null;
                     $institute  = $request->institute_name[$key] ?? null;
                     $year       = $request->year_of_passing[$key] ?? null;
+                    $month      = $request->month_passing[$key] ?? null;
                     $certNo     = $request->certificate_no[$key] ?? null;
 
                     $removed    = isset($request->removed_document[$key]) && $request->removed_document[$key] == '1';
@@ -667,6 +701,7 @@ class FormPController extends BaseController
                         ],
                         [
                             'institute_name'    => $institute,
+                            'month_passing'     => $month,
                             'year_of_passing'   => $year,
                             'certificate_no'    => $certNo,
                             'upload_document'   => $finalDoc,
@@ -707,19 +742,32 @@ class FormPController extends BaseController
                     $lastNum++;
                     $newSerial = 'exp_' . $lastNum;
 
-                    Mst_experience::updateOrCreate(
-                        [
-                            'login_id'       => $loginId,
-                            'application_id' => $applicationId,
-                            'company_name'   => $companyName,
-                        ],
-                        [
-                            'experience'      => $expYears,
-                            'designation'     => $designation,
-                            'upload_document' => $finalDoc,
-                            'exp_serial'      => $newSerial,
-                        ]
-                    );
+                    $expIdentity = [
+                        'login_id'       => $loginId,
+                        'application_id' => $applicationId,
+                    ];
+                    if ($hasCompanyNameColumn) {
+                        $expIdentity['company_name'] = $companyName;
+                    } elseif ($hasEmpCateColumn) {
+                        $expIdentity['emp_cate'] = $companyName;
+                    }
+                    $expPayload = [
+                        'designation'     => $designation,
+                        'upload_document' => $finalDoc,
+                        'exp_serial'      => $newSerial,
+                    ];
+                    if ($hasExperienceColumn) {
+                        $expPayload['experience'] = $expYears;
+                    } elseif ($hasTotalExpColumn) {
+                        $expPayload['total_exp'] = $expYears;
+                    }
+                    if ($hasCompanyNameColumn) {
+                        $expPayload['company_name'] = $companyName;
+                    } elseif ($hasEmpCateColumn) {
+                        $expPayload['emp_cate'] = $companyName;
+                    }
+
+                    Mst_experience::updateOrCreate($expIdentity, $expPayload);
                 }
             }
 
@@ -931,6 +979,10 @@ class FormPController extends BaseController
     // Save As Draft function
     public function saveDraft(Request $request)
     {
+        if ($request->input('month_passing') === null && $request->exists('month_of_passing')) {
+            $request->merge(['month_passing' => (array) $request->input('month_of_passing', [])]);
+        }
+
         $request->merge([
             'aadhaar' => preg_replace('/\D/', '', $request->aadhaar)
         ]);
@@ -987,6 +1039,8 @@ class FormPController extends BaseController
             'institute_name.*'     => 'nullable|string|max:255',
             'year_of_passing'      => 'nullable|array|min:1',
             'year_of_passing.*'    => 'nullable',
+            'month_passing'        => 'nullable|array',
+            'month_passing.*'      => 'nullable|string|max:20',
             'certificate_no'      => 'nullable|array',
             'certificate_no.*'    => 'nullable|string|max:20',
 
@@ -1035,6 +1089,10 @@ class FormPController extends BaseController
         DB::beginTransaction();
 
         try {
+            $hasCompanyNameColumn = Schema::hasColumn('tnelb_applicants_exp', 'company_name');
+            $hasEmpCateColumn = Schema::hasColumn('tnelb_applicants_exp', 'emp_cate');
+            $hasExperienceColumn = Schema::hasColumn('tnelb_applicants_exp', 'experience');
+            $hasTotalExpColumn = Schema::hasColumn('tnelb_applicants_exp', 'total_exp');
             // 🔹 Find existing application if $id is passed
 
             $form = $id ? TnelbFormP::where('application_id', $id)->first() : null;
@@ -1175,6 +1233,7 @@ class FormPController extends BaseController
                         $education->update([
                             'educational_level' => $level ?? null,
                             'institute_name'    => $request->institute_name[$key] ?? null,
+                            'month_passing'     => $request->month_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key] ?? null,
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'upload_document'   => $filePath,
@@ -1187,6 +1246,7 @@ class FormPController extends BaseController
                             'login_id'          => $loginId,
                             'educational_level' => $level,
                             'institute_name'    => $request->institute_name[$key],
+                            'month_passing'     => $request->month_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key],
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
@@ -1234,26 +1294,44 @@ class FormPController extends BaseController
 
                     if ($work) {
                         // 🔹 UPDATE existing record
-                        $work->update([
-                            'company_name'    => $company ?? null,
-                            'experience'      => $request->experience[$key] ?? null,
+                        $workPayload = [
                             'designation'     => $request->designation[$key] ?? null,
                             'upload_document' => $isFileRemoved ? null : ($filePath ?? $work->upload_document),
-                        ]);
+                        ];
+                        if ($hasCompanyNameColumn) {
+                            $workPayload['company_name'] = $company ?? null;
+                        } elseif ($hasEmpCateColumn) {
+                            $workPayload['emp_cate'] = $company ?? null;
+                        }
+                        if ($hasExperienceColumn) {
+                            $workPayload['experience'] = $request->experience[$key] ?? null;
+                        } elseif ($hasTotalExpColumn) {
+                            $workPayload['total_exp'] = $request->experience[$key] ?? null;
+                        }
+                        $work->update($workPayload);
                     } else {
                         // 🔹 INSERT new record
                         $lastNum++;
                         $newExpSerial = 'exp_' . $lastNum;
 
-                        Mst_experience::create([
+                        $workPayload = [
                             'login_id'        => $loginId,
-                            'company_name'    => $company,
-                            'experience'      => $request->experience[$key],
                             'designation'     => $request->designation[$key],
                             'application_id'  => $applicationId,
                             'exp_serial'      => $newExpSerial,
                             'upload_document' => $filePath,
-                        ]);
+                        ];
+                        if ($hasCompanyNameColumn) {
+                            $workPayload['company_name'] = $company;
+                        } elseif ($hasEmpCateColumn) {
+                            $workPayload['emp_cate'] = $company;
+                        }
+                        if ($hasExperienceColumn) {
+                            $workPayload['experience'] = $request->experience[$key];
+                        } elseif ($hasTotalExpColumn) {
+                            $workPayload['total_exp'] = $request->experience[$key];
+                        }
+                        Mst_experience::create($workPayload);
                     }
                 }
             }

@@ -2298,13 +2298,13 @@ class LicensepdfController extends Controller
                     </tr>
                 </table>
                 <div class="summary-card">
-                    <div class="summary-heading">Issued Certificate History</div>
+                    <div class="summary-heading">Issued Certificates</div>
                     <table class="summary-table" width="100%" cellspacing="0" cellpadding="0">
                     <thead>
                         <tr>
                             <th width="6%">#</th>
                             <th width="28%">Certificate Number</th>
-                            <th width="20%">Issued At</th>
+                            <th width="20%">Date Of Issue</th>
                             <th width="20%">Expired At</th>
                             <th width="16%">Status</th>
                         </tr>

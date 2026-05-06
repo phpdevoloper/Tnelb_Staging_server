@@ -290,7 +290,7 @@ class PDFController extends Controller
             $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
-                <td>' . e($edu->educational_level ?? '') . '</td>
+                <td>' . e($this->expandEducationalLevel($edu->educational_level ?? '')) . '</td>
                 <td>' . e($edu->institute_name ?? '') . '</td>
                 <td>' . e($passingMonth !== '' ? $passingMonth : '-') . '</td>
                 <td>' . e($passingYear !== '' ? $passingYear : '-') . '</td>
@@ -555,7 +555,7 @@ class PDFController extends Controller
             $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
-                <td>' . $edu->educational_level . '</td>
+                <td>' . e($this->expandEducationalLevel($edu->educational_level ?? '')) . '</td>
                 <td>' . $edu->institute_name . '</td>
                 <td>' . ($passingMonth !== '' ? $passingMonth : '-') . '</td>
                 <td>' . ($passingYear !== '' ? $passingYear : '-') . '</td>
@@ -883,7 +883,7 @@ class PDFController extends Controller
             $passingYear  = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
-                <td>' . e($edu->educational_level) . '</td>
+                <td>' . e($this->expandEducationalLevel($edu->educational_level ?? '')) . '</td>
                 <td class="td-left">' . e($edu->institute_name) . '</td>
                 <td>' . ($passingMonth !== '' ? $passingMonth : '-') . '</td>
                 <td>' . ($passingYear  !== '' ? $passingYear  : '-') . '</td>
@@ -1219,7 +1219,7 @@ class PDFController extends Controller
             $passingMonth = trim((string) ($edu->month_passing ?? ''));
             $passingYear = trim((string) ($edu->year_of_passing ?? ''));
             $passingLabel = trim($passingMonth . ' ' . $passingYear);
-            $pdf->Cell(40, 7, $edu->educational_level, 1, 0, 'C');
+            $pdf->Cell(40, 7, $this->expandEducationalLevel($edu->educational_level ?? ''), 1, 0, 'C');
             $pdf->Cell(50, 7, $edu->institute_name, 1, 0, 'C');
             $pdf->Cell(40, 7, ($passingLabel !== '' ? $passingLabel : '-'), 1, 0, 'C');
             $pdf->Cell(50, 7, $edu->percentage . '%', 1, 1, 'C');
@@ -1507,7 +1507,7 @@ class PDFController extends Controller
             $passingYear  = trim((string) ($edu->year_of_passing ?? ''));
             $html .= '<tr>
                 <td>' . ($i + 1) . '</td>
-                <td><span class="eng">' . e($edu->educational_level) . '</span></td>
+                <td><span class="eng">' . e($this->expandEducationalLevel($edu->educational_level ?? '')) . '</span></td>
                 <td class="td-left"><span class="eng">' . e($edu->institute_name) . '</span></td>
                 <td><span class="eng">' . ($passingMonth !== '' ? $passingMonth : '-') . '</span></td>
                 <td><span class="eng">' . ($passingYear  !== '' ? $passingYear  : '-') . '</span></td>
@@ -2087,5 +2087,31 @@ class PDFController extends Controller
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="license.pdf"');
 
+    }
+
+    private function expandEducationalLevel(?string $level): string
+    {
+        $normalized = strtoupper(trim((string) $level));
+        $map = [
+            'BEM' => 'B.E. in Mechanical Engineering',
+            'BEE' => 'B.E. in Electrical and Electronics Engineering',
+            'DiplomaM' => 'Diploma in Mechanical Engineering',
+            'DiplomaE' => 'Diploma in Electrical and Electronics Engineering',
+            'DEEE' => 'Diploma in Electrical and Electronics Engineering',
+            'DEE' => 'Diploma in Electrical and Electronics Engineering',
+            'ITI Certificate' => 'ITI Certificate',
+            'Wireman Helper Examination' => 'Wireman Helper Examination',
+            'NCTVT' => 'National Council for Training in Vocational Trades',
+            'Up to 8th Standard' => 'Up to 8th Standard',
+            'NTC' => 'NTC',
+            'Provisional' => 'Provisional',
+            'Ex-Serviceman' => 'Ex-Serviceman',
+            'H to B' => 'H to B',
+            'SCVT' => 'SCVT',
+            'AMIE' => 'A pass in AMIE',
+            'MEE' => 'M.E. in Electrical and Electronics Engineering',
+        ];
+
+        return $map[$normalized] ?? (string) $level;
     }
 }

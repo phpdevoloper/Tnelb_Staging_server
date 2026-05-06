@@ -246,7 +246,7 @@
                             <i class="fa fa-file-pdf-o" style="font-size:14px;color:red"></i>
                             <span class="badge outline-badge-info" style="font-size:10px;">தமிழ்</span>
                         </a>
-                        <a href="{{ route('admin.generate.pdf', ['application_id' => $workflow->application_id]) }}" target="_blank"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence (English)">
+                        <a href="{{ route('admin.generateLicensePDF', ['application_id' => $workflow->application_id]) }}" target="_blank"  data-bs-toggle="tooltip" data-bs-placement="top" title="Download Licence (English)">
                             <i class="fa fa-file-pdf-o" style="font-size:14px;color:red"></i>
                             <span class="badge outline-badge-info" style="font-size:10px;">English</span>
                         </a>

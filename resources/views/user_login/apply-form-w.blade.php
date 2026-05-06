@@ -340,7 +340,7 @@
                                             <th rowspan="2">S.No</th>
                                             <th rowspan="2">Education Level</th>
                                             <th rowspan="2">Institution/School Name</th>
-                                            <th colspan="2" class="text-center">Year of Passing</th>
+                                            <th colspan="2" class="text-center">Month & Year of Passing</th>
                                             <th rowspan="2">Certificate No</th>
                                             <th class="text-center" rowspan="2">Upload Document<br><span class="file-limit">File type: PDF (Min 5 KB Max 200 KB)</span></th>
                                             <th class="text-center p-1" rowspan="2">
@@ -349,10 +349,10 @@
                                                 </div>
                                             </th>
                                         </tr>
-                                        <tr>
+                                        {{-- <tr>
                                             <th class="text-center">Month</th>
                                             <th class="text-center">Year</th>
-                                        </tr>
+                                        </tr> --}}
                                     </thead>
                                     <tbody id="education-container">
                                         <tr class="education-fields">
@@ -506,7 +506,7 @@
                             <div id="previously_details" class="fs-toggle-panel" style="display:{{ $hasOldPrefill ? 'block' : 'none' }};">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-12 col-md-3">
-                                        <div class="fs-field-label">Certificate Number <span class="req">*</span></div>
+                                        <div class="fs-field-label">Certificate Number <span class="req">*</span> <span class="text-muted" style="font-size:.75rem;font-weight:400;">(eg. H1234)</span></div>
                                         <input autocomplete="off" class="form-control verify-input" id="previously_number" name="competency_certificate_no" type="text" data-type="certificate" data-error="#licenseError" data-msg="#license_message" placeholder="Certificate Number" maxlength="80" value="{{ $oldCertNo }}">
                                         <input type="hidden" id="cert_verify" name="cert_verify" value="0">
                                         <span id="licenseError" class="text-danger" style="font-size:.78rem;"></span>
