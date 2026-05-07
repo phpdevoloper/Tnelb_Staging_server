@@ -2,23 +2,126 @@
 @include('admin.include.header')
 @include('admin.include.navbar')
 <style>
-    .tab-content {
-        padding: 0px 20px;
+    .applicant-supervisor-page {
+        --asp-primary: #4361ee;
+        --asp-primary-soft: #eef2ff;
+        --asp-success: #10b981;
+        --asp-ink: #1f2937;
+        --asp-ink-soft: #4b5563;
+        --asp-border: #e5e7eb;
+        --asp-border-strong: #d1d5db;
+        --asp-bg: #f8fafc;
+        --asp-card-bg: #ffffff;
+        --asp-radius: 12px;
+        --asp-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
     }
-    .table-education-qual-wrap {
+    .applicant-supervisor-page .tab-content {
+        padding: 1rem 1.25rem 0.5rem;
+    }
+    .applicant-supervisor-page .applicant_details {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0f2fe 100%);
+        border: 1px solid var(--asp-border);
+        border-radius: var(--asp-radius);
+        padding: 1rem 1.25rem;
+        box-shadow: var(--asp-shadow);
+    }
+    .applicant-supervisor-page .applicant_details h4 {
+        margin: 0;
+        color: var(--asp-ink);
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.75rem;
+        align-items: center;
+        line-height: 1.5;
+    }
+    .applicant-supervisor-page .applicant_details h4 > span {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.6rem;
+        font-weight: 600;
+        font-size: 0.82rem;
+        border-radius: 999px;
+        background: #ffffffcc;
+        color: var(--asp-ink) !important;
+        border: 1px solid #ffffff;
+    }
+    .applicant-supervisor-page .statbox.widget {
+        border: 1px solid var(--asp-border);
+        border-radius: var(--asp-radius);
+        background: var(--asp-card-bg);
+        box-shadow: var(--asp-shadow);
+    }
+    .applicant-supervisor-page .widget-content-area {
+        padding: 0.75rem 0.75rem 1rem;
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs {
+        border-bottom: 2px solid var(--asp-border);
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs .nav-link {
+        color: var(--asp-ink-soft);
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        padding: 0.6rem 1rem;
+        transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs .nav-link:hover {
+        color: var(--asp-primary);
+        background: var(--asp-primary-soft);
+    }
+    .applicant-supervisor-page .simple-tab .nav-tabs .nav-link.active {
+        color: var(--asp-primary);
+        background: transparent;
+        border-bottom-color: var(--asp-primary);
+    }
+    /* ---------- Section headings (match supervisor page) ---------- */
+    .applicant-supervisor-page .asp-section-title {
+        position: relative;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--asp-ink);
+        margin: 1.1rem 0 0.6rem;
+        padding-left: 0.65rem;
+    }
+    .applicant-supervisor-page .asp-section-title::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.18rem;
+        bottom: 0.18rem;
+        width: 4px;
+        border-radius: 4px;
+        background: var(--asp-primary);
+    }
+    /* Personal details mini-table */
+    .applicant-supervisor-page .home-tab-pane .table-sm tbody td {
+        padding: 0.45rem 0.5rem;
+        border-color: var(--asp-border);
+        font-size: 0.86rem;
+    }
+    .applicant-supervisor-page .home-tab-pane .table-sm tbody td.fw-bold {
+        color: var(--asp-ink-soft);
+    }
+    .applicant-supervisor-page .table-education-qual-wrap {
+        border: 1px solid var(--asp-border);
+        border-radius: 10px;
+        background: #fff;
         width: 100%;
         max-width: 100%;
         min-width: 0;
         overflow-x: auto;
     }
-    .table-education-qual {
+    .applicant-supervisor-page .table-education-qual {
         table-layout: fixed;
         width: 100%;
         max-width: 100%;
         margin-bottom: 0;
     }
-    /* Wrap header text in all applicant-detail tables (overrides any nowrap on th) */
-    #tabsSimple .table thead th {
+    .applicant-supervisor-page #tabsSimple .table thead th {
         white-space: normal !important;
         word-wrap: break-word;
         overflow-wrap: break-word;
@@ -27,21 +130,106 @@
         vertical-align: middle;
         padding: 0.45rem 0.5rem;
     }
-    .table-education-qual tbody td {
+    .applicant-supervisor-page .table-education-qual tbody td {
         word-break: break-word;
         overflow-wrap: break-word;
         vertical-align: middle;
     }
-    .table-education-qual tbody td a {
+    .applicant-supervisor-page .table-education-qual tbody td a {
         white-space: normal;
         word-break: break-word;
     }
-    .table-education-qual img {
+    .applicant-supervisor-page .table-education-qual img {
         max-width: 100%;
         height: auto;
     }
+    .applicant-supervisor-page .applicant-detail-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--asp-border);
+        border-radius: 10px;
+        background: #fff;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.83rem;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table thead th {
+        background: #2b5559;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        border-color: #d7dbe0;
+        text-align: left;
+    }
+    .applicant-supervisor-page .applicant-detail-compact-table tbody td {
+        border-color: #e5e7eb;
+        vertical-align: middle;
+    }
+    .applicant-supervisor-page .asp-photo-frame {
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 0.5rem;
+        background: #fff;
+        display: inline-block;
+        box-sizing: border-box;
+    }
+    .applicant-supervisor-page .asp-signature-frame {
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 0.45rem 0.55rem;
+        background: #fff;
+        display: inline-block;
+        margin-top: 0.5rem;
+        box-sizing: border-box;
+    }
+    .applicant-supervisor-page .asp-photo-frame img,
+    .applicant-supervisor-page .asp-signature-frame img {
+        border: none !important;
+        box-shadow: none;
+        display: block;
+    }
+    .applicant-supervisor-page #profile-tab-pane #specific-class {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 0.75rem;
+        row-gap: 0.1rem;
+        padding: 0.25rem 0.25rem 0.5rem;
+    }
+    .applicant-supervisor-page #profile-tab-pane .form-check {
+        padding: 0.2rem 0.4rem 0.2rem 1.6rem;
+        border-radius: 6px;
+        margin: 0;
+        min-height: auto;
+        transition: background 0.15s ease;
+    }
+    .applicant-supervisor-page #profile-tab-pane .form-check:hover {
+        background: var(--asp-primary-soft);
+    }
+    .applicant-supervisor-page #profile-tab-pane .form-check-label {
+        font-size: 0.85rem;
+        color: var(--asp-ink);
+        cursor: pointer;
+        line-height: 1.35;
+    }
+    .applicant-supervisor-page #contact-tab-pane p {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+        color: var(--asp-ink);
+    }
+    @media (max-width: 575.98px) {
+        .applicant-supervisor-page #profile-tab-pane #specific-class {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
-<div id="content" class="main-content">
+<div id="content" class="main-content applicant-supervisor-page">
     <div class="layout-px-spacing">
         <div class="middle-content container-xxl p-0">
             <div class="secondary-nav">
@@ -100,7 +288,7 @@
                                 </ul>
 
                                 <div class="tab-content" id="myTabContent">
-                                    <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                                    <div class="tab-pane fade show active home-tab-pane" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
                                         <div class="row mt-3 ">
                                             <div class="row">
                                                 <!-- Left Side: Applicant Details -->
@@ -138,13 +326,27 @@
                                                 <!-- Right Side: Applicant Photo -->
                                                 <div class="col-md-4 text-center">
                                                     @if(isset($uploadedPhoto) && !empty($uploadedPhoto->upload_path))
-                                                        <img src="{{ url($uploadedPhoto->upload_path) }}"
-                                                             alt="Applicant Photo"
-                                                             class="img-fluid rounded border"
-                                                             style="width: 150px; height: 200px; object-fit: cover;">
+                                                        <div class="asp-photo-frame">
+                                                            <img src="{{ url($uploadedPhoto->upload_path) }}"
+                                                                 alt="Applicant Photo"
+                                                                 class="img-fluid rounded"
+                                                                 style="width: 150px; height: 200px; object-fit: cover;">
+                                                        </div>
                                                     @else
                                                         <p class="text-muted">No photo available</p>
                                                     @endif
+                                                    <div class="mt-2">
+                                                        @if(isset($uploadedSign) && !empty($uploadedSign->uploaded_doc))
+                                                            <div class="asp-signature-frame">
+                                                                <img src="{{ url($uploadedSign->uploaded_doc) }}"
+                                                                     alt="Applicant Signature"
+                                                                     class="img-fluid rounded"
+                                                                     style="width: 150px; height: 70px; object-fit: contain; background: #fff;">
+                                                            </div>
+                                                        @else
+                                                            <p class="text-muted mb-0">No signature available</p>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                             {{-- <div class="row">
@@ -186,23 +388,32 @@
 
                                             </div> --}}
 
-                                            <h6 class="mt-2 mb-2 fw-bold">Educational Qualifications</h6>
-                                            <div class="table-education-qual-wrap mb-2">
-                                                <table class="table table-bordered table-sm table-education-qual">
+                                            <h6 class="asp-section-title">Educational Qualifications</h6>
+                                            <div class="applicant-detail-table-wrap mb-2">
+                                                <table class="table table-bordered table-sm table-education-qual applicant-detail-compact-table">
                                                     <colgroup>
                                                         <col style="width: 14%;">
                                                         <col style="width: 30%;">
-                                                        <col style="width: 14%;">
+                                                        <col style="width: 10%;">
+                                                        <col style="width: 10%;">
                                                         <col style="width: 18%;">
-                                                        <col style="width: 24%;">
+                                                        <col style="width: 18%;">
                                                     </colgroup>
                                                     <thead>
                                                         <tr>
                                                             <th>Education Level</th>
                                                             <th>Institution/School Name</th>
-                                                            <th>Year of Passing</th>
+                                                            <th colspan="2" class="text-center">Month &amp; Year of Passing</th>
                                                             <th>Certificate No</th>
                                                             <th>Document Upload</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th>Month</th>
+                                                            <th>Year</th>
+                                                            <th></th>
+                                                            <th></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -210,7 +421,22 @@
                                                         <tr>
                                                             <td>{{ $education->educational_level }}</td>
                                                             <td>{{ $education->institute_name }}</td>
-                                                            <td>{{ $education->year_of_passing }}</td>
+                                                            <td>
+                                                                @php
+                                                                    $monthMap = ['01' => 'Jan', '02' => 'Feb', '03' => 'Mar', '04' => 'Apr', '05' => 'May', '06' => 'Jun', '07' => 'Jul', '08' => 'Aug', '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Dec'];
+                                                                    $rawMonth = $education->month_passing ?? $education->month_of_passing ?? '';
+                                                                    $monthKey = is_numeric($rawMonth) ? str_pad((string) $rawMonth, 2, '0', STR_PAD_LEFT) : (string) $rawMonth;
+                                                                    $monthText = $monthMap[$monthKey] ?? '';
+                                                                    if ($monthText === '' && is_string($rawMonth) && trim($rawMonth) !== '') {
+                                                                        $alphaMonth = strtolower(substr(trim($rawMonth), 0, 3));
+                                                                        $alphaMap = ['jan' => 'Jan', 'feb' => 'Feb', 'mar' => 'Mar', 'apr' => 'Apr', 'may' => 'May', 'jun' => 'Jun', 'jul' => 'Jul', 'aug' => 'Aug', 'sep' => 'Sep', 'oct' => 'Oct', 'nov' => 'Nov', 'dec' => 'Dec'];
+                                                                        $monthText = $alphaMap[$alphaMonth] ?? '';
+                                                                    }
+                                                                    $yearText = $education->year_of_passing ?? '';
+                                                                @endphp
+                                                                {{ $monthText !== '' ? $monthText : '—' }}
+                                                            </td>
+                                                            <td>{{ $yearText !== '' ? $yearText : '—' }}</td>
                                                             <td>{{ $education->certificate_no ?? '—' }}</td>
                                                             <td class="text-center">
                                                                 @if(!empty($education->upload_document))
@@ -233,22 +459,22 @@
                                                         </tr>
                                                         @empty
                                                         <tr>
-                                                            <td colspan="5" class="text-center">No educational details available.</td>
+                                                            <td colspan="6" class="text-center">No educational details available.</td>
                                                         </tr>
                                                         @endforelse
                                                     </tbody>
                                                 </table>
                                             </div>
 
-                                            <h6 class="mt-2 mb-2 fw-bold">Institute in which the applicant has undergone the training and the period</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                            <h6 class="asp-section-title">Institute in which the applicant has undergone the training and the period</h6>
+                                            <div class="applicant-detail-table-wrap">
+                                                <table class="table table-bordered applicant-detail-compact-table">
                                                     <thead>
                                                         <tr>
                                                             <th>Institute Name & Address</th>
-                                                            <th>Duration(Years)</th>
                                                             <th>From Date</th>
                                                             <th>To Date</th>
+                                                            <th>Duration(Years)</th>
                                                             <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
@@ -256,9 +482,9 @@
                                                         @forelse ($institute_details as $institutes)
                                                         <tr>
                                                             <td>{{ $institutes->institute_name_address }}</td>
-                                                            <td>{{ $institutes->duration }} years</td>
                                                             <td>{{ format_date( $institutes->from_date) }} </td>
                                                             <td>{{ format_date($institutes->to_date) }}</td>
+                                                            <td>{{ $institutes->duration }} years</td>
                                                             <td style="text-align:center;">
 
                                                                 @if($institutes->upload_doc)
@@ -282,23 +508,33 @@
                                                 </table>
                                             </div>
 
-                                            <h6 class="mt-2 mb-2 fw-bold">Power Station to which he is attached at present</h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                            <h6 class="asp-section-title">Power Station to which he is attached at present</h6>
+                                            <div class="applicant-detail-table-wrap">
+                                                <table class="table table-bordered applicant-detail-compact-table">
                                                     <thead>
                                                         <tr>
                                                             <th>Company / Power Station</th>
                                                             <th>Designation</th>
-                                                            <th>Years of Experience</th>
+                                                            <th colspan="3" class="text-center">Year of Experience</th>
                                                             <th>Document Upload</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th>From (Date)</th>
+                                                            <th>To (Date)</th>
+                                                            <th>Total yrs</th>
+                                                            <th></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @forelse ($workExperience as $exp)
                                                         <tr>
-                                                            <td>{{ $exp->company_name ?? '—' }}</td>
+                                                            <td>{{ $exp->company_name ?? $exp->emp_cate ?? '—' }}</td>
                                                             <td>{{ $exp->designation ?? '—' }}</td>
-                                                            <td>{{ $exp->experience ?? '—' }}</td>
+                                                            <td>{{ !empty($exp->from_date) ? \Carbon\Carbon::parse($exp->from_date)->format('d-m-Y') : '—' }}</td>
+                                                            <td>{{ !empty($exp->to_date) ? \Carbon\Carbon::parse($exp->to_date)->format('d-m-Y') : '—' }}</td>
+                                                            <td>{{ $exp->total_exp ?? $exp->experience ?? '—' }}</td>
                                                             <td style="text-align:center;">
                                                                 @if(!empty($exp->upload_document))
                                                                 <a href="{{ url($exp->upload_document) }}" target="_blank" style="font-size: small;">
@@ -311,58 +547,43 @@
                                                         </tr>
                                                         @empty
                                                         <tr>
-                                                            <td colspan="4" class="text-center">No work experience available.</td>
+                                                            <td colspan="6" class="text-center">No work experience available.</td>
                                                         </tr>
                                                         @endforelse
                                                     </tbody>
                                                 </table>
                                             </div>
 
-                                            <div class="row mt-3 mb-2">
-                                                <div class="col-12 col-sm-6">
-                                                    <h6 class="fw-bold">Name of the employer:</h6>
-                                                </div>
-                                                <div class="col-12 col-sm-6">
+                                            <h6 class="asp-section-title">Name of the employer</h6>
+                                            <div class="row mt-1 mb-2">
+                                                <div class="col-12 col-sm-12">
                                                     <p class="mb-0">{{ $applicant->employer_detail ?? '—' }}</p>
                                                 </div>
                                             </div>
 
-                                            <div class="row">
-                                                <div class="col-lg-8 col-6">
-                                                    <h6 class="mt-3 mb-2 fw-bold pb-1">
-                                                        Have you made any previous application? If so, State reference No. and date
-                                                    </h6>
-                                                </div>
-                                                <div class="col-lg-4 col-6">
-                                                    <p class="mt-2 mb-1 mt-lg-2">
-                                                        @php
-                                                        if (empty($applicant->previously_number) && empty($applicant->previously_date)) {
-                                                            $prev_val = 'No';
-                                                        } else {
-                                                            $prev_val = 'Yes, ' . ($applicant->previously_number ?? '') . ' , ' .
-                                                                (!empty($applicant->previously_date) ? format_date($applicant->previously_date) : '');
-                                                        }
-                                                    @endphp
-                                                    </p>
-                                                </div>
-                                                @if (!empty($prev_val))
-                                                    <div class="col-12">
-                                                        <div class="row justify-content-center">
-                                                            <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                <p class="mb-1">
-                                                                    <strong>Application Number :</strong> {{ $applicant->previously_number ?: '—' }}
-                                                                </p>
-                                                            </div>
-                                        
-                                                            <div class="col-6 col-md-5 col-lg-4 text-center">
-                                                                <p class="mb-1">
-                                                                    <strong>Date :</strong> {{ format_date($applicant->previously_date) ?: '—' }}
-                                                                </p>
-                                                            </div>
-                                                        </div>
+                                            @php
+                                                if (empty($applicant->previously_number) && empty($applicant->previously_date)) {
+                                                    $prev_val = 'No';
+                                                } else {
+                                                    $prev_val = 'Yes, ' . ($applicant->previously_number ?? '') . ' , ' .
+                                                        (!empty($applicant->previously_date) ? format_date($applicant->previously_date) : '');
+                                                }
+                                            @endphp
+                                            <h6 class="asp-section-title">Have you made any previous application? If so, State reference No. and date</h6>
+                                            @if (!empty($prev_val))
+                                                <div class="row justify-content-center mb-2">
+                                                    <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                        <p class="mb-1">
+                                                            <strong>Application Number :</strong> {{ !empty($applicant->previously_number) ? $applicant->previously_number : 'No' }}
+                                                        </p>
                                                     </div>
-                                                @endif
-                                            </div>
+                                                    <div class="col-6 col-md-5 col-lg-4 text-center">
+                                                        <p class="mb-1">
+                                                            <strong>Date :</strong> {{ format_date($applicant->previously_date) ?: '—' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            @endif
                                             @php
                                                 $decryptedaadhar = $applicant->aadhaar ? safeDecrypt($applicant->aadhaar) : '';
                                                 $masked          = strlen($decryptedaadhar) === 12 ? str_repeat('X', 8) . substr($decryptedaadhar, -4) : ($applicant->aadhaar ? 'Invalid Aadhaar' : '—');
@@ -370,7 +591,7 @@
 
                                             <div class="row mb-2">
                                                 <div class="col-md-12 col-lg-12">
-                                                    <h6 class="fw-bold mt-3">Documents Uploaded:</h6>
+                                                    <h6 class="asp-section-title">Documents uploaded</h6>
                                                     <div class="row align-items-center mt-1 g-1">
                                                         <div class="col-lg-6">
                                                             <p class="fw-bold mb-0" style="color: #000;">Aadhaar:</p>
@@ -392,6 +613,29 @@
                                                             @endif
                                                         </div>
                                                     </div>
+                                                    <div class="row align-items-center mt-2 g-1">
+                                                        <div class="col-lg-6">
+                                                            <p class="fw-bold mb-0" style="color: #000;">PAN:</p>
+                                                        </div>
+                                                        <div class="col-lg-6 text-end">
+                                                            @if (!empty($applicant->pancard_doc))
+                                                                <div class="fw-bold mb-0" style="color: #515365">
+                                                                    {{ $applicant->pancard ?? '—' }}
+                                                                    (<a href="{{ route('document.show', ['type' => 'pan', 'filename' => $applicant->pancard_doc]) }}"
+                                                                        target="_blank"
+                                                                        class="text-primary applicant-inline-doc-link"
+                                                                        title="Open PAN document">
+                                                                        <i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i>
+                                                                        <span>View Document</span>
+                                                                    </a>)
+                                                                </div>
+                                                            @else
+                                                                <div class="fw-bold mb-0" style="color: #515365">
+                                                                    {{ $applicant->pancard ?? '—' }}
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -406,21 +650,7 @@
                                         @endphp
 
 
-                                        <div class="row mt-3">
-                                            <div class="row mt-3">
-                                                <div class="col-lg-6 d-flex align-items-center justify-content-center">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" id="check_all" name="check_all" class="form-check-input" @if($isVerified) checked disabled @endif>
-                                                        <label class="form-check-label" for="check_all">Check All</label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-lg-6 d-flex align-items-center justify-content-center">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" id="reset_all" name="reset_all" class="form-check-input">
-                                                        <label class="form-check-label" for="reset_all">Reset All</label>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div class="row mt-2">
                                             <div id="specific-class" class="col-lg-12">
                                                 @php
                                                     $checkboxes = [
@@ -1098,12 +1328,9 @@
 
     $(document).ready(function() {
 
-        var checkAllBox = $('#check_all');
-        var resetAllBox = $('#reset_all');
         var forwardbtn = $("#forwardbtn");
         var confirmForward = $("#confirmForward");
         var confirmVerification = $('#confirmVerification');
-        // var individualCheckboxes = $('.form-check-input:not(#check_all):not(#reset_all)');
         var individualCheckboxes = $('#specific-class .form-check-input:not(#check_all, #reset_all)');
 
         //forwardbtn
@@ -1121,43 +1348,12 @@
         checkPresident.change(function () {
             confirmForwardPres.prop('disabled', !this.checked);
         });
-
-
-
-        // forwardbtn.prop('disabled', $('.form-check-input:not(#check_all):checked').length === 0);
-
-        // Initially disable Reset All
-        resetAllBox.prop('disabled', true);
-
-        checkAllBox.change(function() {
-            if ($(this).prop('checked')) {
-                individualCheckboxes.prop('checked', true);
-                resetAllBox.prop('disabled', false).prop('checked', false); // Enable Reset All
+        // Enable forward only when all checklist items are checked
+        individualCheckboxes.change(function() {
+            if ($('#specific-class input[type="checkbox"].form-check-input:checked').length === individualCheckboxes.length) {
                 forwardbtn.prop('disabled', false);
             } else {
-                individualCheckboxes.prop('checked', false);
-                resetAllBox.prop('disabled', true).prop('checked', false); // Disable Reset All
                 forwardbtn.prop('disabled', true);
-            }
-        });
-
-        // "Reset All" functionality
-        resetAllBox.change(function() {
-            if ($(this).prop('checked')) {
-                individualCheckboxes.prop('checked', false);
-                checkAllBox.prop('checked', false); // Uncheck Check All
-                checkAllBox.prop('disabled', false); // Enable Check All
-                resetAllBox.prop('disabled', true); // Disable Reset All after use
-                forwardbtn.prop('disabled', true);
-            }
-        });
-
-        // If any individual checkbox is manually unchecked, uncheck "Check All"
-        individualCheckboxes.change(function() {
-            if ($('.form-check-input:not(#check_all):not(#reset_all):checked').length === individualCheckboxes.length) {
-                checkAllBox.prop('checked', true);
-            } else {
-                checkAllBox.prop('checked', false);
             }
         });
         

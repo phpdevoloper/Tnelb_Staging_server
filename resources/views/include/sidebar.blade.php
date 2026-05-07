@@ -297,16 +297,6 @@
             <div class="collapse collapse-menu show" id="competencyMenu">
                 <ul class="nav flex-column certificate-menu sidebar-login-v2__subnav">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-start {{ $activeFormS ? 'is-active' : '' }}"
-                            href="{{ route('apply-form-s') }}">
-                            <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
-                            <span>
-                                <span class="sidebar-login-v2__item-title">Supervisor Competency Certificate</span>
-                                <span class="sidebar-login-v2__item-form">[Form S]</span>
-                            </span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link d-flex align-items-start {{ $activeFormWh ? 'is-active' : '' }}"
                             href="{{ route('apply-form-wh') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
@@ -318,7 +308,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-start {{ $activeFormW ? 'is-active' : '' }}"
-                            href="{{ route('apply-form-w') }}">
+                        href="{{ route('apply-form-w') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
                             <span>
                                 <span class="sidebar-login-v2__item-title">Wireman Competency Certificate</span>
@@ -328,12 +318,22 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-start {{ $activeFormP ? 'is-active' : '' }}"
-                            href="{{ route('apply_form_p') }}">
+                        href="{{ route('apply_form_p') }}">
+                        <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
+                        <span>
+                            <span class="sidebar-login-v2__item-title">Power Generating Station Operation &amp;
+                                Maintenance Competency Certificate</span>
+                                <span class="sidebar-login-v2__item-form">[Form P]</span>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-start {{ $activeFormS ? 'is-active' : '' }}"
+                            href="{{ route('apply-form-s') }}">
                             <i class="fa fa-angle-right sidebar-login-v2__icon--sub" aria-hidden="true"></i>
                             <span>
-                                <span class="sidebar-login-v2__item-title">Power Generating Station Operation &amp;
-                                    Maintenance Competency Certificate</span>
-                                <span class="sidebar-login-v2__item-form">[Form P]</span>
+                                <span class="sidebar-login-v2__item-title">Supervisor Competency Certificate</span>
+                                <span class="sidebar-login-v2__item-form">[Form S]</span>
                             </span>
                         </a>
                     </li>

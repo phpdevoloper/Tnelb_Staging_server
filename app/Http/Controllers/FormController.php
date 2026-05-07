@@ -1183,20 +1183,16 @@ class FormController extends BaseController
                         continue;
                     }
             
-                    // ✅ Check if this is an existing row
-                    $eduId = $request->edu_id[$key] ?? null;
-                    $education = $eduId ? Mst_education::find($eduId) : null;
-            
                     // ✅ File Handling
                     $existingEdu = $request->existing_document[$key] ?? null;
                     $filePath = ($existingEdu !== null && $existingEdu !== ''
                         && $this->isValidCompetencyAjaxDocPath($existingEdu, 'education'))
                         ? $existingEdu
                         : null;
-            
+
                     if (isset($request->file("education_document")[$key])) {
                         $file = $request->file("education_document")[$key];
-            
+
                         if ($file && $file->isValid()) {
                             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                             $destinationPath = public_path('education_document');
@@ -1204,35 +1200,28 @@ class FormController extends BaseController
                             $filePath = 'education_document/' . $filename;
                         }
                     }
-            
-                    if ($education) {
-                        // ✅ UPDATE existing record
-                        $education->update([
-                            'educational_level' => $level,
-                            'institute_name'    => $request->institute_name[$key],
-                            'month_passing'     => $request->month_of_passing[$key] ?? null,
-                            'year_of_passing'   => $request->year_of_passing[$key],
-                            'certificate_no'    => $request->certificate_no[$key] ?? null,
-                            'upload_document'   => $filePath,
-                        ]);
-            
-                    } else {
-                        // ✅ INSERT new record
-                        $lastNum++;
-                        $newEduSerial = 'edu_' . $lastNum;
-            
-                        Mst_education::create([
+
+                    // Match by (login_id, application_id, educational_level) so a row added in the
+                    // UI with an empty edu_id[] but the same level as an existing row updates that
+                    // row instead of inserting a duplicate. This mirrors what update() already does.
+                    $lastNum++;
+                    $newEduSerial = 'edu_' . $lastNum;
+
+                    Mst_education::updateOrCreate(
+                        [
                             'login_id'          => $loginId,
+                            'application_id'    => $applicationId,
                             'educational_level' => $level,
+                        ],
+                        [
                             'institute_name'    => $request->institute_name[$key],
                             'month_passing'     => $request->month_of_passing[$key] ?? null,
                             'year_of_passing'   => $request->year_of_passing[$key],
                             'certificate_no'    => $request->certificate_no[$key] ?? null,
-                            'application_id'    => $applicationId,
                             'edu_serial'        => $newEduSerial,
                             'upload_document'   => $filePath,
-                        ]);
-                    }
+                        ]
+                    );
                 }
             }
             
@@ -1294,7 +1283,7 @@ class FormController extends BaseController
                         // 🔹 INSERT new record
                         $lastNum++;
                         $newExpSerial = 'exp_' . $lastNum;
-            
+
                         Mst_experience::create([
                             'login_id'        => $loginId,
                             'emp_type'        => $workRow['emp_type'],

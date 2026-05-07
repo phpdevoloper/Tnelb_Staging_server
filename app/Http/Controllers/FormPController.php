@@ -96,7 +96,13 @@ class FormPController extends BaseController
             'work_level'           => 'nullable|array',
             'work_level.*'         => 'nullable|string|max:50',
             'experience'           => 'nullable|array',
-            'experience.*'         => 'nullable|integer|min:0|max:50',
+            'experience.*'         => 'nullable|numeric|min:0|max:50',
+            'work_date_from'       => 'nullable|array',
+            'work_date_from.*'     => 'nullable|date',
+            'work_date_to'         => 'nullable|array',
+            'work_date_to.*'       => 'nullable|date',
+            'work_experience_total'   => 'nullable|array',
+            'work_experience_total.*' => 'nullable|numeric|min:0|max:50',
             'designation'          => 'nullable|array',
             'designation.*'        => 'nullable|string|max:100',
 
@@ -345,8 +351,16 @@ class FormPController extends BaseController
 
             // process experience
             if ($request->has('work_level')) {
+                $hasFromDateColumn = Schema::hasColumn('tnelb_applicants_exp', 'from_date');
+                $hasToDateColumn = Schema::hasColumn('tnelb_applicants_exp', 'to_date');
+
                 foreach ($request->work_level as $key => $company) {
-                    if (empty($company) || empty($request->experience[$key]) || empty($request->designation[$key])) {
+                    $fromDate = $request->work_date_from[$key] ?? null;
+                    $toDate = $request->work_date_to[$key] ?? null;
+                    $totalExp = $request->work_experience_total[$key] ?? ($request->experience[$key] ?? null);
+                    $designation = $request->designation[$key] ?? null;
+
+                    if (empty($company) && empty($fromDate) && empty($toDate) && empty($totalExp) && empty($designation)) {
                         continue;
                     }
 
@@ -370,7 +384,7 @@ class FormPController extends BaseController
 
                     $expData = [
                         'login_id'        => $loginId,
-                        'designation'     => $request->designation[$key],
+                        'designation'     => $designation,
                         'application_id'  => $newApplicationId,
                         'exp_serial'      => $newExpSerial,
                         'upload_document' => $filePath,
@@ -380,10 +394,17 @@ class FormPController extends BaseController
                     } elseif ($hasEmpCateColumn) {
                         $expData['emp_cate'] = $company;
                     }
+                    if ($hasFromDateColumn) {
+                        $expData['from_date'] = $fromDate ?: null;
+                    }
+                    if ($hasToDateColumn) {
+                        $expData['to_date'] = $toDate ?: null;
+                    }
+                    if ($hasTotalExpColumn) {
+                        $expData['total_exp'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
+                    }
                     if ($hasExperienceColumn) {
-                        $expData['experience'] = $request->experience[$key];
-                    } elseif ($hasTotalExpColumn) {
-                        $expData['total_exp'] = $request->experience[$key];
+                        $expData['experience'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
                     }
                     Mst_experience::create($expData);
                 }
@@ -522,6 +543,12 @@ class FormPController extends BaseController
 
             'work_document'        => 'nullable|array',
             'work_document.*'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+            'work_date_from'       => 'nullable|array',
+            'work_date_from.*'     => 'nullable|date',
+            'work_date_to'         => 'nullable|array',
+            'work_date_to.*'       => 'nullable|date',
+            'work_experience_total'   => 'nullable|array',
+            'work_experience_total.*' => 'nullable|numeric|min:0|max:50',
         ], [
 
             // education arrays
@@ -534,7 +561,7 @@ class FormPController extends BaseController
             // work experience arrays
             'work_level.*.string'           => 'Work level must be a valid string.',
             'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
-            'experience.*.integer'          => 'Experience must be an integer.',
+            'experience.*.numeric'          => 'Experience must be a number.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
             'designation.*.string'          => 'Designation must be a valid string.',
@@ -712,12 +739,16 @@ class FormPController extends BaseController
             }
 
             if ($request->has('work_level')) {
+                $hasFromDateColumn = Schema::hasColumn('tnelb_applicants_exp', 'from_date');
+                $hasToDateColumn = Schema::hasColumn('tnelb_applicants_exp', 'to_date');
                 $lastExp = Mst_experience::whereNotNull('exp_serial')->latest('id')->value('exp_serial');
                 $lastNum = $lastExp ? (int) str_replace('exp_', '', $lastExp) : 0;
 
                 foreach ($request->work_level as $key => $company) {
                     $companyName = $company ?? null;
-                    $expYears    = $request->experience[$key] ?? null;
+                    $fromDate    = $request->work_date_from[$key] ?? null;
+                    $toDate      = $request->work_date_to[$key] ?? null;
+                    $totalExp    = $request->work_experience_total[$key] ?? ($request->experience[$key] ?? null);
                     $designation = $request->designation[$key] ?? null;
 
                     $removed     = isset($request->removed_document_work[$key]) && $request->removed_document_work[$key] == '1';
@@ -736,7 +767,7 @@ class FormPController extends BaseController
                         $finalDoc = $oldDoc ?: null;
                     }
 
-                    $hasAnyData = !empty($companyName) || !empty($expYears) || !empty($designation) || !empty($finalDoc);
+                    $hasAnyData = !empty($companyName) || !empty($fromDate) || !empty($toDate) || !empty($totalExp) || !empty($designation) || !empty($finalDoc);
                     if (!$hasAnyData) continue;
 
                     $lastNum++;
@@ -756,10 +787,17 @@ class FormPController extends BaseController
                         'upload_document' => $finalDoc,
                         'exp_serial'      => $newSerial,
                     ];
+                    if ($hasFromDateColumn) {
+                        $expPayload['from_date'] = $fromDate ?: null;
+                    }
+                    if ($hasToDateColumn) {
+                        $expPayload['to_date'] = $toDate ?: null;
+                    }
+                    if ($hasTotalExpColumn) {
+                        $expPayload['total_exp'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
+                    }
                     if ($hasExperienceColumn) {
-                        $expPayload['experience'] = $expYears;
-                    } elseif ($hasTotalExpColumn) {
-                        $expPayload['total_exp'] = $expYears;
+                        $expPayload['experience'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
                     }
                     if ($hasCompanyNameColumn) {
                         $expPayload['company_name'] = $companyName;
@@ -1053,6 +1091,12 @@ class FormPController extends BaseController
 
             'work_document'        => 'nullable|array',
             'work_document.*'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+            'work_date_from'       => 'nullable|array',
+            'work_date_from.*'     => 'nullable|date',
+            'work_date_to'         => 'nullable|array',
+            'work_date_to.*'       => 'nullable|date',
+            'work_experience_total'   => 'nullable|array',
+            'work_experience_total.*' => 'nullable|numeric|min:0|max:50',
         ], [
 
             // education arrays
@@ -1071,7 +1115,7 @@ class FormPController extends BaseController
             'work_level.*.string'           => 'Work level must be a valid string.',
             'work_level.*.max'              => 'Work level may not be greater than 50 characters.',
 
-            'experience.*.integer'          => 'Experience must be an integer.',
+            'experience.*.numeric'          => 'Experience must be a number.',
             'experience.*.min'              => 'Experience cannot be negative.',
             'experience.*.max'              => 'Experience may not exceed 50 years.',
 
@@ -1259,16 +1303,25 @@ class FormPController extends BaseController
 
 
             if ($request->has('work_level')) {
+                $hasFromDateColumn = Schema::hasColumn('tnelb_applicants_exp', 'from_date');
+                $hasToDateColumn = Schema::hasColumn('tnelb_applicants_exp', 'to_date');
                 // ✅ Fetch last exp_serial from DB once
                 $lastExp = Mst_experience::whereNotNull('exp_serial')->latest('id')->value('exp_serial');
                 $lastNum = $lastExp ? (int) str_replace('exp_', '', $lastExp) : 0;
 
                 foreach ($request->work_level as $key => $company) {
+                    $fromDate = $request->work_date_from[$key] ?? null;
+                    $toDate = $request->work_date_to[$key] ?? null;
+                    $totalExp = $request->work_experience_total[$key] ?? ($request->experience[$key] ?? null);
+                    $designation = $request->designation[$key] ?? null;
+
                     // ✅ Skip empty rows
                     if (
                         empty($company) &&
-                        empty($request->experience[$key] ?? null) &&
-                        empty($request->designation[$key] ?? null)
+                        empty($fromDate) &&
+                        empty($toDate) &&
+                        empty($totalExp) &&
+                        empty($designation)
                     ) {
                         continue;
                     }
@@ -1295,7 +1348,7 @@ class FormPController extends BaseController
                     if ($work) {
                         // 🔹 UPDATE existing record
                         $workPayload = [
-                            'designation'     => $request->designation[$key] ?? null,
+                            'designation'     => $designation,
                             'upload_document' => $isFileRemoved ? null : ($filePath ?? $work->upload_document),
                         ];
                         if ($hasCompanyNameColumn) {
@@ -1303,10 +1356,17 @@ class FormPController extends BaseController
                         } elseif ($hasEmpCateColumn) {
                             $workPayload['emp_cate'] = $company ?? null;
                         }
+                        if ($hasFromDateColumn) {
+                            $workPayload['from_date'] = $fromDate ?: null;
+                        }
+                        if ($hasToDateColumn) {
+                            $workPayload['to_date'] = $toDate ?: null;
+                        }
+                        if ($hasTotalExpColumn) {
+                            $workPayload['total_exp'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
+                        }
                         if ($hasExperienceColumn) {
-                            $workPayload['experience'] = $request->experience[$key] ?? null;
-                        } elseif ($hasTotalExpColumn) {
-                            $workPayload['total_exp'] = $request->experience[$key] ?? null;
+                            $workPayload['experience'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
                         }
                         $work->update($workPayload);
                     } else {
@@ -1316,7 +1376,7 @@ class FormPController extends BaseController
 
                         $workPayload = [
                             'login_id'        => $loginId,
-                            'designation'     => $request->designation[$key],
+                            'designation'     => $designation,
                             'application_id'  => $applicationId,
                             'exp_serial'      => $newExpSerial,
                             'upload_document' => $filePath,
@@ -1326,10 +1386,17 @@ class FormPController extends BaseController
                         } elseif ($hasEmpCateColumn) {
                             $workPayload['emp_cate'] = $company;
                         }
+                        if ($hasFromDateColumn) {
+                            $workPayload['from_date'] = $fromDate ?: null;
+                        }
+                        if ($hasToDateColumn) {
+                            $workPayload['to_date'] = $toDate ?: null;
+                        }
+                        if ($hasTotalExpColumn) {
+                            $workPayload['total_exp'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
+                        }
                         if ($hasExperienceColumn) {
-                            $workPayload['experience'] = $request->experience[$key];
-                        } elseif ($hasTotalExpColumn) {
-                            $workPayload['total_exp'] = $request->experience[$key];
+                            $workPayload['experience'] = $totalExp !== null && $totalExp !== '' ? $totalExp : null;
                         }
                         Mst_experience::create($workPayload);
                     }

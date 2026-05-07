@@ -164,6 +164,7 @@
         border: 1px solid #e3e8f0;
         border-radius: 8px;
         margin-bottom: 20px;
+        position: relative;
     }
     .fs-section-header {
         display: flex;
@@ -299,6 +300,36 @@
         line-height: 1.3;
     }
     .fs-field-label .req { color: #d9363e; }
+    .fs-field-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #035ab3;
+        color: #fff;
+        font-size: .7rem;
+        font-weight: 700;
+        margin-right: 6px;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
+    .fs-field-num-sub {
+        margin-right: 4px;
+        color: #2c3e5e;
+        font-weight: 600;
+    }
+    .fs-field-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .fs-field-head-text { flex: 1; min-width: 0; }
+    .fs-field-head .fs-field-num { margin-right: 0; margin-top: 1px; }
+    .fs-field-head .fs-field-label { margin-bottom: 1px; }
+    .fs-field-head .fs-field-tamil { margin-bottom: 0; }
     .fs-field-tamil {
         font-size: .76rem;
         color: #7a90b0;
@@ -972,29 +1003,32 @@
                         $ageVal = isset($application_details) ? $application_details->age : '';
                     @endphp
                     <div class="fs-section" data-mode="view">
-                        <div class="fs-section-header">
-                            <span class="fs-section-num">1</span>
-                            <div>
-                                <div class="fs-section-title">Applicant &amp; Father Details</div>
-                                <div class="fs-section-tamil">விண்ணப்பதாரர் மற்றும் தகப்பனார் விவரங்கள்</div>
-                            </div>
-                            <button type="button" class="fs-section-edit-toggle" onclick="toggleSectionEdit(this)" title="Edit">
-                                <i class="fa fa-pencil"></i>
-                            </button>
-                        </div>
+                        <button type="button" class="fs-section-edit-toggle" onclick="toggleSectionEdit(this)" title="Edit" style="position:absolute;top:10px;right:10px;">
+                            <i class="fa fa-pencil"></i>
+                        </button>
                         <div class="fs-section-body">
                             <div class="fs-view-block">
                                 <div class="row">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <div class="fs-field-label">Applicant's Name</div>
-                                        <div class="fs-field-tamil">விண்ணப்பதாரர் பெயர்</div>
+                                        <div class="fs-field-head">
+                                            <span class="fs-field-num">1</span>
+                                            <div class="fs-field-head-text">
+                                                <div class="fs-field-label">Applicant's Name</div>
+                                                <div class="fs-field-tamil">விண்ணப்பதாரர் பெயர்</div>
+                                            </div>
+                                        </div>
                                         <div class="fs-view-grid-value-box">
                                             <div class="fs-view-value {{ empty($applicantNameVal) ? 'fs-view-value--empty' : '' }}" data-view-for="Applicant_Name">{{ $applicantNameVal ?: 'Not provided' }}</div>
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <div class="fs-field-label">Father's Name</div>
-                                        <div class="fs-field-tamil">தகப்பனார் பெயர்</div>
+                                        <div class="fs-field-head">
+                                            <span class="fs-field-num">2</span>
+                                            <div class="fs-field-head-text">
+                                                <div class="fs-field-label">Father's Name</div>
+                                                <div class="fs-field-tamil">தகப்பனார் பெயர்</div>
+                                            </div>
+                                        </div>
                                         <div class="fs-view-grid-value-box">
                                             <div class="fs-view-value {{ empty($fathersNameVal) ? 'fs-view-value--empty' : '' }}" data-view-for="Fathers_Name">{{ $fathersNameVal ?: 'Not provided' }}</div>
                                         </div>
@@ -1002,8 +1036,13 @@
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <div class="fs-field-label">Applicant Address</div>
-                                        <div class="fs-field-tamil">விண்ணப்பதாரர் முகவரி</div>
+                                        <div class="fs-field-head">
+                                            <span class="fs-field-num">3</span>
+                                            <div class="fs-field-head-text">
+                                                <div class="fs-field-label">Applicant Address</div>
+                                                <div class="fs-field-tamil">விண்ணப்பதாரர் முகவரி</div>
+                                            </div>
+                                        </div>
                                         <div class="fs-view-grid-value-box">
                                             <div class="fs-view-value {{ empty($addressVal) ? 'fs-view-value--empty' : '' }}" data-view-for="applicants_address">{{ $addressVal ?: 'Not provided' }}</div>
                                         </div>
@@ -1011,14 +1050,19 @@
                                     <div class="col-12 col-md-6">
                                         <div class="row">
                                             <div class="col-12 col-sm-7 mb-3 mb-sm-0">
-                                                <div class="fs-field-label">Date of Birth</div>
-                                                <div class="fs-field-tamil">பிறந்த நாள், மாதம், வருடம்</div>
+                                                <div class="fs-field-head">
+                                                    <span class="fs-field-num">4</span>
+                                                    <div class="fs-field-head-text">
+                                                        <div class="fs-field-label"><span class="fs-field-num-sub">(i)</span>Date of Birth</div>
+                                                        <div class="fs-field-tamil">பிறந்த நாள், மாதம், வருடம்</div>
+                                                    </div>
+                                                </div>
                                                 <div class="fs-view-grid-value-box">
                                                     <div class="fs-view-value {{ empty($dobDisplayVal) ? 'fs-view-value--empty' : '' }}" data-view-for="d_o_b" data-view-format="date">{{ $dobDisplayVal ?: 'Not provided' }}</div>
                                                 </div>
                                             </div>
                                             <div class="col-12 col-sm-5">
-                                                <div class="fs-field-label">Age</div>
+                                                <div class="fs-field-label"><span class="fs-field-num-sub">(ii)</span>Age</div>
                                                 <div class="fs-field-tamil">வயது</div>
                                                 <div class="fs-view-grid-value-box">
                                                     <div class="fs-view-value {{ empty($ageVal) ? 'fs-view-value--empty' : '' }}" data-view-for="age">{{ $ageVal ?: 'Not provided' }}</div>
@@ -1031,14 +1075,24 @@
                             <div class="fs-edit-block">
                                 <div class="row">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <div class="fs-field-label">1. Applicant's Name <span class="req">*</span></div>
-                                        <div class="fs-field-tamil">விண்ணப்பதாரர் பெயர்</div>
+                                        <div class="fs-field-head">
+                                            <span class="fs-field-num">1</span>
+                                            <div class="fs-field-head-text">
+                                                <div class="fs-field-label">Applicant's Name <span class="req">*</span></div>
+                                                <div class="fs-field-tamil">விண்ணப்பதாரர் பெயர்</div>
+                                            </div>
+                                        </div>
                                         <input autocomplete="off" class="form-control" id="Applicant_Name" name="applicant_name" type="text"
                                             value="{{ str_replace('.', '', $applicantNameVal) }}" readonly>
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <div class="fs-field-label">2. Father's Name <span class="req">*</span></div>
-                                        <div class="fs-field-tamil">தகப்பனார் பெயர்</div>
+                                        <div class="fs-field-head">
+                                            <span class="fs-field-num">2</span>
+                                            <div class="fs-field-head-text">
+                                                <div class="fs-field-label">Father's Name <span class="req">*</span></div>
+                                                <div class="fs-field-tamil">தகப்பனார் பெயர்</div>
+                                            </div>
+                                        </div>
                                         <input autocomplete="off" class="form-control" id="Fathers_Name" name="fathers_name"
                                             type="text" value="{{ $fathersNameVal }}" maxlength="50">
                                         <span class="error-message text-danger" style="font-size:.78rem;"></span>
@@ -1046,16 +1100,26 @@
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <div class="fs-field-label">3. Applicant Address <span class="req">*</span> <span style="font-weight:400;font-size:.78rem;">(To be clear)</span></div>
-                                        <div class="fs-field-tamil">விண்ணப்பதாரர் முகவரி <span style="font-size:.72rem;">(தெளிவாக இருத்தல் வேண்டும்)</span></div>
+                                        <div class="fs-field-head">
+                                            <span class="fs-field-num">3</span>
+                                            <div class="fs-field-head-text">
+                                                <div class="fs-field-label">Applicant Address <span class="req">*</span> <span style="font-weight:400;font-size:.78rem;">(To be clear)</span></div>
+                                                <div class="fs-field-tamil">விண்ணப்பதாரர் முகவரி <span style="font-size:.72rem;">(தெளிவாக இருத்தல் வேண்டும்)</span></div>
+                                            </div>
+                                        </div>
                                         <textarea rows="3" class="form-control" id="applicants_address" name="applicants_address" maxlength="250">{{ $addressVal }}</textarea>
                                         <span id="applicants_address_error" class="text-danger" style="font-size:.78rem;"></span>
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <div class="row">
                                             <div class="col-12 col-sm-7 mb-3 mb-sm-0">
-                                                <div class="fs-field-label">4. (i) D.O.B <span class="req">*</span></div>
-                                                <div class="fs-field-tamil">பிறந்த நாள், மாதம், வருடம்</div>
+                                                <div class="fs-field-head">
+                                                    <span class="fs-field-num">4</span>
+                                                    <div class="fs-field-head-text">
+                                                        <div class="fs-field-label"><span class="fs-field-num-sub">(i)</span>D.O.B <span class="req">*</span></div>
+                                                        <div class="fs-field-tamil">பிறந்த நாள், மாதம், வருடம்</div>
+                                                    </div>
+                                                </div>
                                                 <input class="form-control" type="date" autocomplete="off"
                                                     id="d_o_b" name="d_o_b"
                                                     min="{{ \Carbon\Carbon::now()->subYears(100)->format('Y-m-d') }}"
@@ -1064,7 +1128,7 @@
                                                 <span id="dob-error" class="text-danger" style="display:none;"></span>
                                             </div>
                                             <div class="col-12 col-sm-5">
-                                                <div class="fs-field-label">4. (ii) Age <span class="req">*</span></div>
+                                                <div class="fs-field-label"><span class="fs-field-num-sub">(ii)</span>Age <span class="req">*</span></div>
                                                 <div class="fs-field-tamil">வயது</div>
                                                 <input autocomplete="off" class="form-control" id="age" name="age"
                                                     type="number" min="18" max="100" value="{{ $ageVal }}" readonly>
@@ -1450,10 +1514,9 @@
                                                                         </select>
                                                                     </td>
                                                                     <td class="work-employer-cell work-exp-col-employer">
-                                                                        <label class="small text-muted work-employer-label d-block mb-1">Company name <span class="text-danger">*</span></label>
-                                                                        <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" value="{{ $workEmployerName }}">
-                                                                        <div class="work-block work-block--intimation mt-1" style="display: none;">
-                                                                            <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
+                                                                        <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" placeholder="Company name *" value="{{ $workEmployerName }}">
+                                                                        <div class="work-block work-block--intimation mt-1" style="display:none;text-align:left;">
+                                                                            <div style="font-size:.7rem;line-height:1.1;margin-bottom:2px;color:#6c757d;white-space:nowrap;display:inline-block;">Intimation&nbsp;letter&nbsp;<span style="color:#d9363e;">*</span></div>
                                                                             <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]" value="{{ $workIntimationDate }}">
                                                                         </div>
                                                                     </td>
@@ -1581,10 +1644,9 @@
                                                                         </select>
                                                                     </td>
                                                                     <td class="work-employer-cell work-exp-col-employer">
-                                                                        <label class="small text-muted work-employer-label d-block mb-1">—</label>
                                                                         <input type="text" class="form-control form-control-sm work-employer-input" name="work_employer_name[]" maxlength="120" autocomplete="off" disabled>
-                                                                        <div class="work-block work-block--intimation mt-1" style="display: none;">
-                                                                            <label class="small d-block mb-0" style="font-size:0.7rem;">Intimation letter <span class="text-danger">*</span></label>
+                                                                        <div class="work-block work-block--intimation mt-1" style="display:none;text-align:left;">
+                                                                            <div style="font-size:.7rem;line-height:1.1;margin-bottom:2px;color:#6c757d;white-space:nowrap;display:inline-block;">Intimation&nbsp;letter&nbsp;<span style="color:#d9363e;">*</span></div>
                                                                             <input type="date" class="form-control form-control-sm work-intimation-date" name="work_intimation_date[]">
                                                                         </div>
                                                                     </td>
@@ -2592,12 +2654,12 @@
         }
 
         var EMP_LABELS = {
-            '': '—',
-            company: 'Company name <span class="text-danger">*</span>',
-            contractor: 'Contractor / firm name <span class="text-danger">*</span>',
-            apprentice: 'Establishment / training organization <span class="text-danger">*</span>',
-            electrical_inspector: 'Office / department <span class="text-danger">*</span>',
-            retired_employees: 'Name of PSU (State / Central / Corporation) <span class="text-danger">*</span>'
+            '': '',
+            company: 'Company name *',
+            contractor: 'Contractor / firm name *',
+            apprentice: 'Establishment / training organization *',
+            electrical_inspector: 'Office / department *',
+            retired_employees: 'Name of PSU (State / Central / Corporation) *'
         };
 
         function $workRow(el) {
@@ -2663,8 +2725,7 @@
 
         function applyEmploymentType($tr) {
             var t = $tr.find('.work-employment-type').val() || '';
-            var $label = $tr.find('.work-employer-label');
-            $label.html(EMP_LABELS[t] || EMP_LABELS['']);
+            $tr.find('.work-employer-input').attr('placeholder', EMP_LABELS[t] || '');
 
             var $emp = $tr.find('.work-employer-input');
             var $yFrom = $tr.find('.work-date-from');

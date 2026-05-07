@@ -400,21 +400,31 @@
                                 <table class="table table-bordered" id="work-table">
                                     <thead>
                                         <tr>
-                                            <th>Power Station</th>
-                                            <th>Years of Experience</th>
-                                            <th>Designation</th>
-                                            <th class="text-center">Upload Document<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
-                                            <th class="text-center p-1">
+                                            <th rowspan="2" class="align-middle">Power Station</th>
+                                            <th colspan="3" class="text-center">Year of Experience</th>
+                                            <th rowspan="2" class="align-middle">Designation</th>
+                                            <th rowspan="2" class="text-center align-middle">Upload Document<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
+                                            <th rowspan="2" class="text-center align-middle p-1">
                                                 <div class="form-s-actions-stack">
                                                     <button type="button" class="btn-tbl-add add-more-work py-1 px-2" title="Add row"><i class="fa fa-plus"></i></button>
                                                 </div>
                                             </th>
                                         </tr>
+                                        <tr>
+                                            <th class="text-center" style="font-size:.72rem;font-weight:500;">From (date)</th>
+                                            <th class="text-center" style="font-size:.72rem;font-weight:500;">To (date)</th>
+                                            <th class="text-center" style="font-size:.72rem;font-weight:500;width:90px;">Total yrs</th>
+                                        </tr>
                                     </thead>
                                     <tbody id="work-container">
                                         <tr class="work-fields">
                                             <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
-                                            <td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50"></td>
+                                            <td><input type="date" class="form-control work-date-from" name="work_date_from[]"></td>
+                                            <td><input type="date" class="form-control work-date-to" name="work_date_to[]"></td>
+                                            <td>
+                                                <input type="text" class="form-control work-year-total-display text-center" placeholder="—" readonly tabindex="-1">
+                                                <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]">
+                                            </td>
                                             <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
                                             <td><input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf"></td>
                                             <td class="text-center p-1">
@@ -538,7 +548,7 @@
                                     </tr>
                                     {{-- PAN --}}
                                     <tr>
-                                        <td class="doc-serial">(iii)</td>
+                                        <td class="doc-serial">(iv)</td>
                                         <td class="doc-label-cell">
                                             <div class="fs-field-label">PAN Card Number</div>
                                             <div class="fs-field-tamil">நிரந்தர கணக்கு எண்</div>
@@ -548,7 +558,7 @@
                                             <span id="pancard-error" class="text-danger d-block" style="font-size:.78rem;"></span>
                                         </td>
                                         <td class="doc-label-cell">
-                                            <div class="fs-field-label">(iv) Upload PAN Card Document</div>
+                                            <div class="fs-field-label">(v) Upload PAN Card Document</div>
                                             <div class="fs-field-tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</div>
                                         </td>
                                         <td style="min-width:200px;">
@@ -561,7 +571,7 @@
                                     </tr>
                                     {{-- Signature --}}
                                     <tr>
-                                        <td class="doc-serial">(v)</td>
+                                        <td class="doc-serial">(vi)</td>
                                         <td class="doc-label-cell">
                                             <div class="fs-field-label">Upload Signature <span class="req">*</span></div>
                                             <div class="fs-field-tamil">கையொப்பத்தைப் பதிவேற்றவும்</div>
@@ -694,8 +704,8 @@
                     <div class="prv-sub-label">(iii) Power Station</div>
                     <div style="overflow-x:auto;margin-bottom:12px;">
                         <table class="prv-table">
-                            <thead><tr><th>Power Station</th><th>Years of Experience</th><th>Designation</th><th>Document</th></tr></thead>
-                            <tbody id="prv_work_body"><tr><td colspan="4" class="text-center text-muted py-3">—</td></tr></tbody>
+                            <thead><tr><th>Power Station</th><th>From Date</th><th>To Date</th><th>Total yrs</th><th>Designation</th><th>Document</th></tr></thead>
+                            <tbody id="prv_work_body"><tr><td colspan="6" class="text-center text-muted py-3">—</td></tr></tbody>
                         </table>
                     </div>
                     <div class="row">
@@ -879,7 +889,12 @@
                 newRow.classList.add("work-fields");
                 newRow.innerHTML = `
 <td><input autocomplete="off" class="form-control" name="work_level[]" type="text" maxlength="80"></td>
-<td><input autocomplete="off" class="form-control" name="experience[]" type="number" min="0" max="50" placeholder="0-50"></td>
+<td><input type="date" class="form-control work-date-from" name="work_date_from[]"></td>
+<td><input type="date" class="form-control work-date-to" name="work_date_to[]"></td>
+<td>
+    <input type="text" class="form-control work-year-total-display text-center" placeholder="—" readonly tabindex="-1">
+    <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]">
+</td>
 <td><input autocomplete="off" class="form-control" name="designation[]" type="text" maxlength="80"></td>
 <td><input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf"></td>
 <td class="text-center p-1"><div class="form-s-actions-stack"><button type="button" class="btn-tbl-remove remove-work py-1 px-2" title="Remove row"><i class="fa fa-trash-o"></i></button></div></td>`;
@@ -890,6 +905,32 @@
                 e.target.closest("tr").remove();
             }
         });
+
+        function calcWorkTotalYearsP(fromVal, toVal) {
+            if (!fromVal || !toVal) return '';
+            var from = new Date(fromVal + 'T12:00:00');
+            var to = new Date(toVal + 'T12:00:00');
+            if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return '';
+            if (to < from) return 'Invalid range';
+            var years = (to - from) / 86400000 / 365.25;
+            return (Math.round(years * 10) / 10).toFixed(1);
+        }
+        function refreshWorkTotalP(row) {
+            if (!row) return;
+            var fromInput = row.querySelector('.work-date-from');
+            var toInput = row.querySelector('.work-date-to');
+            var displayInput = row.querySelector('.work-year-total-display');
+            var hiddenInput = row.querySelector('.work-experience-total-hidden');
+            if (!fromInput || !toInput || !displayInput) return;
+            var total = calcWorkTotalYearsP(fromInput.value, toInput.value);
+            displayInput.value = total;
+            if (hiddenInput) hiddenInput.value = (total === 'Invalid range') ? '' : total;
+        }
+        document.addEventListener('change', function (e) {
+            if (!e.target.matches('.work-date-from, .work-date-to')) return;
+            refreshWorkTotalP(e.target.closest('.work-fields'));
+        });
+        document.querySelectorAll('#work-container .work-fields').forEach(refreshWorkTotalP);
 
         document.addEventListener("click", function(e) {
             let container = document.getElementById("institute-container");
@@ -992,11 +1033,11 @@
         // Power Station
         var wBody=document.getElementById('prv_work_body');wBody.innerHTML='';
         var wRows=document.querySelectorAll('#work-container .work-fields');
-        if(!wRows.length){wBody.innerHTML='<tr><td colspan="4" class="text-center text-muted py-3">No entries</td></tr>';}
+        if(!wRows.length){wBody.innerHTML='<tr><td colspan="6" class="text-center text-muted py-3">No entries</td></tr>';}
         else{wRows.forEach(function(row){
-            var co=row.querySelector('[name="work_level[]"]'),ex=row.querySelector('[name="experience[]"]'),de=row.querySelector('[name="designation[]"]'),doc=row.querySelector('[name="work_document[]"]');
+            var co=row.querySelector('[name="work_level[]"]'),fr=row.querySelector('[name="work_date_from[]"]'),to=row.querySelector('[name="work_date_to[]"]'),tot=row.querySelector('.work-year-total-display'),de=row.querySelector('[name="designation[]"]'),doc=row.querySelector('[name="work_document[]"]');
             var docLink=(doc&&doc.files&&doc.files[0])?'<a href="'+URL.createObjectURL(doc.files[0])+'" target="_blank" style="color:#035ab3;font-size:.75rem;"><i class="fa fa-file-pdf-o"></i> View</a>':'<span class="text-muted">—</span>';
-            wBody.innerHTML+='<tr><td>'+(co?co.value||'—':'—')+'</td><td class="text-center">'+(ex?ex.value||'—':'—')+'</td><td>'+(de?de.value||'—':'—')+'</td><td class="text-center">'+docLink+'</td></tr>';
+            wBody.innerHTML+='<tr><td>'+(co?co.value||'—':'—')+'</td><td class="text-center">'+fmtDateP((fr||{}).value||'')+'</td><td class="text-center">'+fmtDateP((to||{}).value||'')+'</td><td class="text-center">'+(tot?tot.value||'—':'—')+'</td><td>'+(de?de.value||'—':'—')+'</td><td class="text-center">'+docLink+'</td></tr>';
         });}
         // Employer
         setValP('prv_employer_name',(document.getElementById('employer_name')||{}).value||'');

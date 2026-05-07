@@ -15,6 +15,7 @@ use App\Models\TnelbFormP;
 use App\Models\Admin\SupervisorModel;
 use App\Models\Tnelb_banksolvency_a;
 use App\Models\TnelbApplicantPhoto;
+use App\Models\TnelbApplicantsSign;
 use App\Models\TnelbAppsInstitute;
 use Carbon\Carbon;
 
@@ -80,6 +81,11 @@ class FormPController extends Controller
                 ->orderByDesc('id')
                 ->first();
 
+            $uploadedSign = TnelbApplicantsSign::where('application_id', $applicant_id)
+                ->whereNotNull('uploaded_doc')
+                ->orderByDesc('id')
+                ->first();
+
             $institute_details = collect([]);
 
             // var_dump($workExperience);die;
@@ -108,6 +114,11 @@ class FormPController extends Controller
                 ->orderByDesc('id')
                 ->first();
 
+            $uploadedSign = TnelbApplicantsSign::where('application_id', $applicant_id)
+                ->whereNotNull('uploaded_doc')
+                ->orderByDesc('id')
+                ->first();
+
             $institute_details = TnelbAppsInstitute::where('application_id', $applicant_id)
             ->whereNotNull('upload_doc')
             ->orderByDesc('id')
@@ -127,72 +138,63 @@ class FormPController extends Controller
             return abort(403, 'Unauthorized');
         }
 
+        // Initialize defaults so variables are always defined.
+        $nextForwardUser = null;
+        $returnForwardUser = null;
+
         // Fetch next role dynamically from the roles table
         if ($staff->name === "Supervisor") {
 
             if ($applicant->app_status == 'RE') {
-                $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Secretary')
-                    ->select('name', 'roles_id')
+                $nextForwardUser = DB::table('mst_login_users')
+                    ->where('user_name', 'secretary')
+                    ->select('user_name as name', 'role_id as roles_id')
                     ->first();
             } else {
-                $nextForwardUser = DB::table('mst__staffs__tbls')
-                    ->where('name', 'Assistant Secretary')
-                    ->select('name', 'roles_id')
+                $nextForwardUser = DB::table('mst_login_users')
+                    ->where('user_name', 'assistantsecretary')
+                    ->select('user_name as name', 'role_id as roles_id')
                     ->first();
             }
         }
 
 
         if ($staff->name === "Assistant Secretary") {
-            $nextForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'Secretary')
-                ->select('name', 'roles_id')
+            $nextForwardUser = DB::table('mst_login_users')
+                ->where('user_name', 'secretary')
+                ->select('user_name as name', 'role_id as roles_id')
                 ->first();
         }
         if ($staff->name === "Secretary") {
             // For Form P, always allow Secretary to forward to President
-            $nextForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'President')
-                ->select('name', 'roles_id')
+            $nextForwardUser = DB::table('mst_login_users')
+                ->where('user_name', 'president')
+                ->select('user_name as name', 'role_id as roles_id')
                 ->first();
 
-            $returnForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'Supervisor')
-                ->select('name', 'roles_id')
+            $returnForwardUser = DB::table('mst_login_users')
+                ->where('user_name', 'supervisor')
+                ->select('user_name as name', 'role_id as roles_id')
                 ->first();
         }
 
         if ($staff->name === "President") {
 
-            $nextForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'President')
-                ->select('roles_id', 'name')
+            $nextForwardUser = DB::table('mst_login_users')
+                ->where('user_name', 'president')
+                ->select('user_name as name', 'role_id as roles_id')
                 ->first();
 
-            $returnForwardUser = DB::table('mst__staffs__tbls')
-                ->where('name', 'Supervisor')
-                ->select('name', 'roles_id')
+            $returnForwardUser = DB::table('mst_login_users')
+                ->where('user_name', 'supervisor')
+                ->select('user_name as name', 'role_id as roles_id')
                 ->first();
         }
-
-
-
-
         $user_entry = DB::table('tnelb_form_p')
             ->where('application_id', $applicant_id) // Filter by specific application
             ->select('*')
             ->first();
-
-
-
-        // $workflows = DB::table('tnelb_workflow')
-        //     ->leftjoin('tnelb_application_tbl', 'tnelb_workflow.application_id', '=', 'tnelb_application_tbl.application_id')
-        //     ->leftjoin('mst__roles', 'tnelb_workflow.forwarded_to', '=', 'mst__roles.id')
-        //     ->where('tnelb_workflow.application_id', $applicant_id) // Filter by specific application
-        //     ->select('tnelb_workflow.*', 'mst__roles.name', 'tnelb_application_tbl.form_name', 'tnelb_application_tbl.license_name')
-        //     ->orderBy('tnelb_workflow.id', 'desc')
-        //     ->get();
+  
 
         $workflows = DB::table('tnelb_workflow')
             ->leftjoin('tnelb_form_p', 'tnelb_workflow.application_id', '=', 'tnelb_form_p.application_id')
@@ -229,7 +231,7 @@ class FormPController extends Controller
         };
 
 
-        return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff','institute_details'));
+        return view($view, compact('applicant', 'educationalQualifications', 'workExperience', 'uploadedPhoto', 'uploadedSign', 'documents', 'nextForwardUser', 'returnForwardUser', 'workflows', 'queries', 'user_entry', 'staff','institute_details'));
     }
 
     /**

@@ -687,7 +687,12 @@
                                         <tr>
                                             <th>S.No</th>
                                             <th>Power Station</th>
-                                            <th>Years of Experience (Years)</th>
+                                            <th>
+                                                <div>Year of Experience</div>
+                                                <div class="d-flex justify-content-between" style="gap:6px;font-size:.72rem;font-weight:400;">
+                                                    <span>From (date)</span><span>To (date)</span><span>Total yrs</span>
+                                                </div>
+                                            </th>
                                             <th>Designation</th>
                                             <th class="text-center">Upload Document<br><span class="file-limit">File type: PDF, PNG (Max 200 KB)</span></th>
                                             <th class="text-center p-1">
@@ -700,13 +705,24 @@
                                     <tbody id="work-container">
                                         @if ($exp_details->isNotEmpty())
                                             @foreach ($exp_details as $exp)
+                                                @php
+                                                    $expFromDate = !empty($exp->from_date) ? \Carbon\Carbon::parse($exp->from_date)->format('Y-m-d') : '';
+                                                    $expToDate = !empty($exp->to_date) ? \Carbon\Carbon::parse($exp->to_date)->format('Y-m-d') : '';
+                                                    $expTotal = $exp->total_exp ?? $exp->experience ?? '';
+                                                @endphp
                                                 <tr class="work-fields text-center">
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>
                                                         <input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ $exp->company_name ?? '' }}">
                                                     </td>
                                                     <td>
-                                                        <input autocomplete="off" class="form-control" name="experience[]" type="number" value="{{ $exp->experience ?? '' }}">
+                                                        <div class="d-flex" style="gap:6px;">
+                                                            <input type="date" class="form-control work-date-from" name="work_date_from[]" value="{{ $expFromDate }}">
+                                                            <input type="date" class="form-control work-date-to" name="work_date_to[]" value="{{ $expToDate }}">
+                                                            <input type="text" class="form-control work-year-total-display" placeholder="—" readonly tabindex="-1" value="{{ $expTotal }}">
+                                                        </div>
+                                                        <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]" value="{{ $expTotal }}">
+                                                        <input type="hidden" name="experience[]" class="experience-sync" value="{{ $exp->experience ?? $exp->total_exp ?? '' }}">
                                                     </td>
                                                     <td>
                                                         <input autocomplete="off" class="form-control" name="designation[]" type="text" value="{{ $exp->designation ?? '' }}">
@@ -738,7 +754,15 @@
                                             <tr class="work-fields text-center">
                                                 <td>1</td>
                                                 <td><input autocomplete="off" class="form-control" name="work_level[]" type="text"></td>
-                                                <td><input autocomplete="off" class="form-control" name="experience[]" type="number"></td>
+                                                <td>
+                                                    <div class="d-flex" style="gap:6px;">
+                                                        <input type="date" class="form-control work-date-from" name="work_date_from[]">
+                                                        <input type="date" class="form-control work-date-to" name="work_date_to[]">
+                                                        <input type="text" class="form-control work-year-total-display" placeholder="—" readonly tabindex="-1">
+                                                    </div>
+                                                    <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]">
+                                                    <input type="hidden" name="experience[]" class="experience-sync">
+                                                </td>
                                                 <td><input autocomplete="off" class="form-control" name="designation[]" type="text"></td>
                                                 <td><input class="form-control" name="work_document[]" type="file" accept=".pdf,application/pdf"></td>
                                                 <td class="text-center p-1">
@@ -958,9 +982,9 @@
                                             <input type="hidden" name="aadhaar_doc_removed" id="aadhaar_doc_removed" value="0">
                                         </td>
                                     </tr>
-                                    {{-- (iii) PAN Number / (iv) PAN Document --}}
+                                    {{-- (iv) PAN Number / (v) PAN Document --}}
                                     <tr>
-                                        <td class="doc-serial">(iii)</td>
+                                        <td class="doc-serial">(iv)</td>
                                         <td class="doc-label-cell">
                                             <div class="fs-field-label">PAN Card Number</div>
                                             <div class="fs-field-tamil">நிரந்தர கணக்கு எண்</div>
@@ -970,7 +994,7 @@
                                             <span id="pancard-error" class="text-danger d-block"></span>
                                         </td>
                                         <td class="doc-label-cell">
-                                            <div class="fs-field-label">(iv) Upload PAN Card Document</div>
+                                            <div class="fs-field-label">(v) Upload PAN Card Document</div>
                                             <div class="fs-field-tamil">பான் கார்டு ஆவணத்தைப் பதிவேற்றவும்</div>
                                         </td>
                                         <td style="min-width:200px;">
@@ -993,9 +1017,9 @@
                                             <input type="hidden" name="pancard_doc_removed" id="pancard_doc_removed" value="0">
                                         </td>
                                     </tr>
-                                    {{-- (v) Signature --}}
+                                    {{-- (vi) Signature --}}
                                     <tr>
-                                        <td class="doc-serial">(v)</td>
+                                        <td class="doc-serial">(vi)</td>
                                         <td class="doc-label-cell">
                                             <div class="fs-field-label">Upload Signature <span class="req">*</span></div>
                                             <div class="fs-field-tamil">கையொப்பத்தைப் பதிவேற்றவும்</div>
@@ -1358,7 +1382,15 @@
                     <tr class="work-fields text-center">
                         <td>${serialNo}</td>
                         <td><input type="text" class="form-control" name="work_level[]"></td>
-                        <td><input type="number" step="0.1" class="form-control" name="experience[]" min="0" max="50"></td>
+                        <td>
+                            <div class="d-flex" style="gap:6px;">
+                                <input type="date" class="form-control work-date-from" name="work_date_from[]">
+                                <input type="date" class="form-control work-date-to" name="work_date_to[]">
+                                <input type="text" class="form-control work-year-total-display" placeholder="—" readonly tabindex="-1">
+                            </div>
+                            <input type="hidden" class="work-experience-total-hidden" name="work_experience_total[]">
+                            <input type="hidden" name="experience[]" class="experience-sync">
+                        </td>
                         <td><input type="text" class="form-control" name="designation[]"></td>
                         <td class="text-center">
                             <input type="file" class="form-control" name="work_document[${newRowIndex}]" accept=".pdf,.png,.jpg,.jpeg">
@@ -1385,6 +1417,37 @@
                 row.remove();
             });
         }
+    });
+
+    // Form P work-experience total years calculator
+    function calcWorkTotalYearsP(fromVal, toVal) {
+        if (!fromVal || !toVal) return '';
+        var from = new Date(fromVal + 'T12:00:00');
+        var to = new Date(toVal + 'T12:00:00');
+        if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return '';
+        if (to < from) return 'Invalid range';
+        var years = (to - from) / 86400000 / 365.25;
+        return (Math.round(years * 10) / 10).toFixed(1);
+    }
+    function refreshWorkTotalP(row) {
+        if (!row) return;
+        var fromInput = row.querySelector('.work-date-from');
+        var toInput = row.querySelector('.work-date-to');
+        var displayInput = row.querySelector('.work-year-total-display');
+        var hiddenInput = row.querySelector('.work-experience-total-hidden');
+        var legacyInput = row.querySelector('.experience-sync');
+        if (!fromInput || !toInput || !displayInput) return;
+        var total = calcWorkTotalYearsP(fromInput.value, toInput.value);
+        displayInput.value = total;
+        var clean = (total === 'Invalid range') ? '' : total;
+        if (hiddenInput) hiddenInput.value = clean;
+        if (legacyInput) legacyInput.value = clean;
+    }
+    $(document).on('change', '.work-date-from, .work-date-to', function () {
+        refreshWorkTotalP(this.closest('.work-fields'));
+    });
+    $(function () {
+        document.querySelectorAll('#work-container .work-fields').forEach(refreshWorkTotalP);
     });
 
     $(document).on('click', function(e) {

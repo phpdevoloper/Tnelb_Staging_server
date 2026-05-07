@@ -158,7 +158,9 @@
                                                         <tr>
                                                             <th>Company Name</th>
                                                             <th>Designation</th>
-                                                            <th>Years of Experience</th>
+                                                            <th>From Date</th>
+                                                            <th>To Date</th>
+                                                            <th>Total yrs</th>
                                                             <th>Document Upload</th>
                                                         </tr>
                                                     </thead>
@@ -167,7 +169,9 @@
                                                             <tr>
                                                                 <td>{{ $experience->company_name }}</td>
                                                                 <td>{{ $experience->designation }}</td>
-                                                                <td>{{ $experience->experience }} years</td>
+                                                                <td>{{ !empty($experience->from_date) ? \Carbon\Carbon::parse($experience->from_date)->format('d-m-Y') : '—' }}</td>
+                                                                <td>{{ !empty($experience->to_date) ? \Carbon\Carbon::parse($experience->to_date)->format('d-m-Y') : '—' }}</td>
+                                                                <td>{{ $experience->total_exp ?? $experience->experience ?? '—' }}</td>
                                                                 <td style="text-align:center;">
                                                                     @if($experience->upload_document)
                                                                         <a href="{{ url($experience->upload_document) }}" target="_blank">
@@ -180,7 +184,7 @@
                                                             </tr>
                                                         @empty
                                                             <tr>
-                                                                <td colspan="3" class="text-center">No work experience available.</td>
+                                                                <td colspan="6" class="text-center">No work experience available.</td>
                                                             </tr>
                                                         @endforelse
                                                     </tbody>

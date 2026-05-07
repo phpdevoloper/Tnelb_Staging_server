@@ -1103,6 +1103,10 @@ $(document).ready(function() {
             $clone.find('input[type="file"]').closest('.form-s-file-upload-wrap, .file-section').addClass('preview-file-block');
             $clone.find('.error-message, .certificate-error').remove();
             $clone.find('.text-danger').not('#previewDeclarationError').remove();
+            // The work-experience table's actions column (Add row / Remove row buttons) is
+            // emptied by the .add-more-work / .remove-work cleanup above, leaving a blank
+            // trailing column in the preview. Drop the entire column (header + body cells).
+            $clone.find('.work-exp-col-actions').remove();
 
             const toDisplayValue = (el) => {
                 const $el = $(el);

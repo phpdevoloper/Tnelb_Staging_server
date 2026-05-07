@@ -336,24 +336,35 @@ class PDFController extends Controller
         <tr>
         <th style="font-size:9pt;">S.NO</th>
         <th style="font-size:9pt;">POWER STATION NAME</th>
-        <th style="font-size:9pt;">EXPERIENCE</th>
+        <th style="font-size:9pt;">FROM DATE</th>
+        <th style="font-size:9pt;">TO DATE</th>
+        <th style="font-size:9pt;">TOTAL YRS</th>
         <th style="font-size:9pt;">DESIGNATION</th>
         </tr>';
 
         $hasExpData = $experience->contains(function ($exp) {
             return trim($exp->emp_cate ?? $exp->company_name ?? '') !== ''
-                || trim($exp->total_exp ?? $exp->experience ?? '') !== ''
+                || trim((string) ($exp->from_date ?? '')) !== ''
+                || trim((string) ($exp->to_date ?? '')) !== ''
+                || trim((string) ($exp->total_exp ?? $exp->experience ?? '')) !== ''
                 || trim($exp->designation ?? '') !== '';
         });
 
         if (!$hasExpData) {
-            $html .= '<tr><td>1</td><td>NIL</td><td>NIL</td><td>NIL</td></tr>';
+            $html .= '<tr><td>1</td><td>NIL</td><td>NIL</td><td>NIL</td><td>NIL</td><td>NIL</td></tr>';
         } else {
             foreach ($experience as $i => $exp) {
+                $fromDate = !empty($exp->from_date) ? format_date($exp->from_date) : 'NIL';
+                $toDate = !empty($exp->to_date) ? format_date($exp->to_date) : 'NIL';
+                $totalYrs = ($exp->total_exp ?? $exp->experience) !== null && ($exp->total_exp ?? $exp->experience) !== ''
+                    ? mb_strtoupper(($exp->total_exp ?? $exp->experience) . ' YEARS', 'UTF-8')
+                    : 'NIL';
                 $html .= '<tr>
                     <td>' . ($i + 1) . '</td>
                     <td>' . e(mb_strtoupper(($exp->emp_cate ?? $exp->company_name) ?: 'NIL', 'UTF-8')) . '</td>
-                    <td>' . e(($exp->total_exp ?? $exp->experience) !== null && ($exp->total_exp ?? $exp->experience) !== '' ? mb_strtoupper(($exp->total_exp ?? $exp->experience) . ' YEARS', 'UTF-8') : 'NIL') . '</td>
+                    <td>' . e($fromDate) . '</td>
+                    <td>' . e($toDate) . '</td>
+                    <td>' . e($totalYrs) . '</td>
                     <td>' . e(mb_strtoupper($exp->designation ?: 'NIL', 'UTF-8')) . '</td>
                 </tr>';
             }
@@ -586,12 +597,14 @@ class PDFController extends Controller
         $html .= '<h4 class="ta">(iii). தற்போது பணியாற்றி வரும் மின் நிலையம்</h4>
         <table class="tbl-bordered">
         <tr>
-        <th class="ta">வரிசை எண்</th><th class="ta">மின் நிலையத்தின் பெயர்</th><th class="ta">அனுபவம் (ஆண்டுகள்)</th><th class="ta">பதவி</th>
+        <th class="ta">வரிசை எண்</th><th class="ta">மின் நிலையத்தின் பெயர்</th><th class="ta">தேதி முதல்</th><th class="ta">தேதி வரை</th><th class="ta">மொத்தம் (ஆண்டுகள்)</th><th class="ta">பதவி</th>
         </tr>';
 
         $hasExpDataTa = $experience->contains(function ($exp) {
             return trim($exp->emp_cate ?? $exp->company_name ?? '') !== ''
-                || trim($exp->total_exp ?? $exp->experience ?? '') !== ''
+                || trim((string) ($exp->from_date ?? '')) !== ''
+                || trim((string) ($exp->to_date ?? '')) !== ''
+                || trim((string) ($exp->total_exp ?? $exp->experience ?? '')) !== ''
                 || trim($exp->designation ?? '') !== '';
         });
 
@@ -601,13 +614,20 @@ class PDFController extends Controller
                 <td class="ta">Nil</td>
                 <td class="ta">Nil</td>
                 <td class="ta">Nil</td>
+                <td class="ta">Nil</td>
+                <td class="ta">Nil</td>
             </tr>';
         } else {
             foreach ($experience as $i => $exp) {
+                $fromDate = !empty($exp->from_date) ? format_date($exp->from_date) : 'Nil';
+                $toDate = !empty($exp->to_date) ? format_date($exp->to_date) : 'Nil';
+                $totalYrs = (($exp->total_exp ?? $exp->experience) !== null && ($exp->total_exp ?? $exp->experience) !== '') ? ($exp->total_exp ?? $exp->experience) . ' Years ' : 'Nil';
                 $html .= '<tr>
                     <td class="ta">' . ($i + 1) . '</td>
                     <td class="ta">' . (($exp->emp_cate ?? $exp->company_name) ?: 'Nil') . '</td>
-                    <td class="ta">' . ((($exp->total_exp ?? $exp->experience) !== null && ($exp->total_exp ?? $exp->experience) !== '') ? ($exp->total_exp ?? $exp->experience) . ' Years ' : 'Nil') . '</td>
+                    <td class="ta">' . $fromDate . '</td>
+                    <td class="ta">' . $toDate . '</td>
+                    <td class="ta">' . $totalYrs . '</td>
                     <td class="ta">' . ($exp->designation ?: 'Nil') . '</td>
                 </tr>';
             }

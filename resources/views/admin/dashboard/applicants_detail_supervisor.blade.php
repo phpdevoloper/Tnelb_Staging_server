@@ -633,9 +633,15 @@
                                                         @endphp
                                                         @forelse ($educationalQualifications as $education)
                                                         @php
-                                                            $rawMonth = trim((string) ($education->month_passing ?? ''));
-                                                            $monthKey = $rawMonth !== '' ? str_pad($rawMonth, 2, '0', STR_PAD_LEFT) : '';
-                                                            $monthDisplay = $monthLabels[$monthKey] ?? ($rawMonth !== '' ? $rawMonth : '-');
+                                                            $rawMonth = trim((string) ($education->month_passing ?? $education->month_of_passing ?? ''));
+                                                            $monthKey = $rawMonth !== '' && is_numeric($rawMonth) ? str_pad($rawMonth, 2, '0', STR_PAD_LEFT) : $rawMonth;
+                                                            $monthDisplay = $monthLabels[$monthKey] ?? '';
+                                                            if ($monthDisplay === '' && $rawMonth !== '') {
+                                                                $alphaMonth = strtolower(substr($rawMonth, 0, 3));
+                                                                $alphaMap = ['jan' => 'Jan', 'feb' => 'Feb', 'mar' => 'Mar', 'apr' => 'Apr', 'may' => 'May', 'jun' => 'Jun', 'jul' => 'Jul', 'aug' => 'Aug', 'sep' => 'Sep', 'oct' => 'Oct', 'nov' => 'Nov', 'dec' => 'Dec'];
+                                                                $monthDisplay = $alphaMap[$alphaMonth] ?? $rawMonth;
+                                                            }
+                                                            $monthDisplay = $monthDisplay !== '' ? $monthDisplay : '-';
                                                         @endphp
                                                         <tr>
                                                             <td class="col-wrap">{{ $education->educational_level }}</td>
@@ -1246,7 +1252,7 @@
                                             <button class="btn btn-success" id="forwardbtn" data-bs-toggle="modal" data-bs-target="#declarationModal">
                                                 Forward to {{ $workflow[$role] }}
                                             </button>
-                                            <button class="btn btn-warning">On Hold</button>
+                                            {{-- <button class="btn btn-warning">On Hold</button> --}}
                                         </div>
                                     </div>
                                 </div>
@@ -1294,9 +1300,9 @@
                                             <button id="confirmReturnBtn" class="btn btn-warning">
                                                 Return to Supervisor
                                             </button>
-                                            <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
+                                            {{-- <button type="button" id="confirmReturnToApplicantBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#returnToApplicantModal">
                                                 Return to Applicant
-                                            </button>
+                                            </button> --}}
                                         </div>
                                     </div>
                                 </div>
