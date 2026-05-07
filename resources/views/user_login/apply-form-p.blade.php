@@ -381,7 +381,7 @@
                                             <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
                                             <td><input autocomplete="off" class="form-control" name="from_date[]" type="date"></td>
                                             <td><input autocomplete="off" class="form-control" name="to_date[]" type="date"></td>
-                                            <td><input autocomplete="off" class="form-control" name="duration[]" type="number" min="0" max="50" placeholder="Auto" readonly></td>
+                                            <td><input autocomplete="off" class="form-control" name="duration[]" type="number" min="0" max="50" readonly></td>
                                             <td><input class="form-control" name="institute_document[]" type="file" accept=".pdf,application/pdf"></td>
                                             <td class="text-center p-1">
                                                 <div class="form-s-actions-stack">
@@ -908,7 +908,7 @@
                 <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
                 <td><input type="date" class="form-control" name="from_date[]"></td>
                 <td><input type="date" class="form-control" name="to_date[]"></td>
-                <td><input type="number" class="form-control" name="duration[]" min="0" max="50" placeholder="Auto" readonly></td>
+                <td><input type="number" class="form-control" name="duration[]" min="0" max="50" readonly></td>
                 <td><input type="file" class="form-control" name="institute_document[]" accept=".pdf,.png,.jpg,.jpeg"></td>
                 <td class="text-center p-1"><div class="form-s-actions-stack"><button type="button" class="btn-tbl-remove remove-institute py-1 px-2" title="Remove row"><i class="fa fa-trash-o"></i></button></div></td>`;
                     container.appendChild(newRow);

@@ -630,7 +630,7 @@
                                                         <input autocomplete="off" class="form-control" name="to_date[]" type="date" value="{{ $institute->to_date ?? '' }}">
                                                     </td>
                                                     <td>
-                                                        <input autocomplete="off" class="form-control" name="duration[]" type="text" value="{{ $institute->duration ?? '' }}" placeholder="Auto" readonly>
+                                                        <input autocomplete="off" class="form-control" name="duration[]" type="text" value="{{ $institute->duration ?? '' }}" readonly>
                                                     </td>
                                                     <td>
                                                         @if (!empty($institute->upload_doc))
@@ -662,7 +662,7 @@
                                                 <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3" maxlength="255"></textarea></td>
                                                 <td><input autocomplete="off" class="form-control" name="from_date[]" type="date"></td>
                                                 <td><input autocomplete="off" class="form-control" name="to_date[]" type="date"></td>
-                                                <td><input autocomplete="off" class="form-control" name="duration[]" type="text" placeholder="Auto" readonly></td>
+                                                <td><input autocomplete="off" class="form-control" name="duration[]" type="text" readonly></td>
                                                 <td><input class="form-control" name="institute_document[]" type="file" accept=".pdf,application/pdf"></td>
                                                 <td class="text-center p-1">
                                                     <div class="form-s-actions-stack">
@@ -757,7 +757,7 @@
                             {{-- (iv) Employer name --}}
                             <div class="row align-items-start">
                                 <div class="col-12 col-md-3">
-                                    <div class="fs-field-label">(iv) Name of the employer <span style="font-weight:400;font-size:.78rem;">(Upload the documents)</span></div>
+                                    <div class="fs-field-label">(iv) Name of the employer</div>
                                     <div class="fs-field-tamil">தொழில் வழங்குநரின் பெயர்</div>
                                 </div>
                                 <div class="col-12 col-md-9">
@@ -1416,7 +1416,7 @@
                         <td><textarea autocomplete="off" class="form-control" name="institute_name_address[]" cols="5" rows="3"></textarea></td>
                         <td><input type="date" class="form-control" name="from_date[]"></td>
                         <td><input type="date" class="form-control" name="to_date[]"></td>
-                        <td><input type="text" class="form-control" name="duration[]" placeholder="Auto" readonly></td>
+                        <td><input type="text" class="form-control" name="duration[]" readonly></td>
                         <td class="text-center">
                             <input type="file" class="form-control" name="institute_document[${newRowIndex}]" accept=".pdf,.png,.jpg,.jpeg">
                         </td>
