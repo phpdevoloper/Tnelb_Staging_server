@@ -239,16 +239,23 @@
 
                     {{-- ═══ SECTION 1 & 2 — Name & Father's Name ═══ --}}
                     <div class="fs-section">
+                        <div class="fs-section-header">
+                            <span class="fs-section-num">1</span>
+                            <div>
+                                <div class="fs-section-title">Applicant's Name &amp; Father's Name <span class="section-req">*</span></div>
+                                <div class="fs-section-tamil">விண்ணப்பதாரர் பெயர் மற்றும் தகப்பனார் பெயர்</div>
+                            </div>
+                        </div>
                         <div class="fs-section-body">
                             <div class="row">
                                 <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                    <div class="fs-field-label">1. Applicant's Name <span class="req">*</span></div>
+                                    <div class="fs-field-label">Applicant's Name <span class="req">*</span></div>
                                     <div class="fs-field-tamil">விண்ணப்பதாரர் பெயர்</div>
                                     <input type="hidden" name="login_id" id="login_id_store" value="{{ Auth::user()->login_id }}">
                                     <input autocomplete="off" class="form-control" id="Applicant_Name" name="applicant_name" type="text" value="{{ $user['salutation'].' '.$user['applicant_name'] }}" readonly>
                                 </div>
                                 <div class="col-12 col-md-6">
-                                    <div class="fs-field-label">2. Father's Name <span class="req">*</span></div>
+                                    <div class="fs-field-label">Father's Name <span class="req">*</span></div>
                                     <div class="fs-field-tamil">தகப்பனார் பெயர்</div>
                                     <input autocomplete="off" class="form-control" id="Fathers_Name" name="fathers_name" type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="80">
                                     <span class="error-message text-danger"></span>
@@ -259,10 +266,17 @@
 
                     {{-- ═══ SECTION 3 & 4 — Address / DOB ═══ --}}
                     <div class="fs-section">
+                        <div class="fs-section-header">
+                            <span class="fs-section-num">3</span>
+                            <div>
+                                <div class="fs-section-title">Applicant Address &amp; Date of Birth <span class="section-req">*</span></div>
+                                <div class="fs-section-tamil">விண்ணப்பதாரர் முகவரி மற்றும் பிறந்த தேதி</div>
+                            </div>
+                        </div>
                         <div class="fs-section-body">
                             <div class="row">
                                 <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                    <div class="fs-field-label">3. Applicant Address <span class="req">*</span> <span style="font-weight:400;font-size:.78rem;">(To be clear)</span></div>
+                                    <div class="fs-field-label">Applicant Address <span class="req">*</span> <span style="font-weight:400;font-size:.78rem;">(To be clear)</span></div>
                                     <div class="fs-field-tamil">விண்ணப்பதாரர் முகவரி <span style="font-size:.72rem;">(தெளிவாக இருத்தல் வேண்டும்)</span></div>
                                     <textarea rows="3" class="form-control" id="applicants_address" name="applicants_address" maxlength="255">{{Auth::user()->address}}</textarea>
                                     <span id="applicants_address_error" class="text-danger error"></span>
@@ -270,13 +284,13 @@
                                 <div class="col-12 col-md-6">
                                     <div class="row">
                                         <div class="col-12 col-sm-7 mb-3 mb-sm-0">
-                                            <div class="fs-field-label">4. (i) D.O.B <span class="req">*</span></div>
+                                            <div class="fs-field-label">(i) D.O.B <span class="req">*</span></div>
                                             <div class="fs-field-tamil">பிறந்த நாள், மாதம், வருடம்</div>
                                             <input autocomplete="off" class="form-control" id="d_o_b" name="d_o_b" type="text" placeholder="DD/MM/YYYY" value="{{ isset($application) ? $application->d_o_b : '' }}">
                                             <span id="dob-error" class="text-danger"></span>
                                         </div>
                                         <div class="col-12 col-sm-5">
-                                            <div class="fs-field-label">4. (ii) Age</div>
+                                            <div class="fs-field-label">(ii) Age</div>
                                             <div class="fs-field-tamil">வயது</div>
                                             <input autocomplete="off" class="form-control" id="age" name="age" type="number" value="{{ isset($application) ? $application->age : '' }}" readonly>
                                         </div>
@@ -820,7 +834,9 @@
     var MONTH_MAP_WH = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
     function fmtDateWH(v){if(!v)return'—';var p=v.split('-');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:v;}
     function setValWH(id,v){var el=document.getElementById(id);if(!el)return;var t=(v||'').toString().trim();el.textContent=t||'—';el.classList.toggle('prv-empty',!t);}
-    function fileLabelWH(inp){return inp&&inp.files&&inp.files[0]?inp.files[0].name:'—';}
+    function setDocValWH(id,html){var el=document.getElementById(id);if(!el)return;el.innerHTML=html;}
+    var NO_FILE_HTML='<span style="color:#aab;font-style:italic;font-size:.8rem;">No File Uploaded</span>';
+    function fileLabelWH(inp){return inp&&inp.files&&inp.files[0]?'<span>'+inp.files[0].name+'</span>':NO_FILE_HTML;}
 
     function populatePreview(){
         setValWH('prv_name',(document.getElementById('Applicant_Name')||{}).value||'');
@@ -836,7 +852,7 @@
             var lv=row.querySelector('[name="educational_level[]"]'),inst=row.querySelector('[name="institute_name[]"]');
             var mon=row.querySelector('[name="month_of_passing[]"]'),yr=row.querySelector('[name="year_of_passing[]"]');
             var cert=row.querySelector('[name="certificate_no[]"]'),doc=row.querySelector('[name="education_document[]"]');
-            var docLink=(doc&&doc.files&&doc.files[0])?'<a href="'+URL.createObjectURL(doc.files[0])+'" target="_blank" style="color:#035ab3;font-size:.75rem;"><i class="fa fa-file-pdf-o"></i> View</a>':'<span class="text-muted">—</span>';
+            var docLink=(doc&&doc.files&&doc.files[0])?'<a href="'+URL.createObjectURL(doc.files[0])+'" target="_blank" style="color:#035ab3;font-size:.75rem;"><i class="fa fa-file-pdf-o"></i> View</a>':NO_FILE_HTML;
             eduBody.innerHTML+='<tr><td class="text-center">'+(i+1)+'</td><td>'+(lv?lv.value||'—':'—')+'</td><td>'+(inst?inst.value||'—':'—')+'</td><td class="text-center">'+(mon?(MONTH_MAP_WH[mon.value]||mon.value||'—'):'—')+'</td><td class="text-center">'+(yr?(yr.value==='0'||!yr.value?'—':yr.value):'—')+'</td><td>'+(cert?cert.value||'—':'—')+'</td><td class="text-center">'+docLink+'</td></tr>';
         });}
         // Section 6 — Previous Certificate (H)
@@ -856,8 +872,8 @@
         // Aadhaar & PAN
         setValWH('prv_aadhaar',(document.getElementById('aadhaar')||{}).value||'');
         setValWH('prv_pan',(document.getElementById('pancard')||{}).value||'');
-        setValWH('prv_aadhaar_doc',fileLabelWH(document.getElementById('aadhaar_doc')));
-        setValWH('prv_pan_doc',fileLabelWH(document.getElementById('pancard_doc')));
+        setDocValWH('prv_aadhaar_doc',fileLabelWH(document.getElementById('aadhaar_doc')));
+        setDocValWH('prv_pan_doc',fileLabelWH(document.getElementById('pancard_doc')));
     }
     function openPreviewModal(){populatePreview();var m=document.getElementById('appPreviewModal');m.style.display='flex';document.body.style.overflow='hidden';document.getElementById('prvConfirmCheck').checked=false;document.getElementById('prvConfirmBtn').disabled=true;document.getElementById('prvBody').scrollTop=0;}
     function closePreviewModal(){document.getElementById('appPreviewModal').style.display='none';document.body.style.overflow='';}
