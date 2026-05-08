@@ -1056,7 +1056,13 @@
         setValW('prv_pan_doc',fileLabelW(document.getElementById('pancard_doc')));
     }
     function openPreviewModal(){populatePreview();var m=document.getElementById('appPreviewModal');m.style.display='flex';document.body.style.overflow='hidden';document.getElementById('prvConfirmCheck').checked=false;document.getElementById('prvConfirmBtn').disabled=true;document.getElementById('prvBody').scrollTop=0;}
-    function closePreviewModal(){document.getElementById('appPreviewModal').style.display='none';document.body.style.overflow='';}
+    function closePreviewModal() {
+        document.getElementById('appPreviewModal').style.display = 'none';
+        document.body.style.overflow = '';
+        if (typeof window.normalizeCompetencyDynamicSections === 'function') {
+            window.normalizeCompetencyDynamicSections();
+        }
+    }
     document.getElementById('prvConfirmCheck').addEventListener('change',function(){document.getElementById('prvConfirmBtn').disabled=!this.checked;});
     document.getElementById('prvConfirmBtn').addEventListener('click',function(){closePreviewModal();if(typeof window._prvResolve==='function'){window._prvResolve(true);window._prvResolve=null;}});
     document.getElementById('appPreviewModal').addEventListener('click',function(e){if(e.target===this){closePreviewModal();if(typeof window._prvResolve==='function'){window._prvResolve(false);window._prvResolve=null;}}});

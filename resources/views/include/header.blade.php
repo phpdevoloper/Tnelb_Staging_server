@@ -860,27 +860,25 @@ use Illuminate\Support\Facades\Auth;
   </div>
   <!-- --------------------------------------------- -->
 
-  <div class="modal fade" id="competencyInstructionsModalP" tabindex="-1" aria-labelledby="competencyInstructionsModalLabel" aria-hidden="true">
+  <div class="modal fade" id="competencyInstructionsModalP" tabindex="-1" aria-labelledby="competencyInstructionsModalLabelP" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header" style="background- color: white;">
-          <h5 class="modal-title" id="competencyInstructionsModalLabel">📋 Instructions & Declaration</h5>
+        <div class="modal-header" style="background-color: white;">
+          <h5 class="modal-title" id="competencyInstructionsModalLabelP">📋 Instructions & Declaration</h5>
           <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close">X</button>
         </div>
         <div class="modal-body" style="padding: 30px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.8; color: #333;">
           <div class="show-list-numbers">
-            <ul>
-              <li>Fees Issue for <span id="p_certificate_name"></span> from <span id="p_fees_starts_from"></span> onwards is <span id="p_form_fees" style="color:#1f6920; font-weight:600;"></span>.</li>
-            </ul>
+            1) (i) Fees Issue for <span id="p_certificate_name"></span> from <span id="p_fees_starts_from"></span> onwards is <span id="p_form_fees" style="color:#1f6920; font-weight:600;"></span>
           </div>
-          <div id="instructionContent" class="show-list-numbers"></div>
-  
+          <div id="instructionContentP" class="show-list-numbers"></div>
+
           <div class="form-check mt-4">
-            <input type="checkbox" class="form-check-input" id="declaration-agree-renew">
-            <label for="declaration-agree-renew" class="form-check-label" style="font-weight: 600;">
+            <input type="checkbox" class="form-check-input" id="declaration-agree-renew-p">
+            <label for="declaration-agree-renew-p" class="form-check-label" style="font-weight: 600;">
               I have read and agree to the above instructions.
             </label>
-            <div class="text-danger mt-2 d-none" id="declaration-error-renew">
+            <div class="text-danger mt-2 d-none" id="declaration-error-renew-p">
               Please agree the above instructions.
             </div>
           </div>

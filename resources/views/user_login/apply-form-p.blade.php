@@ -1065,17 +1065,5 @@
     document.getElementById('prvConfirmCheck').addEventListener('change',function(){document.getElementById('prvConfirmBtn').disabled=!this.checked;});
     document.getElementById('prvConfirmBtn').addEventListener('click',function(){closePreviewModal();if(typeof window._prvResolve==='function'){window._prvResolve(true);window._prvResolve=null;}});
     document.getElementById('appPreviewModal').addEventListener('click',function(e){if(e.target===this){closePreviewModal();if(typeof window._prvResolve==='function'){window._prvResolve(false);window._prvResolve=null;}}});
-    // Override showInstructPopup — show preview first, then proceed if confirmed
-    (function(){
-        function doOverride(){
-            if(typeof window.showInstructPopup!=='function'){setTimeout(doOverride,50);return;}
-            var origFn=window.showInstructPopup;
-            window.showInstructPopup=function(licence_code,login_id){
-                return new Promise(function(resolve){window._prvResolve=resolve;openPreviewModal();})
-                    .then(function(confirmed){if(confirmed)return origFn(licence_code,login_id);});
-            };
-        }
-        doOverride();
-    })();
     </script>
 </footer>

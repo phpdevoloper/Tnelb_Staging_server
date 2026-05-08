@@ -794,6 +794,87 @@ $(document).ready(function() {
             }
         }
 
+        /**
+         * Remove education rows that match on all visible answers but differ only on document state.
+         * Mirrored-row detection fails when one duplicate still has the file input and the other does not.
+         */
+        function dedupeSemanticDuplicateEducationRows() {
+            if (!$('#competency_form_ws').length) return;
+            const $box = $('#education-container');
+            if (!$box.length) return;
+
+            function rowKey($r) {
+                function v(sel) {
+                    return ($r.find(sel).first().val() || '').toString().trim();
+                }
+                const level = v('select[name="educational_level[]"]');
+                const month = v('select[name="month_of_passing[]"]');
+                const year = v('select[name="year_of_passing[]"]');
+                if (!level || !month || !year || year === '0') {
+                    return null;
+                }
+                return [
+                    level,
+                    v('input[name="institute_name[]"]'),
+                    month,
+                    year,
+                    v('input[name="certificate_no[]"]'),
+                ].join('\u0001');
+            }
+
+            function rowMeta($r) {
+                const fin = $r.find('input[type="file"][name="education_document[]"]').first().get(0);
+                const hasNew = !!(fin && fin.files && fin.files.length);
+                const fname = hasNew ? ((fin.files[0] && fin.files[0].name) || '') : '';
+                const existing = ($r.find('input[name="existing_document[]"]').first().val() || '').toString().trim();
+                let score = (hasNew ? 2 : 0) + (existing ? 1 : 0);
+                return { score: score, fname: fname, existing: existing };
+            }
+
+            while (true) {
+                const buckets = {};
+                $box.find('.education-fields').each(function () {
+                    const $row = $(this);
+                    const k = rowKey($row);
+                    if (!k) return;
+                    if (!buckets[k]) buckets[k] = [];
+                    const m = rowMeta($row);
+                    buckets[k].push({ $row: $row, score: m.score, fname: m.fname });
+                });
+
+                let removedOne = false;
+                $.each(buckets, function (k, list) {
+                    if (!list || list.length < 2) return;
+                    list.sort(function (a, b) { return b.score - a.score; });
+                    // Two rows both with a newly chosen file but different names — keep both.
+                    if (list.length >= 2 && list[0].score === 2 && list[1].score === 2) {
+                        const a = (list[0].fname || '');
+                        const b = (list[1].fname || '');
+                        if (a && b && a !== b) return;
+                    }
+                    for (let x = 1; x < list.length; x++) {
+                        const $r = list[x].$row;
+                        $r.find('.local-file-preview').each(function () {
+                            const u = $(this).data('blobUrl');
+                            if (u) {
+                                try { URL.revokeObjectURL(u); } catch (e) {}
+                            }
+                        });
+                        $r.remove();
+                        removedOne = true;
+                    }
+                });
+
+                if (!removedOne) break;
+
+                const $eduTable = $('#education-table');
+                if ($eduTable.length) $eduTable.next('.education-error').remove();
+                $box.find('.education-fields .edu-serial').each(function (idx) {
+                    $(this).text(String(idx + 1));
+                });
+            }
+        }
+
         function normalizeCompetencyDynamicSections() {
             normalizeMirroredDynamicRows(
                 $('#education-container'),
@@ -808,6 +889,9 @@ $(document).ready(function() {
                     'input[name="education_document[]"]'
                 ]
             );
+
+            dedupeSemanticDuplicateEducationRows();
+
             normalizeMirroredDynamicRows(
                 $('#work-container'),
                 '.work-fields',
@@ -823,6 +907,8 @@ $(document).ready(function() {
                 ]
             );
         }
+
+        window.normalizeCompetencyDynamicSections = normalizeCompetencyDynamicSections;
 
         normalizeCompetencyDynamicSections();
 
@@ -910,7 +996,9 @@ $(document).ready(function() {
             // Remove action blocks and make the clone strictly read-only preview.
             // `.verify-btn` strips the frontend license/certificate Verify buttons (Q7/Q8 on Form S, Q7 on Form W, Q6 on Form WH) from the preview popup.
             // `.remove_verify` strips the "Delete" button that appears next to an already-verified license (Q7/Q8) so the preview stays read-only.
-            $clone.find('#submitPaymentBtn, .submit-payment, .save-draft, .add-more, .add-more-education, .add-more-work, .remove-education, .remove-work, .remove_edu, .remove_exp, .remove-doc_edu_confirm, .remove-work-doc-confirm, .remove-aadhaar-doc, .remove-pan-doc, .verify-btn, .remove_verify, [onclick*="togglePhotoInput"], [onclick*="toggleSignInput"], [onclick*="verify_form"], [onclick*="verify_form_s"]').remove();
+            // `#ProceedtoPayment` and `.fs-action-bar` strip Form P's bottom Save-Draft / Preview-&-Proceed bar so the SweetAlert footer (Pay Now / Edit Details) is the only set of actions in the popup.
+            // `.remove-docs`, `.remove-doc_edu`, `.remove-doc_work`, `.remove-doc_inst` strip the per-document "Remove" button next to existing-doc View links.
+            $clone.find('#submitPaymentBtn, #ProceedtoPayment, .fs-action-bar, .submit-payment, .save-draft, .add-more, .add-more-education, .add-more-work, .add-more-institute, .remove-education, .remove-work, .remove-institute, .remove_edu, .remove_exp, .remove_inst, .remove-doc_edu_confirm, .remove-doc_edu, .remove-doc_work, .remove-doc_inst, .remove-work-doc-confirm, .remove-aadhaar-doc, .remove-pan-doc, .remove-docs, .verify-btn, .remove_verify, [onclick*="togglePhotoInput"], [onclick*="toggleSignInput"], [onclick*="verify_form"], [onclick*="verify_form_s"]').remove();
             $clone.find('input, textarea, select, button').prop('disabled', true);
             $clone.find('input[type="checkbox"], input[type="radio"]').each(function () {
                 this.disabled = true;
@@ -1003,6 +1091,39 @@ $(document).ready(function() {
                 if (cls.indexOf('form-control-sm') !== -1) display.addClass('preview-value-sm');
                 $el.replaceWith(display);
             });
+
+                // Replace each file input in the clone with a clean read-only display:
+                // if the live source already shows a "View Document" link (.local-file-preview / .fs-doc-existing nearby) just drop the input;
+                // if the user picked a file (still in srcInput.files), show "<icon> filename";
+                // otherwise show a dash. Photo and signature have their own filename UI and are left alone.
+                // Target the surrounding .form-s-file-upload-wrap when present so the later wrap-cleanup pass doesn't delete our replacement.
+                const $srcFileInputs = $sourceForm.find('input[type="file"]');
+                $clone.find('input[type="file"]').each(function (i) {
+                    const $fileInput = $(this);
+                    const inputId = ($fileInput.attr('id') || '').toLowerCase();
+                    if (inputId === 'upload_photo' || inputId === 'upload_sign') return;
+
+                    const $wrap = $fileInput.closest('.form-s-file-upload-wrap');
+                    const $target = $wrap.length ? $wrap : $fileInput;
+                    const $cell = $fileInput.closest('td, .file-section, .aadhaar-doc-input, .pancard-doc-input, .form-group, .col-12, [class*="col-md-"], [class*="col-sm-"]');
+                    const hasLocalView = $fileInput.parent().find('.local-file-preview').length > 0
+                                    || $cell.find('.local-file-preview, .fs-doc-existing').length > 0;
+                    if (hasLocalView) {
+                        $target.remove();
+                        return;
+                    }
+
+                    const srcInput = $srcFileInputs.get(i);
+                    const file = srcInput && srcInput.files && srcInput.files[0];
+                    if (file) {
+                        const $name = $('<div class="preview-file-name"></div>')
+                            .append('<i class="fa fa-file-pdf-o text-danger" aria-hidden="true"></i> ')
+                            .append(document.createTextNode(file.name));
+                        $target.replaceWith($name);
+                    } else {
+                        $target.replaceWith('<div class="preview-value preview-file-empty">—</div>');
+                    }
+                });
 
             // Hide helper wrappers/empty blocks after conversion.
             $clone.find('.form-s-file-upload-wrap').remove();
@@ -1177,6 +1298,23 @@ $(document).ready(function() {
                             margin: 0 auto;
                             justify-content: center;
                         }
+                        .preview-modal-wrap .preview-file-name {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: .35rem;
+                            font-size: 0.84rem;
+                            color: #1f2d3d;
+                            font-weight: 500;
+                            word-break: break-word;
+                        }
+                        .preview-modal-wrap .preview-file-name .fa-file-pdf-o {
+                            color: #d9363e !important;
+                        }
+                        .preview-modal-wrap .preview-file-empty {
+                            min-height: 30px;
+                            color: #8aa0bf;
+                            font-style: italic;
+                        }
                         .preview-modal-wrap a,
                         .preview-modal-wrap .preview-link {
                             font-family: inherit !important;
@@ -1250,6 +1388,8 @@ $(document).ready(function() {
             });
             return result.isConfirmed === true;
         }
+
+        window.showCompetencyPreviewModal = showCompetencyPreviewModal;
 
         $(document).off('click.competencyPay', '#submitPaymentBtn').on('click.competencyPay', '#submitPaymentBtn', async function (e) {
             e.preventDefault();

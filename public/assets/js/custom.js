@@ -246,6 +246,10 @@ $(document).ready(function () {
     $('#saveDraftBtn').on('click', async function(e) {
         e.preventDefault(); 
 
+        if ($('#competency_form_ws').length && typeof window.normalizeCompetencyDynamicSections === 'function') {
+            window.normalizeCompetencyDynamicSections();
+        }
+
         const readableFiles = await validateReadableSelectedFilesForDraft();
         if (!readableFiles) {
             return;

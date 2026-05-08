@@ -239,23 +239,16 @@
 
                     {{-- ═══ SECTION 1 & 2 — Name & Father's Name ═══ --}}
                     <div class="fs-section">
-                        <div class="fs-section-header">
-                            <span class="fs-section-num">1</span>
-                            <div>
-                                <div class="fs-section-title">Applicant's Name &amp; Father's Name <span class="section-req">*</span></div>
-                                <div class="fs-section-tamil">விண்ணப்பதாரர் பெயர் மற்றும் தகப்பனார் பெயர்</div>
-                            </div>
-                        </div>
                         <div class="fs-section-body">
                             <div class="row">
                                 <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                    <div class="fs-field-label">Applicant's Name <span class="req">*</span></div>
+                                    <div class="fs-field-label">1. Applicant's Name <span class="req">*</span></div>
                                     <div class="fs-field-tamil">விண்ணப்பதாரர் பெயர்</div>
                                     <input type="hidden" name="login_id" id="login_id_store" value="{{ Auth::user()->login_id }}">
                                     <input autocomplete="off" class="form-control" id="Applicant_Name" name="applicant_name" type="text" value="{{ $user['salutation'].' '.$user['applicant_name'] }}" readonly>
                                 </div>
                                 <div class="col-12 col-md-6">
-                                    <div class="fs-field-label">Father's Name <span class="req">*</span></div>
+                                    <div class="fs-field-label">2. Father's Name <span class="req">*</span></div>
                                     <div class="fs-field-tamil">தகப்பனார் பெயர்</div>
                                     <input autocomplete="off" class="form-control" id="Fathers_Name" name="fathers_name" type="text" value="{{ isset($application) ? $application->fathers_name : '' }}" maxlength="80">
                                     <span class="error-message text-danger"></span>
@@ -266,17 +259,10 @@
 
                     {{-- ═══ SECTION 3 & 4 — Address / DOB ═══ --}}
                     <div class="fs-section">
-                        <div class="fs-section-header">
-                            <span class="fs-section-num">3</span>
-                            <div>
-                                <div class="fs-section-title">Applicant Address &amp; Date of Birth <span class="section-req">*</span></div>
-                                <div class="fs-section-tamil">விண்ணப்பதாரர் முகவரி மற்றும் பிறந்த தேதி</div>
-                            </div>
-                        </div>
                         <div class="fs-section-body">
                             <div class="row">
                                 <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                    <div class="fs-field-label">Applicant Address <span class="req">*</span> <span style="font-weight:400;font-size:.78rem;">(To be clear)</span></div>
+                                    <div class="fs-field-label">3. Applicant Address <span class="req">*</span> <span style="font-weight:400;font-size:.78rem;">(To be clear)</span></div>
                                     <div class="fs-field-tamil">விண்ணப்பதாரர் முகவரி <span style="font-size:.72rem;">(தெளிவாக இருத்தல் வேண்டும்)</span></div>
                                     <textarea rows="3" class="form-control" id="applicants_address" name="applicants_address" maxlength="255">{{Auth::user()->address}}</textarea>
                                     <span id="applicants_address_error" class="text-danger error"></span>
@@ -284,13 +270,13 @@
                                 <div class="col-12 col-md-6">
                                     <div class="row">
                                         <div class="col-12 col-sm-7 mb-3 mb-sm-0">
-                                            <div class="fs-field-label">(i) D.O.B <span class="req">*</span></div>
+                                            <div class="fs-field-label">4. (i) D.O.B <span class="req">*</span></div>
                                             <div class="fs-field-tamil">பிறந்த நாள், மாதம், வருடம்</div>
                                             <input autocomplete="off" class="form-control" id="d_o_b" name="d_o_b" type="text" placeholder="DD/MM/YYYY" value="{{ isset($application) ? $application->d_o_b : '' }}">
                                             <span id="dob-error" class="text-danger"></span>
                                         </div>
                                         <div class="col-12 col-sm-5">
-                                            <div class="fs-field-label">(ii) Age</div>
+                                            <div class="fs-field-label">4. (ii) Age</div>
                                             <div class="fs-field-tamil">வயது</div>
                                             <input autocomplete="off" class="form-control" id="age" name="age" type="number" value="{{ isset($application) ? $application->age : '' }}" readonly>
                                         </div>
@@ -876,7 +862,13 @@
         setDocValWH('prv_pan_doc',fileLabelWH(document.getElementById('pancard_doc')));
     }
     function openPreviewModal(){populatePreview();var m=document.getElementById('appPreviewModal');m.style.display='flex';document.body.style.overflow='hidden';document.getElementById('prvConfirmCheck').checked=false;document.getElementById('prvConfirmBtn').disabled=true;document.getElementById('prvBody').scrollTop=0;}
-    function closePreviewModal(){document.getElementById('appPreviewModal').style.display='none';document.body.style.overflow='';}
+    function closePreviewModal() {
+        document.getElementById('appPreviewModal').style.display = 'none';
+        document.body.style.overflow = '';
+        if (typeof window.normalizeCompetencyDynamicSections === 'function') {
+            window.normalizeCompetencyDynamicSections();
+        }
+    }
     document.getElementById('prvConfirmCheck').addEventListener('change',function(){document.getElementById('prvConfirmBtn').disabled=!this.checked;});
     document.getElementById('prvConfirmBtn').addEventListener('click',function(){closePreviewModal();if(typeof window._prvResolve==='function'){window._prvResolve(true);window._prvResolve=null;}});
     document.getElementById('appPreviewModal').addEventListener('click',function(e){if(e.target===this){closePreviewModal();if(typeof window._prvResolve==='function'){window._prvResolve(false);window._prvResolve=null;}}});

@@ -251,6 +251,8 @@ class RegisterController extends BaseController
             ->first();
         }
 
+        
+
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)
         ->latest('id')
         ->first();

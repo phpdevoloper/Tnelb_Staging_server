@@ -133,6 +133,37 @@ class FormController extends BaseController
         }
     }
 
+    /**
+     * Populate issued licence number for renewal fee AJAX when tnelb_license has no row or empty number.
+     */
+    private function enrichLicenseDetailsForRenewal($appl_id, $application_details, $license_details)
+    {
+        if (!$application_details) {
+            return $license_details;
+        }
+        $issued = $license_details ? trim((string) ($license_details->license_number ?? '')) : '';
+        if ($issued === '') {
+            $issued = trim((string) ($application_details->license_number ?? ''));
+        }
+        if ($issued === '') {
+            $compRow = DB::table('mst_form_s_w')->where('application_id', $appl_id)->first();
+            if ($compRow) {
+                $issued = trim((string) ($compRow->license_number ?? ''));
+            }
+        }
+        if ($issued === '') {
+            return $license_details;
+        }
+        if (!$license_details) {
+            return (object) ['license_number' => $issued];
+        }
+        if (trim((string) ($license_details->license_number ?? '')) === '') {
+            $license_details->license_number = $issued;
+        }
+
+        return $license_details;
+    }
+
 
     public function editApplication($appl_id)
     {
@@ -194,6 +225,7 @@ class FormController extends BaseController
             ->where('application_id', $appl_id)
             ->select('*')
             ->first();
+        $license_details = $this->enrichLicenseDetailsForRenewal($appl_id, $application_details, $license_details);
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
 
@@ -287,6 +319,7 @@ class FormController extends BaseController
         $license_details = DB::table('tnelb_license')
             ->where('application_id', $appl_id)
             ->first();
+        $license_details = $this->enrichLicenseDetailsForRenewal($appl_id, $application_details, $license_details);
 
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
         $proof_doc = TnelbApplicantsSign::where('application_id', $appl_id)->first();
@@ -721,8 +754,11 @@ class FormController extends BaseController
             $licence_details['category_name'] = $category_type['category_name'];
             $licence_details['form_type'] = $form->appl_type;
             
-            // process education
+            // process education (upsert per level so duplicate DOM rows cannot create duplicate DB rows)
             if ($request->has('educational_level')) {
+                $lastEdu = Mst_education::whereNotNull('edu_serial')->latest('id')->value('edu_serial');
+                $eduSeq = $lastEdu ? (int) str_replace('edu_', '', $lastEdu) : 0;
+
                 foreach ($request->educational_level as $key => $level) {
                     // skip empty/incomplete rows
                     if (
@@ -733,19 +769,19 @@ class FormController extends BaseController
                     ) {
                         continue;
                     }
-                    
-                    // compute edu_serial safely
-                    $lastEdu = Mst_education::whereNotNull('edu_serial')->latest('id')->value('edu_serial');
-                    if ($lastEdu) {
-                        $lastNum = (int) str_replace('edu_', '', $lastEdu);
-                        $newEduSerial = 'edu_' . ($lastNum + 1);
-                    } else {
-                        $newEduSerial = 'edu_1';
+
+                    $monthRaw = $request->month_of_passing[$key] ?? null;
+                    $monthVal = null;
+                    if ($monthRaw !== null && $monthRaw !== '') {
+                        $m = (int) ltrim((string) $monthRaw, '0');
+                        if ($m >= 1 && $m <= 12) {
+                            $monthVal = $m;
+                        }
                     }
-                    
+
                     $filePath = null;
-                    if ($request->hasFile("education_document") && isset($request->file("education_document")[$key])) {
-                        $file = $request->file("education_document")[$key];
+                    if ($request->hasFile('education_document') && isset($request->file('education_document')[$key])) {
+                        $file = $request->file('education_document')[$key];
                         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                         $destinationPath = public_path('education_document');
                         $file->move($destinationPath, $filename);
@@ -754,18 +790,35 @@ class FormController extends BaseController
                         && $this->isValidCompetencyAjaxDocPath($request->existing_document[$key], 'education')) {
                         $filePath = $request->existing_document[$key];
                     }
-                    
-                    Mst_education::create([
+
+                    $upsertAttrs = [
                         'login_id'           => $loginId,
-                        'educational_level'  => $level,
-                        'institute_name'     => $request->institute_name[$key],
-                        'month_passing'      => $request->month_of_passing[$key] ?? null,
-                        'year_of_passing'    => $request->year_of_passing[$key],
-                        'certificate_no'     => $request->certificate_no[$key] ?? null,
                         'application_id'     => $newApplicationId,
-                        'edu_serial'         => $newEduSerial,
-                        'upload_document'    => $filePath,
-                    ]);
+                        'educational_level'  => $level,
+                    ];
+
+                    $existingByKey = Mst_education::where($upsertAttrs)->first();
+
+                    $newEduSerial = ($existingByKey && $existingByKey->edu_serial)
+                        ? $existingByKey->edu_serial
+                        : ('edu_' . (++$eduSeq));
+
+                    $uploadToStore = $filePath;
+                    if ($uploadToStore === null && $existingByKey && $existingByKey->upload_document) {
+                        $uploadToStore = $existingByKey->upload_document;
+                    }
+
+                    Mst_education::updateOrCreate(
+                        $upsertAttrs,
+                        [
+                            'institute_name'    => $request->institute_name[$key],
+                            'month_passing'     => $monthVal ?? $existingByKey?->month_passing ?? $monthRaw,
+                            'year_of_passing'   => $request->year_of_passing[$key],
+                            'certificate_no'    => $request->certificate_no[$key] ?? null,
+                            'edu_serial'        => $newEduSerial,
+                            'upload_document'   => $uploadToStore,
+                        ]
+                    );
                 }
             }
             
@@ -1826,7 +1879,9 @@ class FormController extends BaseController
                         }
                     }
 
-                    // ✅ Update or Create record
+                    // ✅ Update by primary id when the form sends edu_id[] (edit flows), else upsert
+                    // by natural key so repeated "Save as Draft" after preview does not insert copies
+                    // (apply WH/S/W do not post edu_id until they are edit views).
                     if ($education) {
                         // Defensive: keep existing values if request-side index is missing
                         // (avoids silently nulling previously-saved data on partial drafts).
@@ -1847,20 +1902,37 @@ class FormController extends BaseController
                             'upload_document'   => $filePath,
                         ]);
                     } else {
-                        $lastNum++;
-                        $newEduSerial = 'edu_' . $lastNum;
-            
-                        Mst_education::create([
+                        $upsertAttrs = [
                             'login_id'          => $loginId,
-                            'educational_level' => $level,
-                            'institute_name'    => $request->institute_name[$key],
-                            'month_passing'     => $monthVal,
-                            'year_of_passing'   => $request->year_of_passing[$key],
-                            'certificate_no'    => $request->certificate_no[$key] ?? null,
                             'application_id'    => $applicationId,
-                            'edu_serial'        => $newEduSerial,
-                            'upload_document'   => $filePath,
-                        ]);
+                            'educational_level' => $level,
+                        ];
+
+                        $existingByKey = Mst_education::where($upsertAttrs)->first();
+
+                        if ($existingByKey && $existingByKey->edu_serial) {
+                            $newEduSerial = $existingByKey->edu_serial;
+                        } else {
+                            $lastNum++;
+                            $newEduSerial = 'edu_' . $lastNum;
+                        }
+
+                        $uploadToStore = $filePath;
+                        if ($uploadToStore === null && ! $isFileRemoved && $existingByKey && $existingByKey->upload_document) {
+                            $uploadToStore = $existingByKey->upload_document;
+                        }
+
+                        Mst_education::updateOrCreate(
+                            $upsertAttrs,
+                            [
+                                'institute_name'    => $request->institute_name[$key],
+                                'month_passing'     => $monthVal,
+                                'year_of_passing'   => $request->year_of_passing[$key],
+                                'certificate_no'    => $request->certificate_no[$key] ?? null,
+                                'edu_serial'        => $newEduSerial,
+                                'upload_document'   => $uploadToStore,
+                            ]
+                        );
                     }
                 }
             }

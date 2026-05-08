@@ -72,6 +72,24 @@ class EA_RenewalController extends BaseController
             ->select('*')
             ->first();
 
+        $issuedForRenew = $license_details ? trim((string) ($license_details->license_number ?? '')) : '';
+        if ($issuedForRenew === '') {
+            $issuedForRenew = trim((string) ($application_details->license_number ?? ''));
+        }
+        if ($issuedForRenew === '') {
+            $compRow = DB::table('mst_form_s_w')->where('application_id', $appl_id)->first();
+            if ($compRow) {
+                $issuedForRenew = trim((string) ($compRow->license_number ?? ''));
+            }
+        }
+        if ($issuedForRenew !== '') {
+            if (!$license_details) {
+                $license_details = (object) ['license_number' => $issuedForRenew];
+            } elseif (trim((string) ($license_details->license_number ?? '')) === '') {
+                $license_details->license_number = $issuedForRenew;
+            }
+        }
+
         $applicant_photo = TnelbApplicantPhoto::where('application_id', $appl_id)->first();
         $proof_doc = TnelbApplicantsSign::where('application_id', $appl_id)->first();
 

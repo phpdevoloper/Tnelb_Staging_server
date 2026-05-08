@@ -20,13 +20,11 @@ use function PHPUnit\Framework\isNull;
 
 class SupervisorController extends Controller
 {
-    protected $today,$dbNow;
+    protected $today, $dbNow;
     public function __construct()
     {
         $this->today = Carbon::today()->toDateString();
         $this->dbNow  = DB::selectOne("SELECT date_trunc('second', NOW()::timestamp) AS db_now")->db_now;
-
-
     }
 
     public function index()
@@ -42,7 +40,7 @@ class SupervisorController extends Controller
 
     public function view_applications(Request $request)
     {
-        
+
         $staff = Auth::user();
         if (!$staff) {
             return abort(403, 'Unauthorized');
@@ -318,7 +316,7 @@ class SupervisorController extends Controller
         [$renewal, $new_applications] = collect($workflows)->partition(function ($row) {
             return strtoupper((string) ($row->appl_type ?? '')) === 'R';
         });
-        
+
 
         return view('admin.supervisor.view', compact('workflows', 'new_applications', 'renewal', 'returned_applications'));
     }
@@ -500,7 +498,7 @@ class SupervisorController extends Controller
         $staff = Auth::user();
         $roleName = $staff->name ?? '';
 
-        
+
 
         // Base query for Form A contractor applications
         $query = DB::table('tnelb_ea_applications as ta')
@@ -519,27 +517,26 @@ class SupervisorController extends Controller
         // (i.e. processed_by = 'S' and not yet forwarded further, typically P / RE / F)
         if (in_array($roleName, ['Supervisor'], true)) {
             $query->whereIn('ta.application_status', ['P', 'RE']);
-                  
         }
 
         // Assistant Secretary should see only applications that have been forwarded
         // by Supervisor (processed_by = 'S', usually status F/RF)
         elseif ($roleName === 'Assistant Secretary') {
             $query->whereIn('ta.application_status', ['F', 'RF'])
-                  ->where('ta.processed_by', 'S');
+                ->where('ta.processed_by', 'S');
         } elseif ($roleName === 'President') {
             $query->whereIn('ta.application_status', ['F', 'RF'])
-                  ->where('ta.processed_by', 'SE');
+                ->where('ta.processed_by', 'SE');
         }
 
-        
+
 
         $workflows = $query
             ->orderBy('ta.updated_at', 'DESC')
             ->select('ta.*')
             ->get();
 
-        
+
 
         // SA type still uses the existing SA view if needed
         if (strtoupper($type) === 'SA') {
@@ -571,31 +568,31 @@ class SupervisorController extends Controller
 
         $applicationIds = $workflows->pluck('application_id');
 
-    
-            $licenses = DB::table('tnelb_license')
-                ->whereIn('application_id', $applicationIds)
-                ->select('application_id', 'license_number')
-                ->get()
-                ->keyBy('application_id');
 
-            $renewalLicenses = DB::table('tnelb_renewal_license')
-                ->whereIn('application_id', $applicationIds)
-                ->select('application_id', 'license_number')
-                ->get()
-                ->keyBy('application_id');
+        $licenses = DB::table('tnelb_license')
+            ->whereIn('application_id', $applicationIds)
+            ->select('application_id', 'license_number')
+            ->get()
+            ->keyBy('application_id');
 
-            return view('admin.supervisor.completed_forma', compact(
-                'workflows',
-                'licenses',
-                'renewalLicenses'
-            ));
+        $renewalLicenses = DB::table('tnelb_renewal_license')
+            ->whereIn('application_id', $applicationIds)
+            ->select('application_id', 'license_number')
+            ->get()
+            ->keyBy('application_id');
+
+        return view('admin.supervisor.completed_forma', compact(
+            'workflows',
+            'licenses',
+            'renewalLicenses'
+        ));
     }
 
 
     public function forwardApplication(Request $request, $role)
     {
 
-        
+
 
 
         $staff = Auth::user();
@@ -827,18 +824,18 @@ class SupervisorController extends Controller
             'raised_by'      => $query_status == 'P' ? $raised_by : '',
         ]);
 
-         WorkflowA::where('application_id', $request->application_id)
-              ->where('processed_by', $request->processed_by)
-              ->where('role_id', $request->role_id)
-                ->orderByDesc('id')
-                ->limit(1)
-                ->update([
-                    'created_at' => DB::raw('NOW()'),
-                ]);
+        WorkflowA::where('application_id', $request->application_id)
+            ->where('processed_by', $request->processed_by)
+            ->where('role_id', $request->role_id)
+            ->orderByDesc('id')
+            ->limit(1)
+            ->update([
+                'created_at' => DB::raw('NOW()'),
+            ]);
 
 
 
-        
+
 
         EA_Application_model::where('application_id', $request->application_id)
             ->update([
@@ -847,7 +844,7 @@ class SupervisorController extends Controller
                 'updated_at' => DB::raw('NOW()'),
             ]);
 
-        
+
 
         if ($request->application_status === 'RE') {
             $role1 = 'Secretary';
@@ -863,7 +860,7 @@ class SupervisorController extends Controller
     }
 
 
-    
+
     public function approveApplicationForma(Request $request)
     {
         $request->validate([
@@ -938,7 +935,6 @@ class SupervisorController extends Controller
                     : now();
 
                 $expiresAt = $baseExpiry->copy()->addMonths($monthsToAdd)->toDateString();
-
             } else {
 
                 // Fresh → today + months
@@ -949,8 +945,8 @@ class SupervisorController extends Controller
 
             if ($request->validity_override === 'YES') {
 
-            // dd('111');
-            // exit;
+                // dd('111');
+                // exit;
 
                 $qcValidity   = $request->qc_validity_date
                     ? Carbon::parse($request->qc_validity_date)
@@ -985,7 +981,6 @@ class SupervisorController extends Controller
                 ]);
 
                 $newSerial = $application->license_number;
-
             } else {
 
                 $prefix    = $application->license_name;
@@ -1010,24 +1005,24 @@ class SupervisorController extends Controller
             }
 
 
-               $workflowId = DB::table('tnelb_workflow_a')->insertGetId([
-        'application_id' => $request->application_id,
-        'processed_by'   => $request->processed_by,
-        'role_id'        => Auth::user()->roles_id,
-        'appl_status'    => 'A',
-        'remarks'        => $request->remarks ?? 'No remarks provided',
-        'forwarded_to'   => $request->forwarded_to,
-        'created_at'     => now(),
-        'updated_at'     => now(),
-    ]);
+            $workflowId = DB::table('tnelb_workflow_a')->insertGetId([
+                'application_id' => $request->application_id,
+                'processed_by'   => $request->processed_by,
+                'role_id'        => Auth::user()->roles_id,
+                'appl_status'    => 'A',
+                'remarks'        => $request->remarks ?? 'No remarks provided',
+                'forwarded_to'   => $request->forwarded_to,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
 
-    // 2️⃣ UPDATE SAME RECORD (guaranteed)
-    DB::table('tnelb_workflow_a')
-        ->where('id', $workflowId)
-        ->update([
-          'created_at' => DB::raw('NOW()'),
-          'updated_at' => DB::raw('NOW()'),
-        ]);
+            // 2️⃣ UPDATE SAME RECORD (guaranteed)
+            DB::table('tnelb_workflow_a')
+                ->where('id', $workflowId)
+                ->update([
+                    'created_at' => DB::raw('NOW()'),
+                    'updated_at' => DB::raw('NOW()'),
+                ]);
 
 
             DB::commit();
@@ -1041,7 +1036,6 @@ class SupervisorController extends Controller
                 'issued_at'      => $issuedAt,
                 'expires_at'     => $expiresAt,
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -1055,38 +1049,38 @@ class SupervisorController extends Controller
     {
 
         // DB::table('tnelb_application_tbl')
-//     ->where('application_id', 'WB251111111')
-//     ->update([
-//         'd_o_b' => '01-01-1945'
-//     ]);
+        //     ->where('application_id', 'WB251111111')
+        //     ->update([
+        //         'd_o_b' => '01-01-1945'
+        //     ]);
 
-//     DB::table('tnelb_ea_applications')
-//     ->where('application_id', 'AEA25000001')
-//     ->update([
-//         'payment_status' => 'paid',
-//         'application_status' => 'P',
+        //     DB::table('tnelb_ea_applications')
+        //     ->where('application_id', 'AEA25000001')
+        //     ->update([
+        //         'payment_status' => 'paid',
+        //         'application_status' => 'P',
 
-//     ]);
+        //     ]);
 
-// $show = DB::table('tnelb_ea_applications')
-//         ->where('application_id', 'AEA25000001')
-//         ->first();
+        // $show = DB::table('tnelb_ea_applications')
+        //         ->where('application_id', 'AEA25000001')
+        //         ->first();
 
-  // $show = DB::table('tnelb_license')->get()->toArray();
+        // $show = DB::table('tnelb_license')->get()->toArray();
 
-//         $show = DB::table('tnelb_license')
-//           ->where('application_id', 'AEA25000004')
-//           ->delete();
-// if ($show) {
-//     echo "Record deleted successfully";
-// } else {
-//     echo "No record found";
-// }
+        //         $show = DB::table('tnelb_license')
+        //           ->where('application_id', 'AEA25000004')
+        //           ->delete();
+        // if ($show) {
+        //     echo "Record deleted successfully";
+        // } else {
+        //     echo "No record found";
+        // }
 
- 
 
-//  dd($show);
-// exit;
+
+        //  dd($show);
+        // exit;
 
         // dd($request->all());
         // exit;
@@ -1101,7 +1095,7 @@ class SupervisorController extends Controller
         // Fetch the application details
         $application = DB::table('tnelb_ea_applications')
             ->where('application_id', $request->application_id)
-            
+
             ->first();
 
         if (!$application) {
@@ -1117,7 +1111,7 @@ class SupervisorController extends Controller
         // dd($licensename);
         // exit;
 
-        
+
 
         // Get form type
         // $formType = DB::table('tnelb_forms')->where('id', $application->form_id)->first();
@@ -1138,17 +1132,17 @@ class SupervisorController extends Controller
                 $processed = 'SE';
             }
 
-       
-          
-                 DB::table('tnelb_ea_applications')
+
+
+            DB::table('tnelb_ea_applications')
                 ->where('application_id', $request->application_id)
                 ->update([
                     'application_status'     => 'A',
                     'processed_by' => isset($processed) ? $processed : 'PR',
                     'updated_at' => now(),
                 ]);
-            
-         
+
+
 
             $appl_type = preg_replace('/\s+/', '', $application->appl_type);
 
@@ -1181,16 +1175,16 @@ class SupervisorController extends Controller
                     $today = Carbon::today()->toDateString();
 
                     $licenseperiod = DB::table('mst_fees_validity')
-                    ->where('licence_id', $formid->id)
-                    ->where('form_type', $appl_type)
-                    ->where('status', 1)
-                    ->whereDate('validity_start_date', '<=', $today)
-                    ->orderBy('validity_start_date', 'desc') 
-                    ->first();
+                        ->where('licence_id', $formid->id)
+                        ->where('form_type', $appl_type)
+                        ->where('status', 1)
+                        ->whereDate('validity_start_date', '<=', $today)
+                        ->orderBy('validity_start_date', 'desc')
+                        ->first();
 
                     $monthsToAdd = $licenseperiod->validity ?? 0;
-// dd($monthsToAdd);
-// exit;
+                    // dd($monthsToAdd);
+                    // exit;
                     // 🔥 Get original expiry date from tnelb_license table
                     $oldExpiry = DB::table('tnelb_license')
                         ->where('application_id', $request->oldapplicationId)
@@ -1199,13 +1193,13 @@ class SupervisorController extends Controller
                     // If no expiry found, use NOW as fallback
                     $expirySourceDate = $oldExpiry ? Carbon::parse($oldExpiry) : now();
 
-                
+
 
                     // 🔥 Add the validity months to old expiry
                     $expiresAt = $expirySourceDate->copy()->addMonths($monthsToAdd)->format('Y-m-d');
 
-      // dd($expiresAt);
-      //           exit;
+                    // dd($expiresAt);
+                    //           exit;
 
                     $issuedAt = now()->format('Y-m-d H:i:s');
 
@@ -1220,8 +1214,6 @@ class SupervisorController extends Controller
                     ]);
 
                     $newSerial = $application->license_number;
-
-                
                 } else {
                     // existing renewal record still valid -> reuse its values
                     $newSerial = $license_details->license_number;
@@ -1236,7 +1228,7 @@ class SupervisorController extends Controller
                     ->where('application_id', $request->application_id)
                     ->first();
 
-                     
+
 
                 if ($license_details) {
 
@@ -1268,41 +1260,41 @@ class SupervisorController extends Controller
                     $newSerial = "L{$prefix}{$yearMonth}{$newNumber}";
                     $issuedAt = now()->format('Y-m-d H:i:s');
 
-                //  dd($licensename);
-                //  exit;
-               $formid = DB::table('mst_licences')
+                    //  dd($licensename);
+                    //  exit;
+                    $formid = DB::table('mst_licences')
                         ->where('cert_licence_code', $licensename)
                         ->where('status', '1')
                         ->first();
 
-                 $today = Carbon::today()->toDateString();
+                    $today = Carbon::today()->toDateString();
 
-                // $today = '2025-12-31';
+                    // $today = '2025-12-31';
 
-                //  dd($today);
-                //  exit;
+                    //  dd($today);
+                    //  exit;
 
                     $licenseperiod = DB::table('mst_fees_validity')
-                    ->where('licence_id', $formid->id)
-                    ->where('form_type', $appl_type)
-                    ->where('status', 1)
-                    ->whereDate('validity_start_date', '<=', $today)
-                    ->orderBy('validity_start_date', 'desc') 
-                    ->first();
-                        
+                        ->where('licence_id', $formid->id)
+                        ->where('form_type', $appl_type)
+                        ->where('status', 1)
+                        ->whereDate('validity_start_date', '<=', $today)
+                        ->orderBy('validity_start_date', 'desc')
+                        ->first();
+
 
                     // dd($formid->id);
                     // exit;
 
-                        // dd($licenseperiod->validity);
-                        // exit;
-                   
+                    // dd($licenseperiod->validity);
+                    // exit;
+
                     $monthsToAdd = $licenseperiod->validity ?? 0;
 
                     // dd($monthsToAdd);
                     // exit;
 
-// H:i:s
+                    // H:i:s
                     $expiresAt = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
 
                     // dd($licenseperiod->validity);
@@ -1406,7 +1398,7 @@ class SupervisorController extends Controller
                     'processed_by' => $processed ?: 'PR',
                     'updated_at' => now(),
                 ]);
-                
+
 
             // Issue or renew licence and get final number + dates
             [$licenseNumber, $issuedAt, $expiresAt] = $this->issueOrRenewLicense(
@@ -1427,7 +1419,7 @@ class SupervisorController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
-           
+
 
             DB::table('tnelb_workflow')->insert([
                 'application_id' => $request->application_id,
@@ -1473,6 +1465,8 @@ class SupervisorController extends Controller
     private function issueOrRenewLicense(object $application, int $licenceId, string $applType, string $processedBy, string $applicationId, string $loginId): array
     {
         // Renewal flow
+
+        // dd('111');exit;
         if ($applType === 'R') {
             $licenseDetails = DB::table('tnelb_renewal_license')
                 ->where('application_id', $applicationId)
@@ -1485,7 +1479,16 @@ class SupervisorController extends Controller
 
                 $licensePeriod = $this->resolveLicenseValidity($licenceId, $applType);
                 $monthsToAdd   = (int) ($licensePeriod->validity ?? 0);
-                $expiresAt     = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+                // $expiresAt     = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+
+                $expiresAt = $now->copy()
+                    ->addMonths($monthsToAdd)
+                    ->subDay()
+                    ->format('Y-m-d');
+
+
+
+
 
                 DB::table('tnelb_renewal_license')->insert([
                     'login_id'       => $loginId,
@@ -1536,14 +1539,22 @@ class SupervisorController extends Controller
         } else {
             $newNumber = '00001';
         }
-
+        $now = now();
         $licenseNumber = "L{$prefix}{$yearMonth}{$newNumber}";
         $issuedAt      = now()->format('Y-m-d H:i:s');
 
         $licensePeriod = $this->resolveLicenseValidity($licenceId, $applType);
         $monthsToAdd   = (int) ($licensePeriod->validity ?? 0);
-        $expiresAt     = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+        // $expiresAt     = now()->copy()->addMonths($monthsToAdd)->format('Y-m-d');
 
+
+        $expiresAt     = $now->copy()->addMonths($monthsToAdd)->format('Y-m-d');
+
+        $expiresAtnow = $now->copy()
+            ->addMonths($monthsToAdd)
+            ->subDay()
+            ->format('Y-m-d');
+        // dd($expiresAt, $expiresAtnow);exit;
         DB::table('tnelb_license')->insert([
             'application_id' => $applicationId,
             'license_number' => $licenseNumber,

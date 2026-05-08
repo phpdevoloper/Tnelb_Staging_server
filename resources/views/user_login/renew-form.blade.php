@@ -792,8 +792,15 @@
                     <input type="hidden" id="login_id_store" name="login_id" value="{{ Auth::user()->login_id }}">
                     <input type="hidden" id="application_id" name="application_id"
                         value="{{ isset($application_details) ? $application_details->application_id : '' }}">
-                    <input type="hidden" id="license_number" name="license_number"
-                        value="{{ isset($license_details) ? $license_details->license_number : '' }}">
+                    @php
+                        $_renew_issued = '';
+                        if (!empty($license_details) && trim((string) ($license_details->license_number ?? '')) !== '') {
+                            $_renew_issued = trim((string) $license_details->license_number);
+                        } elseif (!empty($application_details->license_number ?? null)) {
+                            $_renew_issued = trim((string) $application_details->license_number);
+                        }
+                    @endphp
+                    <input type="hidden" id="license_number" name="license_number" value="{{ $_renew_issued }}">
 
                     {{-- ═══ SECTION 1 — Applicant Details ═══ --}}
                     @php

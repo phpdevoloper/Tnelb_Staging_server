@@ -2026,6 +2026,9 @@
     function closePreviewModal() {
         document.getElementById('appPreviewModal').style.display = 'none';
         document.body.style.overflow = '';
+        if (typeof window.normalizeCompetencyDynamicSections === 'function') {
+            window.normalizeCompetencyDynamicSections();
+        }
     }
 
     document.getElementById('prvConfirmCheck').addEventListener('change', function() {

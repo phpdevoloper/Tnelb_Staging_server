@@ -713,7 +713,7 @@
                                                 <tr class="work-fields text-center">
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>
-                                                        <input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ $exp->company_name ?? '' }}">
+                                                        <input autocomplete="off" class="form-control" name="work_level[]" type="text" value="{{ $exp->company_name ?? $exp->emp_cate ?? '' }}">
                                                     </td>
                                                     <td>
                                                         <div class="d-flex" style="gap:6px;">
@@ -785,7 +785,7 @@
                                     <div class="fs-field-tamil">தொழில் வழங்குநரின் பெயர்</div>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea class="form-control" name="employer_name" id="employer_name" cols="5" rows="3" maxlength="255">{{ isset($exp) && !empty($exp->company_name) ? $exp->company_name : '' }}</textarea>
+                                    <textarea class="form-control" name="employer_name" id="employer_name" cols="5" rows="3" maxlength="255">{{ $application_details->employer_detail ?? '' }}</textarea>
                                 </div>
                             </div>
 

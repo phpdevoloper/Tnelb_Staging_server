@@ -48,8 +48,8 @@ async function showInstructPopup(licence_code,login_id) {
 
         // 🔹 Now you can safely use form_cost everywhere below
         const modalEl = document.getElementById('competencyInstructionsModalP');
-        const agreeCheckbox = modalEl.querySelector('#declaration-agree-renew');
-        const errorText = modalEl.querySelector('#declaration-error-renew');
+        const agreeCheckbox = modalEl.querySelector('#declaration-agree-renew-p');
+        const errorText = modalEl.querySelector('#declaration-error-renew-p');
         const proceedBtn = modalEl.querySelector('#proceedtoPayment');
 
         document.getElementById('p_certificate_name').textContent = certificate_name;
@@ -61,7 +61,7 @@ async function showInstructPopup(licence_code,login_id) {
         errorText.classList.add('d-none');
 
         // Show modal
-        const modalBody = modalEl.querySelector('#instructionContent');
+        const modalBody = modalEl.querySelector('#instructionContentP');
 
         let html = '<p class="mt-3 text-center" style="color:#0069d9">*** No instructions available. ***</p>';
         if (form_instruct) {
@@ -88,7 +88,7 @@ async function showInstructPopup(licence_code,login_id) {
 
 
         modalBody.innerHTML = html;
-        const el = document.querySelector("#instructionContent");
+        const el = modalEl.querySelector("#instructionContentP");
 
         const modal = new bootstrap.Modal(modalEl, {
             backdrop: 'static',
@@ -351,7 +351,7 @@ async function showInstructPopup(licence_code,login_id) {
 
 // Proceed for Payment
 $(document).ready(function () {
-    $('#ProceedtoPayment').on('click', function (e) {
+    $('#ProceedtoPayment').on('click', async function (e) {
         e.preventDefault();
 
         $('.error-message').remove();
@@ -716,6 +716,12 @@ $(document).ready(function () {
 
         let license_name = $("#license_name").val();
         let login_id = $("#login_id_store").val();
+
+        if (typeof window.showCompetencyPreviewModal === 'function') {
+            const previewConfirmed = await window.showCompetencyPreviewModal();
+            if (!previewConfirmed) return;
+        }
+
         showInstructPopup(license_name,login_id);
     });
 
