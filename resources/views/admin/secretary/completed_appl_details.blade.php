@@ -249,7 +249,7 @@
                                             <div class="row">
                                                 <div class="col-lg-6 col-6">
                                                     <p><strong>License Number:</strong></p>
-                                                    <p><strong>Date of Issue:</strong></p>
+                                                    <p><strong>Date of First Issue:</strong></p>
                                                     <p><strong>Validity Date:</strong></p>
                                                 </div>
                                                 <div class="col-lg-6 col-6">
@@ -266,7 +266,7 @@
                                             <div class="row">
                                                 <div class="col-lg-6 col-6">
                                                     <p><strong>Wireman License Number:</strong></p>
-                                                    <p><strong>Date of Issue:</strong></p>
+                                                    <p><strong>Date of First Issue:</strong></p>
                                                     <p><strong>Validity Date:</strong></p>
                                                 </div>
                                                 <div class="col-lg-6 col-6">

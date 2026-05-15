@@ -217,7 +217,7 @@
                                                 <div class="row">
                                                     <div class="col-lg-4 col-6">
                                                         <p><strong>License Number:</strong></p>
-                                                        <p><strong>Date of Issue:</strong></p>
+                                                        <p><strong>Date of First Issue:</strong></p>
                                                         <p><strong>Validity Date:</strong></p>
                                                     </div>
 
@@ -254,7 +254,7 @@
                                             <div class="row">
                                                 <div class="col-lg-4 col-6">
                                                     <p><strong>License Number:</strong></p>
-                                                    <p><strong>Date of Issue:</strong></p>
+                                                    <p><strong>Date of First Issue:</strong></p>
                                                     <p><strong>Validity Date:</strong></p>
                                                 </div>
                                                 <div class="col-lg-8 col-6">

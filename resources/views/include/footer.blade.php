@@ -1484,6 +1484,20 @@ $(document).ready(function() {
                 }
             }
 
+            let applicantEmailEl = $('#applicant_email');
+            if (applicantEmailEl.length) {
+                let ev = (applicantEmailEl.val() || '').trim();
+                if (ev === '') {
+                    applicantEmailEl.after('<span class="error-message text-danger d-block mt-1">Email ID is required.</span>');
+                    if (!firstErrorField) firstErrorField = applicantEmailEl;
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ev)) {
+                    applicantEmailEl.after('<span class="error-message text-danger d-block mt-1">Enter a valid Email ID.</span>');
+                    if (!firstErrorField) firstErrorField = applicantEmailEl;
+                    isValid = false;
+                }
+            }
+
             let applicantNameEl = $('#Applicant_Name');
             if (applicantNameEl.length) {
                 let applicantName = applicantNameEl.val().trim();
@@ -1666,10 +1680,20 @@ $(document).ready(function() {
                     if (fromDate.length && toDate.length && fromDate.val() && toDate.val()) {
                         const from = new Date(fromDate.val() + 'T12:00:00');
                         const to = new Date(toDate.val() + 'T12:00:00');
-                        if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && to < from) {
-                            toDate.after('<span class="error-message text-danger d-block mt-1">To date must be greater than or equal to From date.</span>');
-                            if (!firstErrorField) firstErrorField = toDate;
-                            isValid = false;
+                        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+                            if (to < from) {
+                                toDate.after('<span class="error-message text-danger d-block mt-1">To date must be greater than or equal to From date.</span>');
+                                if (!firstErrorField) firstErrorField = toDate;
+                                isValid = false;
+                            } else {
+                                const minTo = new Date(from.getTime());
+                                minTo.setFullYear(minTo.getFullYear() + 2);
+                                if (to < minTo) {
+                                    toDate.after('<span class="error-message text-danger d-block mt-1">Minimum 2 Years Experience needed</span>');
+                                    if (!firstErrorField) firstErrorField = toDate;
+                                    isValid = false;
+                                }
+                            }
                         }
                     }
 
